@@ -25,7 +25,7 @@ public static class SeedData
         }
 
         // Create admin user if not exists
-        var adminEmail = "admin@spanishwithkaren.com";
+        var adminEmail = "admin@lakecountryspanish.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
         if (adminUser == null)

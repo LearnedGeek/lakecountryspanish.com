@@ -1,6 +1,6 @@
-# Spanish with Karen - User Guide
+# Lake Country Spanish - User Guide
 
-This guide covers how to use the Spanish with Karen website from both student and administrator perspectives.
+This guide covers how to use the Lake Country Spanish website from both student and administrator perspectives.
 
 ---
 

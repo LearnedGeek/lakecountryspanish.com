@@ -85,8 +85,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(e => e.Payment)
-                .WithMany()
-                .HasForeignKey(e => e.PaymentId)
+                .WithOne(p => p.StudentPackage)
+                .HasForeignKey<StudentPackage>(e => e.PaymentId)
                 .OnDelete(DeleteBehavior.SetNull);
         });
 

@@ -1,4 +1,4 @@
-# Spanish with Karen
+# Lake Country Spanish
 
 A complete web application for managing an online Spanish teaching business. Built with ASP.NET Core 8 MVC, this application provides student scheduling, payment processing via Stripe, document management, and a modern responsive interface.
 
@@ -103,7 +103,7 @@ SpanishScheduler/
 
 On first run, the application seeds a default admin account:
 
-- **Email**: `admin@spanishwithkaren.com`
+- **Email**: `admin@lakecountryspanish.com`
 - **Password**: `Admin123!`
 
 > **Important**: Change this password immediately after first login in a production environment.
