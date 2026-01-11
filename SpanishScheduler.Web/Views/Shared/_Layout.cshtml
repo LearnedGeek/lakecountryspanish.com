@@ -1,0 +1,182 @@
+@using Microsoft.AspNetCore.Identity
+@using SpanishScheduler.Web.Models.Entities
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Spanish with Karen</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fef3f2',
+                            100: '#fee4e2',
+                            200: '#fecdca',
+                            300: '#fca5a0',
+                            400: '#f87168',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                        },
+                        secondary: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            300: '#fcd34d',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="h-full bg-gray-50">
+    <div class="min-h-full">
+        <nav class="bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <a asp-controller="Home" asp-action="Index" class="flex-shrink-0">
+                            <span class="text-2xl font-bold text-white">Spanish with Karen</span>
+                        </a>
+                        <div class="hidden md:block ml-10">
+                            <div class="flex items-baseline space-x-4">
+                                <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">Home</a>
+                                <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">About</a>
+                                <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">Contact</a>
+                                @if (SignInManager.IsSignedIn(User))
+                                {
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">Admin Dashboard</a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="Student" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">My Dashboard</a>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-4 flex items-center md:ml-6">
+                            @if (SignInManager.IsSignedIn(User))
+                            {
+                                var user = await UserManager.GetUserAsync(User);
+                                <span class="text-white text-sm mr-4">Welcome, @user?.FirstName</span>
+                                <form asp-controller="Account" asp-action="Logout" method="post">
+                                    <button type="submit" class="bg-primary-800 hover:bg-primary-900 text-white rounded-md px-4 py-2 text-sm font-medium transition">
+                                        Sign Out
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a asp-controller="Account" asp-action="Login" class="bg-white text-primary-600 hover:bg-gray-100 rounded-md px-4 py-2 text-sm font-medium transition">
+                                    Sign In
+                                </a>
+                            }
+                        </div>
+                    </div>
+                    <!-- Mobile menu button -->
+                    <div class="md:hidden">
+                        <button type="button" onclick="toggleMobileMenu()" class="text-white hover:bg-primary-500 hover:bg-opacity-75 p-2 rounded-md">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile menu -->
+            <div class="md:hidden hidden" id="mobile-menu">
+                <div class="space-y-1 px-2 pb-3 pt-2">
+                    <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Home</a>
+                    <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">About</a>
+                    <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Contact</a>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Admin Dashboard</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Student" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">My Dashboard</a>
+                        }
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
+                            <button type="submit" class="w-full text-left text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">
+                                Sign Out
+                            </button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a asp-controller="Account" asp-action="Login" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Sign In</a>
+                    }
+                </div>
+            </div>
+        </nav>
+
+        <main>
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">@TempData["SuccessMessage"]</span>
+                    </div>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mt-4">
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                        <span class="block sm:inline">@TempData["ErrorMessage"]</span>
+                    </div>
+                </div>
+            }
+            @RenderBody()
+        </main>
+
+        <footer class="bg-gray-800 mt-auto">
+            <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+                <div class="md:flex md:items-center md:justify-between">
+                    <div class="flex justify-center space-x-6 md:order-2">
+                        <p class="text-gray-400 text-sm">Native Peruvian Spanish Teacher</p>
+                    </div>
+                    <div class="mt-8 md:order-1 md:mt-0">
+                        <p class="text-center text-sm text-gray-400">
+                            &copy; @DateTime.Now.Year Spanish with Karen. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        function toggleMobileMenu() {
+            var menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

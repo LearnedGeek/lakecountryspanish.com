@@ -1,0 +1,192 @@
+@model SpanishScheduler.Web.Models.ViewModels.StudentDashboardViewModel
+@{
+    ViewData["Title"] = "My Dashboard";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Welcome back, @Model.StudentName!</h1>
+            <p class="mt-2 text-gray-600">Manage your Spanish lessons and track your progress.</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-blue-100 rounded-lg">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Upcoming Classes</p>
+                        <p class="text-2xl font-semibold text-gray-900">@Model.UpcomingClasses.Count()</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-lg">
+                        <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Package Credits</p>
+                        <p class="text-2xl font-semibold text-gray-900">@Model.AvailablePackageClasses</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-yellow-100 rounded-lg">
+                        <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Balance Due</p>
+                        <p class="text-2xl font-semibold text-gray-900">$@Model.Balance.ToString("0.00")</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-purple-100 rounded-lg">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Documents</p>
+                        <p class="text-2xl font-semibold text-gray-900">@Model.Documents.Count()</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 mb-8">
+            <a asp-action="BookClass" class="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg p-4 transition">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Book a Class
+            </a>
+            <a asp-action="Payments" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                </svg>
+                Payment History
+            </a>
+            <a asp-action="Documents" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                My Documents
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Upcoming Classes -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Upcoming Classes</h2>
+                </div>
+                <div class="p-6">
+                    @if (Model.UpcomingClasses.Any())
+                    {
+                        <div class="space-y-4">
+                            @foreach (var cls in Model.UpcomingClasses.Take(5))
+                            {
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium text-gray-900">@cls.ClassDateTime.ToString("dddd, MMMM d")</p>
+                                        <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt") - @cls.ClassDateTime.AddHours(1).ToString("h:mm tt")</p>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium @(cls.PaymentStatus == SpanishScheduler.Web.Models.Entities.PaymentStatus.Paid || cls.PaymentStatus == SpanishScheduler.Web.Models.Entities.PaymentStatus.PartOfPackage ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800")">
+                                            @cls.PaymentStatus
+                                        </span>
+                                    </div>
+                                    @if (cls.ClassDateTime > DateTime.Now.AddHours(24))
+                                    {
+                                        <form asp-action="CancelClass" method="post">
+                                            <input type="hidden" name="id" value="@cls.Id" />
+                                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm font-medium"
+                                                    onclick="return confirm('Are you sure you want to cancel this class?')">
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                            <p class="mt-2 text-gray-500">No upcoming classes</p>
+                            <a asp-action="BookClass" class="mt-4 inline-flex items-center text-primary-600 hover:text-primary-700 font-medium">
+                                Book your first class
+                                <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                </svg>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Recent Documents -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Recent Documents</h2>
+                </div>
+                <div class="p-6">
+                    @if (Model.Documents.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var doc in Model.Documents.Take(5))
+                            {
+                                <a asp-action="DownloadDocument" asp-route-id="@doc.Id"
+                                   class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                                    <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                    </svg>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900">@doc.Title</p>
+                                        <p class="text-xs text-gray-500">Uploaded @doc.UploadedAt.ToString("MMM d, yyyy")</p>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                        @if (Model.Documents.Count() > 5)
+                        {
+                            <div class="mt-4 text-center">
+                                <a asp-action="Documents" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
+                                    View all documents
+                                </a>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <p class="mt-2 text-gray-500">No documents available yet</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

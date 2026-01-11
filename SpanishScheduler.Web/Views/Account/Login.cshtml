@@ -1,0 +1,65 @@
+@model SpanishScheduler.Web.Models.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In";
+}
+
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 -mt-16">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+                Sign in to your account
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                Welcome back to Spanish with Karen
+            </p>
+        </div>
+
+        <form asp-action="Login" method="post" class="mt-8 space-y-6">
+            <input type="hidden" asp-for="ReturnUrl" />
+
+            <div asp-validation-summary="ModelOnly" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"></div>
+
+            <div class="space-y-4">
+                <div>
+                    <label asp-for="Email" class="block text-sm font-medium text-gray-700">Email address</label>
+                    <input asp-for="Email" type="email" autocomplete="email" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2 border"
+                           placeholder="you@example.com" />
+                    <span asp-validation-for="Email" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input asp-for="Password" type="password" autocomplete="current-password" required
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2 border"
+                           placeholder="Enter your password" />
+                    <span asp-validation-for="Password" class="text-red-500 text-sm"></span>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <input asp-for="RememberMe" type="checkbox"
+                               class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                        <label asp-for="RememberMe" class="ml-2 block text-sm text-gray-900">Remember me</label>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="group relative flex w-full justify-center rounded-md bg-primary-600 py-3 px-4 text-sm font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition">
+                    Sign in
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center">
+            <p class="text-sm text-gray-600">
+                Not a student yet?
+                <a asp-controller="Contact" asp-action="Index" class="font-medium text-primary-600 hover:text-primary-500">
+                    Contact Karen to get started
+                </a>
+            </p>
+        </div>
+    </div>
+</div>

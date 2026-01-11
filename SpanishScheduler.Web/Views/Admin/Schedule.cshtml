@@ -1,0 +1,110 @@
+@model SpanishScheduler.Web.Models.ViewModels.AdminScheduleViewModel
+@{
+    ViewData["Title"] = "Schedule";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Schedule</h1>
+            <p class="mt-2 text-gray-600">View and manage all scheduled classes.</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6">
+            <form asp-action="Schedule" method="get" class="flex flex-wrap gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                    <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                           class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-2 border" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")"
+                           class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-2 border" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Student</label>
+                    <select name="studentId" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-2 border">
+                        <option value="">All Students</option>
+                        @foreach (var student in Model.Students)
+                        {
+                            <option value="@student.Id" selected="@(Model.StudentId == student.Id)">@student.FullName</option>
+                        }
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white rounded-lg px-4 py-2 font-medium transition">
+                        Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Schedule List -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Time</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var cls in Model.Classes)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <p class="text-sm font-medium text-gray-900">@cls.ClassDateTime.ToString("dddd, MMM d")</p>
+                                <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <p class="text-sm text-gray-900">@cls.Student.FullName</p>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    @(cls.Status == SpanishScheduler.Web.Models.Entities.ClassStatus.Scheduled ? "bg-blue-100 text-blue-800" :
+                                      cls.Status == SpanishScheduler.Web.Models.Entities.ClassStatus.Completed ? "bg-green-100 text-green-800" :
+                                      "bg-gray-100 text-gray-800")">
+                                    @cls.Status
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    @(cls.PaymentStatus == SpanishScheduler.Web.Models.Entities.PaymentStatus.Paid || cls.PaymentStatus == SpanishScheduler.Web.Models.Entities.PaymentStatus.PartOfPackage ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800")">
+                                    @cls.PaymentStatus
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                @if (cls.Status == SpanishScheduler.Web.Models.Entities.ClassStatus.Scheduled)
+                                {
+                                    <form asp-action="CompleteClass" method="post" class="inline">
+                                        <input type="hidden" name="id" value="@cls.Id" />
+                                        <button type="submit" class="text-green-600 hover:text-green-900 mr-3">Complete</button>
+                                    </form>
+                                    <form asp-action="CancelClass" method="post" class="inline">
+                                        <input type="hidden" name="id" value="@cls.Id" />
+                                        <button type="submit" class="text-red-600 hover:text-red-900"
+                                                onclick="return confirm('Are you sure you want to cancel this class?')">Cancel</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (!Model.Classes.Any())
+            {
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                    </svg>
+                    <p class="mt-2 text-gray-500">No classes found for the selected filters</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
