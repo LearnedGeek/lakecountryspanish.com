@@ -5,7 +5,7 @@
 | Phase | Feature | Status |
 |-------|---------|--------|
 | 1 | Subscription Foundation | **COMPLETE** |
-| 2 | Token System | Planned |
+| 2 | Token System | **COMPLETE** |
 | 3 | Points & Gamification | Planned |
 | 4 | AI Assignments | Planned |
 | 5 | Analytics & Polish | Planned |
@@ -19,6 +19,18 @@
 - Subscription management UI (Plans, Manage, Success views)
 - Cancellation policy enforcement (3rd week deadline)
 - Pause/Resume subscription functionality
+
+### Phase 2 Completed Features
+- Token, TokenPurchasePermission, TokenTransaction entities
+- ITokenService interface with full token lifecycle management
+- TokenService implementation with Stripe integration for purchases
+- TokenController for student token dashboard and purchases
+- Student token views (Index, Success, History)
+- Admin token management (Permissions, GrantPermission, GrantTokens, StudentTokens)
+- Token purchase permission system (Karen-controlled)
+- Support for earned tokens (never expire) and purchased tokens (with expiration)
+- Token transaction audit trail
+- Token usage for class booking with refund/forfeit support
 
 ---
 

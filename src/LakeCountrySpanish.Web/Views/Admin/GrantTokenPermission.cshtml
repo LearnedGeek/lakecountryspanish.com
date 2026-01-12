@@ -1,0 +1,147 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.GrantPermissionViewModel
+@{
+    ViewData["Title"] = "Grant Token Permission";
+    var students = ViewBag.Students as IEnumerable<LakeCountrySpanish.Web.Models.Entities.ApplicationUser>;
+}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+        <a href="@Url.Action("TokenPermissions")" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4">
+            <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Permissions
+        </a>
+        <h1 class="text-3xl font-bold text-gray-900">Grant Token Permission</h1>
+        <p class="text-gray-600 mt-2">Allow a student to purchase tokens.</p>
+    </div>
+
+    <div class="max-w-2xl">
+        <div class="bg-white rounded-lg shadow p-6">
+            <form method="post" asp-action="GrantTokenPermission">
+                @Html.AntiForgeryToken()
+
+                <div class="space-y-6">
+                    <div>
+                        <label for="StudentId" class="block text-sm font-medium text-gray-700 mb-2">Student</label>
+                        <select name="StudentId" id="StudentId" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select a student...</option>
+                            @if (students != null)
+                            {
+                                @foreach (var student in students)
+                                {
+                                    if (student.Id == Model.StudentId)
+                                    {
+                                        <option value="@student.Id" selected>@student.FullName (@student.Email)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@student.Id">@student.FullName (@student.Email)</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="Reason" class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                        <select name="Reason" id="Reason" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            @if (Model.Reason == "Trial")
+                            {
+                                <option value="Trial" selected>Trial - New student trying the service</option>
+                            }
+                            else
+                            {
+                                <option value="Trial">Trial - New student trying the service</option>
+                            }
+                            @if (Model.Reason == "Additional")
+                            {
+                                <option value="Additional" selected>Additional - Extra tokens for existing student</option>
+                            }
+                            else
+                            {
+                                <option value="Additional">Additional - Extra tokens for existing student</option>
+                            }
+                            @if (Model.Reason == "Admin")
+                            {
+                                <option value="Admin" selected>Admin - Special circumstances</option>
+                            }
+                            else
+                            {
+                                <option value="Admin">Admin - Special circumstances</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="TokenLimit" class="block text-sm font-medium text-gray-700 mb-2">Token Limit</label>
+                            <input type="number" name="TokenLimit" id="TokenLimit" value="@Model.TokenLimit" min="1" max="20" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="text-xs text-gray-500 mt-1">Maximum tokens student can purchase</p>
+                        </div>
+
+                        <div>
+                            <label for="TokenPrice" class="block text-sm font-medium text-gray-700 mb-2">Price per Token ($)</label>
+                            <input type="number" name="TokenPrice" id="TokenPrice" value="@Model.TokenPrice" min="1" max="100" step="0.01" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="ExpirationDays" class="block text-sm font-medium text-gray-700 mb-2">Permission Expires In (days)</label>
+                            <input type="number" name="ExpirationDays" id="ExpirationDays" value="@Model.ExpirationDays" min="1" max="365" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="text-xs text-gray-500 mt-1">How long student has to purchase</p>
+                        </div>
+
+                        <div>
+                            <label for="TokenValidityDays" class="block text-sm font-medium text-gray-700 mb-2">Token Validity (days)</label>
+                            <input type="number" name="TokenValidityDays" id="TokenValidityDays" value="@Model.TokenValidityDays" min="7" max="365" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <p class="text-xs text-gray-500 mt-1">How long purchased tokens are valid</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="AdminNotes" class="block text-sm font-medium text-gray-700 mb-2">Notes (optional)</label>
+                        <textarea name="AdminNotes" id="AdminNotes" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Any notes about this permission...">@Model.AdminNotes</textarea>
+                    </div>
+
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <h4 class="text-sm font-medium text-blue-800 mb-2">Summary</h4>
+                        <p class="text-sm text-blue-700">
+                            The student will be able to purchase up to <strong id="summaryLimit">@Model.TokenLimit</strong> token(s)
+                            at <strong>$<span id="summaryPrice">@Model.TokenPrice.ToString("0.00")</span></strong> each.
+                            Purchased tokens will be valid for <strong id="summaryValidity">@Model.TokenValidityDays</strong> days.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <a href="@Url.Action("TokenPermissions")" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                        Cancel
+                    </a>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Grant Permission
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('TokenLimit').addEventListener('input', function() {
+        document.getElementById('summaryLimit').textContent = this.value;
+    });
+    document.getElementById('TokenPrice').addEventListener('input', function() {
+        document.getElementById('summaryPrice').textContent = parseFloat(this.value).toFixed(2);
+    });
+    document.getElementById('TokenValidityDays').addEventListener('input', function() {
+        document.getElementById('summaryValidity').textContent = this.value;
+    });
+</script>

@@ -1,0 +1,90 @@
+@model List<LakeCountrySpanish.Web.Models.ViewModels.TokenTransactionViewModel>
+@{
+    ViewData["Title"] = "Token History";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Token History</h1>
+                <p class="mt-2 text-gray-600">Complete history of your token transactions.</p>
+            </div>
+            <a href="@Url.Action("Index")" class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Tokens
+            </a>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            @if (!Model.Any())
+            {
+                <div class="p-12 text-center text-gray-500">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p class="mt-4">No token transactions yet.</p>
+                </div>
+            }
+            else
+            {
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Change</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var txn in Model)
+                        {
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    @txn.CreatedAt.ToString("MMM d, yyyy")<br/>
+                                    <span class="text-xs">@txn.CreatedAt.ToString("h:mm tt")</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @GetTypeBadgeClass(txn.Type)">
+                                        @txn.TypeDisplay
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-600">
+                                    @(txn.Details ?? "-")
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium @txn.TypeClass">
+                                    @txn.QuantityDisplay
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                                    @txn.BalanceAfter
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetTypeBadgeClass(string type)
+    {
+        return type switch
+        {
+            "Earned" => "bg-green-100 text-green-800",
+            "Purchased" => "bg-purple-100 text-purple-800",
+            "AdminGrant" => "bg-blue-100 text-blue-800",
+            "UsedForClass" => "bg-gray-100 text-gray-800",
+            "Expired" => "bg-red-100 text-red-800",
+            "Refunded" => "bg-yellow-100 text-yellow-800",
+            "Forfeited" => "bg-red-100 text-red-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+}

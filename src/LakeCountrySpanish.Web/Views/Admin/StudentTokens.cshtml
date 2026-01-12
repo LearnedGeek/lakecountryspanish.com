@@ -1,0 +1,234 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.StudentTokenSummaryViewModel
+@{
+    ViewData["Title"] = $"Tokens - {Model.StudentName}";
+    var tokenBatches = ViewBag.TokenBatches as List<LakeCountrySpanish.Web.Models.ViewModels.TokenBatchViewModel>;
+    var transactions = ViewBag.Transactions as List<LakeCountrySpanish.Web.Models.ViewModels.TokenTransactionViewModel>;
+    var permissionHistory = ViewBag.PermissionHistory as List<LakeCountrySpanish.Web.Models.ViewModels.AdminTokenPermissionViewModel>;
+}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8 flex justify-between items-start">
+        <div>
+            <a href="@Url.Action("StudentProfile", new { id = Model.StudentId })" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4">
+                <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Student Profile
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">@Model.StudentName - Tokens</h1>
+            <p class="text-gray-600 mt-2">@Model.StudentEmail</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="@Url.Action("GrantTokenPermission", new { studentId = Model.StudentId })" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                Grant Purchase Permission
+            </a>
+            <a href="@Url.Action("GrantTokens", new { studentId = Model.StudentId })" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Grant Tokens
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mb-6 rounded-md bg-green-50 p-4">
+            <p class="text-sm font-medium text-green-800">@TempData["SuccessMessage"]</p>
+        </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Balance Overview -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Balance Cards -->
+            <div class="grid grid-cols-3 gap-4">
+                <div class="bg-white rounded-lg shadow p-6 text-center">
+                    <p class="text-4xl font-bold text-blue-600">@Model.TotalTokens</p>
+                    <p class="text-sm text-gray-500 mt-1">Total Available</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 text-center">
+                    <p class="text-2xl font-semibold text-green-600">@Model.EarnedTokens</p>
+                    <p class="text-sm text-gray-500 mt-1">Earned</p>
+                    <p class="text-xs text-gray-400">Never expires</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6 text-center">
+                    <p class="text-2xl font-semibold text-purple-600">@Model.PurchasedTokens</p>
+                    <p class="text-sm text-gray-500 mt-1">Purchased</p>
+                    <p class="text-xs text-gray-400">Check expiration</p>
+                </div>
+            </div>
+
+            <!-- Active Tokens -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Active Token Batches</h2>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    @if (tokenBatches == null || !tokenBatches.Any())
+                    {
+                        <div class="p-6 text-center text-gray-500">
+                            <p>No active tokens</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var batch in tokenBatches)
+                        {
+                            <div class="p-4 flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">@batch.SourceDisplay</p>
+                                    <p class="text-sm text-gray-500">
+                                        Created: @batch.CreatedAt.ToString("MMM d, yyyy")
+                                        @if (batch.NeverExpires)
+                                        {
+                                            <span class="ml-2 text-green-600">- Never expires</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="ml-2 @(batch.IsExpiring ? "text-orange-600 font-medium" : "")">
+                                                - Expires @batch.ExpiresAt?.ToString("MMM d, yyyy")
+                                            </span>
+                                        }
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-semibold text-gray-900">@batch.QuantityRemaining</p>
+                                    <p class="text-xs text-gray-500">of @batch.Quantity</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Transaction History</h2>
+                </div>
+                <div class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                    @if (transactions == null || !transactions.Any())
+                    {
+                        <div class="p-6 text-center text-gray-500">
+                            <p>No transactions yet</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var txn in transactions)
+                        {
+                            <div class="p-4 flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">@txn.TypeDisplay</p>
+                                    <p class="text-sm text-gray-500">@txn.CreatedAt.ToString("MMM d, yyyy h:mm tt")</p>
+                                    @if (!string.IsNullOrEmpty(txn.Details))
+                                    {
+                                        <p class="text-xs text-gray-400 mt-1">@txn.Details</p>
+                                    }
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-semibold @txn.TypeClass">@txn.QuantityDisplay</p>
+                                    <p class="text-xs text-gray-500">Balance: @txn.BalanceAfter</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Active Permission -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Purchase Permission</h2>
+                </div>
+                <div class="p-6">
+                    @if (Model.HasActivePermission && Model.ActivePermission != null)
+                    {
+                        <div class="p-4 bg-green-50 rounded-lg mb-4">
+                            <p class="text-sm font-medium text-green-800">Active</p>
+                            <p class="text-sm text-green-700 mt-1">
+                                Can purchase @Model.ActivePermission.TokensRemaining more token(s)
+                            </p>
+                        </div>
+                        <dl class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Limit:</dt>
+                                <dd class="text-gray-900">@Model.ActivePermission.TokenLimit tokens</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Purchased:</dt>
+                                <dd class="text-gray-900">@Model.ActivePermission.TokensPurchased</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Price:</dt>
+                                <dd class="text-gray-900">$@Model.ActivePermission.TokenPrice.ToString("0.00")</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Expires:</dt>
+                                <dd class="text-gray-900">@Model.ActivePermission.ExpiresAt.ToString("MMM d, yyyy")</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Token Validity:</dt>
+                                <dd class="text-gray-900">@Model.ActivePermission.TokenValidityDays days</dd>
+                            </div>
+                        </dl>
+                    }
+                    else
+                    {
+                        <div class="text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            <p class="mt-2">No active purchase permission</p>
+                            <a href="@Url.Action("GrantTokenPermission", new { studentId = Model.StudentId })" class="mt-4 inline-block text-blue-600 hover:text-blue-800">
+                                Grant Permission
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Permission History -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Permission History</h2>
+                </div>
+                <div class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                    @if (permissionHistory == null || !permissionHistory.Any())
+                    {
+                        <div class="p-6 text-center text-gray-500">
+                            <p>No permission history</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var perm in permissionHistory)
+                        {
+                            <div class="p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium @(perm.IsActive ? "bg-green-100 text-green-800" : perm.IsEnabled ? "bg-gray-100 text-gray-800" : "bg-red-100 text-red-800")">
+                                            @(perm.IsActive ? "Active" : perm.IsEnabled ? "Expired" : "Disabled")
+                                        </span>
+                                        <span class="ml-2 text-xs text-gray-500">@perm.Reason</span>
+                                    </div>
+                                    <span class="text-xs text-gray-500">@perm.CreatedAt.ToString("MMM d")</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    @perm.TokensPurchased/@perm.TokenLimit used at $@perm.TokenPrice.ToString("0.00")
+                                </p>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

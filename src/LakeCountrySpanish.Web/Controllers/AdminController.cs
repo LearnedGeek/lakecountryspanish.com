@@ -18,6 +18,7 @@ public class AdminController : Controller
     private readonly IWebHostEnvironment _environment;
     private readonly IEmailService _emailService;
     private readonly IScheduleService _scheduleService;
+    private readonly ITokenService _tokenService;
     private readonly IConfiguration _configuration;
 
     public AdminController(
@@ -27,6 +28,7 @@ public class AdminController : Controller
         IWebHostEnvironment environment,
         IEmailService emailService,
         IScheduleService scheduleService,
+        ITokenService tokenService,
         IConfiguration configuration)
     {
         _context = context;
@@ -35,6 +37,7 @@ public class AdminController : Controller
         _environment = environment;
         _emailService = emailService;
         _scheduleService = scheduleService;
+        _tokenService = tokenService;
         _configuration = configuration;
     }
 
@@ -1278,5 +1281,217 @@ public class AdminController : Controller
 
         TempData["SuccessMessage"] = "Testimonial hidden from public view.";
         return RedirectToAction(nameof(Testimonials));
+    }
+
+    // Token Management
+    public async Task<IActionResult> TokenPermissions()
+    {
+        var permissions = await _context.TokenPurchasePermissions
+            .Include(p => p.Student)
+            .Include(p => p.GrantedBy)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        var viewModels = permissions.Select(p => new AdminTokenPermissionViewModel
+        {
+            Id = p.Id,
+            StudentId = p.StudentId,
+            StudentName = p.Student.FullName,
+            StudentEmail = p.Student.Email!,
+            IsEnabled = p.IsEnabled,
+            TokenLimit = p.TokenLimit,
+            TokensPurchased = p.TokensPurchased,
+            TokensRemaining = p.TokensRemaining,
+            ExpiresAt = p.ExpiresAt,
+            TokenValidityDays = p.TokenValidityDays,
+            TokenPrice = p.TokenPrice,
+            Reason = p.Reason.ToString(),
+            AdminNotes = p.AdminNotes,
+            CreatedAt = p.CreatedAt,
+            IsActive = p.IsActive
+        }).ToList();
+
+        return View(viewModels);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GrantTokenPermission(string? studentId)
+    {
+        var students = await _userManager.GetUsersInRoleAsync("Student");
+        ViewBag.Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName);
+
+        return View(new GrantPermissionViewModel
+        {
+            StudentId = studentId ?? string.Empty,
+            TokenLimit = 3,
+            ExpirationDays = 30,
+            TokenValidityDays = 30,
+            TokenPrice = 30.00m,
+            Reason = "Trial"
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GrantTokenPermission(GrantPermissionViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var students = await _userManager.GetUsersInRoleAsync("Student");
+            ViewBag.Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName);
+            return View(model);
+        }
+
+        var student = await _userManager.FindByIdAsync(model.StudentId);
+        if (student == null)
+        {
+            TempData["ErrorMessage"] = "Student not found.";
+            return RedirectToAction(nameof(TokenPermissions));
+        }
+
+        var adminId = _userManager.GetUserId(User)!;
+        var expiresAt = DateTime.UtcNow.AddDays(model.ExpirationDays);
+        var reason = Enum.Parse<PermissionReason>(model.Reason);
+
+        await _tokenService.GrantPurchasePermissionAsync(
+            model.StudentId,
+            model.TokenLimit,
+            expiresAt,
+            reason,
+            model.TokenValidityDays,
+            model.TokenPrice,
+            adminId,
+            model.AdminNotes);
+
+        TempData["SuccessMessage"] = $"Token purchase permission granted to {student.FullName} for {model.TokenLimit} tokens.";
+        return RedirectToAction(nameof(TokenPermissions));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DisableTokenPermission(int id)
+    {
+        var result = await _tokenService.DisablePermissionAsync(id);
+        if (result)
+        {
+            TempData["SuccessMessage"] = "Token permission disabled.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Permission not found.";
+        }
+        return RedirectToAction(nameof(TokenPermissions));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GrantTokens(string studentId)
+    {
+        var student = await _userManager.FindByIdAsync(studentId);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.StudentName = student.FullName;
+        return View(new GrantTokensViewModel
+        {
+            StudentId = studentId,
+            Quantity = 1
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GrantTokens(GrantTokensViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var student = await _userManager.FindByIdAsync(model.StudentId);
+            ViewBag.StudentName = student?.FullName ?? "Unknown";
+            return View(model);
+        }
+
+        var adminId = _userManager.GetUserId(User)!;
+        DateTime? expiresAt = model.ExpirationDays.HasValue
+            ? DateTime.UtcNow.AddDays(model.ExpirationDays.Value)
+            : null;
+
+        await _tokenService.GrantTokensAsync(
+            model.StudentId,
+            model.Quantity,
+            expiresAt,
+            adminId,
+            model.Notes);
+
+        var studentUser = await _userManager.FindByIdAsync(model.StudentId);
+        TempData["SuccessMessage"] = $"Granted {model.Quantity} token(s) to {studentUser?.FullName}.";
+        return RedirectToAction(nameof(StudentTokens), new { id = model.StudentId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> StudentTokens(string id)
+    {
+        var student = await _userManager.FindByIdAsync(id);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        var earnedBalance = await _tokenService.GetEarnedTokenBalanceAsync(id);
+        var purchasedBalance = await _tokenService.GetPurchasedTokenBalanceAsync(id);
+        var permission = await _tokenService.GetActivePermissionAsync(id);
+        var tokens = await _tokenService.GetActiveTokensAsync(id);
+        var transactions = await _tokenService.GetTransactionHistoryAsync(id, 50);
+        var permissionHistory = await _tokenService.GetPermissionHistoryAsync(id);
+
+        var viewModel = new StudentTokenSummaryViewModel
+        {
+            StudentId = id,
+            StudentName = student.FullName,
+            StudentEmail = student.Email!,
+            EarnedTokens = earnedBalance,
+            PurchasedTokens = purchasedBalance,
+            TotalTokens = earnedBalance + purchasedBalance,
+            HasActivePermission = permission != null,
+            ActivePermission = permission
+        };
+
+        ViewBag.TokenBatches = tokens.Select(t => new TokenBatchViewModel
+        {
+            Id = t.Id,
+            Source = t.Source.ToString(),
+            Quantity = t.Quantity,
+            QuantityRemaining = t.QuantityRemaining,
+            ExpiresAt = t.ExpiresAt,
+            CreatedAt = t.CreatedAt
+        }).ToList();
+
+        ViewBag.Transactions = transactions.Select(t => new TokenTransactionViewModel
+        {
+            Id = t.Id,
+            Type = t.Type.ToString(),
+            Quantity = t.Quantity,
+            BalanceAfter = t.BalanceAfter,
+            Details = t.Details,
+            CreatedAt = t.CreatedAt
+        }).ToList();
+
+        ViewBag.PermissionHistory = permissionHistory.Select(p => new AdminTokenPermissionViewModel
+        {
+            Id = p.Id,
+            IsEnabled = p.IsEnabled,
+            TokenLimit = p.TokenLimit,
+            TokensPurchased = p.TokensPurchased,
+            TokensRemaining = p.TokensRemaining,
+            ExpiresAt = p.ExpiresAt,
+            TokenValidityDays = p.TokenValidityDays,
+            TokenPrice = p.TokenPrice,
+            Reason = p.Reason.ToString(),
+            AdminNotes = p.AdminNotes,
+            CreatedAt = p.CreatedAt,
+            IsActive = p.IsActive
+        }).ToList();
+
+        return View(viewModel);
     }
 }

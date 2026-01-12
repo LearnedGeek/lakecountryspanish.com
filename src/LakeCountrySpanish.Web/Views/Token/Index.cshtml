@@ -1,0 +1,262 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.TokenViewModel
+@{
+    ViewData["Title"] = "My Tokens";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">My Tokens</h1>
+            <p class="mt-2 text-gray-600">View your token balance and purchase additional tokens.</p>
+        </div>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="mb-6 rounded-md bg-green-50 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-green-800">@TempData["Success"]</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-6 rounded-md bg-red-50 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800">@TempData["Error"]</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Token Balance Cards -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Balance Overview -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Token Balance</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-3 gap-6">
+                            <div class="text-center">
+                                <p class="text-4xl font-bold text-blue-600">@Model.TotalTokens</p>
+                                <p class="text-sm text-gray-500 mt-1">Total Available</p>
+                            </div>
+                            <div class="text-center border-l border-gray-200">
+                                <p class="text-2xl font-semibold text-green-600">@Model.EarnedTokens</p>
+                                <p class="text-sm text-gray-500 mt-1">Earned</p>
+                                <p class="text-xs text-gray-400">Never expires</p>
+                            </div>
+                            <div class="text-center border-l border-gray-200">
+                                <p class="text-2xl font-semibold text-purple-600">@Model.PurchasedTokens</p>
+                                <p class="text-sm text-gray-500 mt-1">Purchased</p>
+                                <p class="text-xs text-gray-400">Check expiration</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Token Batches -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Active Token Batches</h2>
+                        <p class="text-sm text-gray-500 mt-1">Tokens are used from oldest expiring batches first</p>
+                    </div>
+                    <div class="divide-y divide-gray-200">
+                        @if (!Model.TokenBatches.Any())
+                        {
+                            <div class="p-6 text-center text-gray-500">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <p class="mt-2">No active tokens</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var batch in Model.TokenBatches)
+                            {
+                                <div class="p-4 flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="@(batch.Source == "Earned" ? "bg-green-100" : batch.Source == "Purchased" ? "bg-purple-100" : "bg-blue-100") p-2 rounded-full">
+                                            <svg class="h-5 w-5 @(batch.Source == "Earned" ? "text-green-600" : batch.Source == "Purchased" ? "text-purple-600" : "text-blue-600")" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-4">
+                                            <p class="text-sm font-medium text-gray-900">@batch.SourceDisplay</p>
+                                            <p class="text-sm text-gray-500">
+                                                @if (batch.NeverExpires)
+                                                {
+                                                    <span>Never expires</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="@(batch.IsExpiring ? "text-orange-600 font-medium" : "")">
+                                                        Expires @batch.ExpiresAt?.ToString("MMM d, yyyy")
+                                                    </span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-semibold text-gray-900">@batch.QuantityRemaining</p>
+                                        <p class="text-xs text-gray-500">of @batch.Quantity</p>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Recent Activity</h2>
+                        </div>
+                        <a href="@Url.Action("History")" class="text-sm text-blue-600 hover:text-blue-800">View All</a>
+                    </div>
+                    <div class="divide-y divide-gray-200">
+                        @if (!Model.RecentTransactions.Any())
+                        {
+                            <div class="p-6 text-center text-gray-500">
+                                <p>No token activity yet</p>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var txn in Model.RecentTransactions.Take(5))
+                            {
+                                <div class="p-4 flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">@txn.TypeDisplay</p>
+                                        <p class="text-sm text-gray-500">@txn.CreatedAt.ToString("MMM d, yyyy h:mm tt")</p>
+                                        @if (!string.IsNullOrEmpty(txn.Details))
+                                        {
+                                            <p class="text-xs text-gray-400 mt-1">@txn.Details</p>
+                                        }
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-semibold @txn.TypeClass">@txn.QuantityDisplay</p>
+                                        <p class="text-xs text-gray-500">Balance: @txn.BalanceAfter</p>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchase Sidebar -->
+            <div class="space-y-6">
+                <!-- Purchase Tokens -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Purchase Tokens</h2>
+                    </div>
+                    <div class="p-6">
+                        @if (Model.CanPurchase && Model.ActivePermission != null)
+                        {
+                            <div class="mb-6 p-4 bg-green-50 rounded-lg">
+                                <p class="text-sm text-green-800">
+                                    <span class="font-medium">Purchase Enabled</span><br/>
+                                    You can purchase up to @Model.ActivePermission.TokensRemaining more token(s).
+                                </p>
+                                <p class="text-xs text-green-600 mt-2">
+                                    Permission expires: @Model.ActivePermission.ExpiresAt.ToString("MMM d, yyyy")
+                                </p>
+                            </div>
+
+                            <form method="post" asp-action="Purchase">
+                                @Html.AntiForgeryToken()
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Number of Tokens</label>
+                                    <select name="quantity" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        @for (int i = 1; i <= Math.Min(10, Model.ActivePermission.TokensRemaining); i++)
+                                        {
+                                            var total = i * Model.ActivePermission.TokenPrice;
+                                            <option value="@i">@i token(s) - $@total.ToString("0.00")</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium">Price:</span> $@Model.ActivePermission.TokenPrice.ToString("0.00") per token
+                                    </p>
+                                    <p class="text-sm text-gray-600">
+                                        <span class="font-medium">Valid for:</span> @Model.ActivePermission.TokenValidityDays days after purchase
+                                    </p>
+                                </div>
+
+                                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700">
+                                    Purchase Tokens
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="text-center py-4">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                                <p class="mt-2 text-gray-500">Token purchases are not currently available.</p>
+                                <p class="mt-1 text-sm text-gray-400">Contact Karen to request token purchase permission.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- How Tokens Work -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">How Tokens Work</h2>
+                    </div>
+                    <div class="p-6 space-y-4 text-sm text-gray-600">
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <p><strong>1 token = 1 class</strong><br/>Use tokens to book individual classes.</p>
+                        </div>
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            <p><strong>Earned tokens never expire</strong><br/>Complete exercises to earn points. 100 points = 1 token!</p>
+                        </div>
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-purple-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p><strong>Purchased tokens have expiration</strong><br/>Check expiration dates and use before they expire.</p>
+                        </div>
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <p><strong>Cancellation policy</strong><br/>Cancel a class with 24+ hours notice to get your token back.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

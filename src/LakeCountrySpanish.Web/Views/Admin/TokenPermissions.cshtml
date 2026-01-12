@@ -1,0 +1,142 @@
+@model List<LakeCountrySpanish.Web.Models.ViewModels.AdminTokenPermissionViewModel>
+@{
+    ViewData["Title"] = "Token Permissions";
+}
+
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Token Purchase Permissions</h1>
+            <p class="text-gray-600 mt-2">Manage student permissions to purchase tokens.</p>
+        </div>
+        <a href="@Url.Action("GrantTokenPermission")" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">
+            <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Grant Permission
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mb-6 rounded-md bg-green-50 p-4">
+            <p class="text-sm font-medium text-green-800">@TempData["SuccessMessage"]</p>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="mb-6 rounded-md bg-red-50 p-4">
+            <p class="text-sm font-medium text-red-800">@TempData["ErrorMessage"]</p>
+        </div>
+    }
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        @if (!Model.Any())
+        {
+            <div class="p-12 text-center text-gray-500">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <p class="mt-4">No token permissions have been granted yet.</p>
+            </div>
+        }
+        else
+        {
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tokens</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expires</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var permission in Model)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">@permission.StudentName</div>
+                                <div class="text-sm text-gray-500">@permission.StudentEmail</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @GetReasonBadgeClass(permission.Reason)">
+                                    @permission.Reason
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">@permission.TokensPurchased / @permission.TokenLimit purchased</div>
+                                <div class="text-sm text-gray-500">@permission.TokensRemaining remaining</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                $@permission.TokenPrice.ToString("0.00")
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">@permission.ExpiresAt.ToString("MMM d, yyyy")</div>
+                                <div class="text-sm text-gray-500">@permission.TokenValidityDays day validity</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if (permission.IsActive)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        Active
+                                    </span>
+                                }
+                                else if (!permission.IsEnabled)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Disabled
+                                    </span>
+                                }
+                                else if (permission.ExpiresAt <= DateTime.UtcNow)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        Expired
+                                    </span>
+                                }
+                                else if (permission.TokensRemaining <= 0)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        Used Up
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="@Url.Action("StudentTokens", new { id = permission.StudentId })" class="text-blue-600 hover:text-blue-900 mr-3">
+                                    View Student
+                                </a>
+                                @if (permission.IsEnabled)
+                                {
+                                    <form method="post" asp-action="DisableTokenPermission" class="inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@permission.Id" />
+                                        <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Disable this permission?');">
+                                            Disable
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetReasonBadgeClass(string reason)
+    {
+        return reason switch
+        {
+            "Trial" => "bg-blue-100 text-blue-800",
+            "Additional" => "bg-purple-100 text-purple-800",
+            "Admin" => "bg-gray-100 text-gray-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+}

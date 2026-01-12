@@ -48,4 +48,9 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public virtual ICollection<StudentDocument> StudentDocuments { get; set; } = new List<StudentDocument>();
     public virtual ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
+
+    // Token navigation properties
+    public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
+    public virtual ICollection<TokenPurchasePermission> TokenPurchasePermissions { get; set; } = new List<TokenPurchasePermission>();
+    public virtual ICollection<TokenTransaction> TokenTransactions { get; set; } = new List<TokenTransaction>();
 }

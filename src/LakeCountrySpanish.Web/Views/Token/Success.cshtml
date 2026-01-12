@@ -1,0 +1,34 @@
+@{
+    ViewData["Title"] = "Purchase Successful";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-lg px-4 py-16 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow p-8 text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100">
+                <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+
+            <h1 class="mt-6 text-2xl font-bold text-gray-900">Purchase Successful!</h1>
+            <p class="mt-2 text-gray-600">Your tokens have been added to your account and are ready to use.</p>
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="mt-4 p-4 bg-green-50 rounded-lg">
+                    <p class="text-sm text-green-800">@TempData["Success"]</p>
+                </div>
+            }
+
+            <div class="mt-8 space-y-4">
+                <a href="@Url.Action("Index")" class="block w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700">
+                    View My Tokens
+                </a>
+                <a href="@Url.Action("Index", "Student")" class="block w-full px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200">
+                    Go to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

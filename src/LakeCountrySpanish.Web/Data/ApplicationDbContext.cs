@@ -29,6 +29,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<RecurringSchedule> RecurringSchedules => Set<RecurringSchedule>();
     public DbSet<SubscriptionHistory> SubscriptionHistory => Set<SubscriptionHistory>();
 
+    // Token entities
+    public DbSet<Token> Tokens => Set<Token>();
+    public DbSet<TokenPurchasePermission> TokenPurchasePermissions => Set<TokenPurchasePermission>();
+    public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -259,6 +264,69 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(s => s.Payments)
                 .HasForeignKey(e => e.SubscriptionId)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // TokenPurchasePermission configuration
+        builder.Entity<TokenPurchasePermission>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TokenPrice).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(e => e.Student)
+                .WithMany(u => u.TokenPurchasePermissions)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.GrantedBy)
+                .WithMany()
+                .HasForeignKey(e => e.GrantedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for finding active permission by student
+            entity.HasIndex(e => new { e.StudentId, e.IsEnabled, e.ExpiresAt });
+        });
+
+        // Token configuration
+        builder.Entity<Token>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany(u => u.Tokens)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.TokenPurchasePermission)
+                .WithMany(p => p.Tokens)
+                .HasForeignKey(e => e.TokenPurchasePermissionId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for finding active tokens by student
+            entity.HasIndex(e => new { e.StudentId, e.Source, e.QuantityRemaining });
+        });
+
+        // TokenTransaction configuration
+        builder.Entity<TokenTransaction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany(u => u.TokenTransactions)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Token)
+                .WithMany(t => t.Transactions)
+                .HasForeignKey(e => e.TokenId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ScheduledClass)
+                .WithMany()
+                .HasForeignKey(e => e.ScheduledClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for transaction history by student
+            entity.HasIndex(e => new { e.StudentId, e.CreatedAt });
         });
     }
 }
