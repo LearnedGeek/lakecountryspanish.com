@@ -1,0 +1,134 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.GenerateAssignmentViewModel
+@{
+    ViewData["Title"] = "Generate Assignment with AI";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>
+                    <i class="bi bi-robot text-primary"></i> Generate Assignment
+                </h1>
+                <a asp-action="Assignments" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">AI Assignment Generator</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Claude AI will generate a complete assignment based on your specifications.
+                        You'll be able to review and edit before approving.
+                    </div>
+
+                    <form asp-action="GenerateAssignment" method="post" id="generateForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="CefrLevel" class="form-label">CEFR Level</label>
+                                <select asp-for="CefrLevel" class="form-select">
+                                    <option value="A1">A1 - Beginner</option>
+                                    <option value="A2">A2 - Elementary</option>
+                                    <option value="B1">B1 - Intermediate</option>
+                                    <option value="B2">B2 - Upper Intermediate</option>
+                                    <option value="C1">C1 - Advanced</option>
+                                    <option value="C2">C2 - Mastery</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Type" class="form-label">Assignment Type</label>
+                                <select asp-for="Type" class="form-select">
+                                    @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
+                                    {
+                                        <option value="@type">@type</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="TopicId" class="form-label">Curriculum Topic (Optional)</label>
+                                <select asp-for="TopicId" class="form-select">
+                                    <option value="">-- General / No specific topic --</option>
+                                    @foreach (var topic in Model.AvailableTopics)
+                                    {
+                                        <option value="@topic.Id">[@topic.CefrLevel] @topic.Name</option>
+                                    }
+                                </select>
+                                <small class="text-muted">Select a topic to focus the assignment on specific content.</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="QuestionCount" class="form-label">Number of Questions</label>
+                                <select asp-for="QuestionCount" class="form-select">
+                                    <option value="3">3 questions</option>
+                                    <option value="5" selected>5 questions</option>
+                                    <option value="7">7 questions</option>
+                                    <option value="10">10 questions</option>
+                                    <option value="15">15 questions</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="AdditionalInstructions" class="form-label">
+                                Additional Instructions (Optional)
+                            </label>
+                            <textarea asp-for="AdditionalInstructions" class="form-control" rows="3"
+                                      placeholder="E.g., 'Focus on food vocabulary' or 'Include past tense verbs' or 'Make it about traveling in Mexico'"></textarea>
+                            <small class="text-muted">
+                                Give specific guidance to the AI about what you want in the assignment.
+                            </small>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
+                                <i class="bi bi-robot"></i> Generate Assignment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Tips Card -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Tips for Better Results</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Select a curriculum topic to ensure alignment with your teaching plan</li>
+                        <li>Use specific instructions like vocabulary themes or grammar points</li>
+                        <li>Generated assignments go to "Pending Review" - always review before using</li>
+                        <li>You can edit any generated content before approving</li>
+                        <li>Multiple choice and fill-in-the-blank work best for auto-grading</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.getElementById('generateForm').addEventListener('submit', function() {
+        const btn = document.getElementById('generateBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating with AI...';
+    });
+</script>
+}

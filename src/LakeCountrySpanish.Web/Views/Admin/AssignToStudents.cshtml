@@ -1,0 +1,154 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.AssignToStudentsViewModel
+@{
+    ViewData["Title"] = "Assign to Students";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-people text-success"></i> Assign to Students
+        </h1>
+        <a asp-action="Assignments" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Assignment Info -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Assignment</h5>
+                </div>
+                <div class="card-body">
+                    <h4>@Model.AssignmentTitle</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Selection -->
+        <div class="col-lg-8">
+            <form asp-action="AssignToStudents" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="AssignmentId" />
+
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Select Students</h5>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">
+                                Select All
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="deselectAll()">
+                                Deselect All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        @if (!Model.AvailableStudents.Any())
+                        {
+                            <div class="text-center py-4">
+                                <i class="bi bi-people display-4 text-muted"></i>
+                                <p class="text-muted mt-2">No students available</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;"></th>
+                                            <th>Student</th>
+                                            <th>Level</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var student in Model.AvailableStudents)
+                                        {
+                                            <tr class="@(student.AlreadyAssigned ? "table-secondary" : "")">
+                                                <td>
+                                                    <input type="checkbox" class="form-check-input student-checkbox"
+                                                           name="SelectedStudentIds" value="@student.Id"
+                                                           @(student.AlreadyAssigned ? "disabled checked" : "") />
+                                                </td>
+                                                <td>
+                                                    <strong>@student.Name</strong>
+                                                    <br>
+                                                    <small class="text-muted">@student.Email</small>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-secondary">@student.CefrLevel</span>
+                                                </td>
+                                                <td>
+                                                    @if (student.AlreadyAssigned)
+                                                    {
+                                                        <span class="badge bg-info">Already Assigned</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Available</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Assignment Options</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label asp-for="DueDate" class="form-label">Due Date (Optional)</label>
+                                <input asp-for="DueDate" type="datetime-local" class="form-control" />
+                                <small class="text-muted">Leave empty for no deadline</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Assignments" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="bi bi-send"></i> Assign to Selected Students
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function selectAll() {
+        document.querySelectorAll('.student-checkbox:not(:disabled)').forEach(cb => cb.checked = true);
+    }
+
+    function deselectAll() {
+        document.querySelectorAll('.student-checkbox:not(:disabled)').forEach(cb => cb.checked = false);
+    }
+</script>
+}

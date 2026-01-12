@@ -1,0 +1,106 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.EditTopicViewModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Create Topic" : "Edit Topic";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>@(Model.IsNew ? "Create Curriculum Topic" : "Edit Topic")</h1>
+                <a asp-action="Topics" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-body">
+                    <form asp-action="@(Model.IsNew ? "CreateTopic" : "EditTopic")" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Topic Name</label>
+                            <input asp-for="Name" class="form-control" required
+                                   placeholder="e.g., Present Tense Conjugation" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="2"
+                                      placeholder="Brief description of what this topic covers..."></textarea>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label asp-for="CefrLevel" class="form-label">CEFR Level</label>
+                                <select asp-for="CefrLevel" class="form-select">
+                                    @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
+                                    {
+                                        <option value="@level">@level</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="Type" class="form-label">Topic Type</label>
+                                <select asp-for="Type" class="form-select">
+                                    @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.TopicType>())
+                                    {
+                                        <option value="@type">@type</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="DisplayOrder" class="form-label">Display Order</label>
+                                <input asp-for="DisplayOrder" type="number" class="form-control" min="0" />
+                                <small class="text-muted">Lower numbers appear first</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Keywords" class="form-label">Keywords (for AI generation)</label>
+                            <input asp-for="Keywords" class="form-control"
+                                   placeholder="e.g., -ar verbs, -er verbs, regular verbs, present tense" />
+                            <small class="text-muted">
+                                Comma-separated keywords to help AI generate relevant content.
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ExampleContent" class="form-label">Example Content (Optional)</label>
+                            <textarea asp-for="ExampleContent" class="form-control" rows="3"
+                                      placeholder="Example vocabulary, sentences, or concepts for this topic..."></textarea>
+                            <small class="text-muted">
+                                Provide examples to guide AI assignment generation.
+                            </small>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                <label asp-for="IsActive" class="form-check-label">Active</label>
+                            </div>
+                            <small class="text-muted">Inactive topics won't appear in assignment generation.</small>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-action="Topics" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> @(Model.IsNew ? "Create Topic" : "Save Changes")
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

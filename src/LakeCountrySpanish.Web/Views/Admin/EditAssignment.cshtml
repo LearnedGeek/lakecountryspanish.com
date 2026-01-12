@@ -1,0 +1,7 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.EditAssignmentViewModel
+@{
+    ViewData["Title"] = "Edit Assignment";
+}
+
+<!-- This view shares the same layout as CreateAssignment -->
+@await Html.PartialAsync("_AssignmentForm", Model)

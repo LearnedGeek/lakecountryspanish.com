@@ -40,6 +40,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentStreak> StudentStreaks => Set<StudentStreak>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
+    // Assignment entities
+    public DbSet<CurriculumTopic> CurriculumTopics => Set<CurriculumTopic>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
+    public DbSet<StudentAssignment> StudentAssignments => Set<StudentAssignment>();
+    public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -399,6 +405,85 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Index for point history by student
             entity.HasIndex(e => new { e.StudentId, e.CreatedAt });
+        });
+
+        // CurriculumTopic configuration
+        builder.Entity<CurriculumTopic>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.CefrLevel, e.Type, e.IsActive });
+        });
+
+        // Assignment configuration
+        builder.Entity<Assignment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.CurriculumTopic)
+                .WithMany(t => t.Assignments)
+                .HasForeignKey(e => e.CurriculumTopicId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.ReviewedBy)
+                .WithMany()
+                .HasForeignKey(e => e.ReviewedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.CreatedBy)
+                .WithMany()
+                .HasForeignKey(e => e.CreatedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => new { e.CefrLevel, e.Status, e.Type });
+        });
+
+        // StudentAssignment configuration
+        builder.Entity<StudentAssignment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Assignment)
+                .WithMany(a => a.StudentAssignments)
+                .HasForeignKey(e => e.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.AssignedBy)
+                .WithMany()
+                .HasForeignKey(e => e.AssignedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for finding student's assignments
+            entity.HasIndex(e => new { e.StudentId, e.Status, e.Priority });
+
+            // Prevent duplicate assignment to same student
+            entity.HasIndex(e => new { e.StudentId, e.AssignmentId }).IsUnique();
+        });
+
+        // AssignmentSubmission configuration
+        builder.Entity<AssignmentSubmission>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PercentageScore).HasColumnType("decimal(5,2)");
+
+            entity.HasOne(e => e.Assignment)
+                .WithMany(a => a.Submissions)
+                .HasForeignKey(e => e.AssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Index for finding student's submissions
+            entity.HasIndex(e => new { e.StudentId, e.SubmittedAt });
+            entity.HasIndex(e => new { e.AssignmentId, e.StudentId });
         });
     }
 }

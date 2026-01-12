@@ -1,0 +1,240 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.AdminAssignmentListViewModel
+@{
+    ViewData["Title"] = "Manage Assignments";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Assignments</h1>
+        <div>
+            <a asp-action="Topics" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-book"></i> Curriculum Topics
+            </a>
+            <a asp-action="GenerateAssignment" class="btn btn-primary me-2">
+                <i class="bi bi-robot"></i> AI Generate
+            </a>
+            <a asp-action="CreateAssignment" class="btn btn-success">
+                <i class="bi bi-plus-lg"></i> Create Manual
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-2">
+            <div class="card bg-secondary text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@Model.Stats.DraftCount</h3>
+                    <small>Draft</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@Model.Stats.PendingReviewCount</h3>
+                    <small>Pending Review</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@Model.Stats.ApprovedCount</h3>
+                    <small>Approved</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@Model.Stats.RejectedCount</h3>
+                    <small>Rejected</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@Model.Stats.AiGeneratedCount</h3>
+                    <small>AI Generated</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="mb-0">@Model.Stats.TotalSubmissions</h3>
+                    <small>Submissions</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">CEFR Level</label>
+                    <select name="cefrLevel" class="form-select">
+                        <option value="">All Levels</option>
+                        @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
+                        {
+                            <option value="@level" selected="@(Model.FilterCefrLevel == level)">@level</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        @foreach (var status in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentStatus>())
+                        {
+                            <option value="@status" selected="@(Model.FilterStatus == status)">@status</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">All Types</option>
+                        @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
+                        {
+                            <option value="@type" selected="@(Model.FilterType == type)">@type</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a asp-action="Assignments" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assignments Table -->
+    @if (!Model.Assignments.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-journal-x display-1 text-muted"></i>
+            <h4 class="mt-3 text-muted">No assignments found</h4>
+            <p class="text-muted">Create your first assignment or generate one with AI!</p>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Level</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th class="text-center">Points</th>
+                            <th class="text-center">Submissions</th>
+                            <th class="text-center">Avg Score</th>
+                            <th>Created</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var assignment in Model.Assignments)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@assignment.Title</strong>
+                                    @if (assignment.IsAiGenerated)
+                                    {
+                                        <span class="badge bg-info ms-1" title="AI Generated">
+                                            <i class="bi bi-robot"></i>
+                                        </span>
+                                    }
+                                    @if (!string.IsNullOrEmpty(assignment.TopicName))
+                                    {
+                                        <br>
+                                        <small class="text-muted">@assignment.TopicName</small>
+                                    }
+                                </td>
+                                <td><span class="badge bg-secondary">@assignment.CefrLevel</span></td>
+                                <td>@assignment.Type</td>
+                                <td><span class="badge @assignment.StatusBadgeClass">@assignment.Status</span></td>
+                                <td class="text-center">@assignment.TotalPoints</td>
+                                <td class="text-center">@assignment.SubmissionCount</td>
+                                <td class="text-center">
+                                    @if (assignment.AverageScore.HasValue)
+                                    {
+                                        <span class="@(assignment.AverageScore >= 80 ? "text-success" : assignment.AverageScore >= 60 ? "text-warning" : "text-danger")">
+                                            @assignment.AverageScore.Value.ToString("0")%
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    @assignment.CreatedAt.ToString("MMM d")
+                                    @if (assignment.ReviewedAt.HasValue)
+                                    {
+                                        <br>
+                                        <small class="text-muted">Reviewed @assignment.ReviewedAt.Value.ToString("MMM d")</small>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group">
+                                        @if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.PendingReview)
+                                        {
+                                            <a asp-action="ReviewAssignment" asp-route-id="@assignment.Id"
+                                               class="btn btn-sm btn-warning">
+                                                <i class="bi bi-eye"></i> Review
+                                            </a>
+                                        }
+                                        else if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Approved)
+                                        {
+                                            <a asp-action="AssignToStudents" asp-route-id="@assignment.Id"
+                                               class="btn btn-sm btn-success">
+                                                <i class="bi bi-people"></i> Assign
+                                            </a>
+                                        }
+                                        <a asp-action="EditAssignment" asp-route-id="@assignment.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <form asp-action="DeleteAssignment" asp-route-id="@assignment.Id"
+                                              method="post" class="d-inline"
+                                              onsubmit="return confirm('Delete this assignment?')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

@@ -30,10 +30,10 @@ public class AssignDocumentViewModel
 {
     public int DocumentId { get; set; }
     public string DocumentTitle { get; set; } = string.Empty;
-    public List<StudentAssignmentViewModel> Students { get; set; } = new List<StudentAssignmentViewModel>();
+    public List<StudentDocumentAssignmentViewModel> Students { get; set; } = new List<StudentDocumentAssignmentViewModel>();
 }
 
-public class StudentAssignmentViewModel
+public class StudentDocumentAssignmentViewModel
 {
     public string StudentId { get; set; } = string.Empty;
     public string StudentName { get; set; } = string.Empty;

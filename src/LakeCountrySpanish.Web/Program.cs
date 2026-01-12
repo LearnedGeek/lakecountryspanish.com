@@ -44,6 +44,8 @@ builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<ITokenService, LakeCountrySpanish.Web.Services.TokenService>();
 builder.Services.AddScoped<IGamificationService, GamificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
+builder.Services.AddScoped<IClaudeApiService, ClaudeApiService>();
+builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddHttpClient();
 
 // Add MVC

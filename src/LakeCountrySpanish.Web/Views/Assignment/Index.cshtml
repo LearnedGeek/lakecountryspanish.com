@@ -1,0 +1,221 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.StudentAssignmentListViewModel
+@{
+    ViewData["Title"] = "My Assignments";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>My Assignments</h1>
+        <a asp-action="History" class="btn btn-outline-secondary">
+            <i class="bi bi-clock-history"></i> View History
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["InfoMessage"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            @TempData["InfoMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 opacity-75">Assigned</h6>
+                            <h2 class="card-title mb-0">@Model.Stats.AssignedCount</h2>
+                        </div>
+                        <i class="bi bi-inbox fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 opacity-75">In Progress</h6>
+                            <h2 class="card-title mb-0">@Model.Stats.InProgressCount</h2>
+                        </div>
+                        <i class="bi bi-pencil-square fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 opacity-75">Completed</h6>
+                            <h2 class="card-title mb-0">@Model.Stats.CompletedCount</h2>
+                        </div>
+                        <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-1 opacity-75">Total Points</h6>
+                            <h2 class="card-title mb-0">@Model.Stats.TotalPointsEarned</h2>
+                        </div>
+                        <i class="bi bi-star-fill fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link @(Context.Request.Query["status"].Count == 0 ? "active" : "")"
+               asp-action="Index">All</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Context.Request.Query["status"] == "Assigned" ? "active" : "")"
+               asp-action="Index" asp-route-status="Assigned">Assigned</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Context.Request.Query["status"] == "InProgress" ? "active" : "")"
+               asp-action="Index" asp-route-status="InProgress">In Progress</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link @(Context.Request.Query["status"] == "Completed" ? "active" : "")"
+               asp-action="Index" asp-route-status="Completed">Completed</a>
+        </li>
+    </ul>
+
+    @if (!Model.Assignments.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-journal-text display-1 text-muted"></i>
+            <h4 class="mt-3 text-muted">No assignments yet</h4>
+            <p class="text-muted">Check back soon - your teacher will assign exercises for you!</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var assignment in Model.Assignments)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 @(assignment.IsOverdue ? "border-danger" : "")">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="badge @assignment.StatusBadgeClass">@assignment.Status</span>
+                            <span class="badge bg-secondary">@assignment.CefrLevel</span>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">@assignment.Title</h5>
+                            <p class="card-text text-muted small">@assignment.Description</p>
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="badge bg-light text-dark">
+                                    <i class="bi bi-tag"></i> @assignment.TypeDisplayName
+                                </span>
+                                @if (assignment.TopicName != null)
+                                {
+                                    <span class="badge bg-light text-dark">
+                                        <i class="bi bi-book"></i> @assignment.TopicName
+                                    </span>
+                                }
+                            </div>
+
+                            <div class="row text-center mb-3">
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Points</small>
+                                    <strong>@assignment.TotalPoints</strong>
+                                    @if (assignment.BonusPoints > 0)
+                                    {
+                                        <span class="text-success small">+@assignment.BonusPoints</span>
+                                    }
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Time</small>
+                                    <strong>~@assignment.EstimatedMinutes min</strong>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted d-block">Attempts</small>
+                                    <strong>@assignment.AttemptCount</strong>
+                                </div>
+                            </div>
+
+                            @if (assignment.BestScore.HasValue)
+                            {
+                                <div class="mb-3">
+                                    <small class="text-muted">Best Score</small>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar @(assignment.BestScore >= 80 ? "bg-success" : assignment.BestScore >= 60 ? "bg-warning" : "bg-danger")"
+                                             style="width: @assignment.BestScore%">
+                                            @assignment.BestScore.Value.ToString("0")%
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (assignment.DueDate.HasValue)
+                            {
+                                <p class="mb-0 small @(assignment.IsOverdue ? "text-danger" : "text-muted")">
+                                    <i class="bi bi-calendar"></i>
+                                    Due: @assignment.DueDate.Value.ToString("MMM d, yyyy")
+                                    @if (assignment.IsOverdue)
+                                    {
+                                        <span class="badge bg-danger ms-1">Overdue</span>
+                                    }
+                                </p>
+                            }
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            @if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.StudentAssignmentStatus.Completed)
+                            {
+                                <a asp-action="Take" asp-route-id="@assignment.StudentAssignmentId"
+                                   class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-arrow-repeat"></i> Retry
+                                </a>
+                            }
+                            else if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.StudentAssignmentStatus.InProgress)
+                            {
+                                <a asp-action="Take" asp-route-id="@assignment.StudentAssignmentId"
+                                   class="btn btn-warning w-100">
+                                    <i class="bi bi-play-fill"></i> Continue
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="d-flex gap-2">
+                                    <a asp-action="Take" asp-route-id="@assignment.StudentAssignmentId"
+                                       class="btn btn-primary flex-grow-1">
+                                        <i class="bi bi-play-fill"></i> Start
+                                    </a>
+                                    <form asp-action="Skip" asp-route-id="@assignment.StudentAssignmentId" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-outline-secondary"
+                                                onclick="return confirm('Skip this assignment?')">
+                                            <i class="bi bi-skip-forward"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,0 +1,317 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.EditAssignmentViewModel
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>@(Model.IsNew ? "Create Assignment" : "Edit Assignment")</h1>
+        <a asp-action="Assignments" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form asp-action="@(Model.IsNew ? "CreateAssignment" : "EditAssignment")" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+
+        <div class="row">
+            <!-- Left Column - Basic Info -->
+            <div class="col-lg-5">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Basic Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Title" class="form-label">Title</label>
+                            <input asp-for="Title" class="form-control" required />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label asp-for="CefrLevel" class="form-label">CEFR Level</label>
+                                <select asp-for="CefrLevel" class="form-select">
+                                    @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
+                                    {
+                                        <option value="@level">@level</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label asp-for="Type" class="form-label">Type</label>
+                                <select asp-for="Type" class="form-select">
+                                    @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
+                                    {
+                                        <option value="@type">@type</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="CurriculumTopicId" class="form-label">Curriculum Topic</label>
+                            <select asp-for="CurriculumTopicId" class="form-select">
+                                <option value="">-- None --</option>
+                                @foreach (var topic in Model.AvailableTopics)
+                                {
+                                    <option value="@topic.Id">[@topic.CefrLevel] @topic.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label asp-for="TotalPoints" class="form-label">Total Points</label>
+                                <input asp-for="TotalPoints" type="number" class="form-control" min="1" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="BonusPoints" class="form-label">Bonus Points</label>
+                                <input asp-for="BonusPoints" type="number" class="form-control" min="0" />
+                            </div>
+                            <div class="col-md-4">
+                                <label asp-for="EstimatedMinutes" class="form-label">Est. Minutes</label>
+                                <input asp-for="EstimatedMinutes" type="number" class="form-control" min="1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Questions & Answers -->
+            <div class="col-lg-7">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Questions</h5>
+                        <button type="button" class="btn btn-sm btn-primary" onclick="addQuestion()">
+                            <i class="bi bi-plus-lg"></i> Add Question
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="questionsContainer">
+                            <!-- Questions will be added here -->
+                        </div>
+                        <input type="hidden" asp-for="QuestionsJson" id="questionsJsonInput" />
+                        <input type="hidden" asp-for="AnswersJson" id="answersJsonInput" />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" onclick="previewQuestions()">
+                        <i class="bi bi-eye"></i> Preview
+                    </button>
+                    <button type="submit" class="btn btn-primary" onclick="prepareSubmit()">
+                        <i class="bi bi-check-lg"></i> @(Model.IsNew ? "Create Assignment" : "Save Changes")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Question Template -->
+<template id="questionTemplate">
+    <div class="card mb-3 question-card" data-index="">
+        <div class="card-header d-flex justify-content-between align-items-center py-2">
+            <span class="question-number">Question 1</span>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="mb-2">
+                <label class="form-label small">Question Text</label>
+                <textarea class="form-control question-text" rows="2" placeholder="Enter the question..."></textarea>
+            </div>
+            <div class="row mb-2">
+                <div class="col-md-6">
+                    <label class="form-label small">Question Type</label>
+                    <select class="form-select form-select-sm question-type" onchange="updateQuestionType(this)">
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="fill_in_the_blank">Fill in the Blank</option>
+                        <option value="translation">Translation</option>
+                        <option value="short_answer">Short Answer</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small">Points</label>
+                    <input type="number" class="form-control form-control-sm question-points" value="1" min="1" />
+                </div>
+            </div>
+            <div class="question-options-container">
+                <!-- Options for multiple choice -->
+            </div>
+            <div class="mb-2">
+                <label class="form-label small">Correct Answer</label>
+                <input type="text" class="form-control form-control-sm correct-answer" placeholder="Enter correct answer..." />
+            </div>
+            <div class="mb-0">
+                <label class="form-label small">Explanation (shown after answering)</label>
+                <input type="text" class="form-control form-control-sm explanation" placeholder="Optional explanation..." />
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+    let questions = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load existing questions if editing
+        const existingJson = document.getElementById('questionsJsonInput').value;
+        if (existingJson && existingJson !== '[]') {
+            try {
+                questions = JSON.parse(existingJson);
+                questions.forEach((q, i) => renderQuestion(q, i));
+            } catch (e) {
+                console.error('Error parsing questions:', e);
+            }
+        }
+
+        if (questions.length === 0) {
+            addQuestion(); // Start with one empty question
+        }
+    });
+
+    function addQuestion() {
+        const index = questions.length;
+        questions.push({
+            id: index + 1,
+            type: 'multiple_choice',
+            question: '',
+            options: ['', '', '', ''],
+            correctAnswer: '',
+            explanation: '',
+            points: 1
+        });
+        renderQuestion(questions[index], index);
+    }
+
+    function renderQuestion(q, index) {
+        const template = document.getElementById('questionTemplate');
+        const clone = template.content.cloneNode(true);
+        const card = clone.querySelector('.question-card');
+
+        card.dataset.index = index;
+        card.querySelector('.question-number').textContent = `Question ${index + 1}`;
+        card.querySelector('.question-text').value = q.question || '';
+        card.querySelector('.question-type').value = q.type || 'multiple_choice';
+        card.querySelector('.question-points').value = q.points || 1;
+        card.querySelector('.correct-answer').value = q.correctAnswer || '';
+        card.querySelector('.explanation').value = q.explanation || '';
+
+        document.getElementById('questionsContainer').appendChild(clone);
+        updateQuestionType(card.querySelector('.question-type'));
+
+        // Set options if multiple choice
+        if (q.type === 'multiple_choice' && q.options) {
+            const optionInputs = card.querySelectorAll('.option-input');
+            q.options.forEach((opt, i) => {
+                if (optionInputs[i]) optionInputs[i].value = opt;
+            });
+        }
+    }
+
+    function removeQuestion(btn) {
+        const card = btn.closest('.question-card');
+        const index = parseInt(card.dataset.index);
+        card.remove();
+        questions.splice(index, 1);
+        renumberQuestions();
+    }
+
+    function renumberQuestions() {
+        const cards = document.querySelectorAll('.question-card');
+        cards.forEach((card, i) => {
+            card.dataset.index = i;
+            card.querySelector('.question-number').textContent = `Question ${i + 1}`;
+        });
+    }
+
+    function updateQuestionType(select) {
+        const card = select.closest('.question-card');
+        const container = card.querySelector('.question-options-container');
+        const type = select.value;
+
+        if (type === 'multiple_choice') {
+            container.innerHTML = `
+                <label class="form-label small">Options</label>
+                <div class="row g-2 mb-2">
+                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option A" /></div>
+                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option B" /></div>
+                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option C" /></div>
+                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option D" /></div>
+                </div>
+            `;
+        } else if (type === 'translation') {
+            container.innerHTML = `
+                <div class="mb-2">
+                    <label class="form-label small">Translation Direction</label>
+                    <select class="form-select form-select-sm translation-direction">
+                        <option value="Spanish to English">Spanish to English</option>
+                        <option value="English to Spanish">English to Spanish</option>
+                    </select>
+                </div>
+            `;
+        } else {
+            container.innerHTML = '';
+        }
+    }
+
+    function collectQuestions() {
+        const cards = document.querySelectorAll('.question-card');
+        const collected = [];
+        const answers = [];
+
+        cards.forEach((card, index) => {
+            const type = card.querySelector('.question-type').value;
+            const q = {
+                id: index + 1,
+                type: type,
+                question: card.querySelector('.question-text').value,
+                points: parseInt(card.querySelector('.question-points').value) || 1,
+                explanation: card.querySelector('.explanation').value
+            };
+
+            if (type === 'multiple_choice') {
+                const optionInputs = card.querySelectorAll('.option-input');
+                q.options = Array.from(optionInputs).map(i => i.value).filter(v => v);
+            } else if (type === 'translation') {
+                const dirSelect = card.querySelector('.translation-direction');
+                if (dirSelect) q.direction = dirSelect.value;
+            }
+
+            collected.push(q);
+            answers.push({
+                questionId: index + 1,
+                correctAnswer: card.querySelector('.correct-answer').value
+            });
+        });
+
+        return { questions: collected, answers: answers };
+    }
+
+    function prepareSubmit() {
+        const data = collectQuestions();
+        document.getElementById('questionsJsonInput').value = JSON.stringify(data.questions);
+        document.getElementById('answersJsonInput').value = JSON.stringify(data.answers);
+    }
+
+    function previewQuestions() {
+        const data = collectQuestions();
+        alert('Questions Preview:\n\n' + data.questions.map((q, i) =>
+            `${i + 1}. [${q.type}] ${q.question}\n   Answer: ${data.answers[i].correctAnswer}`
+        ).join('\n\n'));
+    }
+</script>

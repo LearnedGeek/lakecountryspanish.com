@@ -1,0 +1,305 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.TakeAssignmentViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="mb-1">@Model.Title</h2>
+                            <p class="text-muted mb-0">@Model.Description</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-secondary fs-6">@Model.CefrLevel</span>
+                        </div>
+                    </div>
+
+                    <div class="row text-center border-top pt-3">
+                        <div class="col-3">
+                            <small class="text-muted d-block">Type</small>
+                            <strong>@Model.Type</strong>
+                        </div>
+                        <div class="col-3">
+                            <small class="text-muted d-block">Points</small>
+                            <strong>@Model.TotalPoints</strong>
+                            @if (Model.BonusPoints > 0)
+                            {
+                                <span class="text-success small">+@Model.BonusPoints bonus</span>
+                            }
+                        </div>
+                        <div class="col-3">
+                            <small class="text-muted d-block">Est. Time</small>
+                            <strong>~@Model.EstimatedMinutes min</strong>
+                        </div>
+                        <div class="col-3">
+                            <small class="text-muted d-block">Attempt</small>
+                            <strong>#@Model.AttemptNumber</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timer -->
+            <div class="card mb-4 bg-light">
+                <div class="card-body py-2 text-center">
+                    <i class="bi bi-stopwatch"></i>
+                    <span id="timer">00:00</span>
+                </div>
+            </div>
+
+            <!-- Questions Form -->
+            <form id="assignmentForm" asp-action="Submit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="AssignmentId" value="@Model.AssignmentId" />
+                <input type="hidden" name="AnswersJson" id="answersJson" />
+                <input type="hidden" name="TimeTakenSeconds" id="timeTakenSeconds" />
+
+                <div id="questionsContainer">
+                    <!-- Questions will be rendered by JavaScript -->
+                </div>
+
+                <!-- Feedback Section -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Optional Feedback</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">How did you find this assignment?</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="DifficultyFeedback" id="tooEasy" value="TooEasy">
+                                <label class="btn btn-outline-success" for="tooEasy">Too Easy</label>
+
+                                <input type="radio" class="btn-check" name="DifficultyFeedback" id="justRight" value="JustRight">
+                                <label class="btn btn-outline-primary" for="justRight">Just Right</label>
+
+                                <input type="radio" class="btn-check" name="DifficultyFeedback" id="challenging" value="Challenging">
+                                <label class="btn btn-outline-warning" for="challenging">Challenging</label>
+
+                                <input type="radio" class="btn-check" name="DifficultyFeedback" id="tooHard" value="TooHard">
+                                <label class="btn btn-outline-danger" for="tooHard">Too Hard</label>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <label for="studentNotes" class="form-label">Any notes or questions for your teacher?</label>
+                            <textarea class="form-control" id="studentNotes" name="StudentNotes" rows="2"
+                                      placeholder="Optional: Leave a note about any questions or difficulties..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Save & Exit
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <i class="bi bi-check-circle"></i> Submit Assignment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const questionsJson = @Html.Raw(Model.QuestionsJson);
+    const answers = {};
+    let startTime = Date.now();
+    let timerInterval;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        renderQuestions();
+        startTimer();
+    });
+
+    function startTimer() {
+        timerInterval = setInterval(function() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '';
+
+        questionsJson.forEach((q, index) => {
+            const questionCard = document.createElement('div');
+            questionCard.className = 'card mb-4';
+            questionCard.innerHTML = `
+                <div class="card-header d-flex justify-content-between">
+                    <span>Question ${index + 1}</span>
+                    <span class="badge bg-secondary">${q.points || 1} pt${(q.points || 1) > 1 ? 's' : ''}</span>
+                </div>
+                <div class="card-body">
+                    ${renderQuestion(q, index)}
+                </div>
+            `;
+            container.appendChild(questionCard);
+        });
+    }
+
+    function renderQuestion(q, index) {
+        const questionId = q.id || index;
+
+        switch (q.type?.toLowerCase()) {
+            case 'multiplechoice':
+            case 'multiple_choice':
+                return renderMultipleChoice(q, questionId);
+            case 'fillintheblank':
+            case 'fill_in_the_blank':
+                return renderFillInTheBlank(q, questionId);
+            case 'translation':
+                return renderTranslation(q, questionId);
+            case 'matching':
+                return renderMatching(q, questionId);
+            case 'shortanswer':
+            case 'short_answer':
+                return renderShortAnswer(q, questionId);
+            default:
+                return renderShortAnswer(q, questionId);
+        }
+    }
+
+    function renderMultipleChoice(q, questionId) {
+        let html = `<p class="mb-3">${escapeHtml(q.question)}</p>`;
+        if (q.options && Array.isArray(q.options)) {
+            q.options.forEach((opt, i) => {
+                const optId = `q${questionId}_opt${i}`;
+                html += `
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="q${questionId}"
+                               id="${optId}" value="${escapeHtml(opt)}"
+                               onchange="setAnswer(${questionId}, '${escapeHtml(opt)}')">
+                        <label class="form-check-label" for="${optId}">${escapeHtml(opt)}</label>
+                    </div>
+                `;
+            });
+        }
+        return html;
+    }
+
+    function renderFillInTheBlank(q, questionId) {
+        let questionText = q.question || '';
+        // Replace blanks with input fields
+        let blankCount = 0;
+        questionText = questionText.replace(/_{2,}|\[blank\]|\{\{blank\}\}/gi, () => {
+            blankCount++;
+            return `<input type="text" class="form-control d-inline-block mx-1" style="width: 150px;"
+                           id="q${questionId}_blank${blankCount}"
+                           onchange="setFillInBlankAnswer(${questionId})">`;
+        });
+
+        return `<p class="mb-3">${questionText}</p>`;
+    }
+
+    function renderTranslation(q, questionId) {
+        const direction = q.direction || 'Spanish to English';
+        return `
+            <p class="mb-2"><strong>${direction}</strong></p>
+            <p class="mb-3 fs-5">${escapeHtml(q.question)}</p>
+            <textarea class="form-control" rows="2" id="q${questionId}"
+                      placeholder="Enter your translation..."
+                      onchange="setAnswer(${questionId}, this.value)"></textarea>
+        `;
+    }
+
+    function renderMatching(q, questionId) {
+        let html = `<p class="mb-3">${escapeHtml(q.question || 'Match the items:')}</p>`;
+        if (q.pairs && Array.isArray(q.pairs)) {
+            html += '<div class="row">';
+            q.pairs.forEach((pair, i) => {
+                html += `
+                    <div class="col-md-6 mb-2">
+                        <div class="input-group">
+                            <span class="input-group-text">${escapeHtml(pair.left || pair.term)}</span>
+                            <select class="form-select" onchange="setMatchAnswer(${questionId}, ${i}, this.value)">
+                                <option value="">Select...</option>
+                                ${(q.rightOptions || q.pairs.map(p => p.right || p.definition)).map(opt =>
+                                    `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        return html;
+    }
+
+    function renderShortAnswer(q, questionId) {
+        return `
+            <p class="mb-3">${escapeHtml(q.question)}</p>
+            <textarea class="form-control" rows="3" id="q${questionId}"
+                      placeholder="Enter your answer..."
+                      onchange="setAnswer(${questionId}, this.value)"></textarea>
+        `;
+    }
+
+    function setAnswer(questionId, value) {
+        answers[questionId] = value;
+    }
+
+    function setFillInBlankAnswer(questionId) {
+        const blanks = document.querySelectorAll(`[id^="q${questionId}_blank"]`);
+        const values = Array.from(blanks).map(b => b.value);
+        answers[questionId] = values.length === 1 ? values[0] : values;
+    }
+
+    function setMatchAnswer(questionId, pairIndex, value) {
+        if (!answers[questionId]) answers[questionId] = {};
+        answers[questionId][pairIndex] = value;
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Form submission
+    document.getElementById('assignmentForm').addEventListener('submit', function(e) {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('timeTakenSeconds').value = elapsed;
+
+        // Convert answers to array format
+        const answersArray = questionsJson.map((q, index) => {
+            const questionId = q.id || index;
+            return {
+                questionId: questionId,
+                answer: answers[questionId] || ''
+            };
+        });
+
+        document.getElementById('answersJson').value = JSON.stringify(answersArray);
+
+        // Confirm submission
+        const unanswered = answersArray.filter(a => !a.answer || (typeof a.answer === 'string' && !a.answer.trim())).length;
+        if (unanswered > 0) {
+            if (!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) {
+                e.preventDefault();
+            }
+        }
+    });
+
+    // Warn before leaving
+    window.addEventListener('beforeunload', function(e) {
+        if (Object.keys(answers).length > 0) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+</script>
+}

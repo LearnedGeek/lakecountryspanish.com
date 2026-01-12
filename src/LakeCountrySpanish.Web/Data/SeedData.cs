@@ -98,6 +98,12 @@ public static class SeedData
             await SeedBadgesAsync(context);
         }
 
+        // Seed curriculum topics if none exist
+        if (!context.CurriculumTopics.Any())
+        {
+            await SeedCurriculumTopicsAsync(context);
+        }
+
         // Only seed test data in development environment
         if (isDevelopment)
         {
@@ -323,6 +329,357 @@ public static class SeedData
         };
 
         context.Badges.AddRange(badges);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedCurriculumTopicsAsync(ApplicationDbContext context)
+    {
+        var topics = new List<CurriculumTopic>
+        {
+            // A1 - Beginner Topics
+            new CurriculumTopic
+            {
+                Name = "Greetings & Introductions",
+                Description = "Basic greetings, introducing yourself, and asking about others",
+                CefrLevel = "A1",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 1,
+                IsActive = true,
+                Keywords = "hola, buenos dias, como te llamas, mucho gusto, introductions, greetings"
+            },
+            new CurriculumTopic
+            {
+                Name = "Numbers 1-100",
+                Description = "Counting and using numbers in everyday situations",
+                CefrLevel = "A1",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 2,
+                IsActive = true,
+                Keywords = "numbers, uno, dos, tres, counting, numeros"
+            },
+            new CurriculumTopic
+            {
+                Name = "Present Tense - Regular Verbs",
+                Description = "Conjugating -ar, -er, -ir verbs in present tense",
+                CefrLevel = "A1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 3,
+                IsActive = true,
+                Keywords = "present tense, -ar verbs, -er verbs, -ir verbs, hablar, comer, vivir, conjugation"
+            },
+            new CurriculumTopic
+            {
+                Name = "Ser vs Estar",
+                Description = "Understanding when to use ser and estar",
+                CefrLevel = "A1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 4,
+                IsActive = true,
+                Keywords = "ser, estar, to be, permanent, temporary, location, characteristics"
+            },
+            new CurriculumTopic
+            {
+                Name = "Family & Relationships",
+                Description = "Family members and describing relationships",
+                CefrLevel = "A1",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 5,
+                IsActive = true,
+                Keywords = "familia, madre, padre, hermano, sister, family members, relationships"
+            },
+            new CurriculumTopic
+            {
+                Name = "Colors & Basic Adjectives",
+                Description = "Describing things with colors and simple adjectives",
+                CefrLevel = "A1",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 6,
+                IsActive = true,
+                Keywords = "colors, rojo, azul, verde, grande, pequeno, adjectives, colores"
+            },
+            new CurriculumTopic
+            {
+                Name = "Days, Months & Time",
+                Description = "Expressing dates, days of the week, and telling time",
+                CefrLevel = "A1",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 7,
+                IsActive = true,
+                Keywords = "days, months, lunes, enero, que hora es, time, calendar"
+            },
+
+            // A2 - Elementary Topics
+            new CurriculumTopic
+            {
+                Name = "Present Tense - Irregular Verbs",
+                Description = "Common irregular verbs like ir, tener, hacer, poder",
+                CefrLevel = "A2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 1,
+                IsActive = true,
+                Keywords = "irregular verbs, ir, tener, hacer, poder, querer, venir, saber"
+            },
+            new CurriculumTopic
+            {
+                Name = "Reflexive Verbs",
+                Description = "Daily routines with reflexive verbs",
+                CefrLevel = "A2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 2,
+                IsActive = true,
+                Keywords = "reflexive, me, te, se, levantarse, ducharse, vestirse, daily routine"
+            },
+            new CurriculumTopic
+            {
+                Name = "Food & Restaurant Vocabulary",
+                Description = "Ordering food, describing meals, restaurant situations",
+                CefrLevel = "A2",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 3,
+                IsActive = true,
+                Keywords = "food, comida, restaurante, menu, ordering, desayuno, almuerzo, cena"
+            },
+            new CurriculumTopic
+            {
+                Name = "Direct & Indirect Object Pronouns",
+                Description = "Using lo, la, le, les in sentences",
+                CefrLevel = "A2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 4,
+                IsActive = true,
+                Keywords = "object pronouns, lo, la, le, les, me, te, direct, indirect"
+            },
+            new CurriculumTopic
+            {
+                Name = "Past Tense - Preterite",
+                Description = "Talking about completed past actions",
+                CefrLevel = "A2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 5,
+                IsActive = true,
+                Keywords = "preterite, past tense, ayer, completed actions, -e, -iste, -o"
+            },
+            new CurriculumTopic
+            {
+                Name = "Travel & Transportation",
+                Description = "Vocabulary for traveling, directions, and transportation",
+                CefrLevel = "A2",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 6,
+                IsActive = true,
+                Keywords = "travel, viajar, aeropuerto, tren, autobus, directions, transportation"
+            },
+
+            // B1 - Intermediate Topics
+            new CurriculumTopic
+            {
+                Name = "Past Tense - Imperfect",
+                Description = "Describing ongoing past actions and habits",
+                CefrLevel = "B1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 1,
+                IsActive = true,
+                Keywords = "imperfect, imperfecto, -aba, -ia, used to, was doing, habitual past"
+            },
+            new CurriculumTopic
+            {
+                Name = "Preterite vs Imperfect",
+                Description = "Choosing between preterite and imperfect tenses",
+                CefrLevel = "B1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 2,
+                IsActive = true,
+                Keywords = "preterite, imperfect, past tenses, when to use, completed vs ongoing"
+            },
+            new CurriculumTopic
+            {
+                Name = "Future Tense",
+                Description = "Expressing future plans and predictions",
+                CefrLevel = "B1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 3,
+                IsActive = true,
+                Keywords = "future tense, futuro, -e, -as, -a, will, predictions, plans"
+            },
+            new CurriculumTopic
+            {
+                Name = "Conditional Tense",
+                Description = "Expressing hypothetical situations and polite requests",
+                CefrLevel = "B1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 4,
+                IsActive = true,
+                Keywords = "conditional, condicional, -ia, would, hypothetical, polite requests"
+            },
+            new CurriculumTopic
+            {
+                Name = "Subjunctive - Introduction",
+                Description = "Basic uses of the subjunctive mood",
+                CefrLevel = "B1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 5,
+                IsActive = true,
+                Keywords = "subjunctive, subjuntivo, que, quiero que, espero que, emotions, wishes"
+            },
+            new CurriculumTopic
+            {
+                Name = "Health & Body",
+                Description = "Medical vocabulary, describing symptoms and ailments",
+                CefrLevel = "B1",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 6,
+                IsActive = true,
+                Keywords = "health, salud, doctor, symptoms, body parts, cuerpo, enfermo"
+            },
+            new CurriculumTopic
+            {
+                Name = "Work & Professions",
+                Description = "Job vocabulary, workplace conversations",
+                CefrLevel = "B1",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 7,
+                IsActive = true,
+                Keywords = "work, trabajo, profesion, office, job interview, career"
+            },
+
+            // B2 - Upper Intermediate Topics
+            new CurriculumTopic
+            {
+                Name = "Subjunctive - Advanced Uses",
+                Description = "Complex subjunctive constructions and triggers",
+                CefrLevel = "B2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 1,
+                IsActive = true,
+                Keywords = "subjunctive, aunque, para que, antes de que, advanced subjunctive"
+            },
+            new CurriculumTopic
+            {
+                Name = "Past Subjunctive",
+                Description = "Imperfect subjunctive for hypotheticals and past wishes",
+                CefrLevel = "B2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 2,
+                IsActive = true,
+                Keywords = "past subjunctive, imperfect subjunctive, -ara, -iera, si clauses"
+            },
+            new CurriculumTopic
+            {
+                Name = "Passive Voice & Se Constructions",
+                Description = "Passive structures and impersonal se",
+                CefrLevel = "B2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 3,
+                IsActive = true,
+                Keywords = "passive voice, se pasivo, se impersonal, fue hecho, se habla"
+            },
+            new CurriculumTopic
+            {
+                Name = "Idiomatic Expressions",
+                Description = "Common Spanish idioms and colloquial expressions",
+                CefrLevel = "B2",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 4,
+                IsActive = true,
+                Keywords = "idioms, expressions, modismos, colloquial, slang, native speaker"
+            },
+            new CurriculumTopic
+            {
+                Name = "News & Current Events",
+                Description = "Reading and discussing news articles",
+                CefrLevel = "B2",
+                Type = TopicType.Reading,
+                DisplayOrder = 5,
+                IsActive = true,
+                Keywords = "news, noticias, current events, politics, economia, reading comprehension"
+            },
+            new CurriculumTopic
+            {
+                Name = "Hispanic Culture & Traditions",
+                Description = "Cultural practices across Spanish-speaking countries",
+                CefrLevel = "B2",
+                Type = TopicType.Culture,
+                DisplayOrder = 6,
+                IsActive = true,
+                Keywords = "culture, traditions, holidays, fiestas, customs, Hispanic countries"
+            },
+
+            // C1 - Advanced Topics
+            new CurriculumTopic
+            {
+                Name = "Advanced Verb Tenses",
+                Description = "Perfect tenses, pluperfect, future perfect",
+                CefrLevel = "C1",
+                Type = TopicType.Grammar,
+                DisplayOrder = 1,
+                IsActive = true,
+                Keywords = "perfect tenses, pluperfect, habia, future perfect, habra"
+            },
+            new CurriculumTopic
+            {
+                Name = "Literary Spanish",
+                Description = "Reading and analyzing Spanish literature",
+                CefrLevel = "C1",
+                Type = TopicType.Reading,
+                DisplayOrder = 2,
+                IsActive = true,
+                Keywords = "literature, literatura, novels, poetry, authors, literary analysis"
+            },
+            new CurriculumTopic
+            {
+                Name = "Academic Writing",
+                Description = "Formal writing, essays, and academic style",
+                CefrLevel = "C1",
+                Type = TopicType.Writing,
+                DisplayOrder = 3,
+                IsActive = true,
+                Keywords = "academic writing, essays, formal style, thesis, argumentation"
+            },
+            new CurriculumTopic
+            {
+                Name = "Regional Dialects",
+                Description = "Variations in Spanish across different regions",
+                CefrLevel = "C1",
+                Type = TopicType.Culture,
+                DisplayOrder = 4,
+                IsActive = true,
+                Keywords = "dialects, regional Spanish, voseo, Castilian, Latin American Spanish"
+            },
+
+            // C2 - Mastery Topics
+            new CurriculumTopic
+            {
+                Name = "Nuanced Expression",
+                Description = "Subtle meanings, register, and stylistic choices",
+                CefrLevel = "C2",
+                Type = TopicType.Grammar,
+                DisplayOrder = 1,
+                IsActive = true,
+                Keywords = "nuance, register, formal, informal, stylistic, subtle meanings"
+            },
+            new CurriculumTopic
+            {
+                Name = "Professional Spanish",
+                Description = "Business, legal, and technical Spanish",
+                CefrLevel = "C2",
+                Type = TopicType.Vocabulary,
+                DisplayOrder = 2,
+                IsActive = true,
+                Keywords = "business Spanish, legal, technical, professional, specialized vocabulary"
+            },
+            new CurriculumTopic
+            {
+                Name = "Translation & Interpretation",
+                Description = "Techniques for translating between English and Spanish",
+                CefrLevel = "C2",
+                Type = TopicType.Writing,
+                DisplayOrder = 3,
+                IsActive = true,
+                Keywords = "translation, interpretation, bilingual, false friends, equivalence"
+            }
+        };
+
+        context.CurriculumTopics.AddRange(topics);
         await context.SaveChangesAsync();
     }
 

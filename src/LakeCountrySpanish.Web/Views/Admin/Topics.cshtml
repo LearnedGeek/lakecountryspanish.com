@@ -1,0 +1,178 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.CurriculumTopicListViewModel
+@{
+    ViewData["Title"] = "Curriculum Topics";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Curriculum Topics</h1>
+        <div>
+            <a asp-action="Assignments" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left"></i> Back to Assignments
+            </a>
+            <a asp-action="CreateTopic" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Add Topic
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">CEFR Level</label>
+                    <select name="cefrLevel" class="form-select">
+                        <option value="">All Levels</option>
+                        @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
+                        {
+                            <option value="@level" selected="@(Model.FilterCefrLevel == level)">@level</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Type</label>
+                    <select name="type" class="form-select">
+                        <option value="">All Types</option>
+                        @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.TopicType>())
+                        {
+                            <option value="@type" selected="@(Model.FilterType == type)">@type</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-funnel"></i> Filter
+                    </button>
+                    <a asp-action="Topics" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Topics.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-book display-1 text-muted"></i>
+            <h4 class="mt-3 text-muted">No topics found</h4>
+            <p class="text-muted">Add curriculum topics to organize your assignments.</p>
+            <a asp-action="CreateTopic" class="btn btn-primary mt-2">
+                <i class="bi bi-plus-lg"></i> Add First Topic
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Group by CEFR Level -->
+        @foreach (var levelGroup in Model.Topics.GroupBy(t => t.CefrLevel).OrderBy(g => g.Key))
+        {
+            <div class="card mb-4">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Level @levelGroup.Key</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">Order</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th class="text-center">Assignments</th>
+                                <th class="text-center">Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var topic in levelGroup.OrderBy(t => t.DisplayOrder))
+                            {
+                                <tr class="@(!topic.IsActive ? "table-secondary" : "")">
+                                    <td>
+                                        <span class="badge bg-light text-dark">@topic.DisplayOrder</span>
+                                    </td>
+                                    <td>
+                                        <strong>@topic.Name</strong>
+                                        @if (!string.IsNullOrEmpty(topic.Keywords))
+                                        {
+                                            <br>
+                                            <small class="text-muted">
+                                                <i class="bi bi-tags"></i> @topic.Keywords
+                                            </small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="badge @GetTypeBadgeClass(topic.Type)">@topic.Type</span>
+                                    </td>
+                                    <td>
+                                        <small>@topic.Description</small>
+                                    </td>
+                                    <td class="text-center">
+                                        @topic.Assignments.Count
+                                    </td>
+                                    <td class="text-center">
+                                        @if (topic.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group">
+                                            <a asp-action="EditTopic" asp-route-id="@topic.Id"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form asp-action="DeleteTopic" asp-route-id="@topic.Id"
+                                                  method="post" class="d-inline"
+                                                  onsubmit="return confirm('Delete this topic? Assignments using it will be unlinked.')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@functions {
+    string GetTypeBadgeClass(LakeCountrySpanish.Web.Models.Entities.TopicType type)
+    {
+        return type switch
+        {
+            LakeCountrySpanish.Web.Models.Entities.TopicType.Grammar => "bg-primary",
+            LakeCountrySpanish.Web.Models.Entities.TopicType.Vocabulary => "bg-success",
+            LakeCountrySpanish.Web.Models.Entities.TopicType.Reading => "bg-info",
+            LakeCountrySpanish.Web.Models.Entities.TopicType.Listening => "bg-warning text-dark",
+            LakeCountrySpanish.Web.Models.Entities.TopicType.Speaking => "bg-danger",
+            LakeCountrySpanish.Web.Models.Entities.TopicType.Writing => "bg-secondary",
+            LakeCountrySpanish.Web.Models.Entities.TopicType.Culture => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+}

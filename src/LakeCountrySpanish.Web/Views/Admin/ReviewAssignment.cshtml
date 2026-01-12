@@ -1,0 +1,253 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.ReviewAssignmentViewModel
+@{
+    ViewData["Title"] = "Review Assignment";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="bi bi-clipboard-check text-warning"></i> Review Assignment
+        </h1>
+        <a asp-action="Assignments" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <!-- Left Column - Assignment Info -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Assignment Details</h5>
+                </div>
+                <div class="card-body">
+                    <h4>@Model.Title</h4>
+                    <p class="text-muted">@Model.Description</p>
+
+                    <hr>
+
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Level</small>
+                            <span class="badge bg-secondary fs-6">@Model.CefrLevel</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Type</small>
+                            <strong>@Model.Type</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Points</small>
+                            <strong>@Model.TotalPoints</strong>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.TopicName))
+                    {
+                        <p class="mb-2">
+                            <small class="text-muted">Topic:</small><br>
+                            <strong>@Model.TopicName</strong>
+                        </p>
+                    }
+
+                    <p class="mb-0">
+                        <small class="text-muted">Est. Time:</small>
+                        <strong>~@Model.EstimatedMinutes minutes</strong>
+                    </p>
+                </div>
+            </div>
+
+            @if (Model.IsAiGenerated && !string.IsNullOrEmpty(Model.GenerationPrompt))
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-robot"></i> AI Generation Info</h6>
+                    </div>
+                    <div class="card-body">
+                        <small class="text-muted">Generation Prompt:</small>
+                        <p class="small mb-0">@Model.GenerationPrompt</p>
+                    </div>
+                </div>
+            }
+
+            <!-- Review Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Review Decision</h5>
+                </div>
+                <div class="card-body">
+                    <form id="reviewForm">
+                        <div class="mb-3">
+                            <label class="form-label">Review Notes (Optional)</label>
+                            <textarea id="reviewNotes" class="form-control" rows="3"
+                                      placeholder="Add notes about this assignment...">@Model.ReviewNotes</textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success btn-lg" onclick="approveAssignment()">
+                                <i class="bi bi-check-circle"></i> Approve
+                            </button>
+                            <button type="button" class="btn btn-danger" onclick="rejectAssignment()">
+                                <i class="bi bi-x-circle"></i> Reject
+                            </button>
+                            <a asp-action="EditAssignment" asp-route-id="@Model.Id"
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-pencil"></i> Edit First
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Questions Preview -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Questions Preview</h5>
+                </div>
+                <div class="card-body" id="questionsPreview">
+                    <!-- Questions will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const questionsJson = @Html.Raw(Model.QuestionsJson);
+    const answersJson = @Html.Raw(Model.AnswersJson);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderQuestions();
+    });
+
+    function renderQuestions() {
+        const container = document.getElementById('questionsPreview');
+        const answers = {};
+
+        // Build answers lookup
+        if (Array.isArray(answersJson)) {
+            answersJson.forEach(a => {
+                answers[a.questionId] = a.correctAnswer;
+            });
+        }
+
+        if (!Array.isArray(questionsJson) || questionsJson.length === 0) {
+            container.innerHTML = '<p class="text-muted">No questions found.</p>';
+            return;
+        }
+
+        let html = '';
+        questionsJson.forEach((q, index) => {
+            const questionId = q.id || index + 1;
+            const correctAnswer = answers[questionId] || q.correctAnswer || '';
+
+            html += `
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between">
+                        <span><strong>Question ${index + 1}</strong> - ${q.type || 'Unknown'}</span>
+                        <span class="badge bg-secondary">${q.points || 1} pts</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">${escapeHtml(q.question)}</p>
+                        ${renderQuestionContent(q)}
+                        <div class="alert alert-success mb-0 mt-3">
+                            <strong>Correct Answer:</strong> ${escapeHtml(correctAnswer)}
+                        </div>
+                        ${q.explanation ? `<div class="mt-2"><small class="text-muted">Explanation: ${escapeHtml(q.explanation)}</small></div>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    function renderQuestionContent(q) {
+        const type = (q.type || '').toLowerCase().replace(/_/g, '');
+
+        if (type === 'multiplechoice' && q.options) {
+            let html = '<div class="list-group">';
+            q.options.forEach((opt, i) => {
+                const letter = String.fromCharCode(65 + i);
+                html += `<div class="list-group-item">${letter}. ${escapeHtml(opt)}</div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        if (type === 'translation') {
+            return `<p class="text-muted"><em>Direction: ${q.direction || 'Spanish to English'}</em></p>`;
+        }
+
+        if (type === 'fillintheblank') {
+            return '<p class="text-muted"><em>Fill in the blank question</em></p>';
+        }
+
+        return '<p class="text-muted"><em>Text input answer</em></p>';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function approveAssignment() {
+        if (!confirm('Approve this assignment? It will become available for assigning to students.')) return;
+
+        const notes = document.getElementById('reviewNotes').value;
+        submitReview('ApproveAssignment', notes);
+    }
+
+    function rejectAssignment() {
+        const notes = document.getElementById('reviewNotes').value;
+        if (!notes.trim()) {
+            alert('Please provide a reason for rejection in the notes.');
+            return;
+        }
+
+        if (!confirm('Reject this assignment?')) return;
+
+        submitReview('RejectAssignment', notes);
+    }
+
+    function submitReview(action, notes) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `@Url.Action("ApproveAssignment")`.replace('ApproveAssignment', action);
+
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'id';
+        idInput.value = '@Model.Id';
+        form.appendChild(idInput);
+
+        const notesInput = document.createElement('input');
+        notesInput.type = 'hidden';
+        notesInput.name = 'notes';
+        notesInput.value = notes;
+        form.appendChild(notesInput);
+
+        const token = document.createElement('input');
+        token.type = 'hidden';
+        token.name = '__RequestVerificationToken';
+        token.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value ||
+                     '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+        form.appendChild(token);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+}

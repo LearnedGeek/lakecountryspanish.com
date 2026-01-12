@@ -20,6 +20,7 @@ public class AdminController : Controller
     private readonly IScheduleService _scheduleService;
     private readonly ITokenService _tokenService;
     private readonly IGamificationService _gamificationService;
+    private readonly IAssignmentService _assignmentService;
     private readonly IConfiguration _configuration;
 
     public AdminController(
@@ -31,6 +32,7 @@ public class AdminController : Controller
         IScheduleService scheduleService,
         ITokenService tokenService,
         IGamificationService gamificationService,
+        IAssignmentService assignmentService,
         IConfiguration configuration)
     {
         _context = context;
@@ -41,6 +43,7 @@ public class AdminController : Controller
         _scheduleService = scheduleService;
         _tokenService = tokenService;
         _gamificationService = gamificationService;
+        _assignmentService = assignmentService;
         _configuration = configuration;
     }
 
@@ -714,7 +717,7 @@ public class AdminController : Controller
         {
             DocumentId = id,
             DocumentTitle = document.Title,
-            Students = students.Where(s => s.IsActive).Select(s => new StudentAssignmentViewModel
+            Students = students.Where(s => s.IsActive).Select(s => new StudentDocumentAssignmentViewModel
             {
                 StudentId = s.Id,
                 StudentName = s.FullName,
@@ -1805,5 +1808,392 @@ public class AdminController : Controller
         var count = await _gamificationService.ResetExpiredStreaksAsync();
         TempData["SuccessMessage"] = $"Reset {count} expired streak(s).";
         return RedirectToAction(nameof(Dashboard));
+    }
+
+    // Assignment Management
+
+    public async Task<IActionResult> Assignments(string? cefrLevel, AssignmentStatus? status, AssignmentType? type)
+    {
+        var assignments = await _assignmentService.GetAssignmentsAsync(cefrLevel, status, type);
+        var stats = await _assignmentService.GetOverallStatsAsync();
+
+        var viewModels = new List<AdminAssignmentViewModel>();
+        foreach (var a in assignments)
+        {
+            var submissions = await _assignmentService.GetAssignmentSubmissionsAsync(a.Id);
+            viewModels.Add(new AdminAssignmentViewModel
+            {
+                Id = a.Id,
+                Title = a.Title,
+                Description = a.Description,
+                CefrLevel = a.CefrLevel,
+                Type = a.Type,
+                Status = a.Status,
+                TopicName = a.CurriculumTopic?.Name,
+                TotalPoints = a.TotalPoints,
+                EstimatedMinutes = a.EstimatedMinutes,
+                IsAiGenerated = a.IsAiGenerated,
+                CreatedAt = a.CreatedAt,
+                ReviewedAt = a.ReviewedAt,
+                SubmissionCount = submissions.Count(),
+                AverageScore = submissions.Any() ? submissions.Average(s => s.PercentageScore) : null
+            });
+        }
+
+        return View(new AdminAssignmentListViewModel
+        {
+            Assignments = viewModels,
+            Stats = stats,
+            FilterCefrLevel = cefrLevel,
+            FilterStatus = status,
+            FilterType = type
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GenerateAssignment()
+    {
+        var topics = await _assignmentService.GetAllTopicsAsync();
+        return View(new GenerateAssignmentViewModel
+        {
+            AvailableTopics = topics
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GenerateAssignment(GenerateAssignmentViewModel model)
+    {
+        var adminId = _userManager.GetUserId(User);
+        var assignment = await _assignmentService.GenerateAssignmentAsync(
+            model.CefrLevel,
+            model.Type,
+            model.TopicId,
+            model.QuestionCount,
+            model.AdditionalInstructions,
+            adminId);
+
+        if (assignment.Status == AssignmentStatus.PendingReview)
+        {
+            TempData["SuccessMessage"] = "Assignment generated and pending review.";
+            return RedirectToAction(nameof(ReviewAssignment), new { id = assignment.Id });
+        }
+        else
+        {
+            TempData["WarningMessage"] = "Assignment created as draft. AI generation may have had issues.";
+            return RedirectToAction(nameof(EditAssignment), new { id = assignment.Id });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CreateAssignment()
+    {
+        var topics = await _assignmentService.GetAllTopicsAsync();
+        return View(new EditAssignmentViewModel
+        {
+            AvailableTopics = topics
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateAssignment(EditAssignmentViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            model.AvailableTopics = await _assignmentService.GetAllTopicsAsync();
+            return View(model);
+        }
+
+        var adminId = _userManager.GetUserId(User);
+        var assignment = new Assignment
+        {
+            Title = model.Title,
+            Description = model.Description,
+            CefrLevel = model.CefrLevel,
+            CurriculumTopicId = model.CurriculumTopicId,
+            Type = model.Type,
+            Status = AssignmentStatus.Draft,
+            QuestionsJson = model.QuestionsJson,
+            AnswersJson = model.AnswersJson,
+            TotalPoints = model.TotalPoints,
+            BonusPoints = model.BonusPoints,
+            EstimatedMinutes = model.EstimatedMinutes,
+            CreatedById = adminId
+        };
+
+        await _assignmentService.CreateAssignmentAsync(assignment);
+        TempData["SuccessMessage"] = "Assignment created.";
+        return RedirectToAction(nameof(Assignments));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditAssignment(int id)
+    {
+        var assignment = await _assignmentService.GetAssignmentByIdAsync(id);
+        if (assignment == null) return NotFound();
+
+        var topics = await _assignmentService.GetAllTopicsAsync();
+
+        return View(new EditAssignmentViewModel
+        {
+            Id = assignment.Id,
+            Title = assignment.Title,
+            Description = assignment.Description,
+            CefrLevel = assignment.CefrLevel,
+            CurriculumTopicId = assignment.CurriculumTopicId,
+            Type = assignment.Type,
+            QuestionsJson = assignment.QuestionsJson,
+            AnswersJson = assignment.AnswersJson,
+            TotalPoints = assignment.TotalPoints,
+            BonusPoints = assignment.BonusPoints,
+            EstimatedMinutes = assignment.EstimatedMinutes,
+            AvailableTopics = topics
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditAssignment(EditAssignmentViewModel model)
+    {
+        if (!ModelState.IsValid || !model.Id.HasValue)
+        {
+            model.AvailableTopics = await _assignmentService.GetAllTopicsAsync();
+            return View(model);
+        }
+
+        var assignment = await _assignmentService.GetAssignmentByIdAsync(model.Id.Value);
+        if (assignment == null) return NotFound();
+
+        assignment.Title = model.Title;
+        assignment.Description = model.Description;
+        assignment.CefrLevel = model.CefrLevel;
+        assignment.CurriculumTopicId = model.CurriculumTopicId;
+        assignment.Type = model.Type;
+        assignment.QuestionsJson = model.QuestionsJson;
+        assignment.AnswersJson = model.AnswersJson;
+        assignment.TotalPoints = model.TotalPoints;
+        assignment.BonusPoints = model.BonusPoints;
+        assignment.EstimatedMinutes = model.EstimatedMinutes;
+
+        await _assignmentService.UpdateAssignmentAsync(assignment);
+        TempData["SuccessMessage"] = "Assignment updated.";
+        return RedirectToAction(nameof(Assignments));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ReviewAssignment(int id)
+    {
+        var assignment = await _assignmentService.GetAssignmentByIdAsync(id);
+        if (assignment == null) return NotFound();
+
+        return View(new ReviewAssignmentViewModel
+        {
+            Id = assignment.Id,
+            Title = assignment.Title,
+            Description = assignment.Description,
+            CefrLevel = assignment.CefrLevel,
+            Type = assignment.Type,
+            TopicName = assignment.CurriculumTopic?.Name,
+            TotalPoints = assignment.TotalPoints,
+            EstimatedMinutes = assignment.EstimatedMinutes,
+            IsAiGenerated = assignment.IsAiGenerated,
+            GenerationPrompt = assignment.GenerationPrompt,
+            QuestionsJson = assignment.QuestionsJson,
+            AnswersJson = assignment.AnswersJson
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveAssignment(int id, string? notes)
+    {
+        var adminId = _userManager.GetUserId(User)!;
+        var result = await _assignmentService.ApproveAssignmentAsync(id, adminId, notes);
+
+        if (result)
+        {
+            TempData["SuccessMessage"] = "Assignment approved and ready for students.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Could not approve assignment.";
+        }
+        return RedirectToAction(nameof(Assignments));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RejectAssignment(int id, string? notes)
+    {
+        var adminId = _userManager.GetUserId(User)!;
+        var result = await _assignmentService.RejectAssignmentAsync(id, adminId, notes);
+
+        if (result)
+        {
+            TempData["SuccessMessage"] = "Assignment rejected.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Could not reject assignment.";
+        }
+        return RedirectToAction(nameof(Assignments));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ArchiveAssignment(int id)
+    {
+        var result = await _assignmentService.ArchiveAssignmentAsync(id);
+        TempData["SuccessMessage"] = result ? "Assignment archived." : "Could not archive assignment.";
+        return RedirectToAction(nameof(Assignments));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> AssignToStudents(int id)
+    {
+        var assignment = await _assignmentService.GetAssignmentByIdAsync(id);
+        if (assignment == null) return NotFound();
+
+        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var existingAssignments = await _context.StudentAssignments
+            .Where(sa => sa.AssignmentId == id)
+            .Select(sa => sa.StudentId)
+            .ToListAsync();
+
+        var studentViewModels = students.Where(s => s.IsActive).Select(s => new StudentSelectViewModel
+        {
+            Id = s.Id,
+            Name = s.FullName,
+            Email = s.Email!,
+            CefrLevel = s.CefrLevel,
+            AlreadyAssigned = existingAssignments.Contains(s.Id)
+        }).OrderBy(s => s.Name).ToList();
+
+        return View(new AssignToStudentsViewModel
+        {
+            AssignmentId = id,
+            AssignmentTitle = assignment.Title,
+            AvailableStudents = studentViewModels
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignToStudents(AssignToStudentsViewModel model)
+    {
+        if (!model.SelectedStudentIds.Any())
+        {
+            TempData["ErrorMessage"] = "Please select at least one student.";
+            return RedirectToAction(nameof(AssignToStudents), new { id = model.AssignmentId });
+        }
+
+        var adminId = _userManager.GetUserId(User);
+        await _assignmentService.AssignToStudentsAsync(
+            model.SelectedStudentIds,
+            model.AssignmentId,
+            adminId,
+            model.DueDate);
+
+        TempData["SuccessMessage"] = $"Assignment sent to {model.SelectedStudentIds.Count} student(s).";
+        return RedirectToAction(nameof(Assignments));
+    }
+
+    // Curriculum Topics
+
+    public async Task<IActionResult> Topics(string? cefrLevel, TopicType? type)
+    {
+        var topics = await _assignmentService.GetAllTopicsAsync();
+
+        if (!string.IsNullOrEmpty(cefrLevel))
+            topics = topics.Where(t => t.CefrLevel == cefrLevel);
+
+        if (type.HasValue)
+            topics = topics.Where(t => t.Type == type.Value);
+
+        return View(new CurriculumTopicListViewModel
+        {
+            Topics = topics.ToList(),
+            FilterCefrLevel = cefrLevel,
+            FilterType = type
+        });
+    }
+
+    [HttpGet]
+    public IActionResult CreateTopic()
+    {
+        return View(new EditTopicViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateTopic(EditTopicViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var topic = new CurriculumTopic
+        {
+            Name = model.Name,
+            Description = model.Description,
+            CefrLevel = model.CefrLevel,
+            Type = model.Type,
+            DisplayOrder = model.DisplayOrder,
+            IsActive = model.IsActive,
+            Keywords = model.Keywords,
+            ExampleContent = model.ExampleContent
+        };
+
+        await _assignmentService.CreateTopicAsync(topic);
+        TempData["SuccessMessage"] = "Topic created.";
+        return RedirectToAction(nameof(Topics));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditTopic(int id)
+    {
+        var topic = await _assignmentService.GetTopicByIdAsync(id);
+        if (topic == null) return NotFound();
+
+        return View(new EditTopicViewModel
+        {
+            Id = topic.Id,
+            Name = topic.Name,
+            Description = topic.Description,
+            CefrLevel = topic.CefrLevel,
+            Type = topic.Type,
+            DisplayOrder = topic.DisplayOrder,
+            IsActive = topic.IsActive,
+            Keywords = topic.Keywords,
+            ExampleContent = topic.ExampleContent
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditTopic(EditTopicViewModel model)
+    {
+        if (!ModelState.IsValid || !model.Id.HasValue)
+        {
+            return View(model);
+        }
+
+        var topic = await _assignmentService.GetTopicByIdAsync(model.Id.Value);
+        if (topic == null) return NotFound();
+
+        topic.Name = model.Name;
+        topic.Description = model.Description;
+        topic.CefrLevel = model.CefrLevel;
+        topic.Type = model.Type;
+        topic.DisplayOrder = model.DisplayOrder;
+        topic.IsActive = model.IsActive;
+        topic.Keywords = model.Keywords;
+        topic.ExampleContent = model.ExampleContent;
+
+        await _assignmentService.UpdateTopicAsync(topic);
+        TempData["SuccessMessage"] = "Topic updated.";
+        return RedirectToAction(nameof(Topics));
     }
 }

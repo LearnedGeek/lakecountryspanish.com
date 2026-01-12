@@ -6,8 +6,8 @@
 |-------|---------|--------|
 | 1 | Subscription Foundation | **COMPLETE** |
 | 2 | Token System | **COMPLETE** |
-| 3 | Points & Gamification | Planned |
-| 4 | AI Assignments | Planned |
+| 3 | Points & Gamification | **COMPLETE** |
+| 4 | AI Assignments | **COMPLETE** |
 | 5 | Analytics & Polish | Planned |
 
 ### Phase 1 Completed Features
@@ -31,6 +31,30 @@
 - Support for earned tokens (never expire) and purchased tokens (with expiration)
 - Token transaction audit trail
 - Token usage for class booking with refund/forfeit support
+
+### Phase 3 Completed Features
+- Points system with award tracking for exercises
+- Point-to-token conversion (100 points = 1 earned token)
+- Badge system with milestone, topic mastery, consistency, and challenge badges
+- Student dashboard with points/badges display
+- Streak tracking for consecutive days of activity
+- IGamificationService interface with full implementation
+- Points transaction audit trail
+
+### Phase 4 Completed Features
+- CurriculumTopic, Assignment, StudentAssignment, AssignmentSubmission entities
+- Claude API integration for AI assignment generation (ClaudeApiService)
+- IAssignmentService interface with full assignment lifecycle management
+- AssignmentController for student assignment access
+- Student assignment views (Index, Take, Results, History)
+- Admin assignment management (Assignments, CreateAssignment, EditAssignment, GenerateAssignment, ReviewAssignment)
+- Admin topic management (Topics, CreateTopic, EditTopic)
+- Assignment review workflow (Draft -> PendingReview -> Approved/Rejected)
+- Multi-question type support (Multiple Choice, Fill-in-Blank, Translation, Matching, Short Answer, Reading)
+- Auto-grading with point awards and gamification integration
+- Assign-to-students functionality with bulk assignment support
+- Difficulty feedback collection from students
+- Assignment statistics tracking
 
 ---
 
