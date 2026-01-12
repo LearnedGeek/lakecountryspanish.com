@@ -120,8 +120,8 @@ nunit-*.xml
 # Uploaded files
 wwwroot/uploads/
 
-# Local settings (contains secrets)
-appsettings.Development.json
+# Local/Production settings (contain secrets)
+appsettings.Production.json
 appsettings.Local.json
 
 # Local tool manifest is ok to commit
