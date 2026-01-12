@@ -42,6 +42,7 @@ builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<ITokenService, LakeCountrySpanish.Web.Services.TokenService>();
+builder.Services.AddScoped<IGamificationService, GamificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddHttpClient();
 

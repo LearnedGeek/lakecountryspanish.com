@@ -1,0 +1,247 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.StudentProgressViewModel
+@{
+    ViewData["Title"] = "My Progress";
+}
+
+<div class="container py-4">
+    <h1 class="mb-4">My Progress</h1>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-4">@Model.Progress.TotalPoints.ToString("N0")</h3>
+                    <p class="mb-0">Total Points</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-4">@Model.Progress.CurrentStreak</h3>
+                    <p class="mb-0">Day Streak</p>
+                    @if (Model.Progress.WasActiveToday)
+                    {
+                        <small class="text-white-50">Active today!</small>
+                    }
+                    else if (Model.Progress.CurrentStreak > 0)
+                    {
+                        <small class="text-warning">Complete an activity to keep your streak!</small>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-4">@Model.Progress.TotalBadgesEarned</h3>
+                    <p class="mb-0">Badges Earned</p>
+                    @if (Model.Progress.UnviewedBadgeCount > 0)
+                    {
+                        <span class="badge bg-danger">@Model.Progress.UnviewedBadgeCount new!</span>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <h3 class="display-4">@Model.Progress.TokensEarnedFromPoints</h3>
+                    <p class="mb-0">Tokens Earned</p>
+                    <small>From points</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Points Progress to Next Token -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Progress to Next Token</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+                <span>@Model.Progress.PointsTowardsNextToken / 100 points</span>
+                <span>@(100 - Model.Progress.PointsTowardsNextToken) more to earn a token</span>
+            </div>
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar bg-success progress-bar-striped" role="progressbar"
+                     style="width: @Model.Progress.PointsTowardsNextToken%"
+                     aria-valuenow="@Model.Progress.PointsTowardsNextToken" aria-valuemin="0" aria-valuemax="100">
+                    @Model.Progress.PointsTowardsNextToken%
+                </div>
+            </div>
+            @if (Model.Progress.PointsMultiplier > 1)
+            {
+                <div class="alert alert-success mt-3 mb-0">
+                    <strong>Subscriber Bonus!</strong> You're earning @Model.Progress.PointsMultiplier.ToString("0.0")x points on all activities.
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Streak Info -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Streak Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-2"><strong>Current Streak:</strong> @Model.Progress.CurrentStreak days</p>
+                    <p class="mb-0"><strong>Longest Streak:</strong> @Model.Progress.LongestStreak days</p>
+                </div>
+                <div class="col-md-6">
+                    @if (Model.Progress.WasActiveToday)
+                    {
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle"></i> You've been active today! Keep it up!
+                        </div>
+                    }
+                    else if (Model.Progress.CurrentStreak > 0)
+                    {
+                        <div class="alert alert-warning mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> Don't break your streak! Complete an activity today.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info mb-0">
+                            <i class="bi bi-info-circle"></i> Start your streak by completing an activity!
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badges Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Badges</h5>
+            @if (Model.Progress.UnviewedBadgeCount > 0)
+            {
+                <form method="post" asp-action="MarkBadgesViewed" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Mark all as viewed</button>
+                </form>
+            }
+        </div>
+        <div class="card-body">
+            @if (!Model.AllBadges.Any())
+            {
+                <p class="text-muted">No badges available yet. Keep learning to unlock badges!</p>
+            }
+            else
+            {
+                <!-- Group badges by category -->
+                @foreach (var category in Model.AllBadges.Select(b => b.Category).Distinct())
+                {
+                    var categoryBadges = Model.AllBadges.Where(b => b.Category == category).ToList();
+                    <h6 class="text-muted mt-3 mb-2">@categoryBadges.First().CategoryDisplayName</h6>
+                    <div class="row g-3">
+                        @foreach (var badge in categoryBadges)
+                        {
+                            <div class="col-md-4 col-lg-3">
+                                <div class="card h-100 @(badge.IsEarned ? "" : "bg-light opacity-75")">
+                                    @if (badge.IsNew)
+                                    {
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                            NEW
+                                        </span>
+                                    }
+                                    <div class="card-body text-center">
+                                        @if (!string.IsNullOrEmpty(badge.IconUrl))
+                                        {
+                                            <img src="@badge.IconUrl" alt="@badge.Name" class="mb-2" style="width: 64px; height: 64px; @(badge.IsEarned ? "" : "filter: grayscale(100%);")">
+                                        }
+                                        else
+                                        {
+                                            <div class="mb-2" style="font-size: 48px;">
+                                                @(badge.IsEarned ? "🏆" : "🔒")
+                                            </div>
+                                        }
+                                        <h6 class="card-title mb-1">@badge.Name</h6>
+                                        <p class="card-text small text-muted mb-2">@badge.Description</p>
+                                        @if (badge.IsEarned)
+                                        {
+                                            <span class="badge bg-success">Earned @badge.EarnedAt?.ToString("MMM d, yyyy")</span>
+                                        }
+                                        else if (badge.ProgressPercentage.HasValue)
+                                        {
+                                            <div class="progress mt-2" style="height: 6px;">
+                                                <div class="progress-bar" role="progressbar"
+                                                     style="width: @badge.ProgressPercentage%"
+                                                     aria-valuenow="@badge.ProgressPercentage" aria-valuemin="0" aria-valuemax="100">
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">@badge.CurrentProgress / @badge.RequirementValue</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">@badge.RequirementDescription</small>
+                                        }
+                                        @if (badge.BonusPoints > 0)
+                                        {
+                                            <div class="mt-1">
+                                                <small class="text-success">+@badge.BonusPoints bonus points</small>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Recent Points Activity -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Recent Points Activity</h5>
+        </div>
+        <div class="card-body p-0">
+            @if (!Model.RecentPointHistory.Any())
+            {
+                <p class="text-muted p-3 mb-0">No point activity yet. Complete activities to earn points!</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Activity</th>
+                                <th>Details</th>
+                                <th class="text-end">Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var point in Model.RecentPointHistory)
+                            {
+                                <tr>
+                                    <td>@point.CreatedAt.ToString("MMM d, yyyy h:mm tt")</td>
+                                    <td>@point.SourceDisplayName</td>
+                                    <td>
+                                        @(point.Details ?? point.BadgeName ?? "-")
+                                        @if (point.HasMultiplier)
+                                        {
+                                            <span class="badge bg-info">@point.Multiplier.ToString("0.0")x</span>
+                                        }
+                                    </td>
+                                    <td class="text-end @(point.FinalPoints >= 0 ? "text-success" : "text-danger")">
+                                        <strong>@point.PointsDisplay</strong>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

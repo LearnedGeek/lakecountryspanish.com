@@ -53,4 +53,8 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
     public virtual ICollection<TokenPurchasePermission> TokenPurchasePermissions { get; set; } = new List<TokenPurchasePermission>();
     public virtual ICollection<TokenTransaction> TokenTransactions { get; set; } = new List<TokenTransaction>();
+
+    // Gamification navigation properties
+    public virtual ICollection<StudentBadge> StudentBadges { get; set; } = new List<StudentBadge>();
+    public virtual ICollection<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
 }

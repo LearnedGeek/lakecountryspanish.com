@@ -19,6 +19,7 @@ public class AdminController : Controller
     private readonly IEmailService _emailService;
     private readonly IScheduleService _scheduleService;
     private readonly ITokenService _tokenService;
+    private readonly IGamificationService _gamificationService;
     private readonly IConfiguration _configuration;
 
     public AdminController(
@@ -29,6 +30,7 @@ public class AdminController : Controller
         IEmailService emailService,
         IScheduleService scheduleService,
         ITokenService tokenService,
+        IGamificationService gamificationService,
         IConfiguration configuration)
     {
         _context = context;
@@ -38,6 +40,7 @@ public class AdminController : Controller
         _emailService = emailService;
         _scheduleService = scheduleService;
         _tokenService = tokenService;
+        _gamificationService = gamificationService;
         _configuration = configuration;
     }
 
@@ -1493,5 +1496,314 @@ public class AdminController : Controller
         }).ToList();
 
         return View(viewModel);
+    }
+
+    // Badge Management
+    public async Task<IActionResult> Badges(BadgeCategory? category, bool showInactive = false)
+    {
+        var badgesQuery = _context.Badges.AsQueryable();
+
+        if (category.HasValue)
+        {
+            badgesQuery = badgesQuery.Where(b => b.Category == category.Value);
+        }
+
+        if (!showInactive)
+        {
+            badgesQuery = badgesQuery.Where(b => b.IsActive);
+        }
+
+        var badges = await badgesQuery
+            .OrderBy(b => b.Category)
+            .ThenBy(b => b.DisplayOrder)
+            .ToListAsync();
+
+        var badgeViewModels = new List<AdminBadgeViewModel>();
+        foreach (var badge in badges)
+        {
+            var earnedCount = await _context.StudentBadges
+                .CountAsync(sb => sb.BadgeId == badge.Id);
+            var lastEarned = await _context.StudentBadges
+                .Where(sb => sb.BadgeId == badge.Id)
+                .OrderByDescending(sb => sb.EarnedAt)
+                .Select(sb => sb.EarnedAt)
+                .FirstOrDefaultAsync();
+
+            badgeViewModels.Add(new AdminBadgeViewModel
+            {
+                Id = badge.Id,
+                Name = badge.Name,
+                Description = badge.Description,
+                IconUrl = badge.IconUrl,
+                Category = badge.Category,
+                RequirementType = badge.RequirementType,
+                RequirementValue = badge.RequirementValue,
+                RequirementContext = badge.RequirementContext,
+                BonusPoints = badge.BonusPoints,
+                IsActive = badge.IsActive,
+                DisplayOrder = badge.DisplayOrder,
+                TimesEarned = earnedCount,
+                LastEarnedAt = lastEarned != default ? lastEarned : null
+            });
+        }
+
+        return View(new AdminBadgeListViewModel
+        {
+            Badges = badgeViewModels,
+            FilterCategory = category,
+            ShowInactive = showInactive
+        });
+    }
+
+    [HttpGet]
+    public IActionResult CreateBadge()
+    {
+        return View(new BadgeEditViewModel { IsActive = true, DisplayOrder = 0 });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateBadge(BadgeEditViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var badge = new Badge
+        {
+            Name = model.Name,
+            Description = model.Description,
+            IconUrl = model.IconUrl,
+            Category = model.Category,
+            RequirementType = model.RequirementType,
+            RequirementValue = model.RequirementValue,
+            RequirementContext = model.RequirementContext,
+            BonusPoints = model.BonusPoints,
+            IsActive = model.IsActive,
+            DisplayOrder = model.DisplayOrder
+        };
+
+        await _gamificationService.CreateBadgeAsync(badge);
+
+        TempData["SuccessMessage"] = $"Badge '{badge.Name}' created successfully.";
+        return RedirectToAction(nameof(Badges));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditBadge(int id)
+    {
+        var badge = await _context.Badges.FindAsync(id);
+        if (badge == null)
+        {
+            return NotFound();
+        }
+
+        return View(new BadgeEditViewModel
+        {
+            Id = badge.Id,
+            Name = badge.Name,
+            Description = badge.Description,
+            IconUrl = badge.IconUrl,
+            Category = badge.Category,
+            RequirementType = badge.RequirementType,
+            RequirementValue = badge.RequirementValue,
+            RequirementContext = badge.RequirementContext,
+            BonusPoints = badge.BonusPoints,
+            IsActive = badge.IsActive,
+            DisplayOrder = badge.DisplayOrder
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditBadge(BadgeEditViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var badge = await _context.Badges.FindAsync(model.Id);
+        if (badge == null)
+        {
+            return NotFound();
+        }
+
+        badge.Name = model.Name;
+        badge.Description = model.Description;
+        badge.IconUrl = model.IconUrl;
+        badge.Category = model.Category;
+        badge.RequirementType = model.RequirementType;
+        badge.RequirementValue = model.RequirementValue;
+        badge.RequirementContext = model.RequirementContext;
+        badge.BonusPoints = model.BonusPoints;
+        badge.IsActive = model.IsActive;
+        badge.DisplayOrder = model.DisplayOrder;
+
+        await _gamificationService.UpdateBadgeAsync(badge);
+
+        TempData["SuccessMessage"] = $"Badge '{badge.Name}' updated successfully.";
+        return RedirectToAction(nameof(Badges));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DisableBadge(int id)
+    {
+        var result = await _gamificationService.DisableBadgeAsync(id);
+        if (result)
+        {
+            TempData["SuccessMessage"] = "Badge disabled. Students who earned it will keep it.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Badge not found.";
+        }
+        return RedirectToAction(nameof(Badges));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EnableBadge(int id)
+    {
+        var badge = await _context.Badges.FindAsync(id);
+        if (badge == null)
+        {
+            TempData["ErrorMessage"] = "Badge not found.";
+            return RedirectToAction(nameof(Badges));
+        }
+
+        badge.IsActive = true;
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Badge re-enabled.";
+        return RedirectToAction(nameof(Badges));
+    }
+
+    // Student Gamification Management
+    [HttpGet]
+    public async Task<IActionResult> StudentGamification(string id)
+    {
+        var student = await _userManager.FindByIdAsync(id);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        var progress = await _gamificationService.GetProgressAsync(id);
+        var badges = await _gamificationService.GetStudentBadgesAsync(id);
+        var recentPoints = await _gamificationService.GetPointHistoryAsync(id, 20);
+        var subscription = await _context.Subscriptions
+            .FirstOrDefaultAsync(s => s.StudentId == id && s.Status == SubscriptionStatus.Active);
+
+        var viewModel = new StudentGamificationSummaryViewModel
+        {
+            StudentId = id,
+            StudentName = student.FullName,
+            Email = student.Email!,
+            TotalPoints = progress.TotalPoints,
+            TokensEarnedFromPoints = progress.TokensEarnedFromPoints,
+            CurrentStreak = progress.CurrentStreak,
+            LongestStreak = progress.LongestStreak,
+            BadgesEarned = progress.TotalBadgesEarned,
+            HasActiveSubscription = subscription != null,
+            PointsMultiplier = progress.PointsMultiplier,
+            RecentBadges = badges.OrderByDescending(b => b.EarnedAt).Take(5),
+            RecentPoints = recentPoints
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> AwardBadge(string studentId)
+    {
+        var student = await _userManager.FindByIdAsync(studentId);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        var earnedBadgeIds = await _context.StudentBadges
+            .Where(sb => sb.StudentId == studentId)
+            .Select(sb => sb.BadgeId)
+            .ToListAsync();
+
+        var availableBadges = await _context.Badges
+            .Where(b => b.IsActive && !earnedBadgeIds.Contains(b.Id))
+            .OrderBy(b => b.Category)
+            .ThenBy(b => b.Name)
+            .ToListAsync();
+
+        return View(new AwardBadgeViewModel
+        {
+            StudentId = studentId,
+            StudentName = student.FullName,
+            AvailableBadges = availableBadges
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AwardBadge(AwardBadgeViewModel model)
+    {
+        var result = await _gamificationService.AwardBadgeAsync(model.StudentId, model.BadgeId, model.Context);
+        if (result != null)
+        {
+            var badge = await _context.Badges.FindAsync(model.BadgeId);
+            TempData["SuccessMessage"] = $"Badge '{badge?.Name}' awarded successfully.";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Could not award badge. Student may already have it.";
+        }
+        return RedirectToAction(nameof(StudentGamification), new { id = model.StudentId });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> AdjustPoints(string studentId)
+    {
+        var student = await _userManager.FindByIdAsync(studentId);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        return View(new AdjustPointsViewModel
+        {
+            StudentId = studentId,
+            StudentName = student.FullName,
+            CurrentPoints = student.TotalPoints
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AdjustPoints(AdjustPointsViewModel model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Reason))
+        {
+            ModelState.AddModelError(nameof(model.Reason), "Reason is required.");
+            var student = await _userManager.FindByIdAsync(model.StudentId);
+            model.StudentName = student?.FullName ?? "";
+            model.CurrentPoints = student?.TotalPoints ?? 0;
+            return View(model);
+        }
+
+        var adminId = _userManager.GetUserId(User)!;
+        await _gamificationService.AdjustPointsAsync(model.StudentId, model.Adjustment, model.Reason, adminId);
+
+        TempData["SuccessMessage"] = $"Points adjusted by {model.Adjustment:+#;-#;0}.";
+        return RedirectToAction(nameof(StudentGamification), new { id = model.StudentId });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetStreaks()
+    {
+        var count = await _gamificationService.ResetExpiredStreaksAsync();
+        TempData["SuccessMessage"] = $"Reset {count} expired streak(s).";
+        return RedirectToAction(nameof(Dashboard));
     }
 }

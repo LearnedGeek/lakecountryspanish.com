@@ -92,11 +92,238 @@ public static class SeedData
             await context.SaveChangesAsync();
         }
 
+        // Seed default badges if none exist
+        if (!context.Badges.Any())
+        {
+            await SeedBadgesAsync(context);
+        }
+
         // Only seed test data in development environment
         if (isDevelopment)
         {
             await SeedDevelopmentDataAsync(userManager, context);
         }
+    }
+
+    private static async Task SeedBadgesAsync(ApplicationDbContext context)
+    {
+        var badges = new List<Badge>
+        {
+            // Milestone badges (points-based)
+            new Badge
+            {
+                Name = "First Steps",
+                Description = "Earn your first 50 points",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.Points,
+                RequirementValue = 50,
+                BonusPoints = 10,
+                IsActive = true,
+                DisplayOrder = 1
+            },
+            new Badge
+            {
+                Name = "Century Club",
+                Description = "Earn 100 total points",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.Points,
+                RequirementValue = 100,
+                BonusPoints = 25,
+                IsActive = true,
+                DisplayOrder = 2
+            },
+            new Badge
+            {
+                Name = "Point Master",
+                Description = "Earn 500 total points",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.Points,
+                RequirementValue = 500,
+                BonusPoints = 50,
+                IsActive = true,
+                DisplayOrder = 3
+            },
+            new Badge
+            {
+                Name = "Point Champion",
+                Description = "Earn 1,000 total points",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.Points,
+                RequirementValue = 1000,
+                BonusPoints = 100,
+                IsActive = true,
+                DisplayOrder = 4
+            },
+
+            // Consistency badges (streak-based)
+            new Badge
+            {
+                Name = "Getting Started",
+                Description = "Maintain a 3-day streak",
+                Category = BadgeCategory.Consistency,
+                RequirementType = BadgeRequirementType.Streak,
+                RequirementValue = 3,
+                BonusPoints = 15,
+                IsActive = true,
+                DisplayOrder = 1
+            },
+            new Badge
+            {
+                Name = "Weekly Warrior",
+                Description = "Maintain a 7-day streak",
+                Category = BadgeCategory.Consistency,
+                RequirementType = BadgeRequirementType.Streak,
+                RequirementValue = 7,
+                BonusPoints = 30,
+                IsActive = true,
+                DisplayOrder = 2
+            },
+            new Badge
+            {
+                Name = "Committed Learner",
+                Description = "Maintain a 14-day streak",
+                Category = BadgeCategory.Consistency,
+                RequirementType = BadgeRequirementType.Streak,
+                RequirementValue = 14,
+                BonusPoints = 50,
+                IsActive = true,
+                DisplayOrder = 3
+            },
+            new Badge
+            {
+                Name = "Monthly Master",
+                Description = "Maintain a 30-day streak",
+                Category = BadgeCategory.Consistency,
+                RequirementType = BadgeRequirementType.Streak,
+                RequirementValue = 30,
+                BonusPoints = 100,
+                IsActive = true,
+                DisplayOrder = 4
+            },
+
+            // Class completion badges
+            new Badge
+            {
+                Name = "First Class",
+                Description = "Complete your first class",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.ClassesCompleted,
+                RequirementValue = 1,
+                BonusPoints = 20,
+                IsActive = true,
+                DisplayOrder = 5
+            },
+            new Badge
+            {
+                Name = "Dedicated Student",
+                Description = "Complete 10 classes",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.ClassesCompleted,
+                RequirementValue = 10,
+                BonusPoints = 50,
+                IsActive = true,
+                DisplayOrder = 6
+            },
+            new Badge
+            {
+                Name = "Class Veteran",
+                Description = "Complete 25 classes",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.ClassesCompleted,
+                RequirementValue = 25,
+                BonusPoints = 100,
+                IsActive = true,
+                DisplayOrder = 7
+            },
+            new Badge
+            {
+                Name = "Spanish Scholar",
+                Description = "Complete 50 classes",
+                Category = BadgeCategory.Milestone,
+                RequirementType = BadgeRequirementType.ClassesCompleted,
+                RequirementValue = 50,
+                BonusPoints = 200,
+                IsActive = true,
+                DisplayOrder = 8
+            },
+
+            // CEFR Level badges
+            new Badge
+            {
+                Name = "A1 Achieved",
+                Description = "Reach CEFR level A1 (Beginner)",
+                Category = BadgeCategory.LevelProgress,
+                RequirementType = BadgeRequirementType.CefrLevel,
+                RequirementValue = 1,
+                RequirementContext = "A1",
+                BonusPoints = 50,
+                IsActive = true,
+                DisplayOrder = 1
+            },
+            new Badge
+            {
+                Name = "A2 Achieved",
+                Description = "Reach CEFR level A2 (Elementary)",
+                Category = BadgeCategory.LevelProgress,
+                RequirementType = BadgeRequirementType.CefrLevel,
+                RequirementValue = 2,
+                RequirementContext = "A2",
+                BonusPoints = 100,
+                IsActive = true,
+                DisplayOrder = 2
+            },
+            new Badge
+            {
+                Name = "B1 Achieved",
+                Description = "Reach CEFR level B1 (Intermediate)",
+                Category = BadgeCategory.LevelProgress,
+                RequirementType = BadgeRequirementType.CefrLevel,
+                RequirementValue = 3,
+                RequirementContext = "B1",
+                BonusPoints = 150,
+                IsActive = true,
+                DisplayOrder = 3
+            },
+            new Badge
+            {
+                Name = "B2 Achieved",
+                Description = "Reach CEFR level B2 (Upper Intermediate)",
+                Category = BadgeCategory.LevelProgress,
+                RequirementType = BadgeRequirementType.CefrLevel,
+                RequirementValue = 4,
+                RequirementContext = "B2",
+                BonusPoints = 200,
+                IsActive = true,
+                DisplayOrder = 4
+            },
+
+            // Special badges (manually awarded)
+            new Badge
+            {
+                Name = "Star Student",
+                Description = "Awarded for exceptional effort and progress",
+                Category = BadgeCategory.Special,
+                RequirementType = BadgeRequirementType.Custom,
+                RequirementValue = 0,
+                BonusPoints = 75,
+                IsActive = true,
+                DisplayOrder = 1
+            },
+            new Badge
+            {
+                Name = "Referral Champion",
+                Description = "Referred a friend who became a student",
+                Category = BadgeCategory.Special,
+                RequirementType = BadgeRequirementType.Custom,
+                RequirementValue = 0,
+                BonusPoints = 100,
+                IsActive = true,
+                DisplayOrder = 2
+            }
+        };
+
+        context.Badges.AddRange(badges);
+        await context.SaveChangesAsync();
     }
 
     private static async Task SeedDevelopmentDataAsync(UserManager<ApplicationUser> userManager, ApplicationDbContext context)

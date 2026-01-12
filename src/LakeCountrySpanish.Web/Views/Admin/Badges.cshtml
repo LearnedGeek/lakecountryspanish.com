@@ -1,0 +1,146 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.AdminBadgeListViewModel
+@using LakeCountrySpanish.Web.Models.Entities
+@{
+    ViewData["Title"] = "Badge Management";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Badge Management</h1>
+        <a asp-action="CreateBadge" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Create Badge
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        @foreach (BadgeCategory cat in Enum.GetValues(typeof(BadgeCategory)))
+                        {
+                            if (Model.FilterCategory == cat)
+                            {
+                                <option value="@cat" selected>@cat</option>
+                            }
+                            else
+                            {
+                                <option value="@cat">@cat</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" name="showInactive" value="true"
+                               id="showInactive" @(Model.ShowInactive ? "checked" : "")>
+                        <label class="form-check-label" for="showInactive">Show inactive badges</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-secondary">Filter</button>
+                    <a asp-action="Badges" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Badges.Any())
+    {
+        <div class="alert alert-info">
+            No badges found. <a asp-action="CreateBadge">Create your first badge</a>.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Badge</th>
+                        <th>Category</th>
+                        <th>Requirement</th>
+                        <th>Bonus Points</th>
+                        <th>Times Earned</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var badge in Model.Badges)
+                    {
+                        <tr class="@(!badge.IsActive ? "table-secondary" : "")">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    @if (!string.IsNullOrEmpty(badge.IconUrl))
+                                    {
+                                        <img src="@badge.IconUrl" alt="" style="width: 32px; height: 32px;" class="me-2">
+                                    }
+                                    else
+                                    {
+                                        <span class="me-2" style="font-size: 24px;">🏆</span>
+                                    }
+                                    <div>
+                                        <strong>@badge.Name</strong>
+                                        <br><small class="text-muted">@badge.Description</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@badge.Category</td>
+                            <td>
+                                @badge.RequirementType: @badge.RequirementValue
+                                @if (!string.IsNullOrEmpty(badge.RequirementContext))
+                                {
+                                    <br><small class="text-muted">(@badge.RequirementContext)</small>
+                                }
+                            </td>
+                            <td>@badge.BonusPoints</td>
+                            <td>
+                                @badge.TimesEarned
+                                @if (badge.LastEarnedAt.HasValue)
+                                {
+                                    <br><small class="text-muted">Last: @badge.LastEarnedAt.Value.ToString("MMM d")</small>
+                                }
+                            </td>
+                            <td>
+                                @if (badge.IsActive)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a asp-action="EditBadge" asp-route-id="@badge.Id" class="btn btn-outline-primary">Edit</a>
+                                    @if (badge.IsActive)
+                                    {
+                                        <form method="post" asp-action="DisableBadge" asp-route-id="@badge.Id" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-warning"
+                                                    onclick="return confirm('Disable this badge? Students who earned it will keep it.');">
+                                                Disable
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-action="EnableBadge" asp-route-id="@badge.Id" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-outline-success">Enable</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

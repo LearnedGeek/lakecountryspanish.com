@@ -16,17 +16,20 @@ public class StudentController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IScheduleService _scheduleService;
     private readonly IPaymentService _paymentService;
+    private readonly IGamificationService _gamificationService;
 
     public StudentController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         IScheduleService scheduleService,
-        IPaymentService paymentService)
+        IPaymentService paymentService,
+        IGamificationService gamificationService)
     {
         _context = context;
         _userManager = userManager;
         _scheduleService = scheduleService;
         _paymentService = paymentService;
+        _gamificationService = gamificationService;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -586,5 +589,143 @@ public class StudentController : Controller
     {
         TempData["InfoMessage"] = "Tip cancelled. No charges were made.";
         return RedirectToAction(nameof(Dashboard));
+    }
+
+    // Gamification / Progress
+    [HttpGet]
+    public async Task<IActionResult> Progress()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        // Get gamification progress summary
+        var progress = await _gamificationService.GetProgressAsync(user.Id);
+
+        // Get all active badges with earned status
+        var allBadges = await _gamificationService.GetAllBadgesAsync();
+        var studentBadges = await _gamificationService.GetStudentBadgesAsync(user.Id);
+        var studentBadgeIds = studentBadges.ToDictionary(sb => sb.BadgeId);
+
+        var badgeViewModels = allBadges.Select(b => new BadgeDisplayViewModel
+        {
+            Id = b.Id,
+            Name = b.Name,
+            Description = b.Description,
+            IconUrl = b.IconUrl,
+            Category = b.Category,
+            RequirementType = b.RequirementType,
+            RequirementValue = b.RequirementValue,
+            RequirementContext = b.RequirementContext,
+            BonusPoints = b.BonusPoints,
+            DisplayOrder = b.DisplayOrder,
+            IsEarned = studentBadgeIds.ContainsKey(b.Id),
+            EarnedAt = studentBadgeIds.ContainsKey(b.Id) ? studentBadgeIds[b.Id].EarnedAt : null,
+            IsNew = studentBadgeIds.ContainsKey(b.Id) && !studentBadgeIds[b.Id].IsViewed,
+            CurrentProgress = GetBadgeProgress(b, user, progress)
+        }).OrderByDescending(b => b.IsEarned)
+          .ThenBy(b => b.Category)
+          .ThenBy(b => b.DisplayOrder)
+          .ToList();
+
+        // Get recent point history
+        var recentPoints = await _gamificationService.GetPointHistoryAsync(user.Id, 20);
+        var pointViewModels = recentPoints.Select(p => new PointTransactionViewModel
+        {
+            Id = p.Id,
+            Source = p.Source,
+            BasePoints = p.BasePoints,
+            Multiplier = p.Multiplier,
+            FinalPoints = p.FinalPoints,
+            BalanceAfter = p.BalanceAfter,
+            Details = p.Details,
+            CreatedAt = p.CreatedAt,
+            BadgeName = p.Badge?.Name
+        }).ToList();
+
+        var viewModel = new StudentProgressViewModel
+        {
+            Progress = progress,
+            AllBadges = badgeViewModels,
+            RecentPointHistory = pointViewModels
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> MarkBadgesViewed()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        await _gamificationService.MarkBadgesAsViewedAsync(user.Id);
+        return RedirectToAction(nameof(Progress));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetNewBadges()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Json(new { badges = Array.Empty<object>() });
+        }
+
+        var newBadges = await _gamificationService.GetUnviewedBadgesAsync(user.Id);
+        var badgeViewModels = newBadges.Select(sb => new
+        {
+            id = sb.Badge.Id,
+            name = sb.Badge.Name,
+            description = sb.Badge.Description,
+            iconUrl = sb.Badge.IconUrl,
+            bonusPoints = sb.Badge.BonusPoints,
+            earnedAt = sb.EarnedAt
+        }).ToList();
+
+        return Json(new { badges = badgeViewModels });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetProgressSummary()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Json(new { error = "Unauthorized" });
+        }
+
+        var progress = await _gamificationService.GetProgressAsync(user.Id);
+
+        return Json(new
+        {
+            totalPoints = progress.TotalPoints,
+            pointsTowardsNextToken = progress.PointsTowardsNextToken,
+            tokensEarnedFromPoints = progress.TokensEarnedFromPoints,
+            currentStreak = progress.CurrentStreak,
+            longestStreak = progress.LongestStreak,
+            wasActiveToday = progress.WasActiveToday,
+            totalBadgesEarned = progress.TotalBadgesEarned,
+            unviewedBadgeCount = progress.UnviewedBadgeCount,
+            pointsMultiplier = progress.PointsMultiplier
+        });
+    }
+
+    private static int? GetBadgeProgress(Badge badge, ApplicationUser user, GamificationProgress progress)
+    {
+        return badge.RequirementType switch
+        {
+            BadgeRequirementType.Points => progress.TotalPoints,
+            BadgeRequirementType.Streak => progress.CurrentStreak,
+            BadgeRequirementType.ClassesCompleted => null, // Would need to query
+            BadgeRequirementType.PerfectScores => null, // Would need to query
+            _ => null
+        };
     }
 }

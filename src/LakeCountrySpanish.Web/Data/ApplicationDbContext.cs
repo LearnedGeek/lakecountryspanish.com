@@ -34,6 +34,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TokenPurchasePermission> TokenPurchasePermissions => Set<TokenPurchasePermission>();
     public DbSet<TokenTransaction> TokenTransactions => Set<TokenTransaction>();
 
+    // Gamification entities
+    public DbSet<Badge> Badges => Set<Badge>();
+    public DbSet<StudentBadge> StudentBadges => Set<StudentBadge>();
+    public DbSet<StudentStreak> StudentStreaks => Set<StudentStreak>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -326,6 +332,72 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.SetNull);
 
             // Index for transaction history by student
+            entity.HasIndex(e => new { e.StudentId, e.CreatedAt });
+        });
+
+        // Badge configuration
+        builder.Entity<Badge>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasIndex(e => new { e.Category, e.IsActive, e.DisplayOrder });
+        });
+
+        // StudentBadge configuration
+        builder.Entity<StudentBadge>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany(u => u.StudentBadges)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Badge)
+                .WithMany(b => b.StudentBadges)
+                .HasForeignKey(e => e.BadgeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Each student can only earn each badge once
+            entity.HasIndex(e => new { e.StudentId, e.BadgeId }).IsUnique();
+        });
+
+        // StudentStreak configuration
+        builder.Entity<StudentStreak>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One streak record per student
+            entity.HasIndex(e => e.StudentId).IsUnique();
+        });
+
+        // PointTransaction configuration
+        builder.Entity<PointTransaction>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Multiplier).HasColumnType("decimal(5,2)");
+
+            entity.HasOne(e => e.Student)
+                .WithMany(u => u.PointTransactions)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ScheduledClass)
+                .WithMany()
+                .HasForeignKey(e => e.ScheduledClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Badge)
+                .WithMany(b => b.PointTransactions)
+                .HasForeignKey(e => e.BadgeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for point history by student
             entity.HasIndex(e => new { e.StudentId, e.CreatedAt });
         });
     }

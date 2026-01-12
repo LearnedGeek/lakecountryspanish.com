@@ -1,0 +1,68 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.AdjustPointsViewModel
+@{
+    ViewData["Title"] = $"Adjust Points - {Model.StudentName}";
+}
+
+<div class="container py-4">
+    <h1 class="mb-4">Adjust Points for @Model.StudentName</h1>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Current Balance:</strong> @Model.CurrentPoints.ToString("N0") points
+                    </div>
+
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="StudentId" />
+
+                        <div class="mb-3">
+                            <label asp-for="Adjustment" class="form-label">Point Adjustment</label>
+                            <input asp-for="Adjustment" type="number" class="form-control"
+                                   placeholder="e.g., 50 or -25" required>
+                            <div class="form-text">
+                                Enter a positive number to add points, negative to remove.
+                            </div>
+                            <span asp-validation-for="Adjustment" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Reason" class="form-label">Reason</label>
+                            <textarea asp-for="Reason" class="form-control" rows="3"
+                                      placeholder="Explain why this adjustment is being made..." required></textarea>
+                            <span asp-validation-for="Reason" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Apply Adjustment</button>
+                            <a asp-action="StudentGamification" asp-route-id="@Model.StudentId"
+                               class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Point Adjustments</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Manual point adjustments are logged and visible in the student's point history.
+                    </p>
+                    <h6>Common Reasons:</h6>
+                    <ul class="text-muted small mb-0">
+                        <li>Correction for system error</li>
+                        <li>Bonus for special achievement</li>
+                        <li>Contest or challenge reward</li>
+                        <li>Referral bonus</li>
+                        <li>Compensation for technical issues</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

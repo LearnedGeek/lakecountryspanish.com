@@ -1,0 +1,95 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.BadgeEditViewModel
+@using LakeCountrySpanish.Web.Models.Entities
+@{
+    ViewData["Title"] = "Edit Badge";
+}
+
+<div class="container py-4">
+    <h1 class="mb-4">Edit Badge</h1>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="Id" />
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label">Badge Name</label>
+                            <input asp-for="Name" class="form-control" required>
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" class="form-control" rows="2" required></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="IconUrl" class="form-label">Icon URL (optional)</label>
+                            <input asp-for="IconUrl" class="form-control">
+                            <div class="form-text">Leave empty to use the default trophy icon.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Category" class="form-label">Category</label>
+                                <select asp-for="Category" class="form-select" required>
+                                    @foreach (BadgeCategory cat in Enum.GetValues(typeof(BadgeCategory)))
+                                    {
+                                        <option value="@cat">@cat</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RequirementType" class="form-label">Requirement Type</label>
+                                <select asp-for="RequirementType" class="form-select" required>
+                                    @foreach (BadgeRequirementType req in Enum.GetValues(typeof(BadgeRequirementType)))
+                                    {
+                                        <option value="@req">@req</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RequirementValue" class="form-label">Requirement Value</label>
+                                <input asp-for="RequirementValue" type="number" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RequirementContext" class="form-label">Requirement Context (optional)</label>
+                                <input asp-for="RequirementContext" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="BonusPoints" class="form-label">Bonus Points</label>
+                                <input asp-for="BonusPoints" type="number" class="form-control" min="0">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DisplayOrder" class="form-label">Display Order</label>
+                                <input asp-for="DisplayOrder" type="number" class="form-control" min="0">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox">
+                                <label asp-for="IsActive" class="form-check-label">Active</label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a asp-action="Badges" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
