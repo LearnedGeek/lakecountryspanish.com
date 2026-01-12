@@ -1,0 +1,177 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.SubscriptionPlansViewModel
+@{
+    ViewData["Title"] = "Subscription Plans";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900">Choose Your Plan</h1>
+            <p class="mt-4 text-xl text-gray-600">Unlock consistent learning with a monthly subscription</p>
+            <p class="mt-2 text-gray-500">All plans include automatic class scheduling and priority booking</p>
+        </div>
+
+        @if (TempData["Error"] != null)
+        {
+            <div class="mb-8 rounded-md bg-red-50 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-red-800">@TempData["Error"]</p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.CurrentSubscription != null)
+        {
+            <div class="mb-8 rounded-md bg-blue-50 p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-blue-800">
+                            You currently have an active <strong>@Model.CurrentSubscription.Tier?.Name</strong> subscription.
+                            <a href="@Url.Action("Manage")" class="underline">Manage your subscription</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Pricing Cards -->
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+            @foreach (var tier in Model.Tiers)
+            {
+                var isCurrentTier = Model.CurrentSubscription?.SubscriptionTierId == tier.Id;
+                var isPopular = tier.ClassesPerMonth == 4; // 4 classes is typically most popular
+                var pricePerClass = tier.ClassesPerMonth > 0 ? tier.MonthlyPrice / tier.ClassesPerMonth : 0;
+
+                <div class="relative bg-white rounded-2xl shadow-lg @(isPopular ? "ring-2 ring-blue-500" : "")">
+                    @if (isPopular)
+                    {
+                        <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                            <span class="inline-flex items-center rounded-full bg-blue-500 px-4 py-1 text-sm font-semibold text-white">
+                                Most Popular
+                            </span>
+                        </div>
+                    }
+
+                    <div class="p-8">
+                        <h3 class="text-xl font-semibold text-gray-900">@tier.Name</h3>
+                        <p class="mt-2 text-gray-500">@tier.Description</p>
+
+                        <div class="mt-6">
+                            <p class="flex items-baseline">
+                                <span class="text-4xl font-bold tracking-tight text-gray-900">$@tier.MonthlyPrice.ToString("0.00")</span>
+                                <span class="ml-1 text-gray-500">/month</span>
+                            </p>
+                            <p class="mt-1 text-sm text-gray-500">
+                                $@pricePerClass.ToString("0.00") per class
+                            </p>
+                        </div>
+
+                        <ul class="mt-8 space-y-4">
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span class="ml-3 text-gray-700">@tier.ClassesPerMonth classes per month</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span class="ml-3 text-gray-700">@tier.PointsMultiplier.ToString("0.0")x points on exercises</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span class="ml-3 text-gray-700">Automatic scheduling</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span class="ml-3 text-gray-700">Priority booking</span>
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-5 w-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                <span class="ml-3 text-gray-700">Flexible cancellation</span>
+                            </li>
+                        </ul>
+
+                        <div class="mt-8">
+                            @if (isCurrentTier)
+                            {
+                                <a href="@Url.Action("Manage")"
+                                   class="block w-full rounded-lg bg-gray-100 px-4 py-3 text-center text-sm font-semibold text-gray-900 hover:bg-gray-200">
+                                    Current Plan
+                                </a>
+                            }
+                            else if (Model.CurrentSubscription != null)
+                            {
+                                <button disabled
+                                   class="block w-full rounded-lg bg-gray-300 px-4 py-3 text-center text-sm font-semibold text-gray-500 cursor-not-allowed">
+                                    Manage Current Plan First
+                                </button>
+                            }
+                            else if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <form method="post" asp-action="Subscribe">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="tierId" value="@tier.Id" />
+                                    <button type="submit"
+                                       class="block w-full rounded-lg @(isPopular ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-900 hover:bg-gray-800") px-4 py-3 text-center text-sm font-semibold text-white transition-colors">
+                                        Get Started
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Login", "Account", new { returnUrl = Url.Action("Plans") })"
+                                   class="block w-full rounded-lg @(isPopular ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-900 hover:bg-gray-800") px-4 py-3 text-center text-sm font-semibold text-white transition-colors">
+                                    Sign in to Subscribe
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mt-16">
+            <h2 class="text-2xl font-bold text-gray-900 text-center mb-8">Frequently Asked Questions</h2>
+            <div class="max-w-3xl mx-auto space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">How does automatic scheduling work?</h3>
+                    <p class="mt-2 text-gray-600">Once you subscribe, you can set your preferred class times. Your classes will be automatically scheduled each month based on your preferences.</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">What is the cancellation policy?</h3>
+                    <p class="mt-2 text-gray-600">You can request cancellation before the 3rd week of the month for it to take effect at the end of the current billing period. After the 3rd week, cancellation will take effect at the end of the following month.</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Can I change my plan?</h3>
+                    <p class="mt-2 text-gray-600">Yes! You can upgrade or downgrade your plan at any time through the Stripe billing portal. Changes will be prorated.</p>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900">What happens to unused classes?</h3>
+                    <p class="mt-2 text-gray-600">Unused classes do not roll over to the next month. We encourage you to use all your scheduled classes for maximum learning progress.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

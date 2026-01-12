@@ -11,7 +11,8 @@ public enum PaymentStatus
 {
     Unpaid,
     Paid,
-    PartOfPackage
+    PartOfPackage,
+    PartOfSubscription
 }
 
 public class ScheduledClass
@@ -26,6 +27,22 @@ public class ScheduledClass
     public int? StudentPackageId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Subscription fields
+    /// <summary>
+    /// Subscription this class belongs to (if part of subscription)
+    /// </summary>
+    public int? SubscriptionId { get; set; }
+
+    /// <summary>
+    /// True if this class was auto-generated from a recurring schedule
+    /// </summary>
+    public bool IsFromRecurringSchedule { get; set; }
+
+    /// <summary>
+    /// The recurring schedule that generated this class (if applicable)
+    /// </summary>
+    public int? RecurringScheduleId { get; set; }
+
     // Class details
     public string? ClassroomUrlOverride { get; set; }  // Override student's default URL for this class
     public string? TeacherNotes { get; set; }          // Notes on student progress after completion
@@ -36,4 +53,6 @@ public class ScheduledClass
     public virtual TimeSlot TimeSlot { get; set; } = null!;
     public virtual Payment? Payment { get; set; }
     public virtual StudentPackage? StudentPackage { get; set; }
+    public virtual Subscription? Subscription { get; set; }
+    public virtual RecurringSchedule? RecurringSchedule { get; set; }
 }

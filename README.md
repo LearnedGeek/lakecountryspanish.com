@@ -7,9 +7,17 @@ A complete web application for managing an online Spanish teaching business. Bui
 ### For Students
 - **Dashboard** - View upcoming classes, account balance, and learning documents
 - **Class Booking** - Browse available time slots and book lessons
+- **Subscriptions** - Monthly subscription plans with automatic class scheduling
 - **Package Credits** - Purchase class packages for discounted rates
 - **Payment Processing** - Secure payments via Stripe with automatic verification
 - **Document Access** - Download learning materials shared by the teacher
+
+### Subscription System
+- **Multiple Tiers** - 2, 4, or 8 classes per month with volume discounts
+- **Automatic Scheduling** - Set preferred times and classes are booked automatically
+- **Recurring Billing** - Stripe-powered subscription management
+- **Self-Service Portal** - Manage billing, pause, or cancel through Stripe Customer Portal
+- **Flexible Cancellation** - Request cancellation before 3rd week for end-of-period termination
 
 ### For Administrators
 - **Dashboard** - Overview of today's schedule, revenue, and new inquiries
@@ -114,8 +122,11 @@ On first run, the application seeds a default admin account:
 
 1. Create a [Stripe account](https://dashboard.stripe.com/register)
 2. Get your API keys from the [Stripe Dashboard](https://dashboard.stripe.com/apikeys)
-3. For webhooks (production), configure an endpoint at `/api/payment/webhook`
-4. Add the webhook signing secret to your configuration
+3. For webhooks (production), configure endpoints:
+   - `/api/payment/webhook` - For one-time payments
+   - `/api/subscription/webhook` - For subscription events
+4. Add the webhook signing secrets to your configuration
+5. For subscriptions, create Products and Prices in Stripe Dashboard and add their IDs to the SubscriptionTiers table
 
 ### reCAPTCHA Setup (Optional)
 
@@ -185,7 +196,8 @@ For production, use environment variables instead of `appsettings.json` for sens
 - `ConnectionStrings__DefaultConnection`
 - `Stripe__PublishableKey`
 - `Stripe__SecretKey`
-- `Stripe__WebhookSecret`
+- `Stripe__WebhookSecret` - For one-time payment webhooks
+- `Stripe__SubscriptionWebhookSecret` - For subscription webhooks
 - `ReCaptcha__SiteKey`
 - `ReCaptcha__SecretKey`
 
@@ -193,10 +205,21 @@ For production, use environment variables instead of `appsettings.json` for sens
 
 In production, configure Stripe webhooks to notify your application of payment events:
 
+**One-time Payments:**
 1. Go to Stripe Dashboard > Developers > Webhooks
 2. Add endpoint: `https://yourdomain.com/api/payment/webhook`
 3. Select events: `checkout.session.completed`
-4. Copy the signing secret to your configuration
+4. Copy the signing secret to `Stripe:WebhookSecret`
+
+**Subscriptions:**
+1. Add endpoint: `https://yourdomain.com/api/subscription/webhook`
+2. Select events:
+   - `customer.subscription.created`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_succeeded`
+   - `invoice.payment_failed`
+3. Copy the signing secret to `Stripe:SubscriptionWebhookSecret`
 
 ## License
 

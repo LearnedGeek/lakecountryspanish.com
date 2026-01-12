@@ -23,6 +23,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ClassFeedback> ClassFeedbacks => Set<ClassFeedback>();
     public DbSet<Tip> Tips => Set<Tip>();
 
+    // Subscription entities
+    public DbSet<SubscriptionTier> SubscriptionTiers => Set<SubscriptionTier>();
+    public DbSet<Subscription> Subscriptions => Set<Subscription>();
+    public DbSet<RecurringSchedule> RecurringSchedules => Set<RecurringSchedule>();
+    public DbSet<SubscriptionHistory> SubscriptionHistory => Set<SubscriptionHistory>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -173,6 +179,86 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(e => e.ScheduledClassId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // SubscriptionTier configuration
+        builder.Entity<SubscriptionTier>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.MonthlyPrice).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.PointsMultiplier).HasColumnType("decimal(5,2)");
+        });
+
+        // Subscription configuration
+        builder.Entity<Subscription>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany(u => u.Subscriptions)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Tier)
+                .WithMany(t => t.Subscriptions)
+                .HasForeignKey(e => e.SubscriptionTierId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Index for finding active subscription by student
+            entity.HasIndex(e => new { e.StudentId, e.Status });
+        });
+
+        // RecurringSchedule configuration
+        builder.Entity<RecurringSchedule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Subscription)
+                .WithMany(s => s.RecurringSchedules)
+                .HasForeignKey(e => e.SubscriptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.TimeSlot)
+                .WithMany()
+                .HasForeignKey(e => e.TimeSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // SubscriptionHistory configuration
+        builder.Entity<SubscriptionHistory>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Subscription)
+                .WithMany(s => s.History)
+                .HasForeignKey(e => e.SubscriptionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.SubscriptionId, e.CreatedAt });
+        });
+
+        // Update ScheduledClass for subscription relationships
+        // Using NoAction to avoid cascade path issues with SQL Server
+        builder.Entity<ScheduledClass>(entity =>
+        {
+            entity.HasOne(e => e.Subscription)
+                .WithMany(s => s.ScheduledClasses)
+                .HasForeignKey(e => e.SubscriptionId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(e => e.RecurringSchedule)
+                .WithMany(r => r.ScheduledClasses)
+                .HasForeignKey(e => e.RecurringScheduleId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // Update Payment for subscription relationship
+        builder.Entity<Payment>(entity =>
+        {
+            entity.HasOne(e => e.Subscription)
+                .WithMany(s => s.Payments)
+                .HasForeignKey(e => e.SubscriptionId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
     }
 }

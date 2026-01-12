@@ -12,6 +12,34 @@ public class ApplicationUser : IdentityUser
     public bool IsActive { get; set; } = true;
     public bool MustChangePassword { get; set; } = true;  // Force password change on first login
 
+    // Stripe integration
+    /// <summary>
+    /// Stripe Customer ID for subscription and portal access
+    /// </summary>
+    public string? StripeCustomerId { get; set; }
+
+    // CEFR Level for curriculum
+    /// <summary>
+    /// Student's current CEFR level (A1, A2, B1, B2, C1, C2)
+    /// </summary>
+    public string CefrLevel { get; set; } = "A1";
+
+    // Gamification (Phase 3)
+    /// <summary>
+    /// Total accumulated points
+    /// </summary>
+    public int TotalPoints { get; set; } = 0;
+
+    /// <summary>
+    /// Points progress towards next token (0-99)
+    /// </summary>
+    public int PointsTowardsNextToken => TotalPoints % 100;
+
+    /// <summary>
+    /// Total tokens earned from points
+    /// </summary>
+    public int TokensEarnedFromPoints => TotalPoints / 100;
+
     public string FullName => $"{FirstName} {LastName}";
 
     // Navigation properties
@@ -19,4 +47,5 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<StudentPackage> StudentPackages { get; set; } = new List<StudentPackage>();
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public virtual ICollection<StudentDocument> StudentDocuments { get; set; } = new List<StudentDocument>();
+    public virtual ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
 }

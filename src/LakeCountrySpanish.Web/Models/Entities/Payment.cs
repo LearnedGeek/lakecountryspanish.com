@@ -11,7 +11,9 @@ public enum PaymentStatusType
 public enum PaymentType
 {
     SingleClass,
-    Package
+    Package,
+    Subscription,
+    TokenPurchase
 }
 
 public class Payment
@@ -27,8 +29,14 @@ public class Payment
     public DateTime? CompletedAt { get; set; }
     public string? Description { get; set; }
 
+    /// <summary>
+    /// Subscription ID if this payment is for a subscription
+    /// </summary>
+    public int? SubscriptionId { get; set; }
+
     // Navigation properties
     public virtual ApplicationUser Student { get; set; } = null!;
     public virtual ICollection<ScheduledClass> ScheduledClasses { get; set; } = new List<ScheduledClass>();
     public virtual StudentPackage? StudentPackage { get; set; }
+    public virtual Subscription? Subscription { get; set; }
 }
