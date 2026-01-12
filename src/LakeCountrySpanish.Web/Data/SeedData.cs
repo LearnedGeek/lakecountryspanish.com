@@ -299,22 +299,76 @@ public static class SeedData
 
             if (wednesdaySlot != null && johnPackage != null)
             {
-                // A completed class from last week with notes
+                // Completed classes from recent weeks (for feedback testing)
                 scheduledClasses.Add(new ScheduledClass
                 {
                     StudentId = johnDoe.Id,
                     TimeSlotId = wednesdaySlot.Id,
-                    ClassDateTime = today.AddDays(-7).Add(wednesdaySlot.StartTime),
+                    ClassDateTime = today.AddDays(-3).Add(wednesdaySlot.StartTime),
                     Status = ClassStatus.Completed,
                     PaymentStatus = PaymentStatus.PartOfPackage,
                     StudentPackageId = johnPackage.Id,
                     TeacherNotes = "Reviewed verb conjugations. Good progress on past tense. Homework: Practice irregular verbs.",
-                    CreatedAt = DateTime.UtcNow.AddDays(-14)
+                    CreatedAt = DateTime.UtcNow.AddDays(-10)
+                });
+
+                scheduledClasses.Add(new ScheduledClass
+                {
+                    StudentId = johnDoe.Id,
+                    TimeSlotId = wednesdaySlot.Id,
+                    ClassDateTime = today.AddDays(-10).Add(wednesdaySlot.StartTime),
+                    Status = ClassStatus.Completed,
+                    PaymentStatus = PaymentStatus.PartOfPackage,
+                    StudentPackageId = johnPackage.Id,
+                    TeacherNotes = "Introduction to subjunctive mood. Student grasped concepts well.",
+                    CreatedAt = DateTime.UtcNow.AddDays(-17)
+                });
+            }
+
+            // Add completed classes for Jane too
+            if (tuesdaySlot != null && janePackage != null)
+            {
+                scheduledClasses.Add(new ScheduledClass
+                {
+                    StudentId = janeSmith.Id,
+                    TimeSlotId = tuesdaySlot.Id,
+                    ClassDateTime = today.AddDays(-5).Add(tuesdaySlot.StartTime),
+                    Status = ClassStatus.Completed,
+                    PaymentStatus = PaymentStatus.PartOfPackage,
+                    StudentPackageId = janePackage.Id,
+                    TeacherNotes = "Conversational practice - ordering food at a restaurant. Great pronunciation!",
+                    CreatedAt = DateTime.UtcNow.AddDays(-12)
                 });
             }
 
             context.ScheduledClasses.AddRange(scheduledClasses);
             await context.SaveChangesAsync();
+        }
+
+        // Seed a sample approved testimonial for the homepage
+        if (!context.ClassFeedbacks.Any() && johnDoe != null)
+        {
+            var completedClass = await context.ScheduledClasses
+                .FirstOrDefaultAsync(sc => sc.StudentId == johnDoe.Id && sc.Status == ClassStatus.Completed);
+
+            if (completedClass != null)
+            {
+                var sampleFeedback = new ClassFeedback
+                {
+                    ScheduledClassId = completedClass.Id,
+                    StudentId = johnDoe.Id,
+                    Rating = 5,
+                    PrivateComment = "Really enjoyed the lesson structure!",
+                    PublicTestimonial = "Karen is an amazing teacher! Her lessons are well-structured and she makes learning Spanish fun. I've made more progress in a few weeks than I did in years of self-study.",
+                    AllowPublicDisplay = true,
+                    IsApproved = true,
+                    IsFeatured = true,
+                    CreatedAt = DateTime.UtcNow.AddDays(-5)
+                };
+
+                context.ClassFeedbacks.Add(sampleFeedback);
+                await context.SaveChangesAsync();
+            }
         }
     }
 }
