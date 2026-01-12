@@ -11,4 +11,8 @@ public interface IPaymentService
     Task<IEnumerable<Payment>> GetAllPaymentsAsync(DateTime? startDate = null, DateTime? endDate = null, string? studentId = null);
     Task<decimal> GetStudentBalanceAsync(string studentId);
     Task<decimal> GetClassPriceForStudentAsync(string studentId);
+
+    // Tip-related methods
+    Task<string?> CreateTipCheckoutSessionAsync(string studentId, decimal amount, string? message, int? classId);
+    Task<bool> ProcessTipWebhookAsync(string sessionId);
 }

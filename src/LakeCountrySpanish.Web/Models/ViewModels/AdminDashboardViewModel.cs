@@ -14,4 +14,14 @@ public class AdminDashboardViewModel
     public IEnumerable<ScheduledClass> TodaysSchedule { get; set; } = new List<ScheduledClass>();
     public IEnumerable<ContactInquiry> RecentInquiries { get; set; } = new List<ContactInquiry>();
     public IEnumerable<Payment> RecentPayments { get; set; } = new List<Payment>();
+
+    // 3-day schedule view
+    public List<DayScheduleGroup> UpcomingDays { get; set; } = new();
+    public bool HasScheduleConflicts { get; set; }
+}
+
+public class DayScheduleGroup
+{
+    public DateTime Date { get; set; }
+    public List<ScheduledClass> Classes { get; set; } = new();
 }

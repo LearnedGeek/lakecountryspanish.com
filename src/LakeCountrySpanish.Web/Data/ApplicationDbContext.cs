@@ -20,6 +20,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentDocument> StudentDocuments => Set<StudentDocument>();
     public DbSet<ContactInquiry> ContactInquiries => Set<ContactInquiry>();
     public DbSet<BlockedDate> BlockedDates => Set<BlockedDate>();
+    public DbSet<ClassFeedback> ClassFeedbacks => Set<ClassFeedback>();
+    public DbSet<Tip> Tips => Set<Tip>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -135,6 +137,42 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<BlockedDate>(entity =>
         {
             entity.HasKey(e => e.Id);
+        });
+
+        // ClassFeedback configuration
+        builder.Entity<ClassFeedback>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.ScheduledClass)
+                .WithMany()
+                .HasForeignKey(e => e.ScheduledClassId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Ensure one feedback per class per student
+            entity.HasIndex(e => new { e.ScheduledClassId, e.StudentId }).IsUnique();
+        });
+
+        // Tip configuration
+        builder.Entity<Tip>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ScheduledClass)
+                .WithMany()
+                .HasForeignKey(e => e.ScheduledClassId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

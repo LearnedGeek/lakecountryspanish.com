@@ -127,6 +127,40 @@
     </div>
 </div>
 
+<!-- Testimonials Section -->
+@{
+    var testimonials = ViewBag.Testimonials as IEnumerable<LakeCountrySpanish.Web.Models.ViewModels.TestimonialDisplayViewModel>;
+}
+@if (testimonials != null && testimonials.Any())
+{
+    <div class="bg-white py-16">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">What Students Say</h2>
+                <p class="mt-4 text-lg text-gray-600">Hear from our satisfied learners</p>
+            </div>
+
+            <div class="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                @foreach (var testimonial in testimonials.Take(6))
+                {
+                    <div class="bg-gray-50 rounded-xl p-6 shadow-sm">
+                        <div class="flex items-center mb-4">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <svg class="h-5 w-5 @(i <= testimonial.Rating ? "text-yellow-400" : "text-gray-300")" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            }
+                        </div>
+                        <p class="text-gray-700 italic">"@testimonial.Testimonial"</p>
+                        <p class="mt-4 text-sm font-medium text-gray-900">- @testimonial.StudentFirstName</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
 <!-- How It Works Section -->
 <div class="bg-white py-16">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

@@ -74,7 +74,7 @@
                                 <p class="text-xs text-gray-500">@payment.CreatedAt.ToString("h:mm tt")</p>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <p class="text-sm text-gray-900">@payment.Student.FullName</p>
+                                <a asp-action="StudentProfile" asp-route-id="@payment.StudentId" class="text-sm text-primary-600 hover:text-primary-700 hover:underline">@payment.Student.FullName</a>
                             </td>
                             <td class="px-6 py-4">
                                 <p class="text-sm text-gray-900">@payment.Description</p>

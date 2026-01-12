@@ -227,4 +227,116 @@ public class StripePaymentService : IPaymentService
         var defaultPrice = _configuration.GetValue<decimal>("AppSettings:DefaultClassPrice");
         return defaultPrice > 0 ? defaultPrice : 25.00m;
     }
+
+    public async Task<string?> CreateTipCheckoutSessionAsync(string studentId, decimal amount, string? message, int? classId)
+    {
+        if (amount < 1 || amount > 1000)
+            return null;
+
+        var student = await _context.Users.FindAsync(studentId);
+        if (student == null)
+            return null;
+
+        // Create tip record
+        var tip = new Tip
+        {
+            StudentId = studentId,
+            Amount = amount,
+            Message = message?.Trim(),
+            ScheduledClassId = classId,
+            IsPaid = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Tips.Add(tip);
+        await _context.SaveChangesAsync();
+
+        // Build URLs
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://localhost:7001";
+        var successUrl = $"{baseUrl}/Student/TipSuccess?session_id={{CHECKOUT_SESSION_ID}}";
+        var cancelUrl = $"{baseUrl}/Student/TipCancel";
+
+        // Create Stripe checkout session
+        try
+        {
+            var options = new SessionCreateOptions
+            {
+                PaymentMethodTypes = new List<string> { "card" },
+                LineItems = new List<SessionLineItemOptions>
+                {
+                    new SessionLineItemOptions
+                    {
+                        PriceData = new SessionLineItemPriceDataOptions
+                        {
+                            UnitAmount = (long)(amount * 100),
+                            Currency = "usd",
+                            ProductData = new SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = "Tip for Karen",
+                                Description = string.IsNullOrEmpty(message) ? "Thank you for your support!" : message
+                            },
+                        },
+                        Quantity = 1,
+                    },
+                },
+                Mode = "payment",
+                SuccessUrl = successUrl,
+                CancelUrl = cancelUrl,
+                CustomerEmail = student.Email,
+                Metadata = new Dictionary<string, string>
+                {
+                    { "tipId", tip.Id.ToString() },
+                    { "studentId", studentId },
+                    { "type", "tip" }
+                }
+            };
+
+            var service = new SessionService();
+            var session = await service.CreateAsync(options);
+
+            // Update tip with session ID
+            tip.StripeSessionId = session.Id;
+            await _context.SaveChangesAsync();
+
+            return session.Url;
+        }
+        catch (StripeException)
+        {
+            // Remove the tip record if Stripe session creation fails
+            _context.Tips.Remove(tip);
+            await _context.SaveChangesAsync();
+            return null;
+        }
+    }
+
+    public async Task<bool> ProcessTipWebhookAsync(string sessionId)
+    {
+        if (string.IsNullOrEmpty(sessionId))
+            return false;
+
+        var tip = await _context.Tips.FirstOrDefaultAsync(t => t.StripeSessionId == sessionId);
+        if (tip == null)
+            return false;
+
+        // Check with Stripe if the session is paid
+        try
+        {
+            var service = new SessionService();
+            var session = await service.GetAsync(sessionId);
+
+            if (session.PaymentStatus == "paid")
+            {
+                tip.IsPaid = true;
+                tip.StripePaymentIntentId = session.PaymentIntentId;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+        }
+        catch (StripeException)
+        {
+            return false;
+        }
+    }
 }

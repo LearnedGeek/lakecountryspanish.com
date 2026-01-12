@@ -4,6 +4,7 @@ using LakeCountrySpanish.Web.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LakeCountrySpanish.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260112022231_AddClassroomUrlAndNotes")]
+    partial class AddClassroomUrlAndNotes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -66,9 +69,6 @@ namespace LakeCountrySpanish.Web.Migrations
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
-
-                    b.Property<bool>("MustChangePassword")
-                        .HasColumnType("bit");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -134,52 +134,6 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("BlockedDates");
-                });
-
-            modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.ClassFeedback", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("AllowPublicDisplay")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsFeatured")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("PrivateComment")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PublicTestimonial")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ScheduledClassId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StudentId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StudentId");
-
-                    b.HasIndex("ScheduledClassId", "StudentId")
-                        .IsUnique();
-
-                    b.ToTable("ClassFeedbacks");
                 });
 
             modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.ContactInquiry", b =>
@@ -476,48 +430,6 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.ToTable("TimeSlots");
                 });
 
-            modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.Tip", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsPaid")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ScheduledClassId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("StripePaymentIntentId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StripeSessionId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StudentId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ScheduledClassId");
-
-                    b.HasIndex("StudentId");
-
-                    b.ToTable("Tips");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -651,25 +563,6 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.ClassFeedback", b =>
-                {
-                    b.HasOne("LakeCountrySpanish.Web.Models.Entities.ScheduledClass", "ScheduledClass")
-                        .WithMany()
-                        .HasForeignKey("ScheduledClassId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("LakeCountrySpanish.Web.Models.Entities.ApplicationUser", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ScheduledClass");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.Payment", b =>
                 {
                     b.HasOne("LakeCountrySpanish.Web.Models.Entities.ApplicationUser", "Student")
@@ -755,24 +648,6 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.Navigation("Package");
 
                     b.Navigation("Payment");
-
-                    b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.Tip", b =>
-                {
-                    b.HasOne("LakeCountrySpanish.Web.Models.Entities.ScheduledClass", "ScheduledClass")
-                        .WithMany()
-                        .HasForeignKey("ScheduledClassId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("LakeCountrySpanish.Web.Models.Entities.ApplicationUser", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ScheduledClass");
 
                     b.Navigation("Student");
                 });

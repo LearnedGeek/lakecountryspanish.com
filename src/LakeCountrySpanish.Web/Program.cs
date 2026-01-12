@@ -71,11 +71,11 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Seed roles and admin user
+// Seed roles, admin user, and development test data
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    await SeedData.InitializeAsync(services);
+    await SeedData.InitializeAsync(services, app.Environment.IsDevelopment());
 }
 
 app.Run();

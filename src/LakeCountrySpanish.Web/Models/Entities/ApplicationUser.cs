@@ -7,8 +7,10 @@ public class ApplicationUser : IdentityUser
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public decimal? CustomHourlyRate { get; set; }
+    public string? ClassroomUrl { get; set; }  // Default Zoom/Meet link for this student
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool IsActive { get; set; } = true;
+    public bool MustChangePassword { get; set; } = true;  // Force password change on first login
 
     public string FullName => $"{FirstName} {LastName}";
 

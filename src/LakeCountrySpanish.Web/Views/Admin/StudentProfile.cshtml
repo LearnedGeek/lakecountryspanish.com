@@ -1,0 +1,300 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.StudentProfileViewModel
+@{
+    ViewData["Title"] = $"{Model.FullName} - Student Profile";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <a asp-action="Students" class="text-primary-600 hover:text-primary-700 flex items-center text-sm mb-4">
+                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Back to Students
+            </a>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-16 w-16 bg-primary-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl font-bold text-primary-600">@Model.FullName.Substring(0, 1).ToUpper()</span>
+                    </div>
+                    <div class="ml-4">
+                        <h1 class="text-3xl font-bold text-gray-900">@Model.FullName</h1>
+                        <p class="text-gray-500">@Model.Email</p>
+                    </div>
+                    @if (!Model.IsActive)
+                    {
+                        <span class="ml-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            Inactive
+                        </span>
+                    }
+                </div>
+                <div class="flex space-x-3">
+                    <a asp-action="EditStudent" asp-route-id="@Model.Id" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium transition flex items-center">
+                        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                        Edit Student
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase">Member Since</p>
+                <p class="text-lg font-semibold text-gray-900">@Model.JoinedDate.ToString("MMM d, yyyy")</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase">Credits Left</p>
+                <p class="text-lg font-semibold @(Model.CreditsRemaining > 0 ? "text-green-600" : "text-gray-900")">@Model.CreditsRemaining</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase">Upcoming</p>
+                <p class="text-lg font-semibold text-blue-600">@Model.UpcomingClassCount</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase">Completed</p>
+                <p class="text-lg font-semibold text-gray-900">@Model.TotalClassesCompleted</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase">Total Paid</p>
+                <p class="text-lg font-semibold text-gray-900">$@Model.TotalPaid.ToString("0.00")</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-xs font-medium text-gray-500 uppercase">Balance Due</p>
+                <p class="text-lg font-semibold @(Model.Balance > 0 ? "text-red-600" : "text-gray-900")">$@Model.Balance.ToString("0.00")</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Details & Packages -->
+            <div class="space-y-6">
+                <!-- Student Details -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Details</h2>
+                    </div>
+                    <div class="p-4 space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Rate</span>
+                            @if (Model.HasCustomRate)
+                            {
+                                <span class="text-sm">
+                                    <span class="text-gray-400 line-through mr-1">$@Model.StandardRate.ToString("0.00")</span>
+                                    <span class="font-semibold text-purple-600">$@Model.CustomHourlyRate?.ToString("0.00")</span>
+                                    <span class="text-xs text-purple-500 ml-1">(Custom)</span>
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="text-sm font-medium text-gray-900">$@Model.StandardRate.ToString("0.00")/class</span>
+                            }
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Status</span>
+                            <span class="text-sm font-medium @(Model.IsActive ? "text-green-600" : "text-red-600")">
+                                @(Model.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Cancellations</span>
+                            <span class="text-sm font-medium text-gray-900">@Model.TotalClassesCancelled</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.ClassroomUrl))
+                        {
+                            <div class="pt-2 border-t border-gray-100">
+                                <span class="text-sm text-gray-500 block mb-1">Classroom URL</span>
+                                <a href="@Model.ClassroomUrl" target="_blank" rel="noopener noreferrer"
+                                   class="text-sm text-primary-600 hover:text-primary-700 break-all flex items-center">
+                                    @Model.ClassroomUrl
+                                    <svg class="h-3 w-3 ml-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+                                    </svg>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Active Packages -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Active Packages</h2>
+                    </div>
+                    <div class="p-4">
+                        @if (Model.ActivePackages.Any())
+                        {
+                            <div class="space-y-3">
+                                @foreach (var package in Model.ActivePackages)
+                                {
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">@package.Package?.Name</p>
+                                            <p class="text-xs text-gray-500">Purchased @package.PurchaseDate.ToString("MMM d, yyyy")</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-lg font-bold text-green-600">@package.ClassesRemaining</p>
+                                            <p class="text-xs text-gray-500">remaining</p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-sm text-gray-500 text-center py-4">No active packages</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Recent Payments -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Recent Payments</h2>
+                        <a asp-action="Payments" asp-route-studentId="@Model.Id" class="text-sm text-primary-600 hover:text-primary-700">View all</a>
+                    </div>
+                    <div class="p-4">
+                        @if (Model.RecentPayments.Any())
+                        {
+                            <div class="space-y-2">
+                                @foreach (var payment in Model.RecentPayments)
+                                {
+                                    <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                                        <div>
+                                            <p class="text-sm text-gray-900">@payment.Description</p>
+                                            <p class="text-xs text-gray-500">@payment.CreatedAt.ToString("MMM d, yyyy")</p>
+                                        </div>
+                                        <span class="text-sm font-medium @(payment.Status == LakeCountrySpanish.Web.Models.Entities.PaymentStatusType.Completed ? "text-green-600" : "text-gray-900")">
+                                            $@payment.Amount.ToString("0.00")
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-sm text-gray-500 text-center py-4">No payments yet</p>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle Column - Upcoming Classes -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Upcoming Classes</h2>
+                    <a asp-action="Schedule" asp-route-studentId="@Model.Id" class="text-sm text-primary-600 hover:text-primary-700">View all</a>
+                </div>
+                <div class="p-4">
+                    @if (Model.UpcomingClasses.Any())
+                    {
+                        <div class="space-y-3">
+                            @foreach (var cls in Model.UpcomingClasses)
+                            {
+                                var daysUntil = (cls.ClassDateTime.Date - DateTime.Today).Days;
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <p class="text-sm font-semibold text-gray-900">@cls.ClassDateTime.ToString("dddd, MMM d")</p>
+                                        @if (daysUntil == 0)
+                                        {
+                                            <span class="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">Today</span>
+                                        }
+                                        else if (daysUntil == 1)
+                                        {
+                                            <span class="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">Tomorrow</span>
+                                        }
+                                    </div>
+                                    <p class="text-sm text-gray-600">@cls.ClassDateTime.ToString("h:mm tt") - @cls.ClassDateTime.AddHours(1).ToString("h:mm tt")</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-500">No upcoming classes scheduled</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Right Column - Recent Classes & Documents -->
+            <div class="space-y-6">
+                <!-- Recent Completed Classes -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Recent Classes</h2>
+                        <a asp-action="Schedule" asp-route-studentId="@Model.Id" class="text-sm text-primary-600 hover:text-primary-700">View all</a>
+                    </div>
+                    <div class="p-4">
+                        @if (Model.RecentClasses.Any())
+                        {
+                            <div class="space-y-3">
+                                @foreach (var cls in Model.RecentClasses)
+                                {
+                                    <div class="p-3 bg-gray-50 rounded-lg">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <p class="text-sm font-medium text-gray-900">@cls.ClassDateTime.ToString("MMM d, yyyy")</p>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                                Completed
+                                            </span>
+                                        </div>
+                                        <p class="text-xs text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
+                                        @if (!string.IsNullOrEmpty(cls.TeacherNotes))
+                                        {
+                                            <div class="mt-2 pt-2 border-t border-gray-200">
+                                                <p class="text-xs text-gray-600 italic">@cls.TeacherNotes</p>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-sm text-gray-500 text-center py-4">No completed classes yet</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Documents -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Documents</h2>
+                        <a asp-action="Documents" class="text-sm text-primary-600 hover:text-primary-700">Manage</a>
+                    </div>
+                    <div class="p-4">
+                        @if (Model.Documents.Any())
+                        {
+                            <div class="space-y-2">
+                                @foreach (var doc in Model.Documents.Take(5))
+                                {
+                                    <div class="flex items-center p-2 hover:bg-gray-50 rounded">
+                                        <svg class="h-5 w-5 text-gray-400 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                        </svg>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm text-gray-900 truncate">@doc.Title</p>
+                                            <p class="text-xs text-gray-500">
+                                                @(doc.IsGlobal ? "Global" : "Assigned")
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-sm text-gray-500 text-center py-4">No documents assigned</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

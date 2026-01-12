@@ -57,6 +57,15 @@
                         <span asp-validation-for="CustomHourlyRate" class="text-red-500 text-sm"></span>
                     </div>
 
+                    <div>
+                        <label asp-for="ClassroomUrl" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ClassroomUrl" type="url"
+                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-2 border"
+                               placeholder="https://zoom.us/j/... or https://meet.google.com/..." />
+                        <span asp-validation-for="ClassroomUrl" class="text-red-500 text-sm"></span>
+                        <p class="mt-1 text-sm text-gray-500">Default video call link for this student's classes.</p>
+                    </div>
+
                     <div class="flex items-center">
                         <input asp-for="IsActive" type="checkbox"
                                class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />

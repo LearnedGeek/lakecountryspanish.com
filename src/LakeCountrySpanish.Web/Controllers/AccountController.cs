@@ -48,6 +48,12 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
+            // Check if user must change password
+            if (user.MustChangePassword)
+            {
+                return RedirectToAction("ChangePassword");
+            }
+
             if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
             {
                 return Redirect(model.ReturnUrl);
@@ -77,5 +83,63 @@ public class AccountController : Controller
     public IActionResult AccessDenied()
     {
         return View();
+    }
+
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToAction("Login");
+        }
+
+        return View(new ChangePasswordViewModel { IsRequired = user.MustChangePassword });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return RedirectToAction("Login");
+        }
+
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (result.Succeeded)
+        {
+            // Clear the must change password flag
+            user.MustChangePassword = false;
+            await _userManager.UpdateAsync(user);
+
+            // Re-sign in to refresh the security stamp
+            await _signInManager.RefreshSignInAsync(user);
+
+            TempData["SuccessMessage"] = "Your password has been changed successfully.";
+
+            // Redirect based on role
+            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            {
+                return RedirectToAction("Dashboard", "Admin");
+            }
+            return RedirectToAction("Dashboard", "Student");
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+
+        model.IsRequired = user.MustChangePassword;
+        return View(model);
     }
 }

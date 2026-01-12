@@ -1,18 +1,19 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using LakeCountrySpanish.Web.Models.Entities;
 
 namespace LakeCountrySpanish.Web.Data;
 
 public static class SeedData
 {
-    public static async Task InitializeAsync(IServiceProvider serviceProvider)
+    public static async Task InitializeAsync(IServiceProvider serviceProvider, bool isDevelopment)
     {
         var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
         var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // Ensure database is created
-        await context.Database.EnsureCreatedAsync();
+        // Apply any pending migrations (this also creates the database if it doesn't exist)
+        await context.Database.MigrateAsync();
 
         // Create roles
         string[] roles = { "Admin", "Student" };
@@ -37,10 +38,10 @@ public static class SeedData
                 FirstName = "Karen",
                 LastName = "Admin",
                 EmailConfirmed = true,
-                IsActive = true
+                IsActive = true,
+                MustChangePassword = false  // Admin doesn't need to change password on first login
             };
 
-            // Default password - should be changed on first login
             var result = await userManager.CreateAsync(adminUser, "Admin123!");
             if (result.Succeeded)
             {
@@ -88,6 +89,231 @@ public static class SeedData
             };
 
             context.Packages.AddRange(packages);
+            await context.SaveChangesAsync();
+        }
+
+        // Only seed test data in development environment
+        if (isDevelopment)
+        {
+            await SeedDevelopmentDataAsync(userManager, context);
+        }
+    }
+
+    private static async Task SeedDevelopmentDataAsync(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
+    {
+        // Seed test students if none exist
+        if (!await userManager.Users.AnyAsync(u => u.Email != "admin@lakecountryspanish.com"))
+        {
+            var testStudents = new[]
+            {
+                new { Email = "john.doe@test.com", FirstName = "John", LastName = "Doe", ClassroomUrl = "https://zoom.us/j/1234567890" },
+                new { Email = "jane.smith@test.com", FirstName = "Jane", LastName = "Smith", ClassroomUrl = "https://meet.google.com/abc-defg-hij" },
+                new { Email = "bob.wilson@test.com", FirstName = "Bob", LastName = "Wilson", ClassroomUrl = (string?)null },
+            };
+
+            foreach (var student in testStudents)
+            {
+                var user = new ApplicationUser
+                {
+                    UserName = student.Email,
+                    Email = student.Email,
+                    FirstName = student.FirstName,
+                    LastName = student.LastName,
+                    EmailConfirmed = true,
+                    IsActive = true,
+                    ClassroomUrl = student.ClassroomUrl,
+                    MustChangePassword = false  // Test users don't need to change password
+                };
+
+                var result = await userManager.CreateAsync(user, "Student123!");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, "Student");
+                }
+            }
+        }
+
+        // Seed time slots if none exist
+        if (!context.TimeSlots.Any())
+        {
+            var timeSlots = new List<TimeSlot>
+            {
+                // Monday slots
+                new TimeSlot { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(10, 0, 0), IsRecurring = true, IsActive = true },
+                new TimeSlot { DayOfWeek = DayOfWeek.Monday, StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(15, 0, 0), IsRecurring = true, IsActive = true },
+                // Tuesday slots
+                new TimeSlot { DayOfWeek = DayOfWeek.Tuesday, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(11, 0, 0), IsRecurring = true, IsActive = true },
+                new TimeSlot { DayOfWeek = DayOfWeek.Tuesday, StartTime = new TimeSpan(15, 0, 0), EndTime = new TimeSpan(16, 0, 0), IsRecurring = true, IsActive = true },
+                // Wednesday slots
+                new TimeSlot { DayOfWeek = DayOfWeek.Wednesday, StartTime = new TimeSpan(9, 0, 0), EndTime = new TimeSpan(10, 0, 0), IsRecurring = true, IsActive = true },
+                new TimeSlot { DayOfWeek = DayOfWeek.Wednesday, StartTime = new TimeSpan(13, 0, 0), EndTime = new TimeSpan(14, 0, 0), IsRecurring = true, IsActive = true },
+                // Thursday slots
+                new TimeSlot { DayOfWeek = DayOfWeek.Thursday, StartTime = new TimeSpan(11, 0, 0), EndTime = new TimeSpan(12, 0, 0), IsRecurring = true, IsActive = true },
+                new TimeSlot { DayOfWeek = DayOfWeek.Thursday, StartTime = new TimeSpan(16, 0, 0), EndTime = new TimeSpan(17, 0, 0), IsRecurring = true, IsActive = true },
+                // Friday slots
+                new TimeSlot { DayOfWeek = DayOfWeek.Friday, StartTime = new TimeSpan(10, 0, 0), EndTime = new TimeSpan(11, 0, 0), IsRecurring = true, IsActive = true },
+                new TimeSlot { DayOfWeek = DayOfWeek.Friday, StartTime = new TimeSpan(14, 0, 0), EndTime = new TimeSpan(15, 0, 0), IsRecurring = true, IsActive = true },
+            };
+
+            context.TimeSlots.AddRange(timeSlots);
+            await context.SaveChangesAsync();
+        }
+
+        // Seed blocked dates if none exist
+        if (!context.BlockedDates.Any())
+        {
+            var blockedDates = new List<BlockedDate>
+            {
+                new BlockedDate
+                {
+                    StartDate = DateTime.Today.AddDays(14),
+                    EndDate = DateTime.Today.AddDays(14),
+                    Reason = "Teacher Conference",
+                    CreatedAt = DateTime.UtcNow
+                },
+                new BlockedDate
+                {
+                    StartDate = DateTime.Today.AddDays(30),
+                    EndDate = DateTime.Today.AddDays(32),
+                    Reason = "Holiday Break",
+                    CreatedAt = DateTime.UtcNow
+                }
+            };
+
+            context.BlockedDates.AddRange(blockedDates);
+            await context.SaveChangesAsync();
+        }
+
+        // Give test students some package credits
+        var johnDoe = await userManager.FindByEmailAsync("john.doe@test.com");
+        var janeSmith = await userManager.FindByEmailAsync("jane.smith@test.com");
+        var bobWilson = await userManager.FindByEmailAsync("bob.wilson@test.com");
+
+        if (johnDoe != null && !context.StudentPackages.Any(sp => sp.StudentId == johnDoe.Id))
+        {
+            var tenPackage = await context.Packages.FirstOrDefaultAsync(p => p.ClassCount == 10);
+            if (tenPackage != null)
+            {
+                context.StudentPackages.Add(new StudentPackage
+                {
+                    StudentId = johnDoe.Id,
+                    PackageId = tenPackage.Id,
+                    ClassesRemaining = 8,
+                    PurchaseDate = DateTime.UtcNow.AddDays(-30),
+                    ExpirationDate = DateTime.UtcNow.AddDays(335)
+                });
+            }
+        }
+
+        if (janeSmith != null && !context.StudentPackages.Any(sp => sp.StudentId == janeSmith.Id))
+        {
+            var fivePackage = await context.Packages.FirstOrDefaultAsync(p => p.ClassCount == 5);
+            if (fivePackage != null)
+            {
+                context.StudentPackages.Add(new StudentPackage
+                {
+                    StudentId = janeSmith.Id,
+                    PackageId = fivePackage.Id,
+                    ClassesRemaining = 3,
+                    PurchaseDate = DateTime.UtcNow.AddDays(-14),
+                    ExpirationDate = DateTime.UtcNow.AddDays(351)
+                });
+            }
+        }
+
+        if (bobWilson != null && !context.StudentPackages.Any(sp => sp.StudentId == bobWilson.Id))
+        {
+            var singlePackage = await context.Packages.FirstOrDefaultAsync(p => p.ClassCount == 1);
+            if (singlePackage != null)
+            {
+                context.StudentPackages.Add(new StudentPackage
+                {
+                    StudentId = bobWilson.Id,
+                    PackageId = singlePackage.Id,
+                    ClassesRemaining = 1,
+                    PurchaseDate = DateTime.UtcNow.AddDays(-7),
+                    ExpirationDate = DateTime.UtcNow.AddDays(358)
+                });
+            }
+        }
+
+        await context.SaveChangesAsync();
+
+        // Seed some scheduled classes if none exist
+        if (!context.ScheduledClasses.Any() && johnDoe != null && janeSmith != null)
+        {
+            var mondaySlot = await context.TimeSlots.FirstOrDefaultAsync(ts => ts.DayOfWeek == DayOfWeek.Monday && ts.StartTime.Hours == 9);
+            var tuesdaySlot = await context.TimeSlots.FirstOrDefaultAsync(ts => ts.DayOfWeek == DayOfWeek.Tuesday && ts.StartTime.Hours == 10);
+            var wednesdaySlot = await context.TimeSlots.FirstOrDefaultAsync(ts => ts.DayOfWeek == DayOfWeek.Wednesday && ts.StartTime.Hours == 9);
+
+            var scheduledClasses = new List<ScheduledClass>();
+
+            // Find next occurrence of each day
+            var today = DateTime.Today;
+            var nextMonday = today.AddDays((int)DayOfWeek.Monday - (int)today.DayOfWeek + (today.DayOfWeek >= DayOfWeek.Monday ? 7 : 0));
+            var nextTuesday = today.AddDays((int)DayOfWeek.Tuesday - (int)today.DayOfWeek + (today.DayOfWeek >= DayOfWeek.Tuesday ? 7 : 0));
+            var nextWednesday = today.AddDays((int)DayOfWeek.Wednesday - (int)today.DayOfWeek + (today.DayOfWeek >= DayOfWeek.Wednesday ? 7 : 0));
+
+            var johnPackage = await context.StudentPackages.FirstOrDefaultAsync(sp => sp.StudentId == johnDoe.Id);
+            var janePackage = await context.StudentPackages.FirstOrDefaultAsync(sp => sp.StudentId == janeSmith.Id);
+
+            if (mondaySlot != null && johnPackage != null)
+            {
+                // John has class this coming Monday and next Monday
+                scheduledClasses.Add(new ScheduledClass
+                {
+                    StudentId = johnDoe.Id,
+                    TimeSlotId = mondaySlot.Id,
+                    ClassDateTime = nextMonday.Add(mondaySlot.StartTime),
+                    Status = ClassStatus.Scheduled,
+                    PaymentStatus = PaymentStatus.PartOfPackage,
+                    StudentPackageId = johnPackage.Id,
+                    CreatedAt = DateTime.UtcNow
+                });
+                scheduledClasses.Add(new ScheduledClass
+                {
+                    StudentId = johnDoe.Id,
+                    TimeSlotId = mondaySlot.Id,
+                    ClassDateTime = nextMonday.AddDays(7).Add(mondaySlot.StartTime),
+                    Status = ClassStatus.Scheduled,
+                    PaymentStatus = PaymentStatus.PartOfPackage,
+                    StudentPackageId = johnPackage.Id,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (tuesdaySlot != null && janePackage != null)
+            {
+                // Jane has class this coming Tuesday
+                scheduledClasses.Add(new ScheduledClass
+                {
+                    StudentId = janeSmith.Id,
+                    TimeSlotId = tuesdaySlot.Id,
+                    ClassDateTime = nextTuesday.Add(tuesdaySlot.StartTime),
+                    Status = ClassStatus.Scheduled,
+                    PaymentStatus = PaymentStatus.PartOfPackage,
+                    StudentPackageId = janePackage.Id,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (wednesdaySlot != null && johnPackage != null)
+            {
+                // A completed class from last week with notes
+                scheduledClasses.Add(new ScheduledClass
+                {
+                    StudentId = johnDoe.Id,
+                    TimeSlotId = wednesdaySlot.Id,
+                    ClassDateTime = today.AddDays(-7).Add(wednesdaySlot.StartTime),
+                    Status = ClassStatus.Completed,
+                    PaymentStatus = PaymentStatus.PartOfPackage,
+                    StudentPackageId = johnPackage.Id,
+                    TeacherNotes = "Reviewed verb conjugations. Good progress on past tense. Homework: Practice irregular verbs.",
+                    CreatedAt = DateTime.UtcNow.AddDays(-14)
+                });
+            }
+
+            context.ScheduledClasses.AddRange(scheduledClasses);
             await context.SaveChangesAsync();
         }
     }

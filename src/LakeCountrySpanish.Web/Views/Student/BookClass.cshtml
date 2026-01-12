@@ -1,10 +1,11 @@
-@model LakeCountrySpanish.Web.Models.ViewModels.BookClassViewModel
+@model LakeCountrySpanish.Web.Models.ViewModels.WeeklyBookingViewModel
 @{
     ViewData["Title"] = "Schedule a Class";
+    var dayNames = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 }
 
 <div class="bg-gray-50 min-h-screen">
-    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div class="mb-8">
             <a asp-action="Dashboard" class="text-primary-600 hover:text-primary-700 flex items-center text-sm mb-4">
                 <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -13,211 +14,265 @@
                 Back to Dashboard
             </a>
             <h1 class="text-3xl font-bold text-gray-900">Schedule a Class</h1>
-            <p class="mt-2 text-gray-600">Select an available time slot to schedule your Spanish lesson.</p>
+            <p class="mt-2 text-gray-600">Click on an available time slot to book your Spanish lesson.</p>
         </div>
 
         <!-- Credits Available -->
-        <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-8">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-lg">
-                        <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <div class="flex-shrink-0 p-2 bg-green-100 rounded-lg">
+                        <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-green-800">Available Credits</p>
-                        <p class="text-2xl font-bold text-green-900">@Model.AvailablePackageClasses</p>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-green-800">Available Credits: <span class="text-lg font-bold">@Model.AvailableCredits</span></p>
                     </div>
                 </div>
                 <a asp-action="PurchaseClasses" class="text-green-700 hover:text-green-800 text-sm font-medium">
-                    Buy more credits
+                    Buy more
                 </a>
             </div>
         </div>
 
-        @if (!Model.AvailableSlots.Any())
-        {
-            <div class="bg-white rounded-lg shadow p-8 text-center">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                </svg>
-                <p class="mt-2 text-gray-500">No time slots are currently available.</p>
-                <p class="text-sm text-gray-400">Please check back later or contact Karen.</p>
+        <!-- Legend -->
+        <div class="flex flex-wrap gap-4 mb-4 text-sm">
+            <div class="flex items-center">
+                <div class="w-4 h-4 rounded bg-green-100 border border-green-300 mr-2"></div>
+                <span class="text-gray-600">Available</span>
             </div>
-        }
-        else
-        {
-            <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Step 1: Choose a Time Slot</h2>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="timeSlots">
-                        @foreach (var slot in Model.AvailableSlots)
+            <div class="flex items-center">
+                <div class="w-4 h-4 rounded bg-gray-100 border border-gray-300 mr-2"></div>
+                <span class="text-gray-600">Booked / Unavailable</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 rounded bg-red-100 border border-red-300 mr-2"></div>
+                <span class="text-gray-600">Blocked Date</span>
+            </div>
+            <div class="flex items-center">
+                <div class="w-4 h-4 rounded bg-yellow-100 border border-yellow-300 mr-2"></div>
+                <span class="text-gray-600">Past Booking Cutoff</span>
+            </div>
+        </div>
+
+        <!-- Week Navigation -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <button type="button" onclick="navigateWeek(-1)" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+                <h2 class="text-lg font-semibold text-gray-900" id="weekDisplay">
+                    @Model.WeeklyCalendar.WeekStart.ToString("MMM d") - @Model.WeeklyCalendar.WeekEnd.ToString("MMM d, yyyy")
+                </h2>
+                <button type="button" onclick="navigateWeek(1)" class="p-2 hover:bg-gray-100 rounded-lg transition">
+                    <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Calendar Grid -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full" id="calendarTable">
+                    <thead>
+                        <tr class="bg-gray-50">
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Time</th>
+                            @foreach (var day in Model.WeeklyCalendar.Days)
+                            {
+                                var isToday = day.Date.Date == DateTime.Today;
+                                <th class="px-2 py-3 text-center text-xs font-medium uppercase @(isToday ? "bg-primary-50 text-primary-700" : "text-gray-500")">
+                                    <div>@dayNames[(int)day.Date.DayOfWeek]</div>
+                                    <div class="text-sm font-semibold @(isToday ? "text-primary-700" : "text-gray-900")">@day.Date.Day</div>
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200" id="calendarBody">
+                        @foreach (var timeSlot in Model.WeeklyCalendar.AllTimeSlots)
                         {
-                            <button type="button"
-                                    class="time-slot-btn p-4 border-2 border-gray-200 rounded-lg text-left hover:border-primary-500 hover:bg-primary-50 transition"
-                                    data-slot-id="@slot.Id">
-                                <p class="font-semibold text-gray-900">
-                                    @if (slot.IsRecurring && slot.DayOfWeek.HasValue)
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+                                    @(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt"))
+                                </td>
+                                @foreach (var day in Model.WeeklyCalendar.Days)
+                                {
+                                    // Match by StartTime, not by ID (different days have different slot IDs)
+                                    var slot = day.TimeSlots.FirstOrDefault(ts => ts.StartTime == timeSlot.StartTime);
+                                    var cellClass = "bg-gray-50 text-gray-400";
+                                    var clickable = false;
+                                    var tooltip = "";
+
+                                    if (day.IsBlocked)
                                     {
-                                        @slot.DayOfWeek.Value.ToString()@("s")
+                                        cellClass = "bg-red-50 text-red-400";
+                                        tooltip = day.BlockedReason ?? "Blocked";
                                     }
-                                    else if (slot.SpecificDate.HasValue)
+                                    else if (slot == null || !slot.SlotExistsForDay)
                                     {
-                                        @slot.SpecificDate.Value.ToString("MMM d, yyyy")
+                                        cellClass = "bg-gray-50 text-gray-300";
+                                        tooltip = "Not available";
                                     }
-                                </p>
-                                <p class="text-sm text-gray-500">
-                                    @(DateTime.Today.Add(slot.StartTime).ToString("h:mm tt")) - @(DateTime.Today.Add(slot.EndTime).ToString("h:mm tt"))
-                                </p>
-                            </button>
+                                    else if (slot.IsPastBookingCutoff)
+                                    {
+                                        cellClass = "bg-yellow-50 text-yellow-500";
+                                        tooltip = "Past booking cutoff (1 hour)";
+                                    }
+                                    else if (!slot.IsAvailable)
+                                    {
+                                        cellClass = "bg-gray-100 text-gray-500";
+                                        tooltip = "Already booked";
+                                    }
+                                    else
+                                    {
+                                        cellClass = "bg-green-50 text-green-700 hover:bg-green-100 cursor-pointer";
+                                        clickable = true;
+                                        tooltip = "Click to book";
+                                    }
+
+                                    <td class="px-2 py-3 text-center">
+                                        @if (clickable && slot != null)
+                                        {
+                                            <button type="button"
+                                                    class="w-full py-2 px-1 rounded @cellClass transition text-sm"
+                                                    onclick="openBookingModal(@slot.TimeSlotId, '@day.Date.ToString("yyyy-MM-dd")', '@(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt"))', '@day.Date.ToString("dddd, MMM d")')"
+                                                    title="@tooltip">
+                                                <svg class="h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                </svg>
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <div class="w-full py-2 px-1 rounded @cellClass text-sm" title="@tooltip">
+                                                <svg class="h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                </svg>
+                                            </div>
+                                        }
+                                    </td>
+                                }
+                            </tr>
                         }
-                    </div>
-                </div>
+                    </tbody>
+                </table>
             </div>
 
-            <div id="dateSelection" class="bg-white rounded-lg shadow mt-8 hidden">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Step 2: Choose a Date</h2>
+            @if (!Model.WeeklyCalendar.AllTimeSlots.Any())
+            {
+                <div class="p-8 text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="mt-2 text-gray-500">No time slots have been configured.</p>
+                    <p class="text-sm text-gray-400">Please check back later.</p>
                 </div>
-                <div class="p-6">
-                    <div id="availableDates" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Dates will be loaded via JavaScript -->
-                    </div>
-                    <div id="loadingDates" class="text-center py-8 hidden">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-                        <p class="mt-2 text-gray-500">Loading available dates...</p>
-                    </div>
-                    <div id="noDates" class="text-center py-8 hidden">
-                        <p class="text-gray-500">No available dates for this time slot in the next 60 days.</p>
-                    </div>
-                </div>
-            </div>
+            }
+        </div>
+    </div>
+</div>
 
-            <form asp-action="BookClass" method="post" id="bookingForm" class="hidden mt-8">
-                <input type="hidden" name="timeSlotId" id="selectedTimeSlotId" />
-                <input type="hidden" name="classDateTime" id="selectedDateTime" />
+<!-- Booking Modal -->
+<div id="bookingModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Book a Class</h3>
+        <p class="text-gray-600 mb-4">
+            <span id="modalDate" class="font-medium"></span> at <span id="modalTime" class="font-medium"></span>
+        </p>
 
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Step 3: Confirm Booking</h2>
-
-                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-                        <p class="text-sm text-gray-500">Selected class:</p>
-                        <p id="selectedClassDisplay" class="text-lg font-semibold text-gray-900"></p>
-                    </div>
-
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                        <div class="flex items-center">
-                            <svg class="h-5 w-5 text-green-600 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span class="text-green-700">1 credit will be used from your balance</span>
-                        </div>
-                    </div>
-
-                    <button type="submit"
-                            class="w-full flex justify-center rounded-md bg-primary-600 py-3 px-4 text-sm font-semibold text-white hover:bg-primary-700 transition">
-                        <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                        </svg>
-                        Confirm Booking
-                    </button>
-                </div>
+        <div class="space-y-4">
+            <!-- Single Booking -->
+            <form asp-action="BookClass" method="post" id="singleBookForm">
+                <input type="hidden" name="timeSlotId" id="singleTimeSlotId" />
+                <input type="hidden" name="classDateTime" id="singleDateTime" />
+                <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition flex items-center justify-center">
+                    <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                    </svg>
+                    Book This Class (1 Credit)
+                </button>
             </form>
-        }
+
+            @if (Model.AvailableCredits > 1)
+            {
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="bg-white px-2 text-gray-500">or book recurring</span>
+                    </div>
+                </div>
+
+                <!-- Recurring Booking -->
+                <form asp-action="BookRecurringClasses" method="post" id="recurringBookForm">
+                    <input type="hidden" name="timeSlotId" id="recurringTimeSlotId" />
+                    <input type="hidden" name="startDate" id="recurringStartDate" />
+                    <div class="flex items-center space-x-3">
+                        <label class="text-sm text-gray-700 whitespace-nowrap">Book for</label>
+                        <select name="weekCount" id="weekCount" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                            @for (int i = 2; i <= Math.Min(Model.AvailableCredits, 12); i++)
+                            {
+                                <option value="@i">@i weeks</option>
+                            }
+                        </select>
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition text-sm whitespace-nowrap">
+                            Book Recurring
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">
+                        Same time slot, same day of week. Conflicts will be skipped.
+                    </p>
+                </form>
+            }
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <button type="button" onclick="closeBookingModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg transition">
+                Cancel
+            </button>
+        </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        let selectedSlotId = null;
-        let selectedDateTime = null;
+        let currentWeekStart = new Date('@Model.WeeklyCalendar.WeekStart.ToString("yyyy-MM-dd")');
 
-        document.querySelectorAll('.time-slot-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                // Reset selection
-                document.querySelectorAll('.time-slot-btn').forEach(b => {
-                    b.classList.remove('border-primary-500', 'bg-primary-50');
-                    b.classList.add('border-gray-200');
-                });
+        function navigateWeek(direction) {
+            currentWeekStart.setDate(currentWeekStart.getDate() + (direction * 7));
+            const weekStartStr = currentWeekStart.toISOString().split('T')[0];
+            window.location.href = `/Student/BookClass?weekStart=${weekStartStr}`;
+        }
 
-                // Select this slot
-                this.classList.remove('border-gray-200');
-                this.classList.add('border-primary-500', 'bg-primary-50');
+        function openBookingModal(timeSlotId, dateStr, timeStr, displayDate) {
+            document.getElementById('singleTimeSlotId').value = timeSlotId;
+            document.getElementById('singleDateTime').value = dateStr;
+            document.getElementById('recurringTimeSlotId').value = timeSlotId;
+            document.getElementById('recurringStartDate').value = dateStr;
+            document.getElementById('modalDate').textContent = displayDate;
+            document.getElementById('modalTime').textContent = timeStr;
+            document.getElementById('bookingModal').classList.remove('hidden');
+        }
 
-                selectedSlotId = this.dataset.slotId;
-                document.getElementById('selectedTimeSlotId').value = selectedSlotId;
+        function closeBookingModal() {
+            document.getElementById('bookingModal').classList.add('hidden');
+        }
 
-                // Show date selection and load dates
-                loadAvailableDates(selectedSlotId);
-            });
+        // Close modal on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBookingModal();
+            }
         });
 
-        function loadAvailableDates(slotId) {
-            const dateSection = document.getElementById('dateSelection');
-            const datesContainer = document.getElementById('availableDates');
-            const loading = document.getElementById('loadingDates');
-            const noDates = document.getElementById('noDates');
-            const bookingForm = document.getElementById('bookingForm');
-
-            dateSection.classList.remove('hidden');
-            datesContainer.innerHTML = '';
-            loading.classList.remove('hidden');
-            noDates.classList.add('hidden');
-            bookingForm.classList.add('hidden');
-
-            fetch(`/Student/GetAvailableDates?timeSlotId=${slotId}`)
-                .then(response => response.json())
-                .then(dates => {
-                    loading.classList.add('hidden');
-
-                    if (dates.length === 0) {
-                        noDates.classList.remove('hidden');
-                        return;
-                    }
-
-                    dates.forEach(date => {
-                        const btn = document.createElement('button');
-                        btn.type = 'button';
-                        btn.className = 'date-btn p-4 border-2 border-gray-200 rounded-lg text-left hover:border-primary-500 hover:bg-primary-50 transition';
-                        btn.dataset.date = date.date;
-                        btn.dataset.display = date.display;
-                        btn.innerHTML = `
-                            <p class="font-semibold text-gray-900">${date.display.split(' at ')[0]}</p>
-                            <p class="text-sm text-gray-500">${date.time.replace(/^(\d{2}):(\d{2})$/, (m, h, min) => {
-                                const hour = parseInt(h);
-                                const ampm = hour >= 12 ? 'PM' : 'AM';
-                                const hour12 = hour % 12 || 12;
-                                return `${hour12}:${min} ${ampm}`;
-                            })}</p>
-                        `;
-
-                        btn.addEventListener('click', function() {
-                            document.querySelectorAll('.date-btn').forEach(b => {
-                                b.classList.remove('border-primary-500', 'bg-primary-50');
-                                b.classList.add('border-gray-200');
-                            });
-
-                            this.classList.remove('border-gray-200');
-                            this.classList.add('border-primary-500', 'bg-primary-50');
-
-                            selectedDateTime = this.dataset.date;
-                            document.getElementById('selectedDateTime').value = selectedDateTime;
-                            document.getElementById('selectedClassDisplay').textContent = this.dataset.display;
-
-                            bookingForm.classList.remove('hidden');
-                        });
-
-                        datesContainer.appendChild(btn);
-                    });
-                })
-                .catch(err => {
-                    loading.classList.add('hidden');
-                    noDates.classList.remove('hidden');
-                    console.error('Error loading dates:', err);
-                });
-        }
+        // Close modal on background click
+        document.getElementById('bookingModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBookingModal();
+            }
+        });
     </script>
 }

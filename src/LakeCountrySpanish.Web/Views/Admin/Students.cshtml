@@ -45,7 +45,7 @@
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900">@student.FullName</p>
+                                    <a asp-action="StudentProfile" asp-route-id="@student.Id" class="text-sm font-medium text-primary-600 hover:text-primary-700 hover:underline">@student.FullName</a>
                                     <p class="text-sm text-gray-500">@student.Email</p>
                                 </div>
                             </td>

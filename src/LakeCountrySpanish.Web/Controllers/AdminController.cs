@@ -17,19 +17,25 @@ public class AdminController : Controller
     private readonly IPaymentService _paymentService;
     private readonly IWebHostEnvironment _environment;
     private readonly IEmailService _emailService;
+    private readonly IScheduleService _scheduleService;
+    private readonly IConfiguration _configuration;
 
     public AdminController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         IPaymentService paymentService,
         IWebHostEnvironment environment,
-        IEmailService emailService)
+        IEmailService emailService,
+        IScheduleService scheduleService,
+        IConfiguration configuration)
     {
         _context = context;
         _userManager = userManager;
         _paymentService = paymentService;
         _environment = environment;
         _emailService = emailService;
+        _scheduleService = scheduleService;
+        _configuration = configuration;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -37,8 +43,28 @@ public class AdminController : Controller
         var today = DateTime.Today;
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
         var endOfWeek = today.AddDays(7);
+        var threeDaysOut = today.AddDays(3);
 
         var students = await _userManager.GetUsersInRoleAsync("Student");
+
+        // Get next 3 days of classes
+        var upcomingClasses = await _context.ScheduledClasses
+            .Include(sc => sc.Student)
+            .Include(sc => sc.TimeSlot)
+            .Where(sc => sc.ClassDateTime.Date >= today && sc.ClassDateTime.Date < threeDaysOut && sc.Status == ClassStatus.Scheduled)
+            .OrderBy(sc => sc.ClassDateTime)
+            .ToListAsync();
+
+        var upcomingDays = new List<DayScheduleGroup>();
+        for (int i = 0; i < 3; i++)
+        {
+            var date = today.AddDays(i);
+            upcomingDays.Add(new DayScheduleGroup
+            {
+                Date = date,
+                Classes = upcomingClasses.Where(c => c.ClassDateTime.Date == date).ToList()
+            });
+        }
 
         var viewModel = new AdminDashboardViewModel
         {
@@ -56,12 +82,7 @@ public class AdminController : Controller
                 .CountAsync() * 25m, // Default price, should be calculated properly
             NewInquiries = await _context.ContactInquiries
                 .CountAsync(ci => ci.Status == InquiryStatus.New),
-            TodaysSchedule = await _context.ScheduledClasses
-                .Include(sc => sc.Student)
-                .Include(sc => sc.TimeSlot)
-                .Where(sc => sc.ClassDateTime.Date == today && sc.Status == ClassStatus.Scheduled)
-                .OrderBy(sc => sc.ClassDateTime)
-                .ToListAsync(),
+            TodaysSchedule = upcomingClasses.Where(c => c.ClassDateTime.Date == today).ToList(),
             RecentInquiries = await _context.ContactInquiries
                 .Where(ci => ci.Status == InquiryStatus.New)
                 .OrderByDescending(ci => ci.CreatedAt)
@@ -72,7 +93,9 @@ public class AdminController : Controller
                 .Where(p => p.Status == PaymentStatusType.Completed)
                 .OrderByDescending(p => p.CompletedAt)
                 .Take(5)
-                .ToListAsync()
+                .ToListAsync(),
+            UpcomingDays = upcomingDays,
+            HasScheduleConflicts = await _scheduleService.HasScheduleConflictsAsync()
         };
 
         return View(viewModel);
@@ -111,6 +134,75 @@ public class AdminController : Controller
             Students = studentList.OrderBy(s => s.FullName),
             SearchTerm = search
         });
+    }
+
+    public async Task<IActionResult> StudentProfile(string id)
+    {
+        var student = await _userManager.FindByIdAsync(id);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        var now = DateTime.Now;
+
+        // Get all classes for this student
+        var allClasses = await _context.ScheduledClasses
+            .Include(sc => sc.TimeSlot)
+            .Where(sc => sc.StudentId == id)
+            .OrderByDescending(sc => sc.ClassDateTime)
+            .ToListAsync();
+
+        // Get packages
+        var packages = await _context.StudentPackages
+            .Include(sp => sp.Package)
+            .Where(sp => sp.StudentId == id)
+            .OrderByDescending(sp => sp.PurchaseDate)
+            .ToListAsync();
+
+        // Get payments
+        var payments = await _context.Payments
+            .Where(p => p.StudentId == id)
+            .OrderByDescending(p => p.CreatedAt)
+            .ToListAsync();
+
+        // Get documents assigned to this student
+        var documents = await _context.Documents
+            .Where(d => d.IsGlobal || d.StudentDocuments.Any(sd => sd.StudentId == id))
+            .OrderByDescending(d => d.UploadedAt)
+            .ToListAsync();
+
+        // Get standard rate from config or default
+        var standardRate = _configuration.GetValue<decimal>("AppSettings:DefaultClassPrice");
+        if (standardRate <= 0) standardRate = 25.00m;
+
+        var viewModel = new StudentProfileViewModel
+        {
+            Id = student.Id,
+            FullName = student.FullName,
+            Email = student.Email!,
+            IsActive = student.IsActive,
+            JoinedDate = student.CreatedAt,
+            CustomHourlyRate = student.CustomHourlyRate,
+            StandardRate = standardRate,
+            ClassroomUrl = student.ClassroomUrl,
+
+            TotalClassesCompleted = allClasses.Count(c => c.Status == ClassStatus.Completed),
+            TotalClassesCancelled = allClasses.Count(c => c.Status == ClassStatus.Cancelled),
+            UpcomingClassCount = allClasses.Count(c => c.ClassDateTime >= now && c.Status == ClassStatus.Scheduled),
+            CreditsRemaining = packages.Where(p => p.ClassesRemaining > 0).Sum(p => p.ClassesRemaining),
+
+            TotalPaid = payments.Where(p => p.Status == PaymentStatusType.Completed).Sum(p => p.Amount),
+            Balance = await _paymentService.GetStudentBalanceAsync(id),
+
+            UpcomingClasses = allClasses.Where(c => c.ClassDateTime >= now && c.Status == ClassStatus.Scheduled).Take(10),
+            RecentClasses = allClasses.Where(c => c.Status == ClassStatus.Completed).Take(10),
+            ActivePackages = packages.Where(p => p.ClassesRemaining > 0),
+            RecentPayments = payments.Take(5),
+            Documents = documents
+        };
+
+        return View(viewModel);
     }
 
     [HttpGet]
@@ -172,7 +264,8 @@ public class AdminController : Controller
             FirstName = user.FirstName,
             LastName = user.LastName,
             CustomHourlyRate = user.CustomHourlyRate,
-            IsActive = user.IsActive
+            IsActive = user.IsActive,
+            ClassroomUrl = user.ClassroomUrl
         });
     }
 
@@ -197,6 +290,7 @@ public class AdminController : Controller
         user.LastName = model.LastName;
         user.CustomHourlyRate = model.CustomHourlyRate;
         user.IsActive = model.IsActive;
+        user.ClassroomUrl = model.ClassroomUrl;
 
         var result = await _userManager.UpdateAsync(user);
 
@@ -236,7 +330,18 @@ public class AdminController : Controller
             .ThenBy(ts => ts.StartTime)
             .ToListAsync();
 
-        return View(new ManageTimeSlotsViewModel { TimeSlots = timeSlots });
+        var viewModels = new List<TimeSlotListItemViewModel>();
+        foreach (var slot in timeSlots)
+        {
+            viewModels.Add(new TimeSlotListItemViewModel
+            {
+                TimeSlot = slot,
+                ScheduledStudentCount = await _scheduleService.GetScheduledStudentCountForTimeSlotAsync(slot.Id),
+                CanDelete = await _scheduleService.CanDeleteTimeSlotAsync(slot.Id)
+            });
+        }
+
+        return View(new ManageTimeSlotsViewModel { TimeSlots = viewModels });
     }
 
     [HttpGet]
@@ -252,6 +357,19 @@ public class AdminController : Controller
         if (!ModelState.IsValid)
         {
             return View(model);
+        }
+
+        // Check for overlapping time slots
+        if (model.IsRecurring && model.DayOfWeek.HasValue)
+        {
+            var hasOverlap = await _scheduleService.HasOverlappingTimeSlotsAsync(
+                model.DayOfWeek.Value, model.StartTime, model.EndTime);
+
+            if (hasOverlap)
+            {
+                ModelState.AddModelError(string.Empty, $"This time slot overlaps with an existing slot on {model.DayOfWeek}.");
+                return View(model);
+            }
         }
 
         var timeSlot = new TimeSlot
@@ -281,20 +399,60 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        // Check if there are scheduled classes
-        var hasClasses = await _context.ScheduledClasses
-            .AnyAsync(sc => sc.TimeSlotId == id && sc.Status == ClassStatus.Scheduled);
-
-        if (hasClasses)
+        // Only allow deletion if no scheduled classes
+        var canDelete = await _scheduleService.CanDeleteTimeSlotAsync(id);
+        if (!canDelete)
         {
-            TempData["ErrorMessage"] = "Cannot delete time slot with scheduled classes.";
+            TempData["ErrorMessage"] = "Cannot delete time slot with scheduled classes. Use Deactivate instead.";
             return RedirectToAction(nameof(TimeSlots));
         }
 
+        _context.TimeSlots.Remove(timeSlot);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Time slot deleted successfully.";
+        return RedirectToAction(nameof(TimeSlots));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeactivateTimeSlot(int id)
+    {
+        var timeSlot = await _context.TimeSlots.FindAsync(id);
+        if (timeSlot == null)
+        {
+            return NotFound();
+        }
+
+        var affectedCount = await _scheduleService.GetScheduledStudentCountForTimeSlotAsync(id);
         timeSlot.IsActive = false;
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = "Time slot deactivated successfully.";
+        if (affectedCount > 0)
+        {
+            TempData["WarningMessage"] = $"Time slot deactivated. {affectedCount} scheduled class(es) will remain but no new bookings can be made.";
+        }
+        else
+        {
+            TempData["SuccessMessage"] = "Time slot deactivated successfully.";
+        }
+        return RedirectToAction(nameof(TimeSlots));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReactivateTimeSlot(int id)
+    {
+        var timeSlot = await _context.TimeSlots.FindAsync(id);
+        if (timeSlot == null)
+        {
+            return NotFound();
+        }
+
+        timeSlot.IsActive = true;
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Time slot reactivated successfully.";
         return RedirectToAction(nameof(TimeSlots));
     }
 
@@ -312,21 +470,32 @@ public class AdminController : Controller
             .OrderBy(sc => sc.ClassDateTime)
             .ToListAsync();
 
+        // Get classes with blocked date conflicts
+        var conflictedClasses = await _scheduleService.GetClassesWithBlockedDateConflictsAsync(startDate, endDate);
+        var conflictedIds = conflictedClasses.Select(c => c.Id).ToHashSet();
+
+        var classesWithConflicts = classes.Select(c => new ScheduledClassWithConflict
+        {
+            Class = c,
+            HasBlockedDateConflict = conflictedIds.Contains(c.Id)
+        }).ToList();
+
         var students = await _userManager.GetUsersInRoleAsync("Student");
 
         return View(new AdminScheduleViewModel
         {
-            Classes = classes,
+            Classes = classesWithConflicts,
             StartDate = startDate,
             EndDate = endDate,
             StudentId = studentId,
-            Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName)
+            Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName),
+            HasAnyConflicts = classesWithConflicts.Any(c => c.HasBlockedDateConflict)
         });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> CompleteClass(int id)
+    public async Task<IActionResult> CompleteClass(int id, string? teacherNotes)
     {
         var scheduledClass = await _context.ScheduledClasses.FindAsync(id);
         if (scheduledClass == null)
@@ -335,9 +504,28 @@ public class AdminController : Controller
         }
 
         scheduledClass.Status = ClassStatus.Completed;
+        scheduledClass.TeacherNotes = teacherNotes;
         await _context.SaveChangesAsync();
 
         TempData["SuccessMessage"] = "Class marked as completed.";
+        return RedirectToAction(nameof(Schedule));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetClassUrl(int id, string? classroomUrl)
+    {
+        var scheduledClass = await _context.ScheduledClasses.FindAsync(id);
+        if (scheduledClass == null)
+        {
+            return NotFound();
+        }
+
+        // Set or clear the override URL
+        scheduledClass.ClassroomUrlOverride = string.IsNullOrWhiteSpace(classroomUrl) ? null : classroomUrl.Trim();
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Class URL updated.";
         return RedirectToAction(nameof(Schedule));
     }
 
@@ -995,5 +1183,100 @@ public class AdminController : Controller
         }
 
         return Json(availableDates);
+    }
+
+    // Testimonials Management
+    public async Task<IActionResult> Testimonials()
+    {
+        var testimonials = await _context.ClassFeedbacks
+            .Include(f => f.Student)
+            .Include(f => f.ScheduledClass)
+            .Where(f => f.AllowPublicDisplay && !string.IsNullOrEmpty(f.PublicTestimonial))
+            .OrderByDescending(f => f.CreatedAt)
+            .Select(f => new AdminTestimonialItemViewModel
+            {
+                Id = f.Id,
+                StudentName = f.Student.FullName,
+                Rating = f.Rating,
+                PrivateComment = f.PrivateComment,
+                PublicTestimonial = f.PublicTestimonial!,
+                ClassDate = f.ScheduledClass.ClassDateTime,
+                IsApproved = f.IsApproved,
+                IsFeatured = f.IsFeatured,
+                CreatedAt = f.CreatedAt
+            })
+            .ToListAsync();
+
+        return View(new AdminTestimonialListViewModel { Testimonials = testimonials });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ApproveTestimonial(int id)
+    {
+        var feedback = await _context.ClassFeedbacks.FindAsync(id);
+        if (feedback == null)
+        {
+            return NotFound();
+        }
+
+        feedback.IsApproved = true;
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Testimonial approved and will now be visible on the website.";
+        return RedirectToAction(nameof(Testimonials));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> FeatureTestimonial(int id)
+    {
+        var feedback = await _context.ClassFeedbacks.FindAsync(id);
+        if (feedback == null)
+        {
+            return NotFound();
+        }
+
+        feedback.IsApproved = true;
+        feedback.IsFeatured = true;
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Testimonial featured and will be prominently displayed.";
+        return RedirectToAction(nameof(Testimonials));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UnfeatureTestimonial(int id)
+    {
+        var feedback = await _context.ClassFeedbacks.FindAsync(id);
+        if (feedback == null)
+        {
+            return NotFound();
+        }
+
+        feedback.IsFeatured = false;
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Testimonial is no longer featured.";
+        return RedirectToAction(nameof(Testimonials));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> HideTestimonial(int id)
+    {
+        var feedback = await _context.ClassFeedbacks.FindAsync(id);
+        if (feedback == null)
+        {
+            return NotFound();
+        }
+
+        feedback.IsApproved = false;
+        feedback.IsFeatured = false;
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Testimonial hidden from public view.";
+        return RedirectToAction(nameof(Testimonials));
     }
 }

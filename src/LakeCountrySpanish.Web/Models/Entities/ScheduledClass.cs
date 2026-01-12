@@ -26,6 +26,11 @@ public class ScheduledClass
     public int? StudentPackageId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    // Class details
+    public string? ClassroomUrlOverride { get; set; }  // Override student's default URL for this class
+    public string? TeacherNotes { get; set; }          // Notes on student progress after completion
+    public bool CreditForfeited { get; set; } = false; // True if cancelled within 24 hours (no refund)
+
     // Navigation properties
     public virtual ApplicationUser Student { get; set; } = null!;
     public virtual TimeSlot TimeSlot { get; set; } = null!;

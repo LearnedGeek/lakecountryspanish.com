@@ -41,6 +41,18 @@
             </form>
         </div>
 
+        @if (Model.HasAnyConflicts)
+        {
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center">
+                    <svg class="h-5 w-5 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                    </svg>
+                    <span class="text-red-800 font-medium">Some classes conflict with blocked dates and may need to be rescheduled.</span>
+                </div>
+            </div>
+        }
+
         <!-- Schedule List -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
             <table class="min-w-full divide-y divide-gray-200">
@@ -54,15 +66,28 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach (var cls in Model.Classes)
+                    @foreach (var item in Model.Classes)
                     {
-                        <tr class="hover:bg-gray-50">
+                        var cls = item.Class;
+                        <tr class="hover:bg-gray-50 @(item.HasBlockedDateConflict ? "bg-red-50" : "")">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <p class="text-sm font-medium text-gray-900">@cls.ClassDateTime.ToString("dddd, MMM d")</p>
-                                <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
+                                <div class="flex items-center">
+                                    @if (item.HasBlockedDateConflict)
+                                    {
+                                        <span class="flex-shrink-0 mr-2" title="Conflicts with blocked date">
+                                            <svg class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                            </svg>
+                                        </span>
+                                    }
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">@cls.ClassDateTime.ToString("dddd, MMM d")</p>
+                                        <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <p class="text-sm text-gray-900">@cls.Student.FullName</p>
+                                <a asp-action="StudentProfile" asp-route-id="@cls.StudentId" class="text-sm text-primary-600 hover:text-primary-700 hover:underline">@cls.Student.FullName</a>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -71,6 +96,14 @@
                                       "bg-gray-100 text-gray-800")">
                                     @cls.Status
                                 </span>
+                                @if (cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Completed && !string.IsNullOrEmpty(cls.TeacherNotes))
+                                {
+                                    <span class="ml-1 text-gray-400" title="@cls.TeacherNotes">
+                                        <svg class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                        </svg>
+                                    </span>
+                                }
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -81,10 +114,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 @if (cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Scheduled)
                                 {
-                                    <form asp-action="CompleteClass" method="post" class="inline">
-                                        <input type="hidden" name="id" value="@cls.Id" />
-                                        <button type="submit" class="text-green-600 hover:text-green-900 mr-3">Complete</button>
-                                    </form>
+                                    <button type="button" onclick="showUrlModal(@cls.Id, '@(cls.ClassroomUrlOverride ?? cls.Student.ClassroomUrl ?? "")')" class="text-gray-500 hover:text-gray-700 mr-3" title="Set Class URL">
+                                        <svg class="h-4 w-4 inline" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                        </svg>
+                                    </button>
+                                    <button type="button" onclick="showCompleteModal(@cls.Id, '@cls.Student.FullName')" class="text-green-600 hover:text-green-900 mr-3">Complete</button>
                                     <a asp-action="RescheduleClass" asp-route-id="@cls.Id" class="text-primary-600 hover:text-primary-900 mr-3">Reschedule</a>
                                     <button type="button" onclick="showCancelModal(@cls.Id, '@cls.Student.FullName')" class="text-red-600 hover:text-red-900">Cancel</button>
                                 }
@@ -103,6 +138,64 @@
                 </div>
             }
         </div>
+    </div>
+</div>
+
+<!-- Complete Class Modal -->
+<div id="completeModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Complete Class</h3>
+        <p class="text-gray-600 mb-4">Mark class as completed for <span id="completeStudentName" class="font-semibold"></span>?</p>
+        <form asp-action="CompleteClass" method="post">
+            <input type="hidden" name="id" id="completeClassId" />
+            <div class="space-y-4">
+                <div>
+                    <label for="teacherNotes" class="block text-sm font-medium text-gray-700 mb-1">Teacher Notes (optional)</label>
+                    <textarea name="teacherNotes" id="teacherNotes" rows="3" placeholder="Notes on student progress, homework assigned, topics covered..."
+                              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2 border"></textarea>
+                    <p class="mt-1 text-xs text-gray-500">These notes will be visible when viewing this class.</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" onclick="hideCompleteModal()"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition">
+                    Back
+                </button>
+                <button type="submit"
+                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition">
+                    Mark Complete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Set Class URL Modal -->
+<div id="urlModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Set Class URL</h3>
+        <p class="text-sm text-gray-600 mb-4">Override the default classroom URL for this specific class.</p>
+        <form asp-action="SetClassUrl" method="post">
+            <input type="hidden" name="id" id="urlClassId" />
+            <div class="space-y-4">
+                <div>
+                    <label for="classroomUrl" class="block text-sm font-medium text-gray-700 mb-1">Classroom URL</label>
+                    <input type="url" name="classroomUrl" id="classroomUrl" placeholder="https://zoom.us/j/... or https://meet.google.com/..."
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2 border" />
+                    <p class="mt-1 text-xs text-gray-500">Leave blank to use the student's default classroom URL.</p>
+                </div>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" onclick="hideUrlModal()"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition">
+                    Save URL
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -141,6 +234,17 @@
 
 @section Scripts {
     <script>
+        function showCompleteModal(classId, studentName) {
+            document.getElementById('completeClassId').value = classId;
+            document.getElementById('completeStudentName').textContent = studentName;
+            document.getElementById('teacherNotes').value = '';
+            document.getElementById('completeModal').classList.remove('hidden');
+        }
+
+        function hideCompleteModal() {
+            document.getElementById('completeModal').classList.add('hidden');
+        }
+
         function showCancelModal(classId, studentName) {
             document.getElementById('cancelClassId').value = classId;
             document.getElementById('cancelStudentName').textContent = studentName;
@@ -149,6 +253,16 @@
 
         function hideCancelModal() {
             document.getElementById('cancelModal').classList.add('hidden');
+        }
+
+        function showUrlModal(classId, currentUrl) {
+            document.getElementById('urlClassId').value = classId;
+            document.getElementById('classroomUrl').value = currentUrl || '';
+            document.getElementById('urlModal').classList.remove('hidden');
+        }
+
+        function hideUrlModal() {
+            document.getElementById('urlModal').classList.add('hidden');
         }
     </script>
 }

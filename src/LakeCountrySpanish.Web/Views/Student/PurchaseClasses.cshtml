@@ -56,6 +56,26 @@
             </div>
         }
 
+        @if (Model.HasCustomRate)
+        {
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-6 mb-8">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-purple-100 rounded-lg">
+                        <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-lg font-bold text-purple-900">Special Rate from Your Instructor!</p>
+                        <p class="text-sm text-purple-700">
+                            You have a special discounted rate of <span class="font-bold">$@Model.CustomHourlyRate?.ToString("0.00")</span> per class
+                            (regular price: <span class="line-through">$@Model.BaseClassPrice.ToString("0.00")</span>)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        }
+
         <!-- How it Works -->
         <div class="bg-white rounded-lg shadow p-6 mb-8">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">How It Works</h2>
@@ -94,20 +114,35 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach (var package in Model.Packages)
             {
-                var savings = (Model.BaseClassPrice * package.ClassCount) - package.Price;
-                var pricePerClass = package.Price / package.ClassCount;
-                var discountPercent = savings > 0 ? Math.Round((savings / (Model.BaseClassPrice * package.ClassCount)) * 100) : 0;
-                var isPopular = package.ClassCount == 10; // Mark 10-class as popular
-                var isBestValue = package.ClassCount == 20; // Mark 20-class as best value
+                // Calculate prices - use custom rate if available
+                var effectiveRate = Model.HasCustomRate ? Model.CustomHourlyRate!.Value : Model.BaseClassPrice;
+                var customPrice = effectiveRate * package.ClassCount;
+                var normalPrice = package.Price;
+                var displayPrice = Model.HasCustomRate ? customPrice : normalPrice;
 
-                <div class="relative bg-white rounded-lg shadow-lg overflow-hidden @(isPopular ? "ring-2 ring-primary-500" : "") @(isBestValue ? "ring-2 ring-green-500" : "")">
-                    @if (isPopular)
+                // Calculate savings vs standard pricing
+                var standardTotal = Model.BaseClassPrice * package.ClassCount;
+                var totalSavings = standardTotal - displayPrice;
+                var pricePerClass = displayPrice / package.ClassCount;
+                var discountPercent = totalSavings > 0 ? Math.Round((totalSavings / standardTotal) * 100) : 0;
+
+                var isPopular = package.ClassCount == 10;
+                var isBestValue = package.ClassCount == 20;
+
+                <div class="relative bg-white rounded-lg shadow-lg overflow-hidden @(isPopular ? "ring-2 ring-primary-500" : "") @(isBestValue ? "ring-2 ring-green-500" : "") @(Model.HasCustomRate ? "ring-2 ring-purple-400" : "")">
+                    @if (Model.HasCustomRate)
+                    {
+                        <div class="absolute top-0 right-0 bg-purple-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                            SPECIAL RATE
+                        </div>
+                    }
+                    else if (isPopular)
                     {
                         <div class="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                             POPULAR
                         </div>
                     }
-                    @if (isBestValue)
+                    else if (isBestValue)
                     {
                         <div class="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                             BEST VALUE
@@ -119,7 +154,15 @@
                         <p class="text-sm text-gray-500 mb-4">@package.Description</p>
 
                         <div class="mb-4">
-                            <span class="text-4xl font-bold text-gray-900">$@package.Price.ToString("0")</span>
+                            @if (Model.HasCustomRate)
+                            {
+                                <span class="text-lg text-gray-400 line-through mr-2">$@normalPrice.ToString("0")</span>
+                                <span class="text-4xl font-bold text-purple-600">$@displayPrice.ToString("0")</span>
+                            }
+                            else
+                            {
+                                <span class="text-4xl font-bold text-gray-900">$@displayPrice.ToString("0")</span>
+                            }
                             @if (package.ClassCount > 1)
                             {
                                 <span class="text-sm text-gray-500 ml-1">total</span>
@@ -137,15 +180,23 @@
                                 <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                 </svg>
-                                <span class="text-gray-700">$@pricePerClass.ToString("0.00") per class</span>
+                                @if (Model.HasCustomRate)
+                                {
+                                    <span class="text-gray-400 line-through mr-1">$@(normalPrice / package.ClassCount).ToString("0.00")</span>
+                                    <span class="text-purple-600 font-semibold">$@pricePerClass.ToString("0.00") per class</span>
+                                }
+                                else
+                                {
+                                    <span class="text-gray-700">$@pricePerClass.ToString("0.00") per class</span>
+                                }
                             </div>
-                            @if (savings > 0)
+                            @if (totalSavings > 0)
                             {
                                 <div class="flex items-center text-sm">
                                     <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                     </svg>
-                                    <span class="text-green-600 font-semibold">Save $@savings.ToString("0") (@discountPercent% off!)</span>
+                                    <span class="@(Model.HasCustomRate ? "text-purple-600" : "text-green-600") font-semibold">Save $@totalSavings.ToString("0") (@discountPercent% off!)</span>
                                 </div>
                             }
                             <div class="flex items-center text-sm">
@@ -164,7 +215,7 @@
 
                         <a asp-controller="Payment" asp-action="BuyPackage" asp-route-id="@package.Id"
                            class="block w-full text-center py-3 px-4 rounded-lg font-semibold transition
-                                  @(isPopular || isBestValue ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900")">
+                                  @(Model.HasCustomRate ? "bg-purple-600 hover:bg-purple-700 text-white" : (isPopular || isBestValue ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-900"))">
                             Buy Now
                         </a>
                     </div>

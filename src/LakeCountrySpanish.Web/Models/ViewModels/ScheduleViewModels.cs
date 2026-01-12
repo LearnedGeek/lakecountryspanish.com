@@ -42,16 +42,17 @@ public class TimeSlotViewModel
 
 public class AdminScheduleViewModel
 {
-    public IEnumerable<ScheduledClass> Classes { get; set; } = new List<ScheduledClass>();
+    public IEnumerable<ScheduledClassWithConflict> Classes { get; set; } = new List<ScheduledClassWithConflict>();
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public string? StudentId { get; set; }
     public IEnumerable<ApplicationUser> Students { get; set; } = new List<ApplicationUser>();
+    public bool HasAnyConflicts { get; set; }
 }
 
 public class ManageTimeSlotsViewModel
 {
-    public IEnumerable<TimeSlot> TimeSlots { get; set; } = new List<TimeSlot>();
+    public IEnumerable<TimeSlotListItemViewModel> TimeSlots { get; set; } = new List<TimeSlotListItemViewModel>();
 }
 
 public class ManageCreditsViewModel
@@ -97,4 +98,63 @@ public class RescheduleClassViewModel
     public int CurrentTimeSlotId { get; set; }
     public IEnumerable<TimeSlot> AvailableTimeSlots { get; set; } = new List<TimeSlot>();
     public DateTime NewDateTime { get; set; }
+}
+
+// Weekly Calendar DTOs for new booking view
+public class WeeklyCalendarData
+{
+    public DateTime WeekStart { get; set; }
+    public DateTime WeekEnd { get; set; }
+    public List<DaySchedule> Days { get; set; } = new();
+    public List<TimeSlot> AllTimeSlots { get; set; } = new();  // Distinct time slots for row headers
+}
+
+public class DaySchedule
+{
+    public DateTime Date { get; set; }
+    public bool IsBlocked { get; set; }
+    public string? BlockedReason { get; set; }
+    public List<TimeSlotAvailability> TimeSlots { get; set; } = new();
+}
+
+public class TimeSlotAvailability
+{
+    public int TimeSlotId { get; set; }
+    public TimeSpan StartTime { get; set; }
+    public TimeSpan EndTime { get; set; }
+    public bool IsAvailable { get; set; }
+    public bool IsPastBookingCutoff { get; set; }  // Within 1 hour of now
+    public bool SlotExistsForDay { get; set; }      // Does this slot operate on this day?
+    public string? BookedByStudentName { get; set; } // For admin view (null for student view)
+}
+
+public class RecurringBookingResult
+{
+    public bool Success { get; set; }
+    public List<ScheduledClass> BookedClasses { get; set; } = new();
+    public List<DateTime> ConflictDates { get; set; } = new();
+    public List<string> ConflictReasons { get; set; } = new();
+    public int CreditsUsed { get; set; }
+    public int CreditsRemaining { get; set; }
+}
+
+public class WeeklyBookingViewModel
+{
+    public WeeklyCalendarData WeeklyCalendar { get; set; } = null!;
+    public int AvailableCredits { get; set; }
+    public int MaxRecurringWeeks { get; set; }
+    public decimal ClassPrice { get; set; }
+}
+
+public class TimeSlotListItemViewModel
+{
+    public TimeSlot TimeSlot { get; set; } = null!;
+    public int ScheduledStudentCount { get; set; }
+    public bool CanDelete { get; set; }
+}
+
+public class ScheduledClassWithConflict
+{
+    public ScheduledClass Class { get; set; } = null!;
+    public bool HasBlockedDateConflict { get; set; }
 }
