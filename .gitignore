@@ -129,3 +129,7 @@ appsettings.Local.json
 
 # Claude settings
 .claude/
+
+# Claude temp files
+tmpclaude-*
+2026-01-11-*.txt
