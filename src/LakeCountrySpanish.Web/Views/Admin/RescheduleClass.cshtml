@@ -1,0 +1,197 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.RescheduleClassViewModel
+@{
+    ViewData["Title"] = "Reschedule Class";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <a asp-action="Schedule" class="text-primary-600 hover:text-primary-700 flex items-center text-sm mb-4">
+                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+                Back to Schedule
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">Reschedule Class</h1>
+            <p class="mt-2 text-gray-600">Move this class to a different date and time.</p>
+        </div>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+        <!-- Current Class Info -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Current Booking</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Student</p>
+                    <p class="font-medium text-gray-900">@Model.StudentName</p>
+                    <p class="text-sm text-gray-500">@Model.StudentEmail</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Current Date & Time</p>
+                    <p class="font-medium text-gray-900">@Model.CurrentDateTime.ToString("dddd, MMMM d, yyyy")</p>
+                    <p class="text-sm text-gray-500">@Model.CurrentDateTime.ToString("h:mm tt")</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reschedule Form -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">New Schedule</h2>
+            <form asp-action="RescheduleClass" method="post" id="rescheduleForm">
+                <input type="hidden" name="classId" value="@Model.ClassId" />
+
+                <div class="space-y-6">
+                    <!-- Time Slot Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select Time Slot</label>
+                        <div class="grid grid-cols-2 gap-3" id="timeSlots">
+                            @foreach (var slot in Model.AvailableTimeSlots)
+                            {
+                                <button type="button"
+                                        class="time-slot-btn p-3 border-2 rounded-lg text-left transition @(slot.Id == Model.CurrentTimeSlotId ? "border-primary-500 bg-primary-50" : "border-gray-200 hover:border-primary-500")"
+                                        data-slot-id="@slot.Id">
+                                    <p class="font-medium text-gray-900">
+                                        @if (slot.IsRecurring && slot.DayOfWeek.HasValue)
+                                        {
+                                            @slot.DayOfWeek.Value.ToString()@("s")
+                                        }
+                                        else if (slot.SpecificDate.HasValue)
+                                        {
+                                            @slot.SpecificDate.Value.ToString("MMM d, yyyy")
+                                        }
+                                    </p>
+                                    <p class="text-sm text-gray-500">
+                                        @(DateTime.Today.Add(slot.StartTime).ToString("h:mm tt")) - @(DateTime.Today.Add(slot.EndTime).ToString("h:mm tt"))
+                                    </p>
+                                </button>
+                            }
+                        </div>
+                        <input type="hidden" name="timeSlotId" id="selectedTimeSlotId" value="@Model.CurrentTimeSlotId" />
+                    </div>
+
+                    <!-- Date Selection -->
+                    <div id="dateSelection">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Select New Date</label>
+                        <div id="availableDates" class="grid grid-cols-2 gap-3">
+                            <!-- Dates loaded via JavaScript -->
+                        </div>
+                        <div id="loadingDates" class="text-center py-4 hidden">
+                            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto"></div>
+                        </div>
+                        <div id="noDates" class="text-center py-4 text-gray-500 hidden">
+                            No available dates for this time slot.
+                        </div>
+                        <input type="hidden" name="newDateTime" id="selectedDateTime" />
+                    </div>
+
+                    <!-- Reason -->
+                    <div>
+                        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Reschedule</label>
+                        <input type="text" name="reason" id="reason" placeholder="e.g., Schedule conflict, student request"
+                               class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" />
+                    </div>
+
+                    <!-- Notify Student -->
+                    <div class="flex items-center">
+                        <input type="checkbox" name="notifyStudent" value="true" id="notifyStudent" checked
+                               class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                        <label for="notifyStudent" class="ml-2 text-sm text-gray-700">Notify student about this change</label>
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-end space-x-3">
+                    <a asp-action="Schedule" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition">
+                        Cancel
+                    </a>
+                    <button type="submit" id="submitBtn" disabled
+                            class="bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-md transition">
+                        Reschedule Class
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedSlotId = @Model.CurrentTimeSlotId;
+        const classId = @Model.ClassId;
+
+        // Load dates for initial slot
+        loadAvailableDates(selectedSlotId);
+
+        document.querySelectorAll('.time-slot-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.time-slot-btn').forEach(b => {
+                    b.classList.remove('border-primary-500', 'bg-primary-50');
+                    b.classList.add('border-gray-200');
+                });
+
+                this.classList.remove('border-gray-200');
+                this.classList.add('border-primary-500', 'bg-primary-50');
+
+                selectedSlotId = this.dataset.slotId;
+                document.getElementById('selectedTimeSlotId').value = selectedSlotId;
+                loadAvailableDates(selectedSlotId);
+            });
+        });
+
+        function loadAvailableDates(slotId) {
+            const datesContainer = document.getElementById('availableDates');
+            const loading = document.getElementById('loadingDates');
+            const noDates = document.getElementById('noDates');
+            const submitBtn = document.getElementById('submitBtn');
+
+            datesContainer.innerHTML = '';
+            loading.classList.remove('hidden');
+            noDates.classList.add('hidden');
+            submitBtn.disabled = true;
+
+            fetch(`/Admin/GetAvailableDatesForSlot?timeSlotId=${slotId}&excludeClassId=${classId}`)
+                .then(response => response.json())
+                .then(dates => {
+                    loading.classList.add('hidden');
+
+                    if (dates.length === 0) {
+                        noDates.classList.remove('hidden');
+                        return;
+                    }
+
+                    dates.forEach(date => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'date-btn p-3 border-2 border-gray-200 rounded-lg text-left hover:border-primary-500 transition';
+                        btn.dataset.date = date.date;
+                        btn.innerHTML = `<p class="font-medium text-gray-900">${date.display.split(' at ')[0]}</p>`;
+
+                        btn.addEventListener('click', function() {
+                            document.querySelectorAll('.date-btn').forEach(b => {
+                                b.classList.remove('border-primary-500', 'bg-primary-50');
+                                b.classList.add('border-gray-200');
+                            });
+
+                            this.classList.remove('border-gray-200');
+                            this.classList.add('border-primary-500', 'bg-primary-50');
+
+                            document.getElementById('selectedDateTime').value = this.dataset.date;
+                            submitBtn.disabled = false;
+                        });
+
+                        datesContainer.appendChild(btn);
+                    });
+                })
+                .catch(err => {
+                    loading.classList.add('hidden');
+                    noDates.classList.remove('hidden');
+                    console.error('Error loading dates:', err);
+                });
+        }
+    </script>
+}

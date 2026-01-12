@@ -1,0 +1,154 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.BlockedDatesViewModel
+@{
+    ViewData["Title"] = "Blocked Dates";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <div class="mb-8 flex justify-between items-start">
+            <div>
+                <a asp-action="Dashboard" class="text-primary-600 hover:text-primary-700 flex items-center text-sm mb-4">
+                    <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                    Back to Dashboard
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">Blocked Dates</h1>
+                <p class="mt-2 text-gray-600">Manage vacation time, holidays, and other unavailable periods.</p>
+            </div>
+            <a asp-action="CreateBlockedDate" class="inline-flex items-center bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Block Dates
+            </a>
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        @if (TempData["WarningMessage"] != null)
+        {
+            <div class="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg mb-6">
+                @TempData["WarningMessage"]
+            </div>
+        }
+
+        <!-- Upcoming Blocked Dates -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="p-6 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Upcoming & Current Blocked Periods</h2>
+            </div>
+            <div class="p-6">
+                @if (Model.UpcomingBlockedDates.Any())
+                {
+                    <div class="space-y-4">
+                        @foreach (var blocked in Model.UpcomingBlockedDates)
+                        {
+                            var isActive = blocked.StartDate <= DateTime.Today && blocked.EndDate >= DateTime.Today;
+                            <div class="flex items-center justify-between p-4 rounded-lg @(isActive ? "bg-red-50 border border-red-200" : "bg-gray-50")">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 p-3 rounded-lg @(isActive ? "bg-red-100" : "bg-gray-200")">
+                                        <svg class="h-6 w-6 @(isActive ? "text-red-600" : "text-gray-600")" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                                        </svg>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="font-semibold text-gray-900">@blocked.Reason</p>
+                                        <p class="text-sm text-gray-600">
+                                            @if (blocked.StartDate == blocked.EndDate)
+                                            {
+                                                @blocked.StartDate.ToString("dddd, MMMM d, yyyy")
+                                            }
+                                            else
+                                            {
+                                                @blocked.StartDate.ToString("MMM d") <text>-</text> @blocked.EndDate.ToString("MMM d, yyyy")
+                                            }
+                                            @if (isActive)
+                                            {
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                                    Currently Active
+                                                </span>
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                                <form asp-action="DeleteBlockedDate" method="post" class="inline">
+                                    <input type="hidden" name="id" value="@blocked.Id" />
+                                    <button type="submit" onclick="return confirm('Are you sure you want to remove this blocked period?')"
+                                            class="text-red-600 hover:text-red-800 font-medium text-sm">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-8">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                        </svg>
+                        <p class="mt-2 text-gray-500">No upcoming blocked periods.</p>
+                        <p class="text-sm text-gray-400">Students can schedule on any available time slot.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Past Blocked Dates -->
+        @if (Model.PastBlockedDates.Any())
+        {
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Past Blocked Periods</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @foreach (var blocked in Model.PastBlockedDates.Take(10))
+                            {
+                                <tr class="text-gray-400">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        @if (blocked.StartDate == blocked.EndDate)
+                                        {
+                                            @blocked.StartDate.ToString("MMM d, yyyy")
+                                        }
+                                        else
+                                        {
+                                            @blocked.StartDate.ToString("MMM d") <text>-</text> @blocked.EndDate.ToString("MMM d, yyyy")
+                                        }
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        @blocked.Reason
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                        <form asp-action="DeleteBlockedDate" method="post" class="inline">
+                                            <input type="hidden" name="id" value="@blocked.Id" />
+                                            <button type="submit" onclick="return confirm('Delete this past blocked period?')"
+                                                    class="text-gray-400 hover:text-red-600">
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>

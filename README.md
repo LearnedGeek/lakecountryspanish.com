@@ -37,12 +37,12 @@ A complete web application for managing an online Spanish teaching business. Bui
 ## Project Structure
 
 ```
-SpanishScheduler/
+LakeCountrySpanish/
 ├── README.md
 ├── docs/                          # Documentation
 ├── src/
-│   ├── SpanishScheduler.sln       # Solution file
-│   └── SpanishScheduler.Web/      # Main web application
+│   ├── LakeCountrySpanish.sln     # Solution file
+│   └── LakeCountrySpanish.Web/    # Main web application
 │       ├── Controllers/           # MVC Controllers
 │       ├── Data/                  # DbContext and seed data
 │       ├── Migrations/            # EF Core migrations
@@ -68,13 +68,13 @@ SpanishScheduler/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/SpanishScheduler.git
-   cd SpanishScheduler
+   git clone https://github.com/mcarthey/lakecountryspanish.com.git
+   cd lakecountryspanish.com
    ```
 
 2. **Configure application settings**
 
-   Update `src/SpanishScheduler.Web/appsettings.json` with your keys:
+   Update `src/LakeCountrySpanish.Web/appsettings.Development.json` with your keys:
    ```json
    {
      "Stripe": {
@@ -91,7 +91,7 @@ SpanishScheduler/
 
 3. **Run the application**
    ```bash
-   cd src/SpanishScheduler.Web
+   cd src/LakeCountrySpanish.Web
    dotnet run
    ```
 
@@ -127,11 +127,11 @@ On first run, the application seeds a default admin account:
 
 The application uses SQL Server LocalDB by default. The database is created automatically on first run.
 
-To use a different SQL Server instance, update the connection string in `appsettings.json`:
+To use a different SQL Server instance, update the connection string in `appsettings.Development.json` or `appsettings.Production.json`:
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Server=YOUR_SERVER;Database=SpanishScheduler;Trusted_Connection=True;MultipleActiveResultSets=true"
+    "DefaultConnection": "Server=YOUR_SERVER;Database=LakeCountrySpanish;Trusted_Connection=True;MultipleActiveResultSets=true"
   }
 }
 ```
@@ -158,7 +158,7 @@ Administrators can set custom hourly rates per student for special pricing agree
 ### Running Migrations
 
 ```bash
-cd src/SpanishScheduler.Web
+cd src/LakeCountrySpanish.Web
 dotnet ef migrations add MigrationName
 dotnet ef database update
 ```
