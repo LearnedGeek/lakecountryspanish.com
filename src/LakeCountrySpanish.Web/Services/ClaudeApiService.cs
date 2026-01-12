@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using LakeCountrySpanish.Web.Models.Entities;
+using LakeCountrySpanish.Web.Models.ViewModels;
 
 namespace LakeCountrySpanish.Web.Services;
 
@@ -349,5 +350,157 @@ public class ClaudeApiService : IClaudeApiService
             Feedback = isCorrect ? "Correct!" : "That's not quite right.",
             Explanation = isCorrect ? null : $"The expected answer was: {request.CorrectAnswer}"
         };
+    }
+
+    public async Task<PlacementQuestion> GeneratePlacementQuestionAsync(
+        string cefrLevel,
+        List<string>? previousTopics = null)
+    {
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            return new PlacementQuestion
+            {
+                Success = false,
+                ErrorMessage = "Claude API key is not configured"
+            };
+        }
+
+        try
+        {
+            var prompt = BuildPlacementQuestionPrompt(cefrLevel, previousTopics);
+            var response = await CallClaudeApiAsync(prompt);
+
+            if (response == null)
+            {
+                return new PlacementQuestion
+                {
+                    Success = false,
+                    ErrorMessage = "Failed to get response from Claude API"
+                };
+            }
+
+            return ParsePlacementQuestionResponse(response, cefrLevel);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating placement question via Claude API");
+            return new PlacementQuestion
+            {
+                Success = false,
+                ErrorMessage = ex.Message
+            };
+        }
+    }
+
+    private string BuildPlacementQuestionPrompt(string cefrLevel, List<string>? previousTopics)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("You are a Spanish language placement test generator. Generate a single question to assess a student's Spanish proficiency.");
+        sb.AppendLine();
+        sb.AppendLine($"CEFR Level to assess: {cefrLevel}");
+        sb.AppendLine();
+
+        // Add level-specific guidance
+        sb.AppendLine("Level guidelines:");
+        sb.AppendLine(cefrLevel switch
+        {
+            "A1" => "- Basic vocabulary (greetings, numbers, colors, family)\n- Present tense of ser/estar\n- Simple sentence structure",
+            "A2" => "- Everyday vocabulary (food, travel, shopping)\n- Present tense regular/irregular verbs\n- Basic past tense (preterite)",
+            "B1" => "- Expanded vocabulary and expressions\n- Imperfect vs preterite\n- Subjunctive basics\n- Object pronouns",
+            "B2" => "- Idiomatic expressions\n- Complex subjunctive uses\n- Conditional sentences\n- Advanced verb tenses",
+            "C1" => "- Nuanced vocabulary\n- All subjunctive tenses\n- Complex grammatical structures\n- Literary/formal language",
+            "C2" => "- Native-level expressions and idioms\n- Subtle grammatical distinctions\n- Regional variations\n- Professional/academic vocabulary",
+            _ => "- Appropriate for intermediate level"
+        });
+        sb.AppendLine();
+
+        if (previousTopics?.Any() == true)
+        {
+            sb.AppendLine($"IMPORTANT: Avoid these topics (already tested): {string.Join(", ", previousTopics)}");
+            sb.AppendLine("Choose a different grammar point or vocabulary theme.");
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("Generate ONE question. Vary the question type (prefer multiple choice for reliability).");
+        sb.AppendLine();
+        sb.AppendLine("Respond with a JSON object in this exact format:");
+        sb.AppendLine(@"{
+  ""type"": ""multiple_choice"",
+  ""question"": ""Complete: Yo _____ español. (I speak Spanish)"",
+  ""options"": [""hablo"", ""hablas"", ""habla"", ""hablan""],
+  ""correctAnswer"": ""hablo"",
+  ""acceptableAnswers"": [],
+  ""hint"": ""Think about the first person singular"",
+  ""explanation"": ""Hablo is the first person singular form of hablar"",
+  ""topic"": ""present tense verbs""
+}");
+        sb.AppendLine();
+        sb.AppendLine("For fill-in-the-blank, use type 'fill_blank' and omit 'options'.");
+        sb.AppendLine("Return ONLY the JSON object, no additional text.");
+
+        return sb.ToString();
+    }
+
+    private PlacementQuestion ParsePlacementQuestionResponse(string response, string cefrLevel)
+    {
+        try
+        {
+            var jsonStart = response.IndexOf('{');
+            var jsonEnd = response.LastIndexOf('}');
+
+            if (jsonStart >= 0 && jsonEnd > jsonStart)
+            {
+                var jsonString = response.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                using var doc = JsonDocument.Parse(jsonString);
+                var root = doc.RootElement;
+
+                var question = new PlacementQuestion
+                {
+                    Level = cefrLevel,
+                    Type = root.TryGetProperty("type", out var t) ? t.GetString() ?? "multiple_choice" : "multiple_choice",
+                    Question = root.TryGetProperty("question", out var q) ? q.GetString() ?? "" : "",
+                    CorrectAnswer = root.TryGetProperty("correctAnswer", out var ca) ? ca.GetString() ?? "" : "",
+                    Hint = root.TryGetProperty("hint", out var h) ? h.GetString() : null,
+                    Explanation = root.TryGetProperty("explanation", out var e) ? e.GetString() : null,
+                    Topic = root.TryGetProperty("topic", out var tp) ? tp.GetString() : null,
+                    Success = true
+                };
+
+                // Parse options array
+                if (root.TryGetProperty("options", out var options) && options.ValueKind == JsonValueKind.Array)
+                {
+                    question.Options = options.EnumerateArray()
+                        .Select(o => o.GetString() ?? "")
+                        .Where(s => !string.IsNullOrEmpty(s))
+                        .ToList();
+                }
+
+                // Parse acceptable answers array
+                if (root.TryGetProperty("acceptableAnswers", out var acceptable) && acceptable.ValueKind == JsonValueKind.Array)
+                {
+                    question.AcceptableAnswers = acceptable.EnumerateArray()
+                        .Select(o => o.GetString() ?? "")
+                        .Where(s => !string.IsNullOrEmpty(s))
+                        .ToList();
+                }
+
+                return question;
+            }
+
+            return new PlacementQuestion
+            {
+                Success = false,
+                ErrorMessage = "Could not parse JSON from response"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error parsing placement question response");
+            return new PlacementQuestion
+            {
+                Success = false,
+                ErrorMessage = $"Parse error: {ex.Message}"
+            };
+        }
     }
 }

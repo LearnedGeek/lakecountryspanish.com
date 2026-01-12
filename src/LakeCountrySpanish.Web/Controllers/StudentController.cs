@@ -17,19 +17,22 @@ public class StudentController : Controller
     private readonly IScheduleService _scheduleService;
     private readonly IPaymentService _paymentService;
     private readonly IGamificationService _gamificationService;
+    private readonly IPlacementTestService _placementTestService;
 
     public StudentController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         IScheduleService scheduleService,
         IPaymentService paymentService,
-        IGamificationService gamificationService)
+        IGamificationService gamificationService,
+        IPlacementTestService placementTestService)
     {
         _context = context;
         _userManager = userManager;
         _scheduleService = scheduleService;
         _paymentService = paymentService;
         _gamificationService = gamificationService;
+        _placementTestService = placementTestService;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -71,6 +74,9 @@ public class StudentController : Controller
             })
             .ToListAsync();
 
+        // Check if student has taken placement test
+        var hasTakenPlacementTest = await _placementTestService.HasCompletedTestAsync(user.Id);
+
         var viewModel = new StudentDashboardViewModel
         {
             StudentName = user.FirstName,
@@ -80,7 +86,9 @@ public class StudentController : Controller
             Balance = await _paymentService.GetStudentBalanceAsync(user.Id),
             AvailablePackageClasses = availablePackageClasses,
             Documents = documents,
-            ClassesNeedingFeedback = classesNeedingFeedback
+            ClassesNeedingFeedback = classesNeedingFeedback,
+            CefrLevel = user.CefrLevel,
+            HasTakenPlacementTest = hasTakenPlacementTest
         };
 
         return View(viewModel);

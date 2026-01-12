@@ -229,6 +229,84 @@ public class AssignmentService : IAssignmentService
         return true;
     }
 
+    // Content Library
+
+    public async Task<IEnumerable<Assignment>> FindLibraryMatchesAsync(
+        string cefrLevel,
+        AssignmentType type,
+        int? topicId = null,
+        int maxResults = 5)
+    {
+        var query = _context.Assignments
+            .Include(a => a.CurriculumTopic)
+            .Where(a => a.Status == AssignmentStatus.Approved
+                     && a.CefrLevel == cefrLevel
+                     && a.Type == type);
+
+        // If topic specified, try exact match first
+        if (topicId.HasValue)
+        {
+            var exactMatches = await query
+                .Where(a => a.CurriculumTopicId == topicId)
+                .OrderByDescending(a => a.ReviewedAt)
+                .Take(maxResults)
+                .ToListAsync();
+
+            if (exactMatches.Any())
+                return exactMatches;
+
+            // Fall back to same level/type without topic restriction
+        }
+
+        return await query
+            .OrderByDescending(a => a.ReviewedAt)
+            .Take(maxResults)
+            .ToListAsync();
+    }
+
+    public async Task<Assignment> CloneFromLibraryAsync(
+        int sourceAssignmentId,
+        string? createdById = null)
+    {
+        var source = await GetAssignmentByIdAsync(sourceAssignmentId);
+        if (source == null || source.Status != AssignmentStatus.Approved)
+        {
+            throw new ArgumentException("Source assignment not found or not approved", nameof(sourceAssignmentId));
+        }
+
+        var clone = new Assignment
+        {
+            Title = source.Title,
+            Description = source.Description,
+            CefrLevel = source.CefrLevel,
+            CurriculumTopicId = source.CurriculumTopicId,
+            Type = source.Type,
+            Status = AssignmentStatus.Approved, // Pre-approved since source was approved
+            QuestionsJson = source.QuestionsJson,
+            AnswersJson = source.AnswersJson,
+            TotalPoints = source.TotalPoints,
+            BonusPoints = source.BonusPoints,
+            EstimatedMinutes = source.EstimatedMinutes,
+            IsAiGenerated = source.IsAiGenerated,
+            IsFromLibrary = true,
+            SourceAssignmentId = sourceAssignmentId,
+            CreatedById = createdById,
+            CreatedAt = DateTime.UtcNow,
+            // Copy review info from source
+            ReviewedById = source.ReviewedById,
+            ReviewedAt = DateTime.UtcNow,
+            ReviewNotes = $"Cloned from approved assignment #{sourceAssignmentId}"
+        };
+
+        _context.Assignments.Add(clone);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Cloned assignment #{SourceId} to #{CloneId} from library",
+            sourceAssignmentId, clone.Id);
+
+        return clone;
+    }
+
     // Student Assignments
 
     public async Task<IEnumerable<StudentAssignment>> GetStudentAssignmentsAsync(
@@ -595,7 +673,8 @@ public class AssignmentService : IAssignmentService
             TotalSubmissions = submissions.Count,
             AverageScore = submissions.Any() ? submissions.Average(s => s.PercentageScore) : 0,
             AiGeneratedCount = assignments.Count(a => a.IsAiGenerated),
-            ManuallyCreatedCount = assignments.Count(a => !a.IsAiGenerated)
+            ManuallyCreatedCount = assignments.Count(a => !a.IsAiGenerated),
+            FromLibraryCount = assignments.Count(a => a.IsFromLibrary)
         };
     }
 }

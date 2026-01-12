@@ -46,6 +46,7 @@ builder.Services.AddScoped<IGamificationService, GamificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IClaudeApiService, ClaudeApiService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
+builder.Services.AddScoped<IPlacementTestService, PlacementTestService>();
 builder.Services.AddHttpClient();
 
 // Add MVC

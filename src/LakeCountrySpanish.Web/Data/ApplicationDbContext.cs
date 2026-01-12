@@ -46,6 +46,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentAssignment> StudentAssignments => Set<StudentAssignment>();
     public DbSet<AssignmentSubmission> AssignmentSubmissions => Set<AssignmentSubmission>();
 
+    // Placement test entities
+    public DbSet<PlacementTestSession> PlacementTestSessions => Set<PlacementTestSession>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -435,7 +438,14 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .HasForeignKey(e => e.CreatedById)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            // Content library - self-referencing for cloned assignments
+            entity.HasOne(e => e.SourceAssignment)
+                .WithMany()
+                .HasForeignKey(e => e.SourceAssignmentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasIndex(e => new { e.CefrLevel, e.Status, e.Type });
+            entity.HasIndex(e => e.SourceAssignmentId);
         });
 
         // StudentAssignment configuration
@@ -484,6 +494,20 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Index for finding student's submissions
             entity.HasIndex(e => new { e.StudentId, e.SubmittedAt });
             entity.HasIndex(e => new { e.AssignmentId, e.StudentId });
+        });
+
+        // PlacementTestSession configuration
+        builder.Entity<PlacementTestSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Index for finding active session by student
+            entity.HasIndex(e => new { e.StudentId, e.Status });
         });
     }
 }

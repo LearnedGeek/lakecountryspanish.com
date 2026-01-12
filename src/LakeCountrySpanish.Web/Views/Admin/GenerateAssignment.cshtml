@@ -23,6 +23,47 @@
                 </div>
             }
 
+            @if (Model.ShowLibraryOptions)
+            {
+                <div class="card mb-4 border-success">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-book"></i> Library Matches Found
+                    </div>
+                    <div class="card-body">
+                        <p>Existing approved assignments match your criteria. Choose one to reuse and save time:</p>
+                        <div class="list-group mb-3">
+                            @foreach (var match in Model.LibraryMatches)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>@match.Title</strong>
+                                        <br />
+                                        <small class="text-muted">
+                                            @match.Type | @match.TotalPoints pts | ~@match.EstimatedMinutes min
+                                            @if (match.CurriculumTopic != null)
+                                            {
+                                                <span>| Topic: @match.CurriculumTopic.Name</span>
+                                            }
+                                        </small>
+                                    </div>
+                                    <form asp-action="UseFromLibrary" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="sourceAssignmentId" value="@match.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="bi bi-check-circle"></i> Use This
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+                        <hr />
+                        <p class="mb-0 text-muted">
+                            <i class="bi bi-info-circle"></i> Or generate a new assignment with AI below.
+                        </p>
+                    </div>
+                </div>
+            }
+
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">AI Assignment Generator</h5>
@@ -40,7 +81,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="CefrLevel" class="form-label">CEFR Level</label>
-                                <select asp-for="CefrLevel" class="form-select">
+                                <select asp-for="CefrLevel" class="form-select" id="cefrLevelSelect">
                                     <option value="A1">A1 - Beginner</option>
                                     <option value="A2">A2 - Elementary</option>
                                     <option value="B1">B1 - Intermediate</option>
@@ -51,7 +92,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label asp-for="Type" class="form-label">Assignment Type</label>
-                                <select asp-for="Type" class="form-select">
+                                <select asp-for="Type" class="form-select" id="typeSelect">
                                     @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
                                     {
                                         <option value="@type">@type</option>
@@ -63,7 +104,7 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label asp-for="TopicId" class="form-label">Curriculum Topic (Optional)</label>
-                                <select asp-for="TopicId" class="form-select">
+                                <select asp-for="TopicId" class="form-select" id="topicSelect">
                                     <option value="">-- General / No specific topic --</option>
                                     @foreach (var topic in Model.AvailableTopics)
                                     {
@@ -84,7 +125,7 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label asp-for="AdditionalInstructions" class="form-label">
                                 Additional Instructions (Optional)
                             </label>
@@ -95,8 +136,23 @@
                             </small>
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" asp-for="ForceNewGeneration" id="forceNewGeneration" />
+                                <label class="form-check-label" asp-for="ForceNewGeneration">
+                                    Force new AI generation (bypass content library)
+                                </label>
+                            </div>
+                            <small class="text-muted">
+                                Check this to always generate a new assignment, even if matching ones exist in the library.
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-outline-primary" id="checkLibraryBtn">
+                                <i class="bi bi-search"></i> Check Library
+                            </button>
+                            <button type="submit" class="btn btn-primary flex-grow-1" id="generateBtn">
                                 <i class="bi bi-robot"></i> Generate Assignment
                             </button>
                         </div>
@@ -111,6 +167,7 @@
                 </div>
                 <div class="card-body">
                     <ul class="mb-0">
+                        <li><strong>Check the library first!</strong> Reusing approved assignments is faster and more consistent.</li>
                         <li>Select a curriculum topic to ensure alignment with your teaching plan</li>
                         <li>Use specific instructions like vocabulary themes or grammar points</li>
                         <li>Generated assignments go to "Pending Review" - always review before using</li>
@@ -125,6 +182,20 @@
 
 @section Scripts {
 <script>
+    // Check library button - redirects to same page with query params
+    document.getElementById('checkLibraryBtn').addEventListener('click', function() {
+        const cefrLevel = document.getElementById('cefrLevelSelect').value;
+        const type = document.getElementById('typeSelect').value;
+        const topicId = document.getElementById('topicSelect').value;
+
+        let url = '@Url.Action("GenerateAssignment")' + '?cefrLevel=' + encodeURIComponent(cefrLevel) + '&type=' + encodeURIComponent(type);
+        if (topicId) {
+            url += '&topicId=' + encodeURIComponent(topicId);
+        }
+        window.location.href = url;
+    });
+
+    // Form submission - show loading state
     document.getElementById('generateForm').addEventListener('submit', function() {
         const btn = document.getElementById('generateBtn');
         btn.disabled = true;

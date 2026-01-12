@@ -15,6 +15,10 @@ public class StudentDashboardViewModel
 
     // Completed classes eligible for feedback (completed within last 30 days without existing feedback)
     public IEnumerable<CompletedClassForFeedbackViewModel> ClassesNeedingFeedback { get; set; } = new List<CompletedClassForFeedbackViewModel>();
+
+    // CEFR Level information
+    public string? CefrLevel { get; set; }
+    public bool HasTakenPlacementTest { get; set; }
 }
 
 public class CreateStudentViewModel

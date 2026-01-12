@@ -1,0 +1,110 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.PlacementTestResultViewModel
+@{
+    ViewData["Title"] = "Placement Test Results";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <h1><i class="bi bi-trophy text-warning"></i> Test Complete!</h1>
+            </div>
+
+            <!-- Main Result Card -->
+            <div class="card mb-4 border-primary">
+                <div class="card-body text-center py-5">
+                    <h6 class="text-muted mb-2">Your Spanish Level</h6>
+                    <h1 class="display-1 text-primary mb-3">@Model.DeterminedLevel</h1>
+                    <p class="lead">@Model.LevelDescription</p>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">@Model.TotalCorrect / @Model.TotalQuestions</h3>
+                            <small class="text-muted">Correct Answers</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">@Model.OverallPercentage%</h3>
+                            <small class="text-muted">Overall Score</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-primary">@Model.TimeTaken.ToString(@"mm\:ss")</h3>
+                            <small class="text-muted">Time Taken</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Breakdown -->
+            @if (Model.LevelBreakdown.Any())
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Performance by Level</h5>
+                    </div>
+                    <div class="card-body">
+                        @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
+                        {
+                            if (Model.LevelBreakdown.TryGetValue(level, out var perf) && perf.Total > 0)
+                            {
+                                var progressClass = perf.Percentage >= 80 ? "bg-success" :
+                                                   perf.Percentage >= 60 ? "bg-warning" : "bg-danger";
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <strong>@level</strong>
+                                        <span>@perf.Correct / @perf.Total (@perf.Percentage%)</span>
+                                    </div>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar @progressClass" role="progressbar"
+                                             style="width: @perf.Percentage%"
+                                             aria-valuenow="@perf.Percentage"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- What's Next -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-arrow-right-circle"></i> What's Next?</h5>
+                </div>
+                <div class="card-body">
+                    <p>Your level has been set to <strong>@Model.DeterminedLevel</strong>. This means:</p>
+                    <ul>
+                        <li>Assignments will be tailored to your @Model.DeterminedLevel level</li>
+                        <li>Content will challenge you appropriately</li>
+                        <li>You can retake the test anytime to update your level</li>
+                    </ul>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a asp-controller="Assignment" asp-action="Index" class="btn btn-primary">
+                            <i class="bi bi-book"></i> View My Assignments
+                        </a>
+                        <a asp-controller="Student" asp-action="Dashboard" class="btn btn-outline-primary">
+                            <i class="bi bi-house"></i> Go to Dashboard
+                        </a>
+                        <a asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-repeat"></i> Retake Test
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

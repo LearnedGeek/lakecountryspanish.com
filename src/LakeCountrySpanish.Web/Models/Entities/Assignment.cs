@@ -98,6 +98,16 @@ public class Assignment
     public bool IsAiGenerated { get; set; }
 
     /// <summary>
+    /// Whether this assignment was cloned from the content library
+    /// </summary>
+    public bool IsFromLibrary { get; set; }
+
+    /// <summary>
+    /// If cloned from library, the source assignment ID
+    /// </summary>
+    public int? SourceAssignmentId { get; set; }
+
+    /// <summary>
     /// The prompt used to generate this assignment (if AI-generated)
     /// </summary>
     public string? GenerationPrompt { get; set; }
@@ -129,6 +139,7 @@ public class Assignment
     public virtual CurriculumTopic? CurriculumTopic { get; set; }
     public virtual ApplicationUser? ReviewedBy { get; set; }
     public virtual ApplicationUser? CreatedBy { get; set; }
+    public virtual Assignment? SourceAssignment { get; set; }
     public virtual ICollection<StudentAssignment> StudentAssignments { get; set; } = new List<StudentAssignment>();
     public virtual ICollection<AssignmentSubmission> Submissions { get; set; } = new List<AssignmentSubmission>();
 }

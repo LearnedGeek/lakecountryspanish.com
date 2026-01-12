@@ -1,0 +1,136 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.PlacementTestIndexViewModel
+@{
+    ViewData["Title"] = "Spanish Level Placement Test";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="text-center mb-4">
+                <h1><i class="bi bi-mortarboard text-primary"></i> Placement Test</h1>
+                <p class="lead text-muted">Discover your Spanish proficiency level</p>
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show" role="alert">
+                    @TempData["InfoMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (Model.HasActiveSession)
+            {
+                <div class="card mb-4 border-warning">
+                    <div class="card-header bg-warning text-dark">
+                        <i class="bi bi-exclamation-triangle"></i> Test In Progress
+                    </div>
+                    <div class="card-body">
+                        <p>You have an unfinished placement test. Would you like to continue?</p>
+                        <div class="d-flex gap-2">
+                            <a asp-action="Resume" class="btn btn-primary">
+                                <i class="bi bi-play-fill"></i> Continue Test
+                            </a>
+                            <form asp-action="Abandon" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="sessionId" value="@Model.ActiveSessionId" />
+                                <button type="submit" class="btn btn-outline-danger"
+                                        onclick="return confirm('Are you sure you want to abandon this test?')">
+                                    <i class="bi bi-x-circle"></i> Abandon & Start New
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.HasCompletedTest)
+            {
+                <div class="card mb-4 border-success">
+                    <div class="card-header bg-success text-white">
+                        <i class="bi bi-check-circle"></i> Current Level
+                    </div>
+                    <div class="card-body text-center">
+                        <h2 class="display-4 text-success mb-2">@Model.CurrentLevel</h2>
+                        <p class="text-muted">
+                            Last assessed: @Model.LastTestDate?.ToString("MMMM d, yyyy")
+                        </p>
+                        @if (!Model.HasActiveSession)
+                        {
+                            <p class="small text-muted">
+                                You can retake the placement test anytime to update your level.
+                            </p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">About the Placement Test</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="display-6 text-primary"><i class="bi bi-clock"></i></div>
+                            <strong>10-15 minutes</strong>
+                            <br />
+                            <small class="text-muted">Average completion time</small>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="display-6 text-primary"><i class="bi bi-list-check"></i></div>
+                            <strong>Up to 30 questions</strong>
+                            <br />
+                            <small class="text-muted">Adaptive difficulty</small>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="display-6 text-primary"><i class="bi bi-graph-up"></i></div>
+                            <strong>CEFR Levels</strong>
+                            <br />
+                            <small class="text-muted">A1 through C2</small>
+                        </div>
+                    </div>
+
+                    <h6>How it works:</h6>
+                    <ul>
+                        <li>The test starts at an intermediate level (A2)</li>
+                        <li>Questions get harder or easier based on your answers</li>
+                        <li>The test ends when your level is determined</li>
+                        <li>Your result determines which assignments you'll receive</li>
+                    </ul>
+
+                    <h6>CEFR Levels:</h6>
+                    <div class="row row-cols-2 row-cols-md-3 g-2 mb-4">
+                        <div class="col"><span class="badge bg-success w-100 py-2">A1 - Beginner</span></div>
+                        <div class="col"><span class="badge bg-success w-100 py-2">A2 - Elementary</span></div>
+                        <div class="col"><span class="badge bg-primary w-100 py-2">B1 - Intermediate</span></div>
+                        <div class="col"><span class="badge bg-primary w-100 py-2">B2 - Upper Int.</span></div>
+                        <div class="col"><span class="badge bg-warning text-dark w-100 py-2">C1 - Advanced</span></div>
+                        <div class="col"><span class="badge bg-danger w-100 py-2">C2 - Mastery</span></div>
+                    </div>
+
+                    @if (!Model.HasActiveSession)
+                    {
+                        <form asp-action="Start" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="bi bi-play-fill"></i>
+                                    @(Model.HasCompletedTest ? "Retake Placement Test" : "Start Placement Test")
+                                </button>
+                            </div>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

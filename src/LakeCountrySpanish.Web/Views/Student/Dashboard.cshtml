@@ -12,7 +12,7 @@
         </div>
 
         <!-- Stats Cards -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-8">
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 p-3 bg-blue-100 rounded-lg">
@@ -68,6 +68,27 @@
                     </div>
                 </div>
             </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 p-3 bg-indigo-100 rounded-lg">
+                        <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Spanish Level</p>
+                        @if (!string.IsNullOrEmpty(Model.CefrLevel))
+                        {
+                            <p class="text-2xl font-semibold text-indigo-600">@Model.CefrLevel</p>
+                        }
+                        else
+                        {
+                            <p class="text-sm font-medium text-gray-400">Not assessed</p>
+                        }
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Quick Actions -->
@@ -100,6 +121,36 @@
                 My Documents
             </a>
         </div>
+
+        <!-- Placement Test Invitation -->
+        @if (string.IsNullOrEmpty(Model.CefrLevel))
+        {
+            <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6 mb-8">
+                <div class="flex items-start justify-between">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-indigo-800">Discover Your Spanish Level</h3>
+                            <p class="mt-1 text-sm text-indigo-700">
+                                Take our 10-15 minute placement test to determine your CEFR proficiency level. This helps us personalize your learning experience!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-shrink-0">
+                        <a asp-controller="PlacementTest" asp-action="Index" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
+                            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
+                            </svg>
+                            Take Placement Test
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
 
         <!-- Prompt to buy credits if none available -->
         @if (Model.AvailablePackageClasses == 0)

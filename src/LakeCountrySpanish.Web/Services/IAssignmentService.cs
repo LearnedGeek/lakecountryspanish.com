@@ -111,6 +111,24 @@ public interface IAssignmentService
     /// </summary>
     Task<bool> ArchiveAssignmentAsync(int assignmentId);
 
+    // Content Library
+
+    /// <summary>
+    /// Find matching approved assignments in the content library.
+    /// </summary>
+    Task<IEnumerable<Assignment>> FindLibraryMatchesAsync(
+        string cefrLevel,
+        AssignmentType type,
+        int? topicId = null,
+        int maxResults = 5);
+
+    /// <summary>
+    /// Clone an existing assignment from the content library.
+    /// </summary>
+    Task<Assignment> CloneFromLibraryAsync(
+        int sourceAssignmentId,
+        string? createdById = null);
+
     // Student Assignments
 
     /// <summary>
@@ -229,4 +247,7 @@ public class AssignmentStats
     public decimal AverageScore { get; set; }
     public int AiGeneratedCount { get; set; }
     public int ManuallyCreatedCount { get; set; }
+    public int FromLibraryCount { get; set; }
+    public decimal LibraryReuseRate => TotalAssignments > 0
+        ? (decimal)FromLibraryCount / TotalAssignments * 100 : 0;
 }

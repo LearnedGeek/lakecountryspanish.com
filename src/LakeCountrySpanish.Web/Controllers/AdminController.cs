@@ -1851,13 +1851,37 @@ public class AdminController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> GenerateAssignment()
+    public async Task<IActionResult> GenerateAssignment(string? cefrLevel, AssignmentType? type, int? topicId)
     {
         var topics = await _assignmentService.GetAllTopicsAsync();
-        return View(new GenerateAssignmentViewModel
+
+        var viewModel = new GenerateAssignmentViewModel
         {
+            CefrLevel = cefrLevel ?? "A1",
+            Type = type ?? AssignmentType.MultipleChoice,
+            TopicId = topicId,
             AvailableTopics = topics
-        });
+        };
+
+        // If parameters provided, check for library matches
+        if (!string.IsNullOrEmpty(cefrLevel) && type.HasValue)
+        {
+            viewModel.LibraryMatches = await _assignmentService.FindLibraryMatchesAsync(
+                cefrLevel, type.Value, topicId, 5);
+        }
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UseFromLibrary(int sourceAssignmentId)
+    {
+        var adminId = _userManager.GetUserId(User);
+        var cloned = await _assignmentService.CloneFromLibraryAsync(sourceAssignmentId, adminId);
+
+        TempData["SuccessMessage"] = "Assignment cloned from library and ready to assign.";
+        return RedirectToAction(nameof(AssignToStudents), new { id = cloned.Id });
     }
 
     [HttpPost]
@@ -1865,6 +1889,23 @@ public class AdminController : Controller
     public async Task<IActionResult> GenerateAssignment(GenerateAssignmentViewModel model)
     {
         var adminId = _userManager.GetUserId(User);
+
+        // Check library first unless force generation is requested
+        if (!model.ForceNewGeneration)
+        {
+            var libraryMatches = await _assignmentService.FindLibraryMatchesAsync(
+                model.CefrLevel, model.Type, model.TopicId, 1);
+            var bestMatch = libraryMatches.FirstOrDefault();
+
+            if (bestMatch != null)
+            {
+                var cloned = await _assignmentService.CloneFromLibraryAsync(bestMatch.Id, adminId);
+                TempData["SuccessMessage"] = "Assignment retrieved from library and ready to assign.";
+                return RedirectToAction(nameof(AssignToStudents), new { id = cloned.Id });
+            }
+        }
+
+        // No library match or forced new generation
         var assignment = await _assignmentService.GenerateAssignmentAsync(
             model.CefrLevel,
             model.Type,

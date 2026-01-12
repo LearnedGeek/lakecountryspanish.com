@@ -1,4 +1,5 @@
 using LakeCountrySpanish.Web.Models.Entities;
+using LakeCountrySpanish.Web.Models.ViewModels;
 
 namespace LakeCountrySpanish.Web.Services;
 
@@ -75,4 +76,11 @@ public interface IClaudeApiService
     /// Check if the Claude API is configured and available.
     /// </summary>
     Task<bool> IsAvailableAsync();
+
+    /// <summary>
+    /// Generate a single placement test question for the specified CEFR level.
+    /// </summary>
+    Task<PlacementQuestion> GeneratePlacementQuestionAsync(
+        string cefrLevel,
+        List<string>? previousTopics = null);
 }

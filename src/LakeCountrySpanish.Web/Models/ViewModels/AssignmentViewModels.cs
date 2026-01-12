@@ -179,8 +179,11 @@ public class GenerateAssignmentViewModel
     public int? TopicId { get; set; }
     public int QuestionCount { get; set; } = 5;
     public string? AdditionalInstructions { get; set; }
+    public bool ForceNewGeneration { get; set; }
 
     public IEnumerable<CurriculumTopic> AvailableTopics { get; set; } = new List<CurriculumTopic>();
+    public IEnumerable<Assignment> LibraryMatches { get; set; } = new List<Assignment>();
+    public bool ShowLibraryOptions => LibraryMatches.Any();
 }
 
 /// <summary>

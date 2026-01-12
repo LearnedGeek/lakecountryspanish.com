@@ -929,6 +929,31 @@ public static class SeedData
             await context.SaveChangesAsync();
         }
 
+        // Set CEFR levels for test students
+        if (johnDoe != null && string.IsNullOrEmpty(johnDoe.CefrLevel))
+        {
+            johnDoe.CefrLevel = "B1";
+            await userManager.UpdateAsync(johnDoe);
+        }
+        if (janeSmith != null && string.IsNullOrEmpty(janeSmith.CefrLevel))
+        {
+            janeSmith.CefrLevel = "A2";
+            await userManager.UpdateAsync(janeSmith);
+        }
+        if (bobWilson != null && string.IsNullOrEmpty(bobWilson.CefrLevel))
+        {
+            // Bob has no level - good for testing placement test
+            bobWilson.CefrLevel = null;
+            await userManager.UpdateAsync(bobWilson);
+        }
+
+        // Seed approved assignments for content library testing
+        var adminUser = await userManager.FindByEmailAsync("admin@lakecountryspanish.com");
+        if (!context.Assignments.Any() && adminUser != null)
+        {
+            await SeedApprovedAssignmentsAsync(context, adminUser.Id);
+        }
+
         // Seed a sample approved testimonial for the homepage
         if (!context.ClassFeedbacks.Any() && johnDoe != null)
         {
@@ -954,5 +979,186 @@ public static class SeedData
                 await context.SaveChangesAsync();
             }
         }
+    }
+
+    private static async Task SeedApprovedAssignmentsAsync(ApplicationDbContext context, string adminId)
+    {
+        // Get curriculum topics for linking
+        var a1GrammarTopic = await context.CurriculumTopics.FirstOrDefaultAsync(
+            t => t.CefrLevel == "A1" && t.Type == TopicType.Grammar);
+        var a1VocabTopic = await context.CurriculumTopics.FirstOrDefaultAsync(
+            t => t.CefrLevel == "A1" && t.Type == TopicType.Vocabulary);
+        var a2GrammarTopic = await context.CurriculumTopics.FirstOrDefaultAsync(
+            t => t.CefrLevel == "A2" && t.Type == TopicType.Grammar);
+        var b1GrammarTopic = await context.CurriculumTopics.FirstOrDefaultAsync(
+            t => t.CefrLevel == "B1" && t.Type == TopicType.Grammar);
+
+        var assignments = new List<Assignment>
+        {
+            // A1 Multiple Choice - Approved (content library)
+            new Assignment
+            {
+                Title = "A1 Ser vs Estar Quiz",
+                Description = "Practice distinguishing between ser and estar with common scenarios.",
+                CefrLevel = "A1",
+                Type = AssignmentType.MultipleChoice,
+                Status = AssignmentStatus.Approved,
+                QuestionsJson = @"[
+                    { ""id"": 1, ""question"": ""Mi madre _____ doctora."", ""options"": [""es"", ""está"", ""ser"", ""estar""] },
+                    { ""id"": 2, ""question"": ""El café _____ caliente."", ""options"": [""es"", ""está"", ""son"", ""están""] },
+                    { ""id"": 3, ""question"": ""Nosotros _____ de España."", ""options"": [""somos"", ""estamos"", ""es"", ""está""] },
+                    { ""id"": 4, ""question"": ""La fiesta _____ en mi casa."", ""options"": [""es"", ""está"", ""son"", ""están""] },
+                    { ""id"": 5, ""question"": ""Mi hermana _____ cansada hoy."", ""options"": [""es"", ""está"", ""ser"", ""estar""] }
+                ]",
+                AnswersJson = @"[
+                    { ""id"": 1, ""answer"": ""es"", ""explanation"": ""Use 'ser' for professions."" },
+                    { ""id"": 2, ""answer"": ""está"", ""explanation"": ""Use 'estar' for temporary conditions like temperature."" },
+                    { ""id"": 3, ""answer"": ""somos"", ""explanation"": ""Use 'ser' for origin/nationality."" },
+                    { ""id"": 4, ""answer"": ""es"", ""explanation"": ""Use 'ser' for event locations."" },
+                    { ""id"": 5, ""answer"": ""está"", ""explanation"": ""Use 'estar' for temporary feelings/states."" }
+                ]",
+                EstimatedMinutes = 10,
+                TotalPoints = 25,
+                BonusPoints = 5,
+                CurriculumTopicId = a1GrammarTopic?.Id,
+                CreatedById = adminId,
+                ReviewedById = adminId,
+                ReviewedAt = DateTime.UtcNow.AddDays(-7),
+                ReviewNotes = "Good variety of ser vs estar usage scenarios.",
+                CreatedAt = DateTime.UtcNow.AddDays(-14),
+                IsFromLibrary = false
+            },
+
+            // A1 Fill in the Blank - Approved (content library)
+            new Assignment
+            {
+                Title = "A1 Basic Greetings Practice",
+                Description = "Complete the greetings with the correct Spanish words.",
+                CefrLevel = "A1",
+                Type = AssignmentType.FillInTheBlank,
+                Status = AssignmentStatus.Approved,
+                QuestionsJson = @"[
+                    { ""id"": 1, ""question"": ""_____ días! ¿Cómo estás?"", ""hint"": ""Good (masculine plural)"" },
+                    { ""id"": 2, ""question"": ""Me _____ Juan."", ""hint"": ""I call myself"" },
+                    { ""id"": 3, ""question"": ""_____ gusto en conocerte."", ""hint"": ""A lot / Much"" },
+                    { ""id"": 4, ""question"": ""¿De dónde _____?"", ""hint"": ""Are you (informal) from?"" }
+                ]",
+                AnswersJson = @"[
+                    { ""id"": 1, ""answer"": ""Buenos"", ""acceptableAnswers"": [""buenos"", ""Buenos""] },
+                    { ""id"": 2, ""answer"": ""llamo"", ""acceptableAnswers"": [""llamo"", ""Llamo""] },
+                    { ""id"": 3, ""answer"": ""Mucho"", ""acceptableAnswers"": [""mucho"", ""Mucho""] },
+                    { ""id"": 4, ""answer"": ""eres"", ""acceptableAnswers"": [""eres"", ""es""] }
+                ]",
+                EstimatedMinutes = 8,
+                TotalPoints = 20,
+                BonusPoints = 4,
+                CurriculumTopicId = a1VocabTopic?.Id,
+                CreatedById = adminId,
+                ReviewedById = adminId,
+                ReviewedAt = DateTime.UtcNow.AddDays(-5),
+                ReviewNotes = "Clear and appropriate for A1 level.",
+                CreatedAt = DateTime.UtcNow.AddDays(-10),
+                IsFromLibrary = false
+            },
+
+            // A2 Multiple Choice - Approved (content library)
+            new Assignment
+            {
+                Title = "A2 Preterite Tense Quiz",
+                Description = "Practice conjugating regular verbs in the preterite (past) tense.",
+                CefrLevel = "A2",
+                Type = AssignmentType.MultipleChoice,
+                Status = AssignmentStatus.Approved,
+                QuestionsJson = @"[
+                    { ""id"": 1, ""question"": ""Ayer yo _____ al supermercado. (ir)"", ""options"": [""fui"", ""fue"", ""iba"", ""voy""] },
+                    { ""id"": 2, ""question"": ""Ellos _____ la cena anoche. (preparar)"", ""options"": [""prepararon"", ""preparaban"", ""preparan"", ""preparar""] },
+                    { ""id"": 3, ""question"": ""María _____ un libro la semana pasada. (leer)"", ""options"": [""leyó"", ""leía"", ""lee"", ""leyeron""] },
+                    { ""id"": 4, ""question"": ""Nosotros _____ español en la escuela. (estudiar)"", ""options"": [""estudiamos"", ""estudiábamos"", ""estudian"", ""estudió""] },
+                    { ""id"": 5, ""question"": ""¿Tú _____ la película? (ver)"", ""options"": [""viste"", ""veías"", ""ves"", ""vio""] }
+                ]",
+                AnswersJson = @"[
+                    { ""id"": 1, ""answer"": ""fui"", ""explanation"": ""'Fui' is first person singular preterite of 'ir'."" },
+                    { ""id"": 2, ""answer"": ""prepararon"", ""explanation"": ""Third person plural preterite of -ar verb."" },
+                    { ""id"": 3, ""answer"": ""leyó"", ""explanation"": ""Third person singular preterite of 'leer'."" },
+                    { ""id"": 4, ""answer"": ""estudiamos"", ""explanation"": ""First person plural preterite of -ar verb."" },
+                    { ""id"": 5, ""answer"": ""viste"", ""explanation"": ""Second person singular preterite of 'ver'."" }
+                ]",
+                EstimatedMinutes = 12,
+                TotalPoints = 30,
+                BonusPoints = 5,
+                CurriculumTopicId = a2GrammarTopic?.Id,
+                CreatedById = adminId,
+                ReviewedById = adminId,
+                ReviewedAt = DateTime.UtcNow.AddDays(-3),
+                ReviewNotes = "Good mix of regular and irregular preterite forms.",
+                CreatedAt = DateTime.UtcNow.AddDays(-7),
+                IsFromLibrary = false
+            },
+
+            // B1 Multiple Choice - Approved (content library)
+            new Assignment
+            {
+                Title = "B1 Preterite vs Imperfect",
+                Description = "Choose the correct past tense based on context.",
+                CefrLevel = "B1",
+                Type = AssignmentType.MultipleChoice,
+                Status = AssignmentStatus.Approved,
+                QuestionsJson = @"[
+                    { ""id"": 1, ""question"": ""Cuando era niño, _____ al parque todos los días."", ""options"": [""iba"", ""fui"", ""fue"", ""ir""] },
+                    { ""id"": 2, ""question"": ""Ayer _____ al médico porque me sentía mal."", ""options"": [""fui"", ""iba"", ""fue"", ""ir""] },
+                    { ""id"": 3, ""question"": ""Mientras yo _____ la televisión, sonó el teléfono."", ""options"": [""veía"", ""vi"", ""vio"", ""ver""] },
+                    { ""id"": 4, ""question"": ""Mi abuela siempre _____ galletas para nosotros."", ""options"": [""hacía"", ""hizo"", ""hace"", ""hacer""] },
+                    { ""id"": 5, ""question"": ""El año pasado _____ a España por primera vez."", ""options"": [""viajé"", ""viajaba"", ""viajo"", ""viajar""] }
+                ]",
+                AnswersJson = @"[
+                    { ""id"": 1, ""answer"": ""iba"", ""explanation"": ""Imperfect for habitual past actions."" },
+                    { ""id"": 2, ""answer"": ""fui"", ""explanation"": ""Preterite for completed action at specific time."" },
+                    { ""id"": 3, ""answer"": ""veía"", ""explanation"": ""Imperfect for ongoing background action."" },
+                    { ""id"": 4, ""answer"": ""hacía"", ""explanation"": ""Imperfect for habitual actions with 'siempre'."" },
+                    { ""id"": 5, ""answer"": ""viajé"", ""explanation"": ""Preterite for single completed event."" }
+                ]",
+                EstimatedMinutes = 15,
+                TotalPoints = 35,
+                BonusPoints = 7,
+                CurriculumTopicId = b1GrammarTopic?.Id,
+                CreatedById = adminId,
+                ReviewedById = adminId,
+                ReviewedAt = DateTime.UtcNow.AddDays(-2),
+                ReviewNotes = "Excellent contrast between preterite and imperfect contexts.",
+                CreatedAt = DateTime.UtcNow.AddDays(-5),
+                IsFromLibrary = false
+            },
+
+            // A1 Reading - Pending Review (not in library)
+            new Assignment
+            {
+                Title = "A1 Mi Familia Reading",
+                Description = "Read about a Spanish family and answer comprehension questions.",
+                CefrLevel = "A1",
+                Type = AssignmentType.Reading,
+                Status = AssignmentStatus.PendingReview,
+                QuestionsJson = @"[
+                    { ""id"": 0, ""type"": ""passage"", ""text"": ""Hola, me llamo Carlos. Tengo una familia pequeña. Mi madre se llama Ana y mi padre se llama Pedro. Tengo una hermana. Se llama María. María tiene doce años y yo tengo quince años. Nosotros vivimos en Madrid. Tenemos un perro. Se llama Toby."" },
+                    { ""id"": 1, ""question"": ""¿Cómo se llama el padre de Carlos?"" },
+                    { ""id"": 2, ""question"": ""¿Cuántos años tiene Carlos?"" },
+                    { ""id"": 3, ""question"": ""¿Dónde vive la familia?"" }
+                ]",
+                AnswersJson = @"[
+                    { ""id"": 1, ""answer"": ""Pedro"", ""acceptableAnswers"": [""pedro"", ""Pedro"", ""Se llama Pedro""] },
+                    { ""id"": 2, ""answer"": ""quince"", ""acceptableAnswers"": [""15"", ""quince"", ""Quince""] },
+                    { ""id"": 3, ""answer"": ""Madrid"", ""acceptableAnswers"": [""madrid"", ""Madrid"", ""En Madrid""] }
+                ]",
+                EstimatedMinutes = 12,
+                TotalPoints = 25,
+                BonusPoints = 5,
+                CurriculumTopicId = a1VocabTopic?.Id,
+                CreatedById = adminId,
+                CreatedAt = DateTime.UtcNow.AddDays(-1),
+                IsFromLibrary = false
+            }
+        };
+
+        context.Assignments.AddRange(assignments);
+        await context.SaveChangesAsync();
     }
 }
