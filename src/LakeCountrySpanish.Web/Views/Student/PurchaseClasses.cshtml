@@ -114,17 +114,35 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach (var package in Model.Packages)
             {
-                // Calculate prices - use custom rate if available
-                var effectiveRate = Model.HasCustomRate ? Model.CustomHourlyRate!.Value : Model.BaseClassPrice;
-                var customPrice = effectiveRate * package.ClassCount;
+                // Normal package price and per-class rate
                 var normalPrice = package.Price;
-                var displayPrice = Model.HasCustomRate ? customPrice : normalPrice;
+                var normalPerClass = normalPrice / package.ClassCount;
+                var standardFullPrice = Model.BaseClassPrice * package.ClassCount;
 
-                // Calculate savings vs standard pricing
-                var standardTotal = Model.BaseClassPrice * package.ClassCount;
-                var totalSavings = standardTotal - displayPrice;
-                var pricePerClass = displayPrice / package.ClassCount;
-                var discountPercent = totalSavings > 0 ? Math.Round((totalSavings / standardTotal) * 100) : 0;
+                // Calculate the discount percentage built into this package
+                var packageDiscountPercent = standardFullPrice > 0 ? (standardFullPrice - normalPrice) / standardFullPrice : 0;
+
+                // For custom rate: apply the same percentage discount as the package offers
+                decimal displayPrice;
+                decimal pricePerClass;
+                if (Model.HasCustomRate)
+                {
+                    var customFullPrice = Model.CustomHourlyRate!.Value * package.ClassCount;
+                    displayPrice = Math.Round(customFullPrice * (1 - packageDiscountPercent), 2);
+                    pricePerClass = displayPrice / package.ClassCount;
+                }
+                else
+                {
+                    displayPrice = normalPrice;
+                    pricePerClass = normalPerClass;
+                }
+
+                // Calculate savings vs their base rate (custom or standard) without bulk discount
+                var baseFullPrice = Model.HasCustomRate
+                    ? Model.CustomHourlyRate!.Value * package.ClassCount
+                    : standardFullPrice;
+                var totalSavings = baseFullPrice - displayPrice;
+                var discountPercent = totalSavings > 0 ? Math.Round((totalSavings / baseFullPrice) * 100) : 0;
 
                 var isPopular = package.ClassCount == 10;
                 var isBestValue = package.ClassCount == 20;
@@ -182,7 +200,7 @@
                                 </svg>
                                 @if (Model.HasCustomRate)
                                 {
-                                    <span class="text-gray-400 line-through mr-1">$@(normalPrice / package.ClassCount).ToString("0.00")</span>
+                                    <span class="text-gray-400 line-through mr-1">$@normalPerClass.ToString("0.00")</span>
                                     <span class="text-purple-600 font-semibold">$@pricePerClass.ToString("0.00") per class</span>
                                 }
                                 else
