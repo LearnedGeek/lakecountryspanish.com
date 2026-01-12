@@ -20,9 +20,9 @@ public class ApplicationUser : IdentityUser
 
     // CEFR Level for curriculum
     /// <summary>
-    /// Student's current CEFR level (A1, A2, B1, B2, C1, C2)
+    /// Student's current CEFR level (A1, A2, B1, B2, C1, C2). Null if not yet determined.
     /// </summary>
-    public string CefrLevel { get; set; } = "A1";
+    public string? CefrLevel { get; set; }
 
     // Gamification (Phase 3)
     /// <summary>
