@@ -517,6 +517,50 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.ToTable("Documents");
                 });
 
+            modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.NotificationLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RecipientId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int?>("RelatedEntityId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("WasSent")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecipientId", "Type", "SentAt");
+
+                    b.HasIndex("Type", "RelatedEntityId", "RecipientId");
+
+                    b.ToTable("NotificationLogs");
+                });
+
             modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.Package", b =>
                 {
                     b.Property<int>("Id")
@@ -831,7 +875,8 @@ namespace LakeCountrySpanish.Web.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal?>("BestScore")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
@@ -1506,7 +1551,7 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.HasOne("LakeCountrySpanish.Web.Models.Entities.ApplicationUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("LakeCountrySpanish.Web.Models.Entities.CurriculumTopic", "CurriculumTopic")
                         .WithMany("Assignments")
@@ -1516,12 +1561,12 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.HasOne("LakeCountrySpanish.Web.Models.Entities.ApplicationUser", "ReviewedBy")
                         .WithMany()
                         .HasForeignKey("ReviewedById")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("LakeCountrySpanish.Web.Models.Entities.Assignment", "SourceAssignment")
                         .WithMany()
                         .HasForeignKey("SourceAssignmentId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("CreatedBy");
 
@@ -1568,6 +1613,17 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.Navigation("ScheduledClass");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.NotificationLog", b =>
+                {
+                    b.HasOne("LakeCountrySpanish.Web.Models.Entities.ApplicationUser", "Recipient")
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recipient");
                 });
 
             modelBuilder.Entity("LakeCountrySpanish.Web.Models.Entities.Payment", b =>
@@ -1695,7 +1751,7 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.HasOne("LakeCountrySpanish.Web.Models.Entities.ApplicationUser", "AssignedBy")
                         .WithMany()
                         .HasForeignKey("AssignedById")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("LakeCountrySpanish.Web.Models.Entities.Assignment", "Assignment")
                         .WithMany("StudentAssignments")

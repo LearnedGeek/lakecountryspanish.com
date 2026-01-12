@@ -49,6 +49,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // Placement test entities
     public DbSet<PlacementTestSession> PlacementTestSessions => Set<PlacementTestSession>();
 
+    // Notification entities
+    public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -431,18 +434,18 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasOne(e => e.ReviewedBy)
                 .WithMany()
                 .HasForeignKey(e => e.ReviewedById)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne(e => e.CreatedBy)
                 .WithMany()
                 .HasForeignKey(e => e.CreatedById)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Content library - self-referencing for cloned assignments
             entity.HasOne(e => e.SourceAssignment)
                 .WithMany()
                 .HasForeignKey(e => e.SourceAssignmentId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasIndex(e => new { e.CefrLevel, e.Status, e.Type });
             entity.HasIndex(e => e.SourceAssignmentId);
@@ -452,6 +455,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<StudentAssignment>(entity =>
         {
             entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.BestScore).HasPrecision(5, 2);
 
             entity.HasOne(e => e.Student)
                 .WithMany()
@@ -466,7 +471,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasOne(e => e.AssignedBy)
                 .WithMany()
                 .HasForeignKey(e => e.AssignedById)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
 
             // Index for finding student's assignments
             entity.HasIndex(e => new { e.StudentId, e.Status, e.Priority });
@@ -508,6 +513,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Index for finding active session by student
             entity.HasIndex(e => new { e.StudentId, e.Status });
+        });
+
+        // NotificationLog configuration
+        builder.Entity<NotificationLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Recipient)
+                .WithMany()
+                .HasForeignKey(e => e.RecipientId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Index for finding notifications by recipient and type
+            entity.HasIndex(e => new { e.RecipientId, e.Type, e.SentAt });
+            // Index for finding notifications by related entity (to prevent duplicates)
+            entity.HasIndex(e => new { e.Type, e.RelatedEntityId, e.RecipientId });
         });
     }
 }

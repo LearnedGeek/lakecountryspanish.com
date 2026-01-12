@@ -18,6 +18,15 @@ public class AdminDashboardViewModel
     // 3-day schedule view
     public List<DayScheduleGroup> UpcomingDays { get; set; } = new();
     public bool HasScheduleConflicts { get; set; }
+
+    // Analytics metrics
+    public AdminDashboardMetrics? Metrics { get; set; }
+    public IEnumerable<MonthlyRevenueData> RevenueChart { get; set; } = new List<MonthlyRevenueData>();
+    public RevenueMetrics? RevenueBreakdown { get; set; }
+    public SubscriptionMetrics? SubscriptionMetrics { get; set; }
+    public IEnumerable<StudentEngagementSummary> TopEngagedStudents { get; set; } = new List<StudentEngagementSummary>();
+    public IEnumerable<StudentEngagementSummary> AtRiskStudents { get; set; } = new List<StudentEngagementSummary>();
+    public AssignmentDifficultyReport? DifficultyReport { get; set; }
 }
 
 public class DayScheduleGroup

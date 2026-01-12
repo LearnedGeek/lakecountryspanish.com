@@ -22,6 +22,7 @@ public class AdminController : Controller
     private readonly IGamificationService _gamificationService;
     private readonly IAssignmentService _assignmentService;
     private readonly IConfiguration _configuration;
+    private readonly IAnalyticsService _analyticsService;
 
     public AdminController(
         ApplicationDbContext context,
@@ -33,7 +34,8 @@ public class AdminController : Controller
         ITokenService tokenService,
         IGamificationService gamificationService,
         IAssignmentService assignmentService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IAnalyticsService analyticsService)
     {
         _context = context;
         _userManager = userManager;
@@ -45,6 +47,7 @@ public class AdminController : Controller
         _gamificationService = gamificationService;
         _assignmentService = assignmentService;
         _configuration = configuration;
+        _analyticsService = analyticsService;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -75,6 +78,15 @@ public class AdminController : Controller
             });
         }
 
+        // Get analytics data
+        var metrics = await _analyticsService.GetDashboardMetricsAsync();
+        var revenueChart = await _analyticsService.GetMonthlyRevenueAsync(6);
+        var revenueBreakdown = await _analyticsService.GetRevenueMetricsAsync(startOfMonth, DateTime.UtcNow);
+        var subscriptionMetrics = await _analyticsService.GetSubscriptionMetricsAsync();
+        var topEngaged = await _analyticsService.GetTopEngagedStudentsAsync(5);
+        var atRisk = await _analyticsService.GetAtRiskStudentsAsync(5);
+        var difficultyReport = await _analyticsService.GetDifficultyReportAsync();
+
         var viewModel = new AdminDashboardViewModel
         {
             TotalStudents = students.Count,
@@ -104,7 +116,16 @@ public class AdminController : Controller
                 .Take(5)
                 .ToListAsync(),
             UpcomingDays = upcomingDays,
-            HasScheduleConflicts = await _scheduleService.HasScheduleConflictsAsync()
+            HasScheduleConflicts = await _scheduleService.HasScheduleConflictsAsync(),
+
+            // Analytics data
+            Metrics = metrics,
+            RevenueChart = revenueChart,
+            RevenueBreakdown = revenueBreakdown,
+            SubscriptionMetrics = subscriptionMetrics,
+            TopEngagedStudents = topEngaged,
+            AtRiskStudents = atRisk,
+            DifficultyReport = difficultyReport
         };
 
         return View(viewModel);
@@ -2236,5 +2257,26 @@ public class AdminController : Controller
         await _assignmentService.UpdateTopicAsync(topic);
         TempData["SuccessMessage"] = "Topic updated.";
         return RedirectToAction(nameof(Topics));
+    }
+
+    // Difficulty Analysis
+
+    [HttpGet]
+    public async Task<IActionResult> DifficultyAnalysis()
+    {
+        var report = await _analyticsService.GetDifficultyReportAsync();
+        var flaggedAssignments = await _analyticsService.GetAssignmentsByDifficultyFeedbackAsync();
+
+        // Separate into too easy and too hard
+        var tooEasy = flaggedAssignments.Where(a => a.DominantFeedback == "Too Easy" && a.NeedsAdjustment).ToList();
+        var tooHard = flaggedAssignments.Where(a => a.DominantFeedback == "Too Hard" && a.NeedsAdjustment).ToList();
+
+        return View(new DifficultyAnalysisViewModel
+        {
+            Report = report,
+            TooEasyAssignments = tooEasy,
+            TooHardAssignments = tooHard,
+            AllAssignments = flaggedAssignments
+        });
     }
 }

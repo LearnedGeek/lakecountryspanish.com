@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using LakeCountrySpanish.Web.Models.ViewModels;
 
 namespace LakeCountrySpanish.Web.Services;
 
@@ -173,5 +174,421 @@ public class SmtpEmailService : IEmailService
 </html>";
 
         await SendEmailAsync(studentEmail, studentName, subject, htmlBody);
+    }
+
+    public async Task SendClassReminderAsync(string email, string name, DateTime classDateTime, string? classroomUrl, int hoursUntil)
+    {
+        var subject = hoursUntil <= 1
+            ? "Your Spanish Class Starts Soon!"
+            : $"Reminder: Spanish Class in {hoursUntil} Hours";
+
+        var joinButton = !string.IsNullOrEmpty(classroomUrl)
+            ? $@"<p style='text-align: center; margin: 20px 0;'>
+                <a href='{classroomUrl}' style='background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;'>Join Class</a>
+               </p>"
+            : "";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .highlight {{ background-color: #fff; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #4F46E5; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>Class Reminder</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>This is a friendly reminder about your upcoming Spanish class!</p>
+
+            <div class='highlight'>
+                <p style='margin: 0;'><strong>When:</strong></p>
+                <p style='margin: 5px 0; font-size: 18px; color: #4F46E5;'>{classDateTime:dddd, MMMM d, yyyy} at {classDateTime:h:mm tt}</p>
+            </div>
+
+            {joinButton}
+
+            <p>See you soon!</p>
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
+    }
+
+    public async Task SendPointMilestoneAsync(string email, string name, int totalPoints, int milestone, int tokensEarned)
+    {
+        var subject = $"Congratulations! You've Reached {milestone:N0} Points!";
+
+        var tokenText = tokensEarned > 0
+            ? $"<p><strong>Bonus Reward:</strong> You've earned <strong>{tokensEarned}</strong> free class token{(tokensEarned > 1 ? "s" : "")}!</p>"
+            : "";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #F59E0B; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .highlight {{ background-color: #FEF3C7; padding: 20px; border-radius: 8px; margin: 15px 0; text-align: center; }}
+        .points {{ font-size: 48px; font-weight: bold; color: #F59E0B; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>Milestone Reached!</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>Congratulations on reaching an amazing milestone in your Spanish learning journey!</p>
+
+            <div class='highlight'>
+                <p style='margin: 0; font-size: 14px; color: #92400E;'>TOTAL POINTS</p>
+                <p class='points' style='margin: 10px 0;'>{totalPoints:N0}</p>
+                <p style='margin: 0; font-size: 16px;'>You've reached the <strong>{milestone:N0} point</strong> milestone!</p>
+            </div>
+
+            {tokenText}
+
+            <p>Keep up the excellent work! Every class, assignment, and activity brings you closer to Spanish fluency.</p>
+
+            <p>Keep learning!</p>
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
+    }
+
+    public async Task SendBadgeEarnedAsync(string email, string name, string badgeName, string description, int bonusPoints)
+    {
+        var subject = $"You've Earned a New Badge: {badgeName}!";
+
+        var pointsText = bonusPoints > 0
+            ? $"<p style='text-align: center; margin-top: 15px;'><strong>+{bonusPoints} bonus points!</strong></p>"
+            : "";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #8B5CF6; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .badge-box {{ background-color: #F3E8FF; padding: 20px; border-radius: 8px; margin: 15px 0; text-align: center; }}
+        .badge-name {{ font-size: 24px; font-weight: bold; color: #7C3AED; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>New Badge Earned!</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>You've earned a new achievement badge!</p>
+
+            <div class='badge-box'>
+                <p class='badge-name' style='margin: 0;'>{badgeName}</p>
+                <p style='margin: 10px 0 0 0; color: #6B7280;'>{description}</p>
+                {pointsText}
+            </div>
+
+            <p>This badge has been added to your profile. Keep learning to unlock more achievements!</p>
+
+            <p>Great job!</p>
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
+    }
+
+    public async Task SendPaymentConfirmationAsync(string email, string name, decimal amount, string description, DateTime paymentDate)
+    {
+        var subject = "Payment Confirmation - Lake Country Spanish";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #059669; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .receipt {{ background-color: #fff; padding: 20px; border-radius: 8px; margin: 15px 0; border: 1px solid #e5e7eb; }}
+        .amount {{ font-size: 32px; font-weight: bold; color: #059669; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>Payment Confirmed</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>Thank you for your payment! Here are the details:</p>
+
+            <div class='receipt'>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td style='padding: 10px 0; border-bottom: 1px solid #e5e7eb;'><strong>Description</strong></td>
+                        <td style='padding: 10px 0; border-bottom: 1px solid #e5e7eb; text-align: right;'>{description}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 10px 0; border-bottom: 1px solid #e5e7eb;'><strong>Date</strong></td>
+                        <td style='padding: 10px 0; border-bottom: 1px solid #e5e7eb; text-align: right;'>{paymentDate:MMMM d, yyyy}</td>
+                    </tr>
+                    <tr>
+                        <td style='padding: 15px 0;'><strong>Amount Paid</strong></td>
+                        <td style='padding: 15px 0; text-align: right;'><span class='amount'>${amount:F2}</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <p>If you have any questions about this payment, please don't hesitate to contact me.</p>
+
+            <p>Thank you!</p>
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
+    }
+
+    public async Task SendSubscriptionRenewalAsync(string email, string name, string tierName, decimal amount, DateTime nextRenewalDate)
+    {
+        var subject = "Subscription Renewed - Lake Country Spanish";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .highlight {{ background-color: #EEF2FF; padding: 15px; border-radius: 8px; margin: 15px 0; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>Subscription Renewed</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>Your subscription has been renewed successfully!</p>
+
+            <div class='highlight'>
+                <table style='width: 100%;'>
+                    <tr>
+                        <td><strong>Plan:</strong></td>
+                        <td style='text-align: right;'>{tierName}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Amount:</strong></td>
+                        <td style='text-align: right;'>${amount:F2}/month</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Next Renewal:</strong></td>
+                        <td style='text-align: right;'>{nextRenewalDate:MMMM d, yyyy}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <p>Your classes will continue as scheduled. If you need to make any changes to your subscription, you can do so from your account dashboard.</p>
+
+            <p>Thank you for continuing your Spanish learning journey with me!</p>
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
+    }
+
+    public async Task SendAssignmentAssignedAsync(string email, string name, string assignmentTitle, DateTime? dueDate)
+    {
+        var subject = "New Assignment Available - Lake Country Spanish";
+
+        var dueDateText = dueDate.HasValue
+            ? $"<p><strong>Due Date:</strong> {dueDate.Value:MMMM d, yyyy}</p>"
+            : "";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #0EA5E9; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .assignment-box {{ background-color: #F0F9FF; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #0EA5E9; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>New Assignment</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>You have a new assignment to complete!</p>
+
+            <div class='assignment-box'>
+                <h3 style='margin: 0 0 10px 0; color: #0369A1;'>{assignmentTitle}</h3>
+                {dueDateText}
+            </div>
+
+            <p style='text-align: center;'>
+                <a href='#' style='background-color: #0EA5E9; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;'>View Assignment</a>
+            </p>
+
+            <p>Log in to your account to start working on this assignment. Good luck!</p>
+
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
+    }
+
+    public async Task SendWeeklyProgressReportAsync(string email, string name, WeeklyProgressData progress)
+    {
+        var subject = "Your Weekly Spanish Learning Report";
+
+        var badgesHtml = progress.BadgesEarned.Any()
+            ? $"<p><strong>Badges Earned:</strong> {string.Join(", ", progress.BadgesEarned)}</p>"
+            : "";
+
+        var streakEmoji = progress.CurrentStreak >= 7 ? " " : (progress.CurrentStreak >= 3 ? " " : "");
+
+        var milestoneText = !string.IsNullOrEmpty(progress.NextMilestone) && progress.PointsToNextMilestone > 0
+            ? $"<p style='text-align: center; color: #6B7280;'>Only <strong>{progress.PointsToNextMilestone}</strong> points until your next milestone: <strong>{progress.NextMilestone}</strong></p>"
+            : "";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .stats-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }}
+        .stat-box {{ background-color: #fff; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #e5e7eb; }}
+        .stat-value {{ font-size: 28px; font-weight: bold; color: #4F46E5; }}
+        .stat-label {{ font-size: 12px; color: #6B7280; text-transform: uppercase; }}
+        .total-points {{ background-color: #EEF2FF; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>Weekly Progress Report</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>Here's a summary of your Spanish learning progress this week!</p>
+
+            <table style='width: 100%; border-collapse: collapse; margin: 20px 0;'>
+                <tr>
+                    <td style='width: 50%; padding: 10px; text-align: center; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 8px 0 0 0;'>
+                        <div style='font-size: 28px; font-weight: bold; color: #4F46E5;'>{progress.ClassesAttended}</div>
+                        <div style='font-size: 12px; color: #6B7280; text-transform: uppercase;'>Classes Attended</div>
+                    </td>
+                    <td style='width: 50%; padding: 10px; text-align: center; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 0 8px 0 0;'>
+                        <div style='font-size: 28px; font-weight: bold; color: #4F46E5;'>{progress.AssignmentsCompleted}</div>
+                        <div style='font-size: 12px; color: #6B7280; text-transform: uppercase;'>Assignments Done</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style='width: 50%; padding: 10px; text-align: center; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 0 0 0 8px;'>
+                        <div style='font-size: 28px; font-weight: bold; color: #F59E0B;'>{progress.PointsEarned}</div>
+                        <div style='font-size: 12px; color: #6B7280; text-transform: uppercase;'>Points Earned</div>
+                    </td>
+                    <td style='width: 50%; padding: 10px; text-align: center; background-color: #fff; border: 1px solid #e5e7eb; border-radius: 0 0 8px 0;'>
+                        <div style='font-size: 28px; font-weight: bold; color: #EF4444;'>{progress.CurrentStreak}{streakEmoji}</div>
+                        <div style='font-size: 12px; color: #6B7280; text-transform: uppercase;'>Day Streak</div>
+                    </td>
+                </tr>
+            </table>
+
+            <div class='total-points'>
+                <p style='margin: 0; font-size: 14px; color: #6B7280;'>TOTAL POINTS</p>
+                <p style='margin: 5px 0; font-size: 36px; font-weight: bold; color: #4F46E5;'>{progress.TotalPoints:N0}</p>
+            </div>
+
+            {milestoneText}
+            {badgesHtml}
+
+            <p>Keep up the great work! Every little bit of practice helps you get closer to fluency.</p>
+
+            <p>See you in class!</p>
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
     }
 }

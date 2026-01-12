@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace LakeCountrySpanish.Web.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAssignmentSystem : Migration
+    public partial class AddPhase4And5Features : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,6 +33,62 @@ namespace LakeCountrySpanish.Web.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "NotificationLogs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    RecipientId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RecipientEmail = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    Subject = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    WasSent = table.Column<bool>(type: "bit", nullable: false),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    RelatedEntityId = table.Column<int>(type: "int", nullable: true),
+                    SentAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NotificationLogs", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_NotificationLogs_AspNetUsers_RecipientId",
+                        column: x => x.RecipientId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PlacementTestSessions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    StudentId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    StartingLevel = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CurrentLevel = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DeterminedLevel = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    QuestionsJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    LevelProgressJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TotalQuestionsAnswered = table.Column<int>(type: "int", nullable: false),
+                    TotalCorrect = table.Column<int>(type: "int", nullable: false),
+                    FailedAdvanceCount = table.Column<int>(type: "int", nullable: false),
+                    StartedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CompletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlacementTestSessions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PlacementTestSessions_AspNetUsers_StudentId",
+                        column: x => x.StudentId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Assignments",
                 columns: table => new
                 {
@@ -50,6 +106,8 @@ namespace LakeCountrySpanish.Web.Migrations
                     BonusPoints = table.Column<int>(type: "int", nullable: false),
                     EstimatedMinutes = table.Column<int>(type: "int", nullable: false),
                     IsAiGenerated = table.Column<bool>(type: "bit", nullable: false),
+                    IsFromLibrary = table.Column<bool>(type: "bit", nullable: false),
+                    SourceAssignmentId = table.Column<int>(type: "int", nullable: true),
                     GenerationPrompt = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ReviewedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     ReviewedById = table.Column<string>(type: "nvarchar(450)", nullable: true),
@@ -65,14 +123,17 @@ namespace LakeCountrySpanish.Web.Migrations
                         name: "FK_Assignments_AspNetUsers_CreatedById",
                         column: x => x.CreatedById,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Assignments_AspNetUsers_ReviewedById",
                         column: x => x.ReviewedById,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Assignments_Assignments_SourceAssignmentId",
+                        column: x => x.SourceAssignmentId,
+                        principalTable: "Assignments",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Assignments_CurriculumTopics_CurriculumTopicId",
                         column: x => x.CurriculumTopicId,
@@ -139,7 +200,7 @@ namespace LakeCountrySpanish.Web.Migrations
                     IsAutoAssigned = table.Column<bool>(type: "bit", nullable: false),
                     Priority = table.Column<int>(type: "int", nullable: false),
                     AttemptCount = table.Column<int>(type: "int", nullable: false),
-                    BestScore = table.Column<decimal>(type: "decimal(18,2)", nullable: true)
+                    BestScore = table.Column<decimal>(type: "decimal(5,2)", precision: 5, scale: 2, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -148,8 +209,7 @@ namespace LakeCountrySpanish.Web.Migrations
                         name: "FK_StudentAssignments_AspNetUsers_AssignedById",
                         column: x => x.AssignedById,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.SetNull);
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_StudentAssignments_AspNetUsers_StudentId",
                         column: x => x.StudentId,
@@ -185,6 +245,11 @@ namespace LakeCountrySpanish.Web.Migrations
                 column: "ReviewedById");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Assignments_SourceAssignmentId",
+                table: "Assignments",
+                column: "SourceAssignmentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AssignmentSubmissions_AssignmentId_StudentId",
                 table: "AssignmentSubmissions",
                 columns: new[] { "AssignmentId", "StudentId" });
@@ -198,6 +263,21 @@ namespace LakeCountrySpanish.Web.Migrations
                 name: "IX_CurriculumTopics_CefrLevel_Type_IsActive",
                 table: "CurriculumTopics",
                 columns: new[] { "CefrLevel", "Type", "IsActive" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NotificationLogs_RecipientId_Type_SentAt",
+                table: "NotificationLogs",
+                columns: new[] { "RecipientId", "Type", "SentAt" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_NotificationLogs_Type_RelatedEntityId_RecipientId",
+                table: "NotificationLogs",
+                columns: new[] { "Type", "RelatedEntityId", "RecipientId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlacementTestSessions_StudentId_Status",
+                table: "PlacementTestSessions",
+                columns: new[] { "StudentId", "Status" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_StudentAssignments_AssignedById",
@@ -226,6 +306,12 @@ namespace LakeCountrySpanish.Web.Migrations
         {
             migrationBuilder.DropTable(
                 name: "AssignmentSubmissions");
+
+            migrationBuilder.DropTable(
+                name: "NotificationLogs");
+
+            migrationBuilder.DropTable(
+                name: "PlacementTestSessions");
 
             migrationBuilder.DropTable(
                 name: "StudentAssignments");

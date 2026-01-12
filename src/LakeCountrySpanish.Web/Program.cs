@@ -47,6 +47,9 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IClaudeApiService, ClaudeApiService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<IPlacementTestService, PlacementTestService>();
+builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddScoped<INotificationScheduler, NotificationScheduler>();
+builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddHttpClient();
 
 // Add MVC
