@@ -30,6 +30,12 @@
                 </div>
                 <div class="flex space-x-3">
                     @await Component.InvokeAsync("Button", new {
+                        text = "Manage Tokens",
+                        href = Url.Action("StudentTokens", new { id = Model.Id }),
+                        type = "outline",
+                        icon = "coin"
+                    })
+                    @await Component.InvokeAsync("Button", new {
                         text = "Edit Student",
                         href = Url.Action("EditStudent", new { id = Model.Id }),
                         type = "outline",

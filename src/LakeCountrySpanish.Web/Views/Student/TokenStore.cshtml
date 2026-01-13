@@ -1,0 +1,330 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.TokenStoreViewModel
+@{
+    ViewData["Title"] = "Token Store";
+}
+
+<div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
+    @await Component.InvokeAsync("PageHeader", new {
+        title = "Token Store",
+        subtitle = "Exchange your earned tokens for class tickets",
+        backUrl = Url.Action("Dashboard"),
+        backText = "Back to Dashboard"
+    })
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        @await Component.InvokeAsync("Alert", new { type = "success", message = Model.SuccessMessage })
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        @await Component.InvokeAsync("Alert", new { type = "error", message = Model.ErrorMessage })
+    }
+
+    <!-- Balance Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Class Tickets -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">Class Tickets</p>
+                    <p class="text-4xl font-bold mt-1">@Model.AvailableTickets</p>
+                    <p class="text-green-100 text-sm mt-2">Ready to use for classes</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <svg class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                    </svg>
+                </div>
+            </div>
+            @if (Model.AvailableTickets > 0)
+            {
+                <div class="mt-4 pt-4 border-t border-white/30">
+                    @await Component.InvokeAsync("Button", new {
+                        text = "Book a Class",
+                        href = Url.Action("BookClass"),
+                        type = "secondary",
+                        icon = "calendar"
+                    })
+                </div>
+            }
+        </div>
+
+        <!-- Tokens -->
+        <div class="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl shadow-lg p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-yellow-100 text-sm font-medium">Your Tokens</p>
+                    <p class="text-4xl font-bold mt-1">@Model.TotalTokens</p>
+                    <p class="text-yellow-100 text-sm mt-2">Earned from activities</p>
+                </div>
+                <div class="bg-white/20 rounded-full p-4">
+                    <svg class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+            <!-- Points Progress -->
+            <div class="mt-4 pt-4 border-t border-white/30">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-yellow-100">Points to next token</span>
+                    <span class="font-medium">@Model.CurrentPoints % 100 / 100</span>
+                </div>
+                <div class="w-full bg-white/30 rounded-full h-2">
+                    <div class="bg-white h-2 rounded-full transition-all" style="width: @Model.PointProgressPercent%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token Store Items -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <svg class="h-5 w-5 text-indigo-600 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+                </svg>
+                Store Items
+            </h2>
+        </div>
+        <div class="p-6">
+            <!-- Class Ticket Item -->
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-16 w-16 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Class Ticket</h3>
+                        <p class="text-sm text-gray-500">Book one Spanish class with this ticket</p>
+                        <div class="flex items-center mt-1 text-yellow-600">
+                            <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="font-medium">@Model.TicketTokenCost tokens</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    @if (Model.CanAffordTicket)
+                    {
+                        <form asp-action="BuyTicketWithTokens" method="post">
+                            @Html.AntiForgeryToken()
+                            @await Component.InvokeAsync("Button", new {
+                                text = "Get Ticket",
+                                type = "success",
+                                submit = true,
+                                icon = "plus"
+                            })
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="text-center">
+                            <p class="text-sm text-gray-500 mb-1">Need @(Model.TicketTokenCost - Model.TotalTokens) more tokens</p>
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-gray-100 text-gray-500">
+                                Not enough tokens
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Ticket Purchase Section (only shown if student has permission) -->
+    @if (Model.CanPurchaseTickets && Model.PurchasePermission != null)
+    {
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-200 bg-blue-50">
+                <h2 class="text-lg font-semibold text-blue-900 flex items-center">
+                    <svg class="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                    </svg>
+                    Buy Class Tickets
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-16 w-16 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Purchase Class Tickets</h3>
+                            <p class="text-sm text-gray-500">Buy tickets directly at $@Model.PurchasePermission.TokenPrice.ToString("0.00") each</p>
+                            <div class="flex items-center mt-1 text-blue-600">
+                                <span class="text-sm">@Model.PurchasePermission.TokensRemaining ticket(s) available to purchase</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <form asp-action="PurchaseTickets" method="post" class="flex items-center space-x-3">
+                            @Html.AntiForgeryToken()
+                            <select name="quantity" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                @for (int i = 1; i <= Math.Min(Model.PurchasePermission.TokensRemaining, 5); i++)
+                                {
+                                    <option value="@i">@i ticket@(i > 1 ? "s" : "")</option>
+                                }
+                            </select>
+                            @await Component.InvokeAsync("Button", new {
+                                text = "Buy Now",
+                                type = "primary",
+                                submit = true,
+                                icon = "credit-card"
+                            })
+                        </form>
+                    </div>
+                </div>
+                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <p class="text-xs text-gray-500">
+                        <strong>Note:</strong> Purchased tickets are valid for @Model.PurchasePermission.TokenValidityDays days.
+                        Your purchase permission expires on @Model.PurchasePermission.ExpiresAt.ToString("MMMM d, yyyy").
+                    </p>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Ticket Breakdown -->
+    @if (Model.TicketsBySource.Any())
+    {
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-900">Ticket Sources</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    @foreach (var source in Model.TicketsBySource)
+                    {
+                        var (bgColor, label) = source.Key switch
+                        {
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.TokenExchange => ("bg-yellow-100 text-yellow-800", "From Tokens"),
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.Purchased => ("bg-blue-100 text-blue-800", "Purchased"),
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.AdminGrant => ("bg-purple-100 text-purple-800", "Gifted"),
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.Subscription => ("bg-green-100 text-green-800", "Subscription"),
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.LegacyMigration => ("bg-gray-100 text-gray-800", "Legacy Credits"),
+                            _ => ("bg-gray-100 text-gray-800", source.Key.ToString())
+                        };
+                        <div class="@bgColor rounded-lg p-4 text-center">
+                            <p class="text-2xl font-bold">@source.Value</p>
+                            <p class="text-sm">@label</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Token Transactions -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-900">Recent Token Activity</h2>
+            </div>
+            <div class="divide-y divide-gray-100">
+                @if (Model.RecentTokenTransactions.Any())
+                {
+                    @foreach (var txn in Model.RecentTokenTransactions.Take(5))
+                    {
+                        var isPositive = txn.Quantity > 0;
+                        <div class="px-6 py-3 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">@txn.Details</p>
+                                <p class="text-xs text-gray-500">@txn.CreatedAt.ToString("MMM d, h:mm tt")</p>
+                            </div>
+                            <span class="font-semibold @(isPositive ? "text-green-600" : "text-red-600")">
+                                @(isPositive ? "+" : "")@txn.Quantity
+                            </span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="px-6 py-8 text-center text-gray-500">
+                        <p>No token activity yet</p>
+                        <p class="text-sm mt-1">Complete activities to earn tokens!</p>
+                    </div>
+                }
+            </div>
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-100">
+                <a asp-action="Progress" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                    View all activity &rarr;
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Tickets -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                <h2 class="text-lg font-semibold text-gray-900">Recent Tickets</h2>
+            </div>
+            <div class="divide-y divide-gray-100">
+                @if (Model.RecentTickets.Any())
+                {
+                    @foreach (var ticket in Model.RecentTickets.Take(5))
+                    {
+                        var statusClass = ticket.IsUsed ? "text-gray-400" : (ticket.IsAvailable ? "text-green-600" : "text-red-500");
+                        var statusText = ticket.IsUsed ? "Used" : (ticket.IsAvailable ? "Available" : "Expired");
+                        var sourceLabel = ticket.Source switch
+                        {
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.TokenExchange => "Token Exchange",
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.Purchased => "Purchased",
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.AdminGrant => "Gifted",
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.Subscription => "Subscription",
+                            LakeCountrySpanish.Web.Models.Entities.TicketSource.LegacyMigration => "Legacy",
+                            _ => ticket.Source.ToString()
+                        };
+                        <div class="px-6 py-3 flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-900">@sourceLabel</p>
+                                <p class="text-xs text-gray-500">@ticket.AcquiredAt.ToString("MMM d, yyyy")</p>
+                            </div>
+                            <span class="text-sm font-medium @statusClass">@statusText</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="px-6 py-8 text-center text-gray-500">
+                        <p>No tickets yet</p>
+                        <p class="text-sm mt-1">Earn tokens to get class tickets!</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="mt-8 bg-indigo-50 rounded-xl p-6">
+        <h3 class="text-lg font-semibold text-indigo-900 mb-4">How It Works</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">1</div>
+                <div class="ml-3">
+                    <h4 class="font-medium text-indigo-900">Earn Tokens</h4>
+                    <p class="text-sm text-indigo-700">Complete classes, assignments, and activities to earn points. Every 100 points = 1 token!</p>
+                </div>
+            </div>
+            <div class="flex items-start">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">2</div>
+                <div class="ml-3">
+                    <h4 class="font-medium text-indigo-900">Exchange for Tickets</h4>
+                    <p class="text-sm text-indigo-700">Use @Model.TicketTokenCost tokens to get a class ticket in the Token Store.</p>
+                </div>
+            </div>
+            <div class="flex items-start">
+                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">3</div>
+                <div class="ml-3">
+                    <h4 class="font-medium text-indigo-900">Book a Class</h4>
+                    <p class="text-sm text-indigo-700">Use your ticket to schedule a Spanish class at any available time!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

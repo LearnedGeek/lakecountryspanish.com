@@ -18,15 +18,18 @@ public class StripeSubscriptionService : ISubscriptionService
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<StripeSubscriptionService> _logger;
+    private readonly ITicketService _ticketService;
 
     public StripeSubscriptionService(
         ApplicationDbContext context,
         IConfiguration configuration,
-        ILogger<StripeSubscriptionService> logger)
+        ILogger<StripeSubscriptionService> logger,
+        ITicketService ticketService)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
+        _ticketService = ticketService;
     }
 
     #region Tier Queries
@@ -349,8 +352,47 @@ public class StripeSubscriptionService : ISubscriptionService
         await AddHistoryEntry(subscription.Id, SubscriptionEvent.ClassesReset,
             "Monthly class counter reset");
 
-        // Generate classes for new period
+        // Grant tickets for this subscription period
+        await GrantSubscriptionTicketsAsync(subscription);
+
+        // Generate classes for new period (for recurring schedules)
         await GenerateClassesForSubscriptionAsync(subscription.Id);
+    }
+
+    /// <summary>
+    /// Grant tickets to the student based on their subscription tier.
+    /// Tickets expire at the end of the subscription period.
+    /// </summary>
+    private async Task GrantSubscriptionTicketsAsync(Subscription subscription)
+    {
+        if (subscription.Tier == null)
+        {
+            _logger.LogWarning("Subscription {SubscriptionId} has no tier, cannot grant tickets", subscription.Id);
+            return;
+        }
+
+        var ticketCount = subscription.Tier.ClassesPerMonth;
+        if (ticketCount <= 0)
+        {
+            _logger.LogInformation("Subscription tier {TierName} has no classes, skipping ticket grant", subscription.Tier.Name);
+            return;
+        }
+
+        // Tickets expire at the end of the current subscription period
+        var expiresAt = subscription.CurrentPeriodEnd ?? DateTime.UtcNow.AddMonths(1);
+
+        var tickets = await _ticketService.GrantSubscriptionTicketsAsync(
+            subscription.StudentId,
+            subscription.Id,
+            ticketCount,
+            expiresAt);
+
+        _logger.LogInformation(
+            "Granted {TicketCount} subscription tickets to student {StudentId} for subscription {SubscriptionId}",
+            tickets.Count(), subscription.StudentId, subscription.Id);
+
+        await AddHistoryEntry(subscription.Id, SubscriptionEvent.ClassesReset,
+            $"Granted {ticketCount} class tickets for this period");
     }
 
     /// <summary>

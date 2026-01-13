@@ -135,3 +135,64 @@ public class StudentTokenSummaryViewModel
     public bool HasActivePermission { get; set; }
     public TokenPurchasePermission? ActivePermission { get; set; }
 }
+
+/// <summary>
+/// Consolidated view model for admin gamification management.
+/// </summary>
+public class StudentGamificationViewModel
+{
+    public string StudentId { get; set; } = string.Empty;
+    public string StudentName { get; set; } = string.Empty;
+    public string StudentEmail { get; set; } = string.Empty;
+
+    // Ticket information
+    public int AvailableTickets { get; set; }
+    public Dictionary<TicketSource, int> TicketsBySource { get; set; } = new();
+    public IEnumerable<Ticket> RecentTickets { get; set; } = new List<Ticket>();
+
+    // Token information
+    public int EarnedTokens { get; set; }
+    public int PurchasedTokens { get; set; }
+    public int TotalTokens { get; set; }
+    public bool HasActivePermission { get; set; }
+    public TokenPurchasePermission? ActivePermission { get; set; }
+    public List<TokenBatchViewModel> TokenBatches { get; set; } = new();
+    public List<TokenTransactionViewModel> TokenTransactions { get; set; } = new();
+
+    // Points and engagement
+    public int TotalPoints { get; set; }
+    public int PointsToNextToken => 100 - (TotalPoints % 100);
+    public int PointProgressPercent => TotalPoints % 100;
+    public int CurrentStreak { get; set; }
+    public int LongestStreak { get; set; }
+    public int TotalClassesCompleted { get; set; }
+    public int ClassesThisMonth { get; set; }
+
+    // Badge information
+    public List<StudentBadgeViewModel> Badges { get; set; } = new();
+    public int TotalBadges => Badges.Count;
+}
+
+/// <summary>
+/// View model for a student badge.
+/// </summary>
+public class StudentBadgeViewModel
+{
+    public int BadgeId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string? IconUrl { get; set; }
+    public string Category { get; set; } = string.Empty;
+    public DateTime EarnedAt { get; set; }
+}
+
+/// <summary>
+/// View model for granting tickets to a student.
+/// </summary>
+public class GrantTicketsViewModel
+{
+    public string StudentId { get; set; } = string.Empty;
+    public int Quantity { get; set; } = 1;
+    public int? ExpirationDays { get; set; }
+    public string? Notes { get; set; }
+}

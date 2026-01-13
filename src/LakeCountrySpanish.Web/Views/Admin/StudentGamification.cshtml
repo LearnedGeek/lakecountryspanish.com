@@ -1,157 +1,345 @@
-@model LakeCountrySpanish.Web.Models.ViewModels.StudentGamificationSummaryViewModel
+@model LakeCountrySpanish.Web.Models.ViewModels.StudentGamificationViewModel
 @{
     ViewData["Title"] = $"Gamification - {Model.StudentName}";
 }
 
-<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex justify-between items-center mb-6">
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-8 flex justify-between items-start">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">@Model.StudentName</h1>
-            <p class="text-gray-500">@Model.Email</p>
+            <a href="@Url.Action("StudentProfile", new { id = Model.StudentId })" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4">
+                <svg class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Student Profile
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">@Model.StudentName - Gamification</h1>
+            <p class="text-gray-600 mt-2">@Model.StudentEmail</p>
         </div>
-        <div class="flex space-x-2">
-            <a asp-action="AwardBadge" asp-route-studentId="@Model.StudentId" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 rounded-md hover:bg-indigo-50 text-sm font-medium">
-                Award Badge
+        <div class="flex space-x-3">
+            <a href="@Url.Action("GrantTickets", new { studentId = Model.StudentId })" class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z"/>
+                </svg>
+                Grant Tickets
             </a>
-            <a asp-action="AdjustPoints" asp-route-studentId="@Model.StudentId" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                Adjust Points
-            </a>
-            <a asp-action="StudentProfile" asp-route-id="@Model.StudentId" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                View Profile
+            <a href="@Url.Action("GrantTokens", new { studentId = Model.StudentId })" class="inline-flex items-center px-4 py-2 bg-yellow-600 text-white font-semibold rounded-lg hover:bg-yellow-700">
+                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Grant Tokens
             </a>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-indigo-600 rounded-lg shadow p-4 text-center text-white">
-            <p class="text-3xl font-bold">@Model.TotalPoints.ToString("N0")</p>
-            <p class="text-sm opacity-90">Total Points</p>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="mb-6 rounded-md bg-green-50 p-4">
+            <p class="text-sm font-medium text-green-800">@TempData["SuccessMessage"]</p>
         </div>
-        <div class="bg-green-600 rounded-lg shadow p-4 text-center text-white">
-            <p class="text-3xl font-bold">@Model.CurrentStreak / @Model.LongestStreak</p>
-            <p class="text-sm opacity-90">Current / Best Streak</p>
+    }
+
+    <!-- Overview Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow p-6 text-center border-l-4 border-green-500">
+            <p class="text-3xl font-bold text-green-600">@Model.AvailableTickets</p>
+            <p class="text-sm text-gray-500 mt-1">Class Tickets</p>
         </div>
-        <div class="bg-yellow-500 rounded-lg shadow p-4 text-center text-white">
-            <p class="text-3xl font-bold">@Model.BadgesEarned</p>
-            <p class="text-sm opacity-90">Badges Earned</p>
+        <div class="bg-white rounded-lg shadow p-6 text-center border-l-4 border-yellow-500">
+            <p class="text-3xl font-bold text-yellow-600">@Model.TotalTokens</p>
+            <p class="text-sm text-gray-500 mt-1">Total Tokens</p>
         </div>
-        <div class="bg-cyan-600 rounded-lg shadow p-4 text-center text-white">
-            <p class="text-3xl font-bold">@Model.TokensEarnedFromPoints</p>
-            <p class="text-sm opacity-90">Tokens from Points</p>
+        <div class="bg-white rounded-lg shadow p-6 text-center border-l-4 border-blue-500">
+            <p class="text-3xl font-bold text-blue-600">@Model.TotalPoints</p>
+            <p class="text-sm text-gray-500 mt-1">Total Points</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 text-center border-l-4 border-purple-500">
+            <p class="text-3xl font-bold text-purple-600">@Model.TotalBadges</p>
+            <p class="text-sm text-gray-500 mt-1">Badges Earned</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-6 text-center border-l-4 border-orange-500">
+            <p class="text-3xl font-bold text-orange-600">@Model.CurrentStreak</p>
+            <p class="text-sm text-gray-500 mt-1">Current Streak</p>
         </div>
     </div>
 
-    <!-- Multiplier Status -->
-    <div class="bg-white rounded-lg shadow mb-6">
-        <div class="p-4 flex justify-between items-center">
-            <div>
-                <h2 class="font-semibold text-gray-900">Points Multiplier</h2>
-                <p class="text-sm text-gray-500">
-                    @if (Model.HasActiveSubscription)
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Tickets Section -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Class Tickets</h2>
+                    <span class="text-2xl font-bold text-green-600">@Model.AvailableTickets available</span>
+                </div>
+                <div class="p-6">
+                    @if (Model.TicketsBySource.Any())
                     {
-                        <span class="text-green-600">Active Subscriber - @Model.PointsMultiplier.ToString("0.0")x multiplier on all points</span>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            @foreach (var source in Model.TicketsBySource)
+                            {
+                                var sourceDisplay = source.Key switch
+                                {
+                                    LakeCountrySpanish.Web.Models.Entities.TicketSource.Purchased => "Purchased",
+                                    LakeCountrySpanish.Web.Models.Entities.TicketSource.TokenExchange => "From Tokens",
+                                    LakeCountrySpanish.Web.Models.Entities.TicketSource.AdminGrant => "Admin Grant",
+                                    LakeCountrySpanish.Web.Models.Entities.TicketSource.Subscription => "Subscription",
+                                    LakeCountrySpanish.Web.Models.Entities.TicketSource.LegacyMigration => "Migrated",
+                                    _ => source.Key.ToString()
+                                };
+                                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                                    <p class="text-xl font-semibold text-gray-900">@source.Value</p>
+                                    <p class="text-xs text-gray-500">@sourceDisplay</p>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Recent Tickets</h3>
+                    <div class="divide-y divide-gray-200 max-h-48 overflow-y-auto">
+                        @if (!Model.RecentTickets.Any())
+                        {
+                            <p class="text-center text-gray-500 py-4">No tickets yet</p>
+                        }
+                        else
+                        {
+                            @foreach (var ticket in Model.RecentTickets.Take(5))
+                            {
+                                <div class="py-3 flex justify-between items-center">
+                                    <div>
+                                        <span class="text-sm font-medium @(ticket.IsUsed ? "text-gray-400 line-through" : "text-gray-900")">
+                                            @ticket.Source ticket
+                                        </span>
+                                        <p class="text-xs text-gray-500">
+                                            @ticket.AcquiredAt.ToString("MMM d, yyyy")
+                                            @if (ticket.ExpiresAt.HasValue)
+                                            {
+                                                <span class="@(ticket.ExpiresAt < DateTime.UtcNow.AddDays(7) ? "text-orange-600" : "")">
+                                                    - Expires @ticket.ExpiresAt.Value.ToString("MMM d")
+                                                </span>
+                                            }
+                                        </p>
+                                    </div>
+                                    <span class="text-xs px-2 py-1 rounded-full @(ticket.IsUsed ? "bg-gray-100 text-gray-500" : "bg-green-100 text-green-700")">
+                                        @(ticket.IsUsed ? "Used" : "Available")
+                                    </span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tokens Section -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Tokens</h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="bg-yellow-50 rounded-lg p-4 text-center">
+                            <p class="text-2xl font-bold text-yellow-600">@Model.TotalTokens</p>
+                            <p class="text-xs text-gray-500">Total</p>
+                        </div>
+                        <div class="bg-green-50 rounded-lg p-4 text-center">
+                            <p class="text-xl font-semibold text-green-600">@Model.EarnedTokens</p>
+                            <p class="text-xs text-gray-500">Earned</p>
+                        </div>
+                        <div class="bg-purple-50 rounded-lg p-4 text-center">
+                            <p class="text-xl font-semibold text-purple-600">@Model.PurchasedTokens</p>
+                            <p class="text-xs text-gray-500">Other</p>
+                        </div>
+                    </div>
+
+                    <!-- Points Progress -->
+                    <div class="mb-6">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-600">Progress to next token</span>
+                            <span class="font-medium text-gray-900">@Model.PointProgressPercent / 100 points</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-yellow-500 h-3 rounded-full transition-all" style="width: @Model.PointProgressPercent%"></div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Active Token Batches</h3>
+                    <div class="divide-y divide-gray-200 max-h-48 overflow-y-auto">
+                        @if (!Model.TokenBatches.Any())
+                        {
+                            <p class="text-center text-gray-500 py-4">No active tokens</p>
+                        }
+                        else
+                        {
+                            @foreach (var batch in Model.TokenBatches)
+                            {
+                                <div class="py-3 flex justify-between items-center">
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-900">@batch.SourceDisplay</span>
+                                        <p class="text-xs text-gray-500">
+                                            @batch.CreatedAt.ToString("MMM d, yyyy")
+                                            @if (batch.NeverExpires)
+                                            {
+                                                <span class="text-green-600">- Never expires</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="@(batch.IsExpiring ? "text-orange-600 font-medium" : "")">
+                                                    - Expires @batch.ExpiresAt?.ToString("MMM d")
+                                                </span>
+                                            }
+                                        </p>
+                                    </div>
+                                    <span class="font-semibold text-gray-900">@batch.QuantityRemaining / @batch.Quantity</span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Badges Section -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Badges (@Model.TotalBadges)</h2>
+                </div>
+                <div class="p-6">
+                    @if (!Model.Badges.Any())
+                    {
+                        <p class="text-center text-gray-500 py-4">No badges earned yet</p>
                     }
                     else
                     {
-                        <span>Standard rate (1.0x) - Subscribe for 1.5x bonus</span>
-                    }
-                </p>
-            </div>
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-lg font-bold @(Model.HasActiveSubscription ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")">
-                @Model.PointsMultiplier.ToString("0.0")x
-            </span>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Recent Badges -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Recent Badges</h2>
-            </div>
-            <div class="p-6">
-                @if (!Model.RecentBadges.Any())
-                {
-                    <p class="text-gray-500">No badges earned yet.</p>
-                }
-                else
-                {
-                    <ul class="divide-y divide-gray-200">
-                        @foreach (var badge in Model.RecentBadges)
-                        {
-                            <li class="py-3 flex justify-between items-center">
-                                <div class="flex items-center">
-                                    @if (!string.IsNullOrEmpty(badge.Badge?.IconUrl))
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            @foreach (var badge in Model.Badges)
+                            {
+                                <div class="bg-gray-50 rounded-lg p-4 text-center">
+                                    @if (!string.IsNullOrEmpty(badge.IconUrl))
                                     {
-                                        <img src="@badge.Badge.IconUrl" alt="" class="w-6 h-6 mr-3">
+                                        <img src="@badge.IconUrl" alt="@badge.Name" class="h-12 w-12 mx-auto mb-2" />
                                     }
                                     else
                                     {
-                                        <span class="mr-3 text-xl">🏆</span>
+                                        <div class="h-12 w-12 mx-auto mb-2 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <svg class="h-6 w-6 text-purple-600" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                            </svg>
+                                        </div>
                                     }
-                                    <span class="font-medium text-gray-900">@badge.Badge?.Name</span>
+                                    <p class="text-sm font-medium text-gray-900">@badge.Name</p>
+                                    <p class="text-xs text-gray-500">@badge.EarnedAt.ToString("MMM d, yyyy")</p>
                                 </div>
-                                <span class="text-sm text-gray-500">@badge.EarnedAt.ToString("MMM d, yyyy")</span>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        </div>
-
-        <!-- Recent Points -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-900">Recent Point Activity</h2>
-            </div>
-            @if (!Model.RecentPoints.Any())
-            {
-                <div class="p-6">
-                    <p class="text-gray-500">No point activity yet.</p>
-                </div>
-            }
-            else
-            {
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Source</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Points</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach (var point in Model.RecentPoints)
-                            {
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-3 text-sm text-gray-500">@point.CreatedAt.ToString("MMM d")</td>
-                                    <td class="px-6 py-3 text-sm text-gray-900">
-                                        @point.Source
-                                        @if (point.Multiplier > 1)
-                                        {
-                                            <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800">@point.Multiplier.ToString("0.0")x</span>
-                                        }
-                                    </td>
-                                    <td class="px-6 py-3 text-right text-sm font-medium @(point.FinalPoints >= 0 ? "text-green-600" : "text-red-600")">
-                                        @(point.FinalPoints >= 0 ? "+" : "")@point.FinalPoints
-                                    </td>
-                                </tr>
                             }
-                        </tbody>
-                    </table>
+                        </div>
+                    }
                 </div>
-            }
+            </div>
         </div>
-    </div>
 
-    <div class="mt-6">
-        <a asp-action="Students" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-            Back to Students
-        </a>
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Engagement Stats -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Engagement</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total Classes</span>
+                        <span class="font-semibold text-gray-900">@Model.TotalClassesCompleted</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">This Month</span>
+                        <span class="font-semibold text-gray-900">@Model.ClassesThisMonth</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Current Streak</span>
+                        <span class="font-semibold text-orange-600">@Model.CurrentStreak days</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Longest Streak</span>
+                        <span class="font-semibold text-gray-900">@Model.LongestStreak days</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Total Points</span>
+                        <span class="font-semibold text-blue-600">@Model.TotalPoints</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Purchase Permission -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Ticket Purchase Permission</h2>
+                </div>
+                <div class="p-6">
+                    @if (Model.HasActivePermission && Model.ActivePermission != null)
+                    {
+                        <div class="p-4 bg-green-50 rounded-lg mb-4">
+                            <p class="text-sm font-medium text-green-800">Active</p>
+                            <p class="text-sm text-green-700 mt-1">
+                                Can purchase @Model.ActivePermission.TokensRemaining more ticket(s)
+                            </p>
+                        </div>
+                        <dl class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Limit:</dt>
+                                <dd class="text-gray-900">@Model.ActivePermission.TokenLimit tickets</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Purchased:</dt>
+                                <dd class="text-gray-900">@Model.ActivePermission.TokensPurchased</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Price:</dt>
+                                <dd class="text-gray-900">$@Model.ActivePermission.TokenPrice.ToString("0.00")</dd>
+                            </div>
+                            <div class="flex justify-between">
+                                <dt class="text-gray-500">Expires:</dt>
+                                <dd class="text-gray-900">@Model.ActivePermission.ExpiresAt.ToString("MMM d, yyyy")</dd>
+                            </div>
+                        </dl>
+                    }
+                    else
+                    {
+                        <div class="text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            <p class="mt-2">No active purchase permission</p>
+                            <a href="@Url.Action("GrantTokenPermission", new { studentId = Model.StudentId })" class="mt-4 inline-block text-blue-600 hover:text-blue-800">
+                                Grant Permission
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Recent Token Transactions -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Recent Transactions</h2>
+                </div>
+                <div class="divide-y divide-gray-200 max-h-64 overflow-y-auto">
+                    @if (!Model.TokenTransactions.Any())
+                    {
+                        <div class="p-6 text-center text-gray-500">
+                            <p>No transactions yet</p>
+                        </div>
+                    }
+                    else
+                    {
+                        @foreach (var txn in Model.TokenTransactions.Take(10))
+                        {
+                            <div class="p-4 flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900">@txn.TypeDisplay</p>
+                                    <p class="text-xs text-gray-500">@txn.CreatedAt.ToString("MMM d, h:mm tt")</p>
+                                </div>
+                                <span class="text-sm font-semibold @txn.TypeClass">@txn.QuantityDisplay</span>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 </div>

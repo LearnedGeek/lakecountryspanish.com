@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Services;
@@ -8,12 +9,14 @@ namespace LakeCountrySpanish.Tests.Services;
 public class ScheduleServiceTests
 {
     private readonly ApplicationDbContext _context;
+    private readonly Mock<ITicketService> _mockTicketService;
     private readonly ScheduleService _scheduleService;
 
     public ScheduleServiceTests()
     {
         _context = TestDbContextFactory.Create();
-        _scheduleService = new ScheduleService(_context);
+        _mockTicketService = new Mock<ITicketService>();
+        _scheduleService = new ScheduleService(_context, _mockTicketService.Object);
     }
 
     [Fact]
@@ -231,4 +234,331 @@ public class ScheduleServiceTests
         Assert.Equal(2, student1Classes.Count());
         Assert.All(student1Classes, c => Assert.Equal(student1.Id, c.StudentId));
     }
+
+    #region Cancellation with Ticket Refund Tests
+
+    [Fact]
+    public async Task CancelClassWithForfeitAsync_PaidWithTicket_RefundsTicketWhenNotLate()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        // Class scheduled for 48 hours from now (not late cancellation)
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(48),
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.PaidWithTicket,
+            TicketId = 1
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        _mockTicketService.Setup(t => t.RefundTicketAsync(scheduledClass.Id))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _scheduleService.CancelClassWithForfeitAsync(
+            scheduledClass.Id, student.Id, isAdmin: false, acceptForfeit: false);
+
+        // Assert
+        Assert.True(result);
+        var cancelledClass = await _context.ScheduledClasses.FindAsync(scheduledClass.Id);
+        Assert.Equal(ClassStatus.Cancelled, cancelledClass!.Status);
+        Assert.False(cancelledClass.CreditForfeited);
+        _mockTicketService.Verify(t => t.RefundTicketAsync(scheduledClass.Id), Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelClassWithForfeitAsync_PaidWithTicket_ForfeitsTicketWhenLateCancellation()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        // Class scheduled for 12 hours from now (late cancellation - within 24 hours)
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(12),
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.PaidWithTicket,
+            TicketId = 1
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        // Act - student cancelling late and accepting forfeit
+        var result = await _scheduleService.CancelClassWithForfeitAsync(
+            scheduledClass.Id, student.Id, isAdmin: false, acceptForfeit: true);
+
+        // Assert
+        Assert.True(result);
+        var cancelledClass = await _context.ScheduledClasses.FindAsync(scheduledClass.Id);
+        Assert.Equal(ClassStatus.Cancelled, cancelledClass!.Status);
+        Assert.True(cancelledClass.CreditForfeited);
+        // Ticket should NOT be refunded when forfeited
+        _mockTicketService.Verify(t => t.RefundTicketAsync(It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelClassWithForfeitAsync_AdminCancel_RefundsTicketEvenWhenLate()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        // Class scheduled for 12 hours from now (would be late cancellation for student)
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(12),
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.PaidWithTicket,
+            TicketId = 1
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        _mockTicketService.Setup(t => t.RefundTicketAsync(scheduledClass.Id))
+            .ReturnsAsync(true);
+
+        // Act - admin cancelling
+        var result = await _scheduleService.CancelClassWithForfeitAsync(
+            scheduledClass.Id, "admin-id", isAdmin: true, acceptForfeit: false);
+
+        // Assert
+        Assert.True(result);
+        var cancelledClass = await _context.ScheduledClasses.FindAsync(scheduledClass.Id);
+        Assert.Equal(ClassStatus.Cancelled, cancelledClass!.Status);
+        Assert.False(cancelledClass.CreditForfeited);
+        _mockTicketService.Verify(t => t.RefundTicketAsync(scheduledClass.Id), Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelClassWithForfeitAsync_StudentCannotCancelAnotherStudentsClass()
+    {
+        // Arrange
+        var student1 = CreateTestStudent();
+        var student2 = new ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = "student2@test.com",
+            Email = "student2@test.com",
+            FirstName = "Student",
+            LastName = "Two"
+        };
+        _context.Users.AddRange(student1, student2);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student1.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(48),
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.PaidWithTicket
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        // Act - student2 trying to cancel student1's class
+        var result = await _scheduleService.CancelClassWithForfeitAsync(
+            scheduledClass.Id, student2.Id, isAdmin: false, acceptForfeit: false);
+
+        // Assert
+        Assert.False(result);
+        var notCancelledClass = await _context.ScheduledClasses.FindAsync(scheduledClass.Id);
+        Assert.Equal(ClassStatus.Scheduled, notCancelledClass!.Status);
+    }
+
+    [Fact]
+    public async Task CancelClassWithForfeitAsync_CannotCancelAlreadyCancelledClass()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(48),
+            Status = ClassStatus.Cancelled, // Already cancelled
+            PaymentStatus = PaymentStatus.PaidWithTicket
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _scheduleService.CancelClassWithForfeitAsync(
+            scheduledClass.Id, student.Id, isAdmin: false, acceptForfeit: false);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task CancelClassWithForfeitAsync_StudentMustAcceptForfeitForLateCancellation()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        // Class scheduled for 12 hours from now (late cancellation)
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(12),
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.PaidWithTicket
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        // Act - student trying to cancel late without accepting forfeit
+        var result = await _scheduleService.CancelClassWithForfeitAsync(
+            scheduledClass.Id, student.Id, isAdmin: false, acceptForfeit: false);
+
+        // Assert - should fail because forfeit not accepted
+        Assert.False(result);
+        var notCancelledClass = await _context.ScheduledClasses.FindAsync(scheduledClass.Id);
+        Assert.Equal(ClassStatus.Scheduled, notCancelledClass!.Status);
+    }
+
+    #endregion
+
+    #region BookClassAsync Tests
+
+    [Fact]
+    public async Task BookClassAsync_WithAvailableSlot_CreatesScheduledClass()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var classDateTime = GetNextDayOfWeek(DayOfWeek.Monday).Add(timeSlot.StartTime);
+
+        // Act
+        var result = await _scheduleService.BookClassAsync(student.Id, timeSlot.Id, classDateTime);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(student.Id, result.StudentId);
+        Assert.Equal(timeSlot.Id, result.TimeSlotId);
+        Assert.Equal(classDateTime, result.ClassDateTime);
+        Assert.Equal(ClassStatus.Scheduled, result.Status);
+        Assert.Equal(PaymentStatus.Unpaid, result.PaymentStatus);
+    }
+
+    [Fact]
+    public async Task BookClassAsync_WithAlreadyBookedSlot_ReturnsNull()
+    {
+        // Arrange
+        var student1 = CreateTestStudent();
+        var student2 = new ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = "student2@test.com",
+            Email = "student2@test.com",
+            FirstName = "Student",
+            LastName = "Two"
+        };
+        _context.Users.AddRange(student1, student2);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var classDateTime = GetNextDayOfWeek(DayOfWeek.Monday).Add(timeSlot.StartTime);
+
+        // Book the class first
+        var existingClass = new ScheduledClass
+        {
+            StudentId = student1.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = classDateTime,
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.Unpaid
+        };
+        _context.ScheduledClasses.Add(existingClass);
+        await _context.SaveChangesAsync();
+
+        // Act - Try to book same slot
+        var result = await _scheduleService.BookClassAsync(student2.Id, timeSlot.Id, classDateTime);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private ApplicationUser CreateTestStudent()
+    {
+        return new ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = $"test{Guid.NewGuid():N}@test.com",
+            Email = $"test{Guid.NewGuid():N}@test.com",
+            FirstName = "Test",
+            LastName = "Student"
+        };
+    }
+
+    private TimeSlot CreateTestTimeSlot()
+    {
+        return new TimeSlot
+        {
+            DayOfWeek = DayOfWeek.Monday,
+            StartTime = new TimeSpan(10, 0, 0),
+            EndTime = new TimeSpan(11, 0, 0),
+            IsRecurring = true,
+            IsActive = true
+        };
+    }
+
+    private DateTime GetNextDayOfWeek(DayOfWeek dayOfWeek)
+    {
+        var today = DateTime.Today;
+        var daysUntil = ((int)dayOfWeek - (int)today.DayOfWeek + 7) % 7;
+        if (daysUntil == 0) daysUntil = 7; // Get next week if today is that day
+        return today.AddDays(daysUntil);
+    }
+
+    #endregion
 }

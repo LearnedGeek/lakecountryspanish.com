@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" class="llama-mascot">
+  <defs>
+    <!-- Gradients for depth -->
+    <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#F5F5F5"/>
+    </linearGradient>
+    <linearGradient id="scarfGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#E85A42"/>
+      <stop offset="100%" style="stop-color:#C84B31"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Circular background/border -->
+  <g class="llama-border">
+    <circle cx="100" cy="100" r="95" fill="white" stroke="#1e3a5f" stroke-width="4"/>
+  </g>
+
+  <!-- Llama body group - can be animated together -->
+  <g class="llama-body" transform="translate(100, 110)">
+    <!-- Main body -->
+    <ellipse cx="0" cy="20" rx="35" ry="30" fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2"/>
+
+    <!-- Neck -->
+    <path d="M -10 -5 Q -15 -40 -5 -55 L 15 -55 Q 20 -40 15 -5 Z"
+          fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2"/>
+
+    <!-- Front legs -->
+    <g class="llama-legs">
+      <rect x="-20" y="40" width="10" height="25" rx="4" fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2"/>
+      <rect x="10" y="40" width="10" height="25" rx="4" fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2"/>
+    </g>
+  </g>
+
+  <!-- Llama head group -->
+  <g class="llama-head" transform="translate(100, 55)">
+    <!-- Head shape -->
+    <ellipse cx="5" cy="0" rx="22" ry="18" fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2"/>
+
+    <!-- Snout/muzzle -->
+    <ellipse cx="22" cy="5" rx="12" ry="10" fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2"/>
+
+    <!-- Ears -->
+    <g class="llama-ears">
+      <ellipse cx="-8" cy="-22" rx="5" ry="12" fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2" transform="rotate(-15 -8 -22)"/>
+      <ellipse cx="12" cy="-22" rx="5" ry="12" fill="url(#bodyGradient)" stroke="#1e3a5f" stroke-width="2" transform="rotate(15 12 -22)"/>
+      <!-- Inner ear -->
+      <ellipse cx="-8" cy="-22" rx="2" ry="6" fill="#FFD4CC" transform="rotate(-15 -8 -22)"/>
+      <ellipse cx="12" cy="-22" rx="2" ry="6" fill="#FFD4CC" transform="rotate(15 12 -22)"/>
+    </g>
+
+    <!-- Eyes -->
+    <g class="llama-eyes">
+      <circle cx="-2" cy="-2" r="4" fill="#1e3a5f"/>
+      <circle cx="-3" cy="-3" r="1.5" fill="white"/>
+      <circle cx="14" cy="-2" r="4" fill="#1e3a5f"/>
+      <circle cx="13" cy="-3" r="1.5" fill="white"/>
+    </g>
+
+    <!-- Smile -->
+    <path class="llama-smile" d="M 18 8 Q 24 14 30 8" fill="none" stroke="#1e3a5f" stroke-width="2" stroke-linecap="round"/>
+
+    <!-- Nose -->
+    <ellipse cx="28" cy="3" rx="3" ry="2" fill="#1e3a5f"/>
+  </g>
+
+  <!-- Scarf -->
+  <g class="llama-scarf" transform="translate(100, 80)">
+    <path d="M -25 0 Q -20 8 0 10 Q 20 8 25 0 Q 20 -5 0 -3 Q -20 -5 -25 0 Z"
+          fill="url(#scarfGradient)" stroke="#a73d28" stroke-width="1"/>
+    <!-- Scarf tails -->
+    <path class="scarf-tail" d="M -20 8 Q -25 20 -18 35 Q -22 20 -15 10"
+          fill="url(#scarfGradient)" stroke="#a73d28" stroke-width="1"/>
+  </g>
+
+  <!-- Book -->
+  <g class="llama-book" transform="translate(55, 115)">
+    <!-- Book cover -->
+    <rect x="0" y="0" width="30" height="40" rx="2" fill="#C84B31" stroke="#a73d28" stroke-width="2"/>
+    <!-- Book pages -->
+    <rect x="3" y="3" width="24" height="34" fill="#FFF8F0"/>
+    <!-- Book spine -->
+    <line x1="15" y1="3" x2="15" y2="37" stroke="#a73d28" stroke-width="1"/>
+
+    <!-- Globe on book -->
+    <g class="book-globe" transform="translate(15, 18)">
+      <circle cx="0" cy="0" r="10" fill="#4A90D9" stroke="#1e3a5f" stroke-width="1.5"/>
+      <!-- Latitude lines -->
+      <ellipse cx="0" cy="0" rx="10" ry="4" fill="none" stroke="#1e3a5f" stroke-width="0.5"/>
+      <ellipse cx="0" cy="-5" rx="7" ry="2" fill="none" stroke="#1e3a5f" stroke-width="0.5"/>
+      <ellipse cx="0" cy="5" rx="7" ry="2" fill="none" stroke="#1e3a5f" stroke-width="0.5"/>
+      <!-- Longitude line -->
+      <ellipse cx="0" cy="0" rx="4" ry="10" fill="none" stroke="#1e3a5f" stroke-width="0.5"/>
+      <!-- Land masses (simplified) -->
+      <path d="M -5 -3 Q -3 -5 0 -4 Q 3 -3 2 0 Q 0 2 -3 1 Q -6 0 -5 -3" fill="#2E7D32"/>
+      <path d="M 3 3 Q 6 2 7 5 Q 5 7 3 5 Q 2 4 3 3" fill="#2E7D32"/>
+    </g>
+  </g>
+
+  <!-- Speech bubble with ñ -->
+  <g class="llama-speech" transform="translate(145, 35)">
+    <ellipse cx="0" cy="0" rx="22" ry="18" fill="white" stroke="#1e3a5f" stroke-width="2"/>
+    <!-- Bubble tail -->
+    <path d="M -15 12 L -22 22 L -8 14" fill="white" stroke="#1e3a5f" stroke-width="2"/>
+    <path d="M -15 12 L -22 22 L -8 14" fill="white" stroke="white" stroke-width="1"/>
+    <!-- The ñ -->
+    <text x="0" y="6" text-anchor="middle" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#1e3a5f">ñ</text>
+  </g>
+</svg>

@@ -18,6 +18,8 @@ public class StudentController : Controller
     private readonly IPaymentService _paymentService;
     private readonly IGamificationService _gamificationService;
     private readonly IPlacementTestService _placementTestService;
+    private readonly ITokenService _tokenService;
+    private readonly ITicketService _ticketService;
 
     public StudentController(
         ApplicationDbContext context,
@@ -25,7 +27,9 @@ public class StudentController : Controller
         IScheduleService scheduleService,
         IPaymentService paymentService,
         IGamificationService gamificationService,
-        IPlacementTestService placementTestService)
+        IPlacementTestService placementTestService,
+        ITokenService tokenService,
+        ITicketService ticketService)
     {
         _context = context;
         _userManager = userManager;
@@ -33,6 +37,8 @@ public class StudentController : Controller
         _paymentService = paymentService;
         _gamificationService = gamificationService;
         _placementTestService = placementTestService;
+        _tokenService = tokenService;
+        _ticketService = ticketService;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -77,6 +83,10 @@ public class StudentController : Controller
         // Check if student has taken placement test
         var hasTakenPlacementTest = await _placementTestService.HasCompletedTestAsync(user.Id);
 
+        // Get ticket and token balances
+        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
+        var totalTokens = await _tokenService.GetTotalTokenBalanceAsync(user.Id);
+
         var viewModel = new StudentDashboardViewModel
         {
             StudentName = user.FirstName,
@@ -84,7 +94,12 @@ public class StudentController : Controller
             UpcomingClasses = classes.Where(c => c.ClassDateTime >= now && c.Status == ClassStatus.Scheduled),
             PastClasses = classes.Where(c => c.ClassDateTime < now || c.Status != ClassStatus.Scheduled).Take(10),
             Balance = await _paymentService.GetStudentBalanceAsync(user.Id),
+#pragma warning disable CS0618 // Legacy field
             AvailablePackageClasses = availablePackageClasses,
+#pragma warning restore CS0618
+            AvailableTickets = availableTickets,
+            TotalTokens = totalTokens,
+            PointsToNextToken = 100 - (user.TotalPoints % 100),
             Documents = documents,
             ClassesNeedingFeedback = classesNeedingFeedback,
             CefrLevel = user.CefrLevel,
@@ -94,41 +109,14 @@ public class StudentController : Controller
         return View(viewModel);
     }
 
-    // Purchase Classes - students must buy credits before scheduling
+    // Legacy PurchaseClasses - redirects to Token Store
     [HttpGet]
-    public async Task<IActionResult> PurchaseClasses()
+    public IActionResult PurchaseClasses()
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        var packages = await _context.Packages
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.ClassCount)
-            .ToListAsync();
-
-        var availableCredits = await _context.StudentPackages
-            .Where(sp => sp.StudentId == user.Id && sp.ClassesRemaining > 0)
-            .SumAsync(sp => sp.ClassesRemaining);
-
-        // Get the standard base price (without any custom discount)
-        var singleClassPackage = packages.FirstOrDefault(p => p.ClassCount == 1);
-        var standardBasePrice = singleClassPackage?.Price ?? 25.00m;
-
-        var viewModel = new PurchaseClassesViewModel
-        {
-            Packages = packages,
-            AvailableCredits = availableCredits,
-            BaseClassPrice = standardBasePrice,
-            CustomHourlyRate = user.CustomHourlyRate
-        };
-
-        return View(viewModel);
+        return RedirectToAction(nameof(TokenStore));
     }
 
-    // Scheduling - requires credits (Weekly Calendar View)
+    // Scheduling - requires tickets (Weekly Calendar View)
     [HttpGet]
     public async Task<IActionResult> BookClass(DateTime? weekStart)
     {
@@ -138,15 +126,14 @@ public class StudentController : Controller
             return NotFound();
         }
 
-        var availablePackageClasses = await _context.StudentPackages
-            .Where(sp => sp.StudentId == user.Id && sp.ClassesRemaining > 0)
-            .SumAsync(sp => sp.ClassesRemaining);
+        // Use new ticket system
+        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
 
-        // Redirect to purchase page if no credits available
-        if (availablePackageClasses == 0)
+        // Redirect to token store if no tickets available
+        if (availableTickets == 0)
         {
-            TempData["InfoMessage"] = "You need to purchase class credits before you can schedule a lesson.";
-            return RedirectToAction(nameof(PurchaseClasses));
+            TempData["InfoMessage"] = "You need class tickets to schedule a lesson. Earn tokens and exchange them for tickets in the Token Store!";
+            return RedirectToAction(nameof(TokenStore));
         }
 
         // Default to current week (Sunday start)
@@ -158,8 +145,8 @@ public class StudentController : Controller
         var viewModel = new WeeklyBookingViewModel
         {
             WeeklyCalendar = weeklyCalendar,
-            AvailableCredits = availablePackageClasses,
-            MaxRecurringWeeks = availablePackageClasses,
+            AvailableCredits = availableTickets,
+            MaxRecurringWeeks = availableTickets,
             ClassPrice = await _paymentService.GetClassPriceForStudentAsync(user.Id)
         };
 
@@ -212,17 +199,12 @@ public class StudentController : Controller
             return RedirectToAction(nameof(BookClass));
         }
 
-        // Verify student has credits available
-        var studentPackage = await _context.StudentPackages
-            .Where(sp => sp.StudentId == user.Id && sp.ClassesRemaining > 0)
-            .OrderBy(sp => sp.ExpirationDate)
-            .ThenBy(sp => sp.PurchaseDate) // Use oldest purchase first
-            .FirstOrDefaultAsync();
-
-        if (studentPackage == null)
+        // Verify student has tickets available
+        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
+        if (availableTickets == 0)
         {
-            TempData["ErrorMessage"] = "You need to purchase class credits before scheduling. Please buy a package first.";
-            return RedirectToAction(nameof(PurchaseClasses));
+            TempData["ErrorMessage"] = "You need class tickets to schedule a lesson. Visit the Token Store to get tickets!";
+            return RedirectToAction(nameof(TokenStore));
         }
 
         // Book the class
@@ -233,13 +215,23 @@ public class StudentController : Controller
             return RedirectToAction(nameof(BookClass));
         }
 
-        // Deduct credit from package
-        studentPackage.ClassesRemaining--;
-        scheduledClass.StudentPackageId = studentPackage.Id;
-        scheduledClass.PaymentStatus = PaymentStatus.PartOfPackage;
+        // Use a ticket for the class
+        var ticket = await _ticketService.UseTicketForClassAsync(user.Id, scheduledClass.Id);
+        if (ticket == null)
+        {
+            // Rollback the booking if ticket usage fails
+            _context.ScheduledClasses.Remove(scheduledClass);
+            await _context.SaveChangesAsync();
+            TempData["ErrorMessage"] = "Failed to use ticket for booking. Please try again.";
+            return RedirectToAction(nameof(BookClass));
+        }
+
+        scheduledClass.TicketId = ticket.Id;
+        scheduledClass.PaymentStatus = PaymentStatus.PaidWithTicket;
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"Class booked successfully! You have {studentPackage.ClassesRemaining} credits remaining.";
+        var remainingTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
+        TempData["SuccessMessage"] = $"Class booked successfully! You have {remainingTickets} ticket{(remainingTickets == 1 ? "" : "s")} remaining.";
         return RedirectToAction(nameof(Dashboard));
     }
 
@@ -260,13 +252,12 @@ public class StudentController : Controller
             return RedirectToAction(nameof(BookClass));
         }
 
-        var availableCredits = await _context.StudentPackages
-            .Where(sp => sp.StudentId == user.Id && sp.ClassesRemaining > 0)
-            .SumAsync(sp => sp.ClassesRemaining);
+        // Use new ticket system
+        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
 
-        if (weekCount > availableCredits)
+        if (weekCount > availableTickets)
         {
-            TempData["ErrorMessage"] = $"You only have {availableCredits} credits available. Please select fewer weeks.";
+            TempData["ErrorMessage"] = $"You only have {availableTickets} ticket{(availableTickets == 1 ? "" : "s")} available. Please select fewer weeks.";
             return RedirectToAction(nameof(BookClass));
         }
 
@@ -274,22 +265,14 @@ public class StudentController : Controller
 
         if (result.BookedClasses.Any())
         {
-            // Deduct credits for booked classes
-            var creditsToDeduct = result.CreditsUsed;
-            var packages = await _context.StudentPackages
-                .Where(sp => sp.StudentId == user.Id && sp.ClassesRemaining > 0)
-                .OrderBy(sp => sp.ExpirationDate)
-                .ThenBy(sp => sp.PurchaseDate)
-                .ToListAsync();
-
+            // Use tickets for booked classes
             foreach (var bookedClass in result.BookedClasses)
             {
-                var package = packages.FirstOrDefault(p => p.ClassesRemaining > 0);
-                if (package != null)
+                var ticket = await _ticketService.UseTicketForClassAsync(user.Id, bookedClass.Id);
+                if (ticket != null)
                 {
-                    package.ClassesRemaining--;
-                    bookedClass.StudentPackageId = package.Id;
-                    bookedClass.PaymentStatus = PaymentStatus.PartOfPackage;
+                    bookedClass.TicketId = ticket.Id;
+                    bookedClass.PaymentStatus = PaymentStatus.PaidWithTicket;
                 }
             }
             await _context.SaveChangesAsync();
@@ -346,7 +329,7 @@ public class StudentController : Controller
 
         if (willForfeitCredit && !acceptForfeit)
         {
-            TempData["ErrorMessage"] = "Late cancellation requires acceptance of credit forfeit.";
+            TempData["ErrorMessage"] = "Late cancellation requires acceptance of ticket forfeit.";
             return RedirectToAction(nameof(Dashboard));
         }
 
@@ -356,11 +339,11 @@ public class StudentController : Controller
         {
             if (willForfeitCredit)
             {
-                TempData["WarningMessage"] = "Class cancelled. Since this was within 24 hours, your credit has been forfeited.";
+                TempData["WarningMessage"] = "Class cancelled. Since this was within 24 hours, your ticket has been forfeited.";
             }
             else
             {
-                TempData["SuccessMessage"] = "Class cancelled successfully. Your credit has been restored.";
+                TempData["SuccessMessage"] = "Class cancelled successfully. Your ticket has been restored.";
             }
         }
         else
@@ -736,4 +719,130 @@ public class StudentController : Controller
             _ => null
         };
     }
+
+    #region Token Store
+
+    /// <summary>
+    /// Token Store - where students can spend earned tokens on class tickets.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> TokenStore()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new TokenStoreViewModel
+        {
+            TotalTokens = await _tokenService.GetTotalTokenBalanceAsync(user.Id),
+            EarnedTokens = await _tokenService.GetEarnedTokenBalanceAsync(user.Id),
+            AvailableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id),
+            TicketsBySource = await _ticketService.GetTicketCountsBySourceAsync(user.Id),
+            TicketTokenCost = _ticketService.GetTicketTokenCost(),
+            CurrentPoints = user.TotalPoints,
+            RecentTokenTransactions = await _tokenService.GetTransactionHistoryAsync(user.Id, 10),
+            RecentTickets = await _ticketService.GetAllTicketsAsync(user.Id, 10),
+            CanPurchaseTickets = await _ticketService.CanPurchaseTicketsAsync(user.Id),
+            PurchasePermission = await _ticketService.GetActiveTicketPermissionAsync(user.Id)
+        };
+
+        if (TempData["SuccessMessage"] != null)
+            viewModel.SuccessMessage = TempData["SuccessMessage"]?.ToString();
+        if (TempData["ErrorMessage"] != null)
+            viewModel.ErrorMessage = TempData["ErrorMessage"]?.ToString();
+
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// Exchange tokens for a class ticket in the Token Store.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BuyTicketWithTokens()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var tokenCost = _ticketService.GetTicketTokenCost();
+        var tokenBalance = await _tokenService.GetTotalTokenBalanceAsync(user.Id);
+
+        if (tokenBalance < tokenCost)
+        {
+            TempData["ErrorMessage"] = $"You need {tokenCost} tokens to buy a class ticket. You currently have {tokenBalance} tokens.";
+            return RedirectToAction(nameof(TokenStore));
+        }
+
+        var ticket = await _ticketService.ExchangeTokensForTicketAsync(user.Id);
+
+        if (ticket != null)
+        {
+            TempData["SuccessMessage"] = $"Success! You exchanged {tokenCost} tokens for a class ticket. You now have {await _ticketService.GetAvailableTicketCountAsync(user.Id)} ticket(s).";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Unable to complete the exchange. Please try again.";
+        }
+
+        return RedirectToAction(nameof(TokenStore));
+    }
+
+    /// <summary>
+    /// Initiate a Stripe checkout session to purchase tickets with money.
+    /// Only available if student has active purchase permission.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PurchaseTickets(int quantity = 1)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _ticketService.CanPurchaseTicketsAsync(user.Id))
+        {
+            TempData["ErrorMessage"] = "You don't have permission to purchase tickets at this time.";
+            return RedirectToAction(nameof(TokenStore));
+        }
+
+        var permission = await _ticketService.GetActiveTicketPermissionAsync(user.Id);
+        if (permission == null || quantity > permission.TokensRemaining)
+        {
+            TempData["ErrorMessage"] = "Invalid purchase request. Please try again.";
+            return RedirectToAction(nameof(TokenStore));
+        }
+
+        var successUrl = Url.Action("PurchaseSuccess", "Student", null, Request.Scheme)!;
+        var cancelUrl = Url.Action("TokenStore", "Student", null, Request.Scheme)!;
+
+        var checkoutUrl = await _ticketService.CreateTicketPurchaseCheckoutAsync(
+            user.Id, quantity, successUrl, cancelUrl);
+
+        if (checkoutUrl == null)
+        {
+            TempData["ErrorMessage"] = "Unable to create checkout session. Please try again.";
+            return RedirectToAction(nameof(TokenStore));
+        }
+
+        return Redirect(checkoutUrl);
+    }
+
+    /// <summary>
+    /// Handle successful ticket purchase return from Stripe.
+    /// </summary>
+    [HttpGet]
+    public IActionResult PurchaseSuccess()
+    {
+        TempData["SuccessMessage"] = "Thank you for your purchase! Your tickets will be available shortly.";
+        return RedirectToAction(nameof(TokenStore));
+    }
+
+    #endregion
 }

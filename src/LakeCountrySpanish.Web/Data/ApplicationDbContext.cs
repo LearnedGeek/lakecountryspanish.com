@@ -41,6 +41,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<StudentStreak> StudentStreaks => Set<StudentStreak>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
 
+    // Ticket entities
+    public DbSet<Ticket> Tickets => Set<Ticket>();
+
     // Assignment entities
     public DbSet<CurriculumTopic> CurriculumTopics => Set<CurriculumTopic>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
@@ -436,6 +439,32 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Index for point history by student
             entity.HasIndex(e => new { e.StudentId, e.CreatedAt });
+        });
+
+        // Ticket configuration
+        builder.Entity<Ticket>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany(u => u.Tickets)
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.UsedForClass)
+                .WithMany()
+                .HasForeignKey(e => e.UsedForClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Subscription)
+                .WithMany()
+                .HasForeignKey(e => e.SubscriptionId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for finding available tickets by student
+            entity.HasIndex(e => new { e.StudentId, e.IsUsed, e.ExpiresAt });
+            // Index for finding tickets by source
+            entity.HasIndex(e => new { e.StudentId, e.Source });
         });
 
         // CurriculumTopic configuration

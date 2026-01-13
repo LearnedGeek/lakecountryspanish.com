@@ -57,4 +57,7 @@ public class ApplicationUser : IdentityUser
     // Gamification navigation properties
     public virtual ICollection<StudentBadge> StudentBadges { get; set; } = new List<StudentBadge>();
     public virtual ICollection<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
+
+    // Ticket navigation property
+    public virtual ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 }

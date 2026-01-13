@@ -33,6 +33,12 @@ public class AssignmentController : Controller
 
         var assignments = await _assignmentService.GetStudentAssignmentsAsync(user.Id, status);
         var stats = await _assignmentService.GetStudentStatsAsync(user.Id);
+        var submissions = await _assignmentService.GetStudentSubmissionsAsync(user.Id);
+
+        // Group submissions by assignment and get max points earned
+        var bestPointsByAssignment = submissions
+            .GroupBy(s => s.AssignmentId)
+            .ToDictionary(g => g.Key, g => g.Max(s => s.TotalPointsEarned));
 
         var viewModels = assignments.Select(sa => new StudentAssignmentViewModel
         {
@@ -52,7 +58,8 @@ public class AssignmentController : Controller
             StartedAt = sa.StartedAt,
             CompletedAt = sa.CompletedAt,
             BestScore = sa.BestScore,
-            AttemptCount = sa.AttemptCount
+            AttemptCount = sa.AttemptCount,
+            PointsEarned = bestPointsByAssignment.GetValueOrDefault(sa.AssignmentId)
         }).ToList();
 
         return View(new StudentAssignmentListViewModel

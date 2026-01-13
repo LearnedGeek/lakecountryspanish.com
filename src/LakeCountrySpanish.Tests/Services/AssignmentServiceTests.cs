@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
+using LakeCountrySpanish.Web.Services;
 
 namespace LakeCountrySpanish.Tests.Services;
 
@@ -467,6 +470,268 @@ public class AssignmentServiceTests
         Assert.NotNull(result);
         Assert.Contains("hola", result.AnswersJson);
         Assert.True(result.IsFirstAttempt);
+    }
+
+    private ApplicationUser CreateTestStudent()
+    {
+        return new ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = $"test{Guid.NewGuid():N}@test.com",
+            Email = $"test{Guid.NewGuid():N}@test.com",
+            FirstName = "Test",
+            LastName = "Student"
+        };
+    }
+
+    private CurriculumTopic CreateTestTopic()
+    {
+        return new CurriculumTopic
+        {
+            Name = $"Test Topic {Guid.NewGuid():N}",
+            Description = "A test topic",
+            CefrLevel = "A1",
+            Type = TopicType.Grammar,
+            DisplayOrder = 1,
+            IsActive = true
+        };
+    }
+}
+
+/// <summary>
+/// Tests for AssignmentService grading functionality.
+/// </summary>
+public class AssignmentServiceGradingTests
+{
+    private readonly ApplicationDbContext _context;
+    private readonly Mock<IClaudeApiService> _claudeApiServiceMock;
+    private readonly Mock<IGamificationService> _gamificationServiceMock;
+    private readonly Mock<ILogger<AssignmentService>> _loggerMock;
+    private readonly AssignmentService _assignmentService;
+
+    public AssignmentServiceGradingTests()
+    {
+        _context = TestDbContextFactory.Create();
+        _claudeApiServiceMock = new Mock<IClaudeApiService>();
+        _gamificationServiceMock = new Mock<IGamificationService>();
+        _loggerMock = new Mock<ILogger<AssignmentService>>();
+
+        _assignmentService = new AssignmentService(
+            _context,
+            _claudeApiServiceMock.Object,
+            _gamificationServiceMock.Object,
+            _loggerMock.Object);
+    }
+
+    [Fact]
+    public async Task SubmitAssignmentAsync_WithCorrectAnswers_GradesCorrectly()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var topic = CreateTestTopic();
+        _context.CurriculumTopics.Add(topic);
+        await _context.SaveChangesAsync();
+
+        // Create assignment matching the seed data format from SeedData.cs
+        var assignment = new Assignment
+        {
+            Title = "B1 Preterite vs Imperfect",
+            Description = "Choose the correct past tense based on context.",
+            CefrLevel = "B1",
+            Type = AssignmentType.MultipleChoice,
+            Status = AssignmentStatus.Approved,
+            CurriculumTopicId = topic.Id,
+            EstimatedMinutes = 15,
+            TotalPoints = 35,
+            BonusPoints = 7,
+            QuestionsJson = @"[
+                { ""id"": 1, ""question"": ""Cuando era niño, _____ al parque todos los días."", ""options"": [""iba"", ""fui"", ""fue"", ""ir""] },
+                { ""id"": 2, ""question"": ""Ayer _____ al médico porque me sentía mal."", ""options"": [""fui"", ""iba"", ""fue"", ""ir""] },
+                { ""id"": 3, ""question"": ""Mientras yo _____ la televisión, sonó el teléfono."", ""options"": [""veía"", ""vi"", ""vio"", ""ver""] },
+                { ""id"": 4, ""question"": ""Mi abuela siempre _____ galletas para nosotros."", ""options"": [""hacía"", ""hizo"", ""hace"", ""hacer""] },
+                { ""id"": 5, ""question"": ""El año pasado _____ a España por primera vez."", ""options"": [""viajé"", ""viajaba"", ""viajo"", ""viajar""] }
+            ]",
+            AnswersJson = @"[
+                { ""id"": 1, ""answer"": ""iba"", ""explanation"": ""Imperfect for habitual past actions."" },
+                { ""id"": 2, ""answer"": ""fui"", ""explanation"": ""Preterite for completed action at specific time."" },
+                { ""id"": 3, ""answer"": ""veía"", ""explanation"": ""Imperfect for ongoing background action."" },
+                { ""id"": 4, ""answer"": ""hacía"", ""explanation"": ""Imperfect for habitual actions with 'siempre'."" },
+                { ""id"": 5, ""answer"": ""viajé"", ""explanation"": ""Preterite for single completed event."" }
+            ]",
+            CreatedById = student.Id
+        };
+        _context.Assignments.Add(assignment);
+
+        var studentAssignment = new StudentAssignment
+        {
+            StudentId = student.Id,
+            AssignmentId = assignment.Id,
+            AssignedAt = DateTime.UtcNow,
+            DueDate = DateTime.UtcNow.AddDays(7),
+            Status = StudentAssignmentStatus.Assigned
+        };
+        _context.StudentAssignments.Add(studentAssignment);
+        await _context.SaveChangesAsync();
+
+        // Student submits all correct answers - NOTE: This is the format the JS sends (with "id" field)
+        var studentAnswersJson = @"[
+            { ""id"": 1, ""answer"": ""iba"" },
+            { ""id"": 2, ""answer"": ""fui"" },
+            { ""id"": 3, ""answer"": ""veía"" },
+            { ""id"": 4, ""answer"": ""hacía"" },
+            { ""id"": 5, ""answer"": ""viajé"" }
+        ]";
+
+        // Act
+        var result = await _assignmentService.SubmitAssignmentAsync(
+            student.Id,
+            assignment.Id,
+            studentAnswersJson,
+            timeTakenSeconds: 300);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(5, result.Submission.TotalQuestions);
+        Assert.Equal(5, result.Submission.CorrectAnswers);
+        Assert.Equal(100, result.Submission.PercentageScore);
+        Assert.True(result.IsPerfectScore);
+        Assert.Equal(35, result.PointsEarned); // TotalPoints
+        Assert.Equal(7, result.BonusPointsEarned); // BonusPoints for perfect score
+    }
+
+    [Fact]
+    public async Task SubmitAssignmentAsync_WithQuestionIdFormat_GradesCorrectly()
+    {
+        // Arrange - This test verifies the current bug where "questionId" doesn't work
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var topic = CreateTestTopic();
+        _context.CurriculumTopics.Add(topic);
+        await _context.SaveChangesAsync();
+
+        var assignment = new Assignment
+        {
+            Title = "Simple Quiz",
+            CefrLevel = "A1",
+            Type = AssignmentType.MultipleChoice,
+            Status = AssignmentStatus.Approved,
+            CurriculumTopicId = topic.Id,
+            EstimatedMinutes = 5,
+            TotalPoints = 20,
+            BonusPoints = 0,
+            QuestionsJson = @"[
+                { ""id"": 1, ""question"": ""Hola means..."", ""options"": [""Hello"", ""Goodbye"", ""Thanks"", ""Please""] },
+                { ""id"": 2, ""question"": ""Adiós means..."", ""options"": [""Hello"", ""Goodbye"", ""Thanks"", ""Please""] }
+            ]",
+            AnswersJson = @"[
+                { ""id"": 1, ""answer"": ""Hello"" },
+                { ""id"": 2, ""answer"": ""Goodbye"" }
+            ]",
+            CreatedById = student.Id
+        };
+        _context.Assignments.Add(assignment);
+
+        var studentAssignment = new StudentAssignment
+        {
+            StudentId = student.Id,
+            AssignmentId = assignment.Id,
+            AssignedAt = DateTime.UtcNow,
+            Status = StudentAssignmentStatus.Assigned
+        };
+        _context.StudentAssignments.Add(studentAssignment);
+        await _context.SaveChangesAsync();
+
+        // This is the format Take.cshtml actually sends - uses "questionId" not "id"
+        var studentAnswersWithQuestionId = @"[
+            { ""questionId"": 1, ""answer"": ""Hello"" },
+            { ""questionId"": 2, ""answer"": ""Goodbye"" }
+        ]";
+
+        // Act
+        var result = await _assignmentService.SubmitAssignmentAsync(
+            student.Id,
+            assignment.Id,
+            studentAnswersWithQuestionId,
+            timeTakenSeconds: 60);
+
+        // Assert - This test documents the current bug
+        // The grading code expects "id" but JS sends "questionId"
+        // So currently this would fail (0% score) even with correct answers
+        Assert.NotNull(result);
+
+        // After the fix, these should pass:
+        Assert.Equal(2, result.Submission.TotalQuestions);
+        Assert.Equal(2, result.Submission.CorrectAnswers);
+        Assert.Equal(100, result.Submission.PercentageScore);
+    }
+
+    [Fact]
+    public async Task SubmitAssignmentAsync_WithIncorrectAnswers_GradesCorrectly()
+    {
+        // Arrange
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var topic = CreateTestTopic();
+        _context.CurriculumTopics.Add(topic);
+        await _context.SaveChangesAsync();
+
+        var assignment = new Assignment
+        {
+            Title = "Simple Quiz",
+            CefrLevel = "A1",
+            Type = AssignmentType.MultipleChoice,
+            Status = AssignmentStatus.Approved,
+            CurriculumTopicId = topic.Id,
+            EstimatedMinutes = 5,
+            TotalPoints = 20,
+            BonusPoints = 5,
+            QuestionsJson = @"[
+                { ""id"": 1, ""question"": ""Hola means..."", ""options"": [""Hello"", ""Goodbye"", ""Thanks"", ""Please""] },
+                { ""id"": 2, ""question"": ""Adiós means..."", ""options"": [""Hello"", ""Goodbye"", ""Thanks"", ""Please""] }
+            ]",
+            AnswersJson = @"[
+                { ""id"": 1, ""answer"": ""Hello"" },
+                { ""id"": 2, ""answer"": ""Goodbye"" }
+            ]",
+            CreatedById = student.Id
+        };
+        _context.Assignments.Add(assignment);
+
+        var studentAssignment = new StudentAssignment
+        {
+            StudentId = student.Id,
+            AssignmentId = assignment.Id,
+            AssignedAt = DateTime.UtcNow,
+            Status = StudentAssignmentStatus.Assigned
+        };
+        _context.StudentAssignments.Add(studentAssignment);
+        await _context.SaveChangesAsync();
+
+        // Student gets 1 right, 1 wrong (using "id" format)
+        var studentAnswersJson = @"[
+            { ""id"": 1, ""answer"": ""Hello"" },
+            { ""id"": 2, ""answer"": ""Thanks"" }
+        ]";
+
+        // Act
+        var result = await _assignmentService.SubmitAssignmentAsync(
+            student.Id,
+            assignment.Id,
+            studentAnswersJson,
+            timeTakenSeconds: 60);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Submission.TotalQuestions);
+        Assert.Equal(1, result.Submission.CorrectAnswers);
+        Assert.Equal(50, result.Submission.PercentageScore);
+        Assert.False(result.IsPerfectScore);
+        Assert.Equal(10, result.PointsEarned); // Half of TotalPoints
+        Assert.Equal(0, result.BonusPointsEarned); // No bonus for non-perfect
     }
 
     private ApplicationUser CreateTestStudent()

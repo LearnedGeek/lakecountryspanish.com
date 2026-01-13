@@ -10,7 +10,9 @@ public class StudentDashboardViewModel
     public IEnumerable<ScheduledClass> UpcomingClasses { get; set; } = new List<ScheduledClass>();
     public IEnumerable<ScheduledClass> PastClasses { get; set; } = new List<ScheduledClass>();
     public decimal Balance { get; set; }
+    [Obsolete("Use AvailableTickets instead")]
     public int AvailablePackageClasses { get; set; }
+    public int AvailableTickets { get; set; }  // New ticket-based system
     public IEnumerable<Document> Documents { get; set; } = new List<Document>();
 
     // Completed classes eligible for feedback (completed within last 30 days without existing feedback)
@@ -19,6 +21,10 @@ public class StudentDashboardViewModel
     // CEFR Level information
     public string? CefrLevel { get; set; }
     public bool HasTakenPlacementTest { get; set; }
+
+    // Gamification quick stats
+    public int TotalTokens { get; set; }
+    public int PointsToNextToken { get; set; }
 }
 
 public class CreateStudentViewModel

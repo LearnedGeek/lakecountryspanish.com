@@ -71,10 +71,20 @@ public class AccountController : Controller
         return View(model);
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Logout()
+    {
+        // Handle GET requests to /Account/Logout (from cookie expiration redirects)
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            await _signInManager.SignOutAsync();
+        }
+        return RedirectToAction("Login");
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize]
-    public async Task<IActionResult> Logout()
+    public async Task<IActionResult> LogoutPost()
     {
         await _signInManager.SignOutAsync();
         return RedirectToAction("Index", "Home");

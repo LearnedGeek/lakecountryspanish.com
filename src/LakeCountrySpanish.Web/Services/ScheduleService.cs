@@ -8,10 +8,12 @@ namespace LakeCountrySpanish.Web.Services;
 public class ScheduleService : IScheduleService
 {
     private readonly ApplicationDbContext _context;
+    private readonly ITicketService _ticketService;
 
-    public ScheduleService(ApplicationDbContext context)
+    public ScheduleService(ApplicationDbContext context, ITicketService ticketService)
     {
         _context = context;
+        _ticketService = ticketService;
     }
 
     public async Task<IEnumerable<TimeSlot>> GetAvailableTimeSlotsAsync()
@@ -419,8 +421,22 @@ public class ScheduleService : IScheduleService
 
         scheduledClass.Status = ClassStatus.Cancelled;
 
-        // If class was paid for with a package
-        if (scheduledClass.PaymentStatus == PaymentStatus.PartOfPackage && scheduledClass.StudentPackageId.HasValue)
+        // Handle ticket refunds (new system)
+        if (scheduledClass.PaymentStatus == PaymentStatus.PaidWithTicket)
+        {
+            if (willForfeit && !isAdmin)
+            {
+                // Student cancelling late - forfeit the ticket
+                scheduledClass.CreditForfeited = true;
+            }
+            else
+            {
+                // Admin cancelling or student cancelling with >24hr notice - restore ticket
+                await _ticketService.RefundTicketAsync(classId);
+            }
+        }
+        // Legacy: If class was paid for with a package
+        else if (scheduledClass.PaymentStatus == PaymentStatus.PartOfPackage && scheduledClass.StudentPackageId.HasValue)
         {
             if (willForfeit && !isAdmin)
             {

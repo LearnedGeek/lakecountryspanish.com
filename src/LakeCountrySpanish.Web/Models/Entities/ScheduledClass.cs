@@ -12,7 +12,8 @@ public enum PaymentStatus
     Unpaid,
     Paid,
     PartOfPackage,
-    PartOfSubscription
+    PartOfSubscription,
+    PaidWithTicket
 }
 
 public class ScheduledClass
@@ -25,6 +26,12 @@ public class ScheduledClass
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Unpaid;
     public int? PaymentId { get; set; }
     public int? StudentPackageId { get; set; }
+
+    /// <summary>
+    /// The ticket used to book this class (new ticket system)
+    /// </summary>
+    public int? TicketId { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Subscription fields
@@ -69,6 +76,7 @@ public class ScheduledClass
     public virtual TimeSlot TimeSlot { get; set; } = null!;
     public virtual Payment? Payment { get; set; }
     public virtual StudentPackage? StudentPackage { get; set; }
+    public virtual Ticket? Ticket { get; set; }
     public virtual Subscription? Subscription { get; set; }
     public virtual RecurringSchedule? RecurringSchedule { get; set; }
     public virtual Tip? Tip { get; set; }

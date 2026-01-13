@@ -110,14 +110,24 @@
 
                         <div class="grid grid-cols-3 gap-2 mt-4 text-center">
                             <div>
-                                <p class="text-xs text-gray-500">Points</p>
-                                <p class="font-semibold text-gray-900">
-                                    @assignment.TotalPoints
-                                    @if (assignment.BonusPoints > 0)
-                                    {
-                                        <span class="text-green-600 text-xs">+@assignment.BonusPoints</span>
-                                    }
-                                </p>
+                                @if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.StudentAssignmentStatus.Completed && assignment.PointsEarned.HasValue)
+                                {
+                                    <p class="text-xs text-gray-500">Earned</p>
+                                    <p class="font-semibold @(assignment.PointsEarned > 0 ? "text-green-600" : "text-gray-900")">
+                                        @assignment.PointsEarned / @(assignment.TotalPoints + assignment.BonusPoints)
+                                    </p>
+                                }
+                                else
+                                {
+                                    <p class="text-xs text-gray-500">Possible</p>
+                                    <p class="font-semibold text-gray-900">
+                                        @assignment.TotalPoints
+                                        @if (assignment.BonusPoints > 0)
+                                        {
+                                            <span class="text-green-600 text-xs">+@assignment.BonusPoints</span>
+                                        }
+                                    </p>
+                                }
                             </div>
                             <div>
                                 <p class="text-xs text-gray-500">Time</p>

@@ -19,6 +19,7 @@ public class AdminController : Controller
     private readonly IEmailService _emailService;
     private readonly IScheduleService _scheduleService;
     private readonly ITokenService _tokenService;
+    private readonly ITicketService _ticketService;
     private readonly IGamificationService _gamificationService;
     private readonly IAssignmentService _assignmentService;
     private readonly IConfiguration _configuration;
@@ -32,6 +33,7 @@ public class AdminController : Controller
         IEmailService emailService,
         IScheduleService scheduleService,
         ITokenService tokenService,
+        ITicketService ticketService,
         IGamificationService gamificationService,
         IAssignmentService assignmentService,
         IConfiguration configuration,
@@ -44,6 +46,7 @@ public class AdminController : Controller
         _emailService = emailService;
         _scheduleService = scheduleService;
         _tokenService = tokenService;
+        _ticketService = ticketService;
         _gamificationService = gamificationService;
         _assignmentService = assignmentService;
         _configuration = configuration;
@@ -856,87 +859,7 @@ public class AdminController : Controller
         return RedirectToAction(nameof(Packages));
     }
 
-    // Student Credits Management
-    [HttpGet]
-    public async Task<IActionResult> ManageCredits(string id)
-    {
-        var student = await _userManager.FindByIdAsync(id);
-        if (student == null)
-        {
-            return NotFound();
-        }
-
-        var studentPackages = await _context.StudentPackages
-            .Include(sp => sp.Package)
-            .Where(sp => sp.StudentId == id)
-            .OrderByDescending(sp => sp.PurchaseDate)
-            .ToListAsync();
-
-        var totalCredits = studentPackages.Sum(sp => sp.ClassesRemaining);
-
-        return View(new ManageCreditsViewModel
-        {
-            StudentId = id,
-            StudentName = student.FullName,
-            StudentEmail = student.Email!,
-            StudentPackages = studentPackages,
-            TotalCreditsRemaining = totalCredits
-        });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddCredits(string studentId, int credits, string reason)
-    {
-        var student = await _userManager.FindByIdAsync(studentId);
-        if (student == null)
-        {
-            return NotFound();
-        }
-
-        if (credits <= 0)
-        {
-            TempData["ErrorMessage"] = "Credits must be greater than 0.";
-            return RedirectToAction(nameof(ManageCredits), new { id = studentId });
-        }
-
-        // Create a new "Admin Granted" package entry
-        var studentPackage = new StudentPackage
-        {
-            StudentId = studentId,
-            PackageId = 1, // Use single class package as reference
-            PurchaseDate = DateTime.UtcNow,
-            ClassesRemaining = credits,
-            PaymentId = null // No payment - admin granted
-        };
-
-        _context.StudentPackages.Add(studentPackage);
-        await _context.SaveChangesAsync();
-
-        TempData["SuccessMessage"] = $"Added {credits} credits to {student.FullName}. Reason: {reason}";
-        return RedirectToAction(nameof(ManageCredits), new { id = studentId });
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AdjustPackageCredits(int packageId, int newCredits, string reason)
-    {
-        var studentPackage = await _context.StudentPackages
-            .Include(sp => sp.Student)
-            .FirstOrDefaultAsync(sp => sp.Id == packageId);
-
-        if (studentPackage == null)
-        {
-            return NotFound();
-        }
-
-        var oldCredits = studentPackage.ClassesRemaining;
-        studentPackage.ClassesRemaining = Math.Max(0, newCredits);
-        await _context.SaveChangesAsync();
-
-        TempData["SuccessMessage"] = $"Adjusted credits from {oldCredits} to {newCredits} for {studentPackage.Student.FullName}. Reason: {reason}";
-        return RedirectToAction(nameof(ManageCredits), new { id = studentPackage.StudentId });
-    }
+    // Legacy credit management removed - use StudentGamification and GrantTickets instead
 
     // Blocked Dates Management (Vacation/Holiday)
     public async Task<IActionResult> BlockedDates()
@@ -1452,7 +1375,7 @@ public class AdminController : Controller
 
         var studentUser = await _userManager.FindByIdAsync(model.StudentId);
         TempData["SuccessMessage"] = $"Granted {model.Quantity} token(s) to {studentUser?.FullName}.";
-        return RedirectToAction(nameof(StudentTokens), new { id = model.StudentId });
+        return RedirectToAction(nameof(StudentGamification), new { id = model.StudentId });
     }
 
     [HttpGet]
@@ -1520,6 +1443,149 @@ public class AdminController : Controller
         }).ToList();
 
         return View(viewModel);
+    }
+
+    /// <summary>
+    /// Consolidated gamification management page for a student.
+    /// Shows tickets, tokens, badges, points, and engagement metrics.
+    /// </summary>
+    public async Task<IActionResult> StudentGamification(string id)
+    {
+        var student = await _userManager.FindByIdAsync(id);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        // Get ticket data
+        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(id);
+        var ticketsBySource = await _ticketService.GetTicketCountsBySourceAsync(id);
+        var recentTickets = await _ticketService.GetAllTicketsAsync(id, 10);
+
+        // Get token data
+        var earnedBalance = await _tokenService.GetEarnedTokenBalanceAsync(id);
+        var purchasedBalance = await _tokenService.GetPurchasedTokenBalanceAsync(id);
+        var permission = await _tokenService.GetActivePermissionAsync(id);
+        var tokens = await _tokenService.GetActiveTokensAsync(id);
+        var transactions = await _tokenService.GetTransactionHistoryAsync(id, 20);
+
+        // Get badge data
+        var studentBadges = await _context.StudentBadges
+            .Include(sb => sb.Badge)
+            .Where(sb => sb.StudentId == id)
+            .OrderByDescending(sb => sb.EarnedAt)
+            .ToListAsync();
+
+        // Get engagement data
+        var now = DateTime.Now;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var totalClassesCompleted = await _context.ScheduledClasses
+            .CountAsync(c => c.StudentId == id && c.Status == ClassStatus.Completed);
+        var classesThisMonth = await _context.ScheduledClasses
+            .CountAsync(c => c.StudentId == id && c.Status == ClassStatus.Completed && c.ClassDateTime >= startOfMonth);
+
+        // Get streak data from gamification service
+        var progressData = await _gamificationService.GetProgressAsync(id);
+
+        var viewModel = new StudentGamificationViewModel
+        {
+            StudentId = id,
+            StudentName = student.FullName,
+            StudentEmail = student.Email!,
+
+            // Tickets
+            AvailableTickets = availableTickets,
+            TicketsBySource = ticketsBySource,
+            RecentTickets = recentTickets,
+
+            // Tokens
+            EarnedTokens = earnedBalance,
+            PurchasedTokens = purchasedBalance,
+            TotalTokens = earnedBalance + purchasedBalance,
+            HasActivePermission = permission != null,
+            ActivePermission = permission,
+            TokenBatches = tokens.Select(t => new TokenBatchViewModel
+            {
+                Id = t.Id,
+                Source = t.Source.ToString(),
+                Quantity = t.Quantity,
+                QuantityRemaining = t.QuantityRemaining,
+                ExpiresAt = t.ExpiresAt,
+                CreatedAt = t.CreatedAt
+            }).ToList(),
+            TokenTransactions = transactions.Select(t => new TokenTransactionViewModel
+            {
+                Id = t.Id,
+                Type = t.Type.ToString(),
+                Quantity = t.Quantity,
+                BalanceAfter = t.BalanceAfter,
+                Details = t.Details,
+                CreatedAt = t.CreatedAt
+            }).ToList(),
+
+            // Points and engagement
+            TotalPoints = student.TotalPoints,
+            CurrentStreak = progressData?.CurrentStreak ?? 0,
+            LongestStreak = progressData?.LongestStreak ?? 0,
+            TotalClassesCompleted = totalClassesCompleted,
+            ClassesThisMonth = classesThisMonth,
+
+            // Badges
+            Badges = studentBadges.Select(sb => new StudentBadgeViewModel
+            {
+                BadgeId = sb.BadgeId,
+                Name = sb.Badge.Name,
+                Description = sb.Badge.Description,
+                IconUrl = sb.Badge.IconUrl,
+                Category = sb.Badge.Category.ToString(),
+                EarnedAt = sb.EarnedAt
+            }).ToList()
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GrantTickets(string studentId)
+    {
+        var student = await _userManager.FindByIdAsync(studentId);
+        if (student == null)
+        {
+            return NotFound();
+        }
+
+        ViewBag.StudentName = student.FullName;
+        return View(new GrantTicketsViewModel
+        {
+            StudentId = studentId,
+            Quantity = 1
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> GrantTickets(GrantTicketsViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var student = await _userManager.FindByIdAsync(model.StudentId);
+            ViewBag.StudentName = student?.FullName ?? "Unknown";
+            return View(model);
+        }
+
+        DateTime? expiresAt = model.ExpirationDays.HasValue
+            ? DateTime.UtcNow.AddDays(model.ExpirationDays.Value)
+            : null;
+
+        await _ticketService.GrantTicketsAsync(
+            model.StudentId,
+            model.Quantity,
+            expiresAt,
+            model.Notes);
+
+        var studentUser = await _userManager.FindByIdAsync(model.StudentId);
+        TempData["SuccessMessage"] = $"Granted {model.Quantity} ticket{(model.Quantity == 1 ? "" : "s")} to {studentUser?.FullName}.";
+        return RedirectToAction(nameof(StudentGamification), new { id = model.StudentId });
     }
 
     // Badge Management
@@ -1703,41 +1769,6 @@ public class AdminController : Controller
 
         TempData["SuccessMessage"] = "Badge re-enabled.";
         return RedirectToAction(nameof(Badges));
-    }
-
-    // Student Gamification Management
-    [HttpGet]
-    public async Task<IActionResult> StudentGamification(string id)
-    {
-        var student = await _userManager.FindByIdAsync(id);
-        if (student == null)
-        {
-            return NotFound();
-        }
-
-        var progress = await _gamificationService.GetProgressAsync(id);
-        var badges = await _gamificationService.GetStudentBadgesAsync(id);
-        var recentPoints = await _gamificationService.GetPointHistoryAsync(id, 20);
-        var subscription = await _context.Subscriptions
-            .FirstOrDefaultAsync(s => s.StudentId == id && s.Status == SubscriptionStatus.Active);
-
-        var viewModel = new StudentGamificationSummaryViewModel
-        {
-            StudentId = id,
-            StudentName = student.FullName,
-            Email = student.Email!,
-            TotalPoints = progress.TotalPoints,
-            TokensEarnedFromPoints = progress.TokensEarnedFromPoints,
-            CurrentStreak = progress.CurrentStreak,
-            LongestStreak = progress.LongestStreak,
-            BadgesEarned = progress.TotalBadgesEarned,
-            HasActiveSubscription = subscription != null,
-            PointsMultiplier = progress.PointsMultiplier,
-            RecentBadges = badges.OrderByDescending(b => b.EarnedAt).Take(5),
-            RecentPoints = recentPoints
-        };
-
-        return View(viewModel);
     }
 
     [HttpGet]

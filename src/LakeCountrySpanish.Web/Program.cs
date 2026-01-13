@@ -42,6 +42,7 @@ builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<ITokenService, LakeCountrySpanish.Web.Services.TokenService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IGamificationService, GamificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IClaudeApiService, ClaudeApiService>();
@@ -80,10 +81,30 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// Seed roles, admin user, and development test data
+// Apply pending database migrations automatically
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<ApplicationDbContext>();
+    var logger = services.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
+        if (pendingMigrations.Any())
+        {
+            logger.LogInformation("Applying {Count} pending database migration(s)...", pendingMigrations.Count());
+            await context.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied successfully.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while applying database migrations.");
+        throw; // Fail fast - don't start app with incompatible database
+    }
+
+    // Seed roles, admin user, and development test data
     await SeedData.InitializeAsync(services, app.Environment.IsDevelopment());
 }
 

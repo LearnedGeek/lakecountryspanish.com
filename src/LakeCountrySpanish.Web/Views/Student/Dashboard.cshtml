@@ -20,10 +20,10 @@
                 icon = "calendar"
             })
             @await Component.InvokeAsync("StatCard", new {
-                value = Model.AvailablePackageClasses.ToString(),
-                label = "Package Credits",
+                value = Model.AvailableTickets.ToString(),
+                label = "Class Tickets",
                 color = "success",
-                icon = "currency"
+                icon = "ticket"
             })
             @await Component.InvokeAsync("StatCard", new {
                 value = "$" + Model.Balance.ToString("0.00"),
@@ -83,15 +83,15 @@
                     <p class="text-sm text-gray-500">Practice & Homework</p>
                 </div>
             </a>
-            <a asp-controller="Token" asp-action="Index" class="flex items-center bg-white rounded-lg shadow p-4 hover:shadow-md transition group">
+            <a asp-controller="Student" asp-action="TokenStore" class="flex items-center bg-white rounded-lg shadow p-4 hover:shadow-md transition group">
                 <div class="flex-shrink-0 p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition">
                     <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="font-medium text-gray-900">My Tokens</p>
-                    <p class="text-sm text-gray-500">Earned & Purchased</p>
+                    <p class="font-medium text-gray-900">Token Store</p>
+                    <p class="text-sm text-gray-500">Spend Tokens for Tickets</p>
                 </div>
             </a>
             <a asp-controller="Subscription" asp-action="Plans" class="flex items-center bg-white rounded-lg shadow p-4 hover:shadow-md transition group">
@@ -109,7 +109,7 @@
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-4 mb-8">
-            @if (Model.AvailablePackageClasses > 0)
+            @if (Model.AvailableTickets > 0)
             {
                 <a asp-action="BookClass" class="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg p-4 transition">
                     <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -118,11 +118,11 @@
                     Schedule a Class
                 </a>
             }
-            <a asp-action="PurchaseClasses" class="flex items-center justify-center @(Model.AvailablePackageClasses == 0 ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300") rounded-lg p-4 transition">
+            <a asp-action="TokenStore" class="flex items-center justify-center @(Model.AvailableTickets == 0 ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300") rounded-lg p-4 transition">
                 <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Buy Classes
+                Token Store
             </a>
             <a asp-action="Payments" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
                 <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -168,12 +168,12 @@
             </div>
         }
 
-        <!-- Prompt to buy credits if none available -->
-        @if (Model.AvailablePackageClasses == 0)
+        <!-- Prompt when no tickets available -->
+        @if (Model.AvailableTickets == 0)
         {
             @await Component.InvokeAsync("Alert", new {
-                type = "warning",
-                message = "No class credits available. Purchase class credits to schedule your next Spanish lesson. Buy in bulk and save!"
+                type = "info",
+                message = "No class tickets available. Earn tokens by completing activities, then visit the Token Store to get tickets!"
             })
         }
 
@@ -304,9 +304,9 @@
                         @await Component.InvokeAsync("EmptyState", new {
                             icon = "calendar",
                             title = "No upcoming classes",
-                            message = Model.AvailablePackageClasses > 0 ? "Schedule your next class" : "Purchase credits to book",
-                            actionText = Model.AvailablePackageClasses > 0 ? "Schedule your next class" : "Purchase credits to book",
-                            actionUrl = Model.AvailablePackageClasses > 0 ? Url.Action("BookClass") : Url.Action("PurchaseClasses")
+                            message = Model.AvailableTickets > 0 ? "Schedule your next class" : "Get tickets to book",
+                            actionText = Model.AvailableTickets > 0 ? "Schedule your next class" : "Visit Token Store",
+                            actionUrl = Model.AvailableTickets > 0 ? Url.Action("BookClass") : Url.Action("TokenStore")
                         })
                     }
                 </div>
@@ -610,7 +610,7 @@
         <div id="standardCancelMessage" class="hidden mb-4">
             @await Component.InvokeAsync("Alert", new {
                 type = "success",
-                message = "Your credit will be restored. Since you're cancelling more than 24 hours in advance, your class credit will be returned to your account."
+                message = "Your ticket will be restored. Since you're cancelling more than 24 hours in advance, your class ticket will be returned to your account."
             })
         </div>
 
@@ -618,7 +618,7 @@
         <div id="forfeitWarning" class="hidden mb-4">
             @await Component.InvokeAsync("Alert", new {
                 type = "warning",
-                message = "Late Cancellation - Credit Will Be Forfeited. Because this class is within 24 hours, cancelling will forfeit your class credit."
+                message = "Late Cancellation - Ticket Will Be Forfeited. Because this class is within 24 hours, cancelling will forfeit your class ticket."
             })
         </div>
 

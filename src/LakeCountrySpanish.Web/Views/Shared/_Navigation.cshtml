@@ -36,7 +36,7 @@
                     {
                         var user = await UserManager.GetUserAsync(User);
                         <span class="text-primary-200 text-sm mr-4">Welcome, @user?.FirstName</span>
-                        <form asp-controller="Account" asp-action="Logout" method="post">
+                        <form asp-controller="Account" asp-action="LogoutPost" method="post">
                             <button type="submit" class="bg-primary-700 hover:bg-primary-600 text-white rounded-md px-4 py-2 text-sm font-medium transition">
                                 Sign Out
                             </button>
@@ -77,7 +77,7 @@
                 {
                     <a asp-controller="Student" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">My Dashboard</a>
                 }
-                <form asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
+                <form asp-controller="Account" asp-action="LogoutPost" method="post" class="mt-2">
                     <button type="submit" class="w-full text-left text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">
                         Sign Out
                     </button>

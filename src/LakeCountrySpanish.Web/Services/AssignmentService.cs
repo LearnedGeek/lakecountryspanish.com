@@ -539,9 +539,11 @@ public class AssignmentService : IAssignmentService
                     a => a.GetProperty("id").GetInt32(),
                     a => a);
 
+            // Handle both "id" and "questionId" formats (JS sends "questionId", but "id" is also valid)
             var studentAnswers = studentAnswersDoc.RootElement.EnumerateArray()
                 .ToDictionary(
-                    a => a.GetProperty("id").GetInt32(),
+                    a => a.TryGetProperty("id", out var idProp) ? idProp.GetInt32() :
+                         a.TryGetProperty("questionId", out var qIdProp) ? qIdProp.GetInt32() : 0,
                     a => a.GetProperty("answer").GetString() ?? "");
 
             foreach (var question in questionsDoc.RootElement.EnumerateArray())

@@ -302,6 +302,9 @@
         return div.innerHTML;
     }
 
+    // Flag to track intentional form submission
+    let isSubmitting = false;
+
     // Form submission
     document.getElementById('assignmentForm').addEventListener('submit', function(e) {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -323,13 +326,17 @@
         if (unanswered > 0) {
             if (!confirm(`You have ${unanswered} unanswered question(s). Submit anyway?`)) {
                 e.preventDefault();
+                return;
             }
         }
+
+        // Mark as intentionally submitting to bypass beforeunload warning
+        isSubmitting = true;
     });
 
-    // Warn before leaving
+    // Warn before leaving (but not during intentional form submission)
     window.addEventListener('beforeunload', function(e) {
-        if (Object.keys(answers).length > 0) {
+        if (Object.keys(answers).length > 0 && !isSubmitting) {
             e.preventDefault();
             e.returnValue = '';
         }

@@ -36,6 +36,7 @@ public class StudentAssignmentViewModel
     public DateTime? CompletedAt { get; set; }
     public decimal? BestScore { get; set; }
     public int AttemptCount { get; set; }
+    public int? PointsEarned { get; set; }
     public bool IsOverdue => DueDate.HasValue && DueDate.Value < DateTime.UtcNow && Status != StudentAssignmentStatus.Completed;
 
     public string TypeDisplayName => Type switch
