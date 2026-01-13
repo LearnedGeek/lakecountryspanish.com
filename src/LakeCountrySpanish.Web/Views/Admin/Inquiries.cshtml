@@ -5,10 +5,10 @@
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Contact Inquiries</h1>
-            <p class="mt-2 text-gray-600">Review and respond to potential student inquiries.</p>
-        </div>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Contact Inquiries",
+            subtitle = "Review and respond to potential student inquiries."
+        })
 
         <!-- Filter -->
         <div class="bg-white rounded-lg shadow p-4 mb-6">
@@ -19,9 +19,10 @@
                     <option value="Responded" selected="@(Model.FilterStatus == LakeCountrySpanish.Web.Models.Entities.InquiryStatus.Responded)">Responded</option>
                     <option value="Closed" selected="@(Model.FilterStatus == LakeCountrySpanish.Web.Models.Entities.InquiryStatus.Closed)">Closed</option>
                 </select>
-                <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white rounded-lg px-4 py-2 font-medium transition">
-                    Filter
-                </button>
+                @await Component.InvokeAsync("Button", new {
+                    text = "Filter",
+                    type = "secondary"
+                })
             </form>
         </div>
 
@@ -45,12 +46,11 @@
                                 </p>
                             </div>
                             <div class="text-right">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    @(inquiry.Status == LakeCountrySpanish.Web.Models.Entities.InquiryStatus.New ? "bg-blue-100 text-blue-800" :
-                                      inquiry.Status == LakeCountrySpanish.Web.Models.Entities.InquiryStatus.Responded ? "bg-green-100 text-green-800" :
-                                      "bg-gray-100 text-gray-800")">
-                                    @inquiry.Status
-                                </span>
+                                @{
+                                    var statusColor = inquiry.Status == LakeCountrySpanish.Web.Models.Entities.InquiryStatus.New ? "blue" :
+                                                      inquiry.Status == LakeCountrySpanish.Web.Models.Entities.InquiryStatus.Responded ? "green" : "gray";
+                                }
+                                @await Component.InvokeAsync("StatusBadge", new { text = inquiry.Status.ToString(), color = statusColor })
                                 <p class="text-xs text-gray-400 mt-1">@inquiry.CreatedAt.ToString("MMM d, yyyy 'at' h:mm tt")</p>
                             </div>
                         </div>
@@ -86,11 +86,11 @@
             }
             else
             {
-                <div class="bg-white rounded-lg shadow p-12 text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                    </svg>
-                    <p class="mt-2 text-gray-500">No inquiries found</p>
+                <div class="bg-white rounded-lg shadow">
+                    @await Component.InvokeAsync("EmptyState", new {
+                        title = "No inquiries found",
+                        icon = "inbox"
+                    })
                 </div>
             }
         </div>

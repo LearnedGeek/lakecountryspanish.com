@@ -5,44 +5,37 @@
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <a asp-action="Students" class="text-primary-600 hover:text-primary-700 flex items-center text-sm mb-4">
-                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-                Back to Students
-            </a>
-            <h1 class="text-3xl font-bold text-gray-900">Manage Credits</h1>
-            <p class="mt-2 text-gray-600">@Model.StudentName (@Model.StudentEmail)</p>
-        </div>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Manage Credits",
+            subtitle = Model.StudentName + " (" + Model.StudentEmail + ")",
+            backUrl = Url.Action("Students"),
+            backText = "Back to Students"
+        })
 
         @if (TempData["SuccessMessage"] != null)
         {
-            <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
-                @TempData["SuccessMessage"]
-            </div>
+            @await Component.InvokeAsync("Alert", new {
+                type = "success",
+                message = TempData["SuccessMessage"]!.ToString()
+            })
         }
 
         @if (TempData["ErrorMessage"] != null)
         {
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-                @TempData["ErrorMessage"]
-            </div>
+            @await Component.InvokeAsync("Alert", new {
+                type = "error",
+                message = TempData["ErrorMessage"]!.ToString()
+            })
         }
 
         <!-- Current Credits Summary -->
-        <div class="bg-white rounded-lg shadow p-6 mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-500">Total Credits Remaining</p>
-                    <p class="text-4xl font-bold text-gray-900">@Model.TotalCreditsRemaining</p>
-                </div>
-                <div class="flex-shrink-0 p-4 bg-green-100 rounded-full">
-                    <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                    </svg>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.TotalCreditsRemaining.ToString(),
+                label = "Total Credits Remaining",
+                color = "success",
+                icon = "currency"
+            })
         </div>
 
         <!-- Add Credits Form -->
@@ -62,9 +55,11 @@
                                class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500" />
                     </div>
                     <div class="flex items-end">
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-md transition">
-                            Add Credits
-                        </button>
+                        @await Component.InvokeAsync("Button", new {
+                            text = "Add Credits",
+                            type = "success",
+                            cssClass = "w-full justify-center"
+                        })
                     </div>
                 </div>
             </form>
@@ -89,7 +84,7 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach (var package in Model.StudentPackages)
                         {
-                            <tr>
+                            <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     @package.PurchaseDate.ToString("MMM d, yyyy")
                                 </td>
@@ -97,14 +92,15 @@
                                     @package.Package.Name
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(package.ClassesRemaining > 0 ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800")">
-                                        @package.ClassesRemaining / @package.Package.ClassCount
-                                    </span>
+                                    @await Component.InvokeAsync("StatusBadge", new {
+                                        text = package.ClassesRemaining + " / " + package.Package.ClassCount,
+                                        color = package.ClassesRemaining > 0 ? "green" : "gray"
+                                    })
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     @if (package.PaymentId.HasValue)
                                     {
-                                        <span class="text-green-600">Paid</span>
+                                        @await Component.InvokeAsync("StatusBadge", new { text = "Paid", color = "green" })
                                     }
                                     else
                                     {
@@ -153,14 +149,8 @@
                 </div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="hideAdjustModal()"
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition">
-                    Save Changes
-                </button>
+                @await Component.InvokeAsync("Button", new { text = "Cancel", type = "secondary", onclick = "hideAdjustModal()" })
+                @await Component.InvokeAsync("Button", new { text = "Save Changes", type = "primary" })
             </div>
         </form>
     </div>

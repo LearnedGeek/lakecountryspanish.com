@@ -5,15 +5,11 @@
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <a asp-action="Students" class="text-primary-600 hover:text-primary-700 flex items-center text-sm mb-4">
-                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-                Back to Students
-            </a>
-            <h1 class="text-3xl font-bold text-gray-900">Edit Student</h1>
-        </div>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Edit Student",
+            backUrl = Url.Action("Students"),
+            backText = "Back to Students"
+        })
 
         <div class="bg-white rounded-lg shadow p-6">
             <form asp-action="EditStudent" method="post">
@@ -84,10 +80,11 @@
                 </div>
 
                 <div class="mt-8">
-                    <button type="submit"
-                            class="w-full flex justify-center rounded-md bg-primary-600 py-3 px-4 text-sm font-semibold text-white hover:bg-primary-700 transition">
-                        Save Changes
-                    </button>
+                    @await Component.InvokeAsync("Button", new {
+                        text = "Save Changes",
+                        type = "primary",
+                        cssClass = "w-full justify-center py-3"
+                    })
                 </div>
             </form>
         </div>

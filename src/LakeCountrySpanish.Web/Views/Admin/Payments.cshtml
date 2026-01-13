@@ -5,21 +5,23 @@
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Payments</h1>
-            <p class="mt-2 text-gray-600">Track all student payments.</p>
-        </div>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Payments",
+            subtitle = "Track all student payments."
+        })
 
         <!-- Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-sm text-gray-500">Total Revenue (filtered)</p>
-                <p class="text-3xl font-bold text-green-600">$@Model.TotalRevenue.ToString("0.00")</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-sm text-gray-500">Pending Payments</p>
-                <p class="text-3xl font-bold text-yellow-600">$@Model.PendingPayments.ToString("0.00")</p>
-            </div>
+            @await Component.InvokeAsync("StatCard", new {
+                value = "$" + Model.TotalRevenue.ToString("0.00"),
+                label = "Total Revenue (filtered)",
+                color = "success"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = "$" + Model.PendingPayments.ToString("0.00"),
+                label = "Pending Payments",
+                color = "warning"
+            })
         </div>
 
         <!-- Filters -->
@@ -46,9 +48,10 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white rounded-lg px-4 py-2 font-medium transition">
-                        Filter
-                    </button>
+                    @await Component.InvokeAsync("Button", new {
+                        text = "Filter",
+                        type = "secondary"
+                    })
                 </div>
             </form>
         </div>
@@ -84,13 +87,12 @@
                                 <p class="text-sm font-medium text-gray-900">$@payment.Amount.ToString("0.00")</p>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    @(payment.Status == LakeCountrySpanish.Web.Models.Entities.PaymentStatusType.Completed ? "bg-green-100 text-green-800" :
-                                      payment.Status == LakeCountrySpanish.Web.Models.Entities.PaymentStatusType.Pending ? "bg-yellow-100 text-yellow-800" :
-                                      payment.Status == LakeCountrySpanish.Web.Models.Entities.PaymentStatusType.Failed ? "bg-red-100 text-red-800" :
-                                      "bg-gray-100 text-gray-800")">
-                                    @payment.Status
-                                </span>
+                                @{
+                                    var statusColor = payment.Status == LakeCountrySpanish.Web.Models.Entities.PaymentStatusType.Completed ? "green" :
+                                                      payment.Status == LakeCountrySpanish.Web.Models.Entities.PaymentStatusType.Pending ? "yellow" :
+                                                      payment.Status == LakeCountrySpanish.Web.Models.Entities.PaymentStatusType.Failed ? "red" : "gray";
+                                }
+                                @await Component.InvokeAsync("StatusBadge", new { text = payment.Status.ToString(), color = statusColor })
                             </td>
                         </tr>
                     }
@@ -98,12 +100,10 @@
             </table>
             @if (!Model.Payments.Any())
             {
-                <div class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                    </svg>
-                    <p class="mt-2 text-gray-500">No payments found</p>
-                </div>
+                @await Component.InvokeAsync("EmptyState", new {
+                    title = "No payments found",
+                    icon = "document"
+                })
             }
         </div>
     </div>

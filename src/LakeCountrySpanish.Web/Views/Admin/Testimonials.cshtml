@@ -5,25 +5,27 @@
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Testimonials</h1>
-            <p class="mt-2 text-gray-600">Manage student testimonials displayed on the website.</p>
-        </div>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Testimonials",
+            subtitle = "Manage student testimonials displayed on the website."
+        })
 
         <!-- Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-sm text-gray-500">Total Submitted</p>
-                <p class="text-3xl font-bold text-gray-900">@Model.Testimonials.Count()</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-sm text-gray-500">Approved</p>
-                <p class="text-3xl font-bold text-green-600">@Model.Testimonials.Count(t => t.IsApproved)</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-sm text-gray-500">Pending Review</p>
-                <p class="text-3xl font-bold text-yellow-600">@Model.Testimonials.Count(t => !t.IsApproved)</p>
-            </div>
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.Testimonials.Count().ToString(),
+                label = "Total Submitted"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.Testimonials.Count(t => t.IsApproved).ToString(),
+                label = "Approved",
+                color = "success"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.Testimonials.Count(t => !t.IsApproved).ToString(),
+                label = "Pending Review",
+                color = "warning"
+            })
         </div>
 
         <!-- Testimonials List -->
@@ -48,21 +50,15 @@
                                         </div>
                                         @if (testimonial.IsFeatured)
                                         {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                Featured
-                                            </span>
+                                            @await Component.InvokeAsync("StatusBadge", new { text = "Featured", color = "yellow" })
                                         }
                                         @if (testimonial.IsApproved)
                                         {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                Approved
-                                            </span>
+                                            @await Component.InvokeAsync("StatusBadge", new { text = "Approved", color = "green" })
                                         }
                                         else
                                         {
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
-                                                Pending
-                                            </span>
+                                            @await Component.InvokeAsync("StatusBadge", new { text = "Pending", color = "yellow" })
                                         }
                                     </div>
                                     <p class="text-gray-700 mb-2">"@testimonial.PublicTestimonial"</p>
@@ -83,36 +79,28 @@
                                     {
                                         <form asp-action="ApproveTestimonial" asp-route-id="@testimonial.Id" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="w-full text-center bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-1.5 rounded transition">
-                                                Approve
-                                            </button>
+                                            @await Component.InvokeAsync("Button", new { text = "Approve", type = "success", size = "sm", cssClass = "w-full" })
                                         </form>
                                     }
                                     @if (!testimonial.IsFeatured)
                                     {
                                         <form asp-action="FeatureTestimonial" asp-route-id="@testimonial.Id" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="w-full text-center bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-3 py-1.5 rounded transition">
-                                                Feature
-                                            </button>
+                                            @await Component.InvokeAsync("Button", new { text = "Feature", type = "warning", size = "sm", cssClass = "w-full" })
                                         </form>
                                     }
                                     else
                                     {
                                         <form asp-action="UnfeatureTestimonial" asp-route-id="@testimonial.Id" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="w-full text-center bg-gray-500 hover:bg-gray-600 text-white text-sm font-medium px-3 py-1.5 rounded transition">
-                                                Unfeature
-                                            </button>
+                                            @await Component.InvokeAsync("Button", new { text = "Unfeature", type = "secondary", size = "sm", cssClass = "w-full" })
                                         </form>
                                     }
                                     @if (testimonial.IsApproved)
                                     {
                                         <form asp-action="HideTestimonial" asp-route-id="@testimonial.Id" method="post">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="w-full text-center bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-3 py-1.5 rounded transition">
-                                                Hide
-                                            </button>
+                                            @await Component.InvokeAsync("Button", new { text = "Hide", type = "danger", size = "sm", cssClass = "w-full" })
                                         </form>
                                     }
                                 </div>
@@ -123,13 +111,11 @@
             }
             else
             {
-                <div class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                    </svg>
-                    <p class="mt-2 text-gray-500">No testimonials have been submitted yet</p>
-                    <p class="text-sm text-gray-400 mt-1">Students can submit testimonials after completing classes</p>
-                </div>
+                @await Component.InvokeAsync("EmptyState", new {
+                    title = "No testimonials have been submitted yet",
+                    message = "Students can submit testimonials after completing classes",
+                    icon = "trophy"
+                })
             }
         </div>
     </div>

@@ -7,13 +7,12 @@
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
-            <a asp-action="Students" class="text-primary-600 hover:text-primary-700 flex items-center text-sm mb-4">
-                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                </svg>
-                Back to Students
-            </a>
-            <div class="flex items-center justify-between">
+            @await Component.InvokeAsync("PageHeader", new {
+                title = "",
+                backUrl = Url.Action("Students"),
+                backText = "Back to Students"
+            })
+            <div class="flex items-center justify-between mt-4">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 h-16 w-16 bg-primary-100 rounded-full flex items-center justify-center">
                         <span class="text-2xl font-bold text-primary-600">@Model.FullName.Substring(0, 1).ToUpper()</span>
@@ -24,48 +23,51 @@
                     </div>
                     @if (!Model.IsActive)
                     {
-                        <span class="ml-4 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                            Inactive
-                        </span>
+                        <div class="ml-4">
+                            @await Component.InvokeAsync("StatusBadge", new { text = "Inactive", color = "red" })
+                        </div>
                     }
                 </div>
                 <div class="flex space-x-3">
-                    <a asp-action="EditStudent" asp-route-id="@Model.Id" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium transition flex items-center">
-                        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                        </svg>
-                        Edit Student
-                    </a>
+                    @await Component.InvokeAsync("Button", new {
+                        text = "Edit Student",
+                        href = Url.Action("EditStudent", new { id = Model.Id }),
+                        type = "outline",
+                        icon = "edit"
+                    })
                 </div>
             </div>
         </div>
 
         <!-- Quick Stats -->
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-            <div class="bg-white rounded-lg shadow p-4">
-                <p class="text-xs font-medium text-gray-500 uppercase">Member Since</p>
-                <p class="text-lg font-semibold text-gray-900">@Model.JoinedDate.ToString("MMM d, yyyy")</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <p class="text-xs font-medium text-gray-500 uppercase">Credits Left</p>
-                <p class="text-lg font-semibold @(Model.CreditsRemaining > 0 ? "text-green-600" : "text-gray-900")">@Model.CreditsRemaining</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <p class="text-xs font-medium text-gray-500 uppercase">Upcoming</p>
-                <p class="text-lg font-semibold text-blue-600">@Model.UpcomingClassCount</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <p class="text-xs font-medium text-gray-500 uppercase">Completed</p>
-                <p class="text-lg font-semibold text-gray-900">@Model.TotalClassesCompleted</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <p class="text-xs font-medium text-gray-500 uppercase">Total Paid</p>
-                <p class="text-lg font-semibold text-gray-900">$@Model.TotalPaid.ToString("0.00")</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <p class="text-xs font-medium text-gray-500 uppercase">Balance Due</p>
-                <p class="text-lg font-semibold @(Model.Balance > 0 ? "text-red-600" : "text-gray-900")">$@Model.Balance.ToString("0.00")</p>
-            </div>
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.JoinedDate.ToString("MMM d, yyyy"),
+                label = "Member Since"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.CreditsRemaining.ToString(),
+                label = "Credits Left",
+                color = Model.CreditsRemaining > 0 ? "success" : "default"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.UpcomingClassCount.ToString(),
+                label = "Upcoming",
+                color = "primary"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.TotalClassesCompleted.ToString(),
+                label = "Completed"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = "$" + Model.TotalPaid.ToString("0.00"),
+                label = "Total Paid"
+            })
+            @await Component.InvokeAsync("StatCard", new {
+                value = "$" + Model.Balance.ToString("0.00"),
+                label = "Balance Due",
+                color = Model.Balance > 0 ? "danger" : "default"
+            })
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -199,11 +201,11 @@
                                         <p class="text-sm font-semibold text-gray-900">@cls.ClassDateTime.ToString("dddd, MMM d")</p>
                                         @if (daysUntil == 0)
                                         {
-                                            <span class="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">Today</span>
+                                            @await Component.InvokeAsync("StatusBadge", new { text = "Today", color = "blue" })
                                         }
                                         else if (daysUntil == 1)
                                         {
-                                            <span class="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded">Tomorrow</span>
+                                            @await Component.InvokeAsync("StatusBadge", new { text = "Tomorrow", color = "blue" })
                                         }
                                     </div>
                                     <p class="text-sm text-gray-600">@cls.ClassDateTime.ToString("h:mm tt") - @cls.ClassDateTime.AddHours(1).ToString("h:mm tt")</p>
@@ -213,12 +215,10 @@
                     }
                     else
                     {
-                        <div class="text-center py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                            </svg>
-                            <p class="mt-2 text-sm text-gray-500">No upcoming classes scheduled</p>
-                        </div>
+                        @await Component.InvokeAsync("EmptyState", new {
+                            title = "No upcoming classes scheduled",
+                            icon = "calendar"
+                        })
                     }
                 </div>
             </div>
@@ -240,9 +240,7 @@
                                     <div class="p-3 bg-gray-50 rounded-lg">
                                         <div class="flex items-center justify-between mb-1">
                                             <p class="text-sm font-medium text-gray-900">@cls.ClassDateTime.ToString("MMM d, yyyy")</p>
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                                Completed
-                                            </span>
+                                            @await Component.InvokeAsync("StatusBadge", new { text = "Completed", color = "green" })
                                         </div>
                                         <p class="text-xs text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
                                         @if (!string.IsNullOrEmpty(cls.TeacherNotes))

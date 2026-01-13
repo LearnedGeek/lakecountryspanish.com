@@ -5,10 +5,10 @@
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Schedule</h1>
-            <p class="mt-2 text-gray-600">View and manage all scheduled classes.</p>
-        </div>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Schedule",
+            subtitle = "View and manage all scheduled classes."
+        })
 
         <!-- Filters -->
         <div class="bg-white rounded-lg shadow p-4 mb-6">
@@ -34,23 +34,20 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white rounded-lg px-4 py-2 font-medium transition">
-                        Filter
-                    </button>
+                    @await Component.InvokeAsync("Button", new {
+                        text = "Filter",
+                        type = "secondary"
+                    })
                 </div>
             </form>
         </div>
 
         @if (Model.HasAnyConflicts)
         {
-            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                <div class="flex items-center">
-                    <svg class="h-5 w-5 text-red-600 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                    <span class="text-red-800 font-medium">Some classes conflict with blocked dates and may need to be rescheduled.</span>
-                </div>
-            </div>
+            @await Component.InvokeAsync("Alert", new {
+                type = "warning",
+                message = "Some classes conflict with blocked dates and may need to be rescheduled."
+            })
         }
 
         <!-- Schedule List -->
@@ -90,12 +87,11 @@
                                 <a asp-action="StudentProfile" asp-route-id="@cls.StudentId" class="text-sm text-primary-600 hover:text-primary-700 hover:underline">@cls.Student.FullName</a>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    @(cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Scheduled ? "bg-blue-100 text-blue-800" :
-                                      cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Completed ? "bg-green-100 text-green-800" :
-                                      "bg-gray-100 text-gray-800")">
-                                    @cls.Status
-                                </span>
+                                @{
+                                    var statusColor = cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Scheduled ? "blue" :
+                                                      cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Completed ? "green" : "gray";
+                                }
+                                @await Component.InvokeAsync("StatusBadge", new { text = cls.Status.ToString(), color = statusColor })
                                 @if (cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Completed && !string.IsNullOrEmpty(cls.TeacherNotes))
                                 {
                                     <span class="ml-1 text-gray-400" title="@cls.TeacherNotes">
@@ -106,10 +102,11 @@
                                 }
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    @(cls.PaymentStatus == LakeCountrySpanish.Web.Models.Entities.PaymentStatus.Paid || cls.PaymentStatus == LakeCountrySpanish.Web.Models.Entities.PaymentStatus.PartOfPackage ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800")">
-                                    @cls.PaymentStatus
-                                </span>
+                                @{
+                                    var paymentColor = (cls.PaymentStatus == LakeCountrySpanish.Web.Models.Entities.PaymentStatus.Paid ||
+                                                        cls.PaymentStatus == LakeCountrySpanish.Web.Models.Entities.PaymentStatus.PartOfPackage) ? "green" : "yellow";
+                                }
+                                @await Component.InvokeAsync("StatusBadge", new { text = cls.PaymentStatus.ToString(), color = paymentColor })
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 @if (cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Scheduled)
@@ -130,18 +127,17 @@
             </table>
             @if (!Model.Classes.Any())
             {
-                <div class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                    </svg>
-                    <p class="mt-2 text-gray-500">No classes found for the selected filters</p>
-                </div>
+                @await Component.InvokeAsync("EmptyState", new {
+                    title = "No classes found for the selected filters",
+                    icon = "calendar"
+                })
             }
         </div>
     </div>
 </div>
 
 <!-- Complete Class Modal -->
+@await Component.InvokeAsync("Modal", new { id = "completeModal", title = "Complete Class" })
 <div id="completeModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Complete Class</h3>
@@ -157,14 +153,8 @@
                 </div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="hideCompleteModal()"
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition">
-                    Back
-                </button>
-                <button type="submit"
-                        class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition">
-                    Mark Complete
-                </button>
+                @await Component.InvokeAsync("Button", new { text = "Back", type = "secondary", onclick = "hideCompleteModal()" })
+                @await Component.InvokeAsync("Button", new { text = "Mark Complete", type = "success" })
             </div>
         </form>
     </div>
@@ -186,14 +176,8 @@
                 </div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="hideUrlModal()"
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-md transition">
-                    Save URL
-                </button>
+                @await Component.InvokeAsync("Button", new { text = "Cancel", type = "secondary", onclick = "hideUrlModal()" })
+                @await Component.InvokeAsync("Button", new { text = "Save URL", type = "primary" })
             </div>
         </form>
     </div>
@@ -219,14 +203,8 @@
                 </div>
             </div>
             <div class="mt-6 flex justify-end space-x-3">
-                <button type="button" onclick="hideCancelModal()"
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-2 px-4 rounded-md transition">
-                    Back
-                </button>
-                <button type="submit"
-                        class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-md transition">
-                    Cancel Class
-                </button>
+                @await Component.InvokeAsync("Button", new { text = "Back", type = "secondary", onclick = "hideCancelModal()" })
+                @await Component.InvokeAsync("Button", new { text = "Cancel Class", type = "danger" })
             </div>
         </form>
     </div>

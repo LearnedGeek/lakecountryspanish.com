@@ -6,13 +6,15 @@
 
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Badge Management</h1>
-        <a asp-action="CreateBadge" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Create Badge
-        </a>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Badge Management"
+        })
+        @await Component.InvokeAsync("Button", new {
+            text = "Create Badge",
+            href = Url.Action("CreateBadge"),
+            type = "primary",
+            icon = "plus"
+        })
     </div>
 
     <!-- Filters -->
@@ -41,7 +43,7 @@
                 <label class="ml-2 text-sm text-gray-700" for="showInactive">Show inactive badges</label>
             </div>
             <div class="flex gap-2">
-                <button type="submit" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Filter</button>
+                @await Component.InvokeAsync("Button", new { text = "Filter", type = "outline" })
                 <a asp-action="Badges" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Clear</a>
             </div>
         </form>
@@ -49,9 +51,13 @@
 
     @if (!Model.Badges.Any())
     {
-        <div class="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-4">
-            No badges found. <a asp-action="CreateBadge" class="underline hover:text-blue-900">Create your first badge</a>.
-        </div>
+        @await Component.InvokeAsync("Alert", new {
+            type = "info",
+            message = "No badges found."
+        })
+        <p class="mt-2 text-sm text-gray-600">
+            <a asp-action="CreateBadge" class="underline hover:text-primary-700">Create your first badge</a>.
+        </p>
     }
     else
     {
@@ -105,18 +111,19 @@
                                 }
                             </td>
                             <td class="px-6 py-4 text-center">
-                                @if (badge.IsActive)
-                                {
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>
-                                }
+                                @await Component.InvokeAsync("StatusBadge", new {
+                                    text = badge.IsActive ? "Active" : "Inactive",
+                                    color = badge.IsActive ? "green" : "gray"
+                                })
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex justify-end space-x-2">
-                                    <a asp-action="EditBadge" asp-route-id="@badge.Id" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">Edit</a>
+                                    @await Component.InvokeAsync("Button", new {
+                                        text = "Edit",
+                                        href = Url.Action("EditBadge", new { id = badge.Id }),
+                                        type = "outline",
+                                        size = "sm"
+                                    })
                                     @if (badge.IsActive)
                                     {
                                         <form method="post" asp-action="DisableBadge" asp-route-id="@badge.Id" class="inline">
