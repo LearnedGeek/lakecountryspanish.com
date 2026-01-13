@@ -5,169 +5,110 @@
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p class="mt-2 text-gray-600">Welcome back, Karen! Here's your business overview.</p>
-        </div>
+        @await Component.InvokeAsync("PageHeader", new {
+            title = "Admin Dashboard",
+            subtitle = "Welcome back, Karen! Here's your business overview."
+        })
 
         <!-- Key Metrics Row -->
         @if (Model.Metrics != null)
         {
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-primary-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Monthly Recurring Revenue</p>
-                            <p class="text-2xl font-bold text-gray-900">$@Model.Metrics.MRR.ToString("N2")</p>
-                        </div>
-                        <div class="p-3 bg-primary-100 rounded-full">
-                            <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
+                @await Component.InvokeAsync("StatCard", new {
+                    value = "$" + Model.Metrics.MRR.ToString("N2"),
+                    label = "Monthly Recurring Revenue",
+                    color = "primary",
+                    icon = "currency",
+                    borderLeft = true
+                })
 
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 @(Model.Metrics.RevenueChangePercent >= 0 ? "border-green-500" : "border-red-500")">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Revenue Change</p>
-                            <p class="text-2xl font-bold @(Model.Metrics.RevenueChangePercent >= 0 ? "text-green-600" : "text-red-600")">
-                                @(Model.Metrics.RevenueChangePercent >= 0 ? "+" : "")@Model.Metrics.RevenueChangePercent.ToString("N1")%
-                            </p>
-                        </div>
-                        <div class="p-3 @(Model.Metrics.RevenueChangePercent >= 0 ? "bg-green-100" : "bg-red-100") rounded-full">
-                            @if (Model.Metrics.RevenueChangePercent >= 0)
-                            {
-                                <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-                                </svg>
-                            }
-                            else
-                            {
-                                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 014.306 6.43l.776 2.898m0 0l3.182-5.511m-3.182 5.51l-5.511-3.181" />
-                                </svg>
-                            }
-                        </div>
-                    </div>
-                </div>
+                @await Component.InvokeAsync("StatCard", new {
+                    value = (Model.Metrics.RevenueChangePercent >= 0 ? "+" : "") + Model.Metrics.RevenueChangePercent.ToString("N1") + "%",
+                    label = "Revenue Change",
+                    color = Model.Metrics.RevenueChangePercent >= 0 ? "green" : "red",
+                    icon = "chart",
+                    borderLeft = true
+                })
 
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Active Subscriptions</p>
-                            <p class="text-2xl font-bold text-gray-900">@Model.Metrics.ActiveSubscriptions</p>
-                        </div>
-                        <div class="p-3 bg-blue-100 rounded-full">
-                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
+                @await Component.InvokeAsync("StatCard", new {
+                    value = Model.Metrics.ActiveSubscriptions.ToString(),
+                    label = "Active Subscriptions",
+                    color = "blue",
+                    icon = "users",
+                    borderLeft = true
+                })
 
-                <div class="bg-white rounded-lg shadow p-6 border-l-4 @(Model.Metrics.ChurnRate <= 5 ? "border-green-500" : "border-yellow-500")">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-gray-500">Churn Rate</p>
-                            <p class="text-2xl font-bold @(Model.Metrics.ChurnRate <= 5 ? "text-green-600" : "text-yellow-600")">@Model.Metrics.ChurnRate.ToString("N1")%</p>
-                        </div>
-                        <div class="p-3 @(Model.Metrics.ChurnRate <= 5 ? "bg-green-100" : "bg-yellow-100") rounded-full">
-                            <svg class="h-6 w-6 @(Model.Metrics.ChurnRate <= 5 ? "text-green-600" : "text-yellow-600")" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                            </svg>
-                        </div>
-                    </div>
-                </div>
+                @await Component.InvokeAsync("StatCard", new {
+                    value = Model.Metrics.ChurnRate.ToString("N1") + "%",
+                    label = "Churn Rate",
+                    color = Model.Metrics.ChurnRate <= 5 ? "green" : "yellow",
+                    icon = "users",
+                    borderLeft = true
+                })
             </div>
         }
 
         <!-- Original Stats Cards -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-blue-100 rounded-lg">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Active Students</p>
-                        <p class="text-2xl font-semibold text-gray-900">@Model.ActiveStudents / @Model.TotalStudents</p>
-                    </div>
-                </div>
-            </div>
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.ActiveStudents + " / " + Model.TotalStudents,
+                label = "Active Students",
+                color = "blue",
+                icon = "users"
+            })
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-green-100 rounded-lg">
-                        <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Today's Classes</p>
-                        <p class="text-2xl font-semibold text-gray-900">@Model.TodaysClasses</p>
-                    </div>
-                </div>
-            </div>
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.TodaysClasses.ToString(),
+                label = "Today's Classes",
+                color = "green",
+                icon = "calendar"
+            })
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-yellow-100 rounded-lg">
-                        <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Revenue This Month</p>
-                        <p class="text-2xl font-semibold text-gray-900">$@Model.TotalRevenueThisMonth.ToString("0.00")</p>
-                    </div>
-                </div>
-            </div>
+            @await Component.InvokeAsync("StatCard", new {
+                value = "$" + Model.TotalRevenueThisMonth.ToString("0.00"),
+                label = "Revenue This Month",
+                color = "yellow",
+                icon = "currency"
+            })
 
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-red-100 rounded-lg">
-                        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">New Inquiries</p>
-                        <p class="text-2xl font-semibold text-gray-900">@Model.NewInquiries</p>
-                    </div>
-                </div>
-            </div>
+            @await Component.InvokeAsync("StatCard", new {
+                value = Model.NewInquiries.ToString(),
+                label = "New Inquiries",
+                color = "red",
+                icon = "mail"
+            })
         </div>
 
         <!-- Quick Actions -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <a asp-action="CreateStudent" class="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg p-4 transition">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                </svg>
-                Add Student
-            </a>
-            <a asp-action="CreateTimeSlot" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Add Time Slot
-            </a>
-            <a asp-action="GenerateAssignment" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                </svg>
-                New Assignment
-            </a>
-            <a asp-action="Inquiries" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                </svg>
-                View Inquiries
-            </a>
+            @await Component.InvokeAsync("Button", new {
+                text = "Add Student",
+                href = Url.Action("CreateStudent"),
+                type = "primary",
+                icon = "user-plus",
+                cssClass = "w-full justify-center p-4"
+            })
+            @await Component.InvokeAsync("Button", new {
+                text = "Add Time Slot",
+                href = Url.Action("CreateTimeSlot"),
+                type = "secondary",
+                icon = "clock",
+                cssClass = "w-full justify-center p-4"
+            })
+            @await Component.InvokeAsync("Button", new {
+                text = "New Assignment",
+                href = Url.Action("GenerateAssignment"),
+                type = "secondary",
+                icon = "document",
+                cssClass = "w-full justify-center p-4"
+            })
+            @await Component.InvokeAsync("Button", new {
+                text = "View Inquiries",
+                href = Url.Action("Inquiries"),
+                type = "secondary",
+                icon = "mail",
+                cssClass = "w-full justify-center p-4"
+            })
         </div>
 
         <!-- Navigation Links -->
@@ -181,7 +122,7 @@
             <a asp-action="Schedule" class="bg-white rounded-lg shadow p-4 hover:shadow-md transition text-center relative">
                 @if (Model.HasScheduleConflicts)
                 {
-                    <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-bold" title="Schedule conflicts detected">!</span>
+                    @await Component.InvokeAsync("StatusBadge", new { text = "!", color = "red", size = "xs" })
                 }
                 <svg class="h-8 w-8 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
@@ -236,7 +177,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Revenue Trend Chart -->
             <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-900">Revenue Trend (6 Months)</h2>
                 </div>
                 <div class="p-6">
@@ -248,7 +189,7 @@
             @if (Model.RevenueBreakdown != null)
             {
                 <div class="bg-white rounded-lg shadow">
-                    <div class="p-6 border-b border-gray-200">
+                    <div class="px-6 py-4 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-900">Revenue Breakdown (This Month)</h2>
                     </div>
                     <div class="p-6">
@@ -280,9 +221,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             <!-- Top Engaged Students -->
             <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h2 class="text-lg font-semibold text-gray-900">Top Engaged Students</h2>
-                    <span class="text-xs text-gray-500">By points earned</span>
+                    @await Component.InvokeAsync("StatusBadge", new { text = "By points earned", color = "gray", size = "xs" })
                 </div>
                 <div class="p-6">
                     @if (Model.TopEngagedStudents.Any())
@@ -306,16 +247,19 @@
                     }
                     else
                     {
-                        <p class="text-gray-500 text-center py-4">No engagement data yet</p>
+                        @await Component.InvokeAsync("EmptyState", new {
+                            title = "No engagement data yet",
+                            icon = "users"
+                        })
                     }
                 </div>
             </div>
 
             <!-- At-Risk Students -->
             <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h2 class="text-lg font-semibold text-gray-900">At-Risk Students</h2>
-                    <span class="text-xs text-gray-500">Inactive 14+ days</span>
+                    @await Component.InvokeAsync("StatusBadge", new { text = "Inactive 14+ days", color = "red", size = "xs" })
                 </div>
                 <div class="p-6">
                     @if (Model.AtRiskStudents.Any())
@@ -348,9 +292,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <!-- Upcoming Schedule (3 Days) -->
             <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h2 class="text-lg font-semibold text-gray-900">Upcoming Schedule</h2>
-                    <a asp-action="Schedule" class="text-primary-600 hover:text-primary-700 text-sm font-medium">View All</a>
+                    <a asp-action="Schedule" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">View All</a>
                 </div>
                 <div class="p-6">
                     @if (Model.UpcomingDays.Any(d => d.Classes.Any()))
@@ -386,9 +330,12 @@
                                                     <div class="flex space-x-2">
                                                         <form asp-action="CompleteClass" method="post">
                                                             <input type="hidden" name="id" value="@cls.Id" />
-                                                            <button type="submit" class="text-green-600 hover:text-green-800 text-sm font-medium">
-                                                                Complete
-                                                            </button>
+                                                            @await Component.InvokeAsync("Button", new {
+                                                                text = "Complete",
+                                                                type = "success",
+                                                                size = "sm",
+                                                                submit = true
+                                                            })
                                                         </form>
                                                     </div>
                                                 </div>
@@ -405,18 +352,20 @@
                     }
                     else
                     {
-                        <div class="text-center py-8">
-                            <p class="text-gray-500">No classes scheduled for the next 3 days</p>
-                        </div>
+                        @await Component.InvokeAsync("EmptyState", new {
+                            title = "No upcoming classes",
+                            message = "No classes scheduled for the next 3 days",
+                            icon = "calendar"
+                        })
                     }
                 </div>
             </div>
 
             <!-- Recent Inquiries -->
             <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                     <h2 class="text-lg font-semibold text-gray-900">New Inquiries</h2>
-                    <a asp-action="Inquiries" class="text-primary-600 hover:text-primary-700 text-sm font-medium">View All</a>
+                    <a asp-action="Inquiries" class="text-sm font-medium text-indigo-600 hover:text-indigo-500">View All</a>
                 </div>
                 <div class="p-6">
                     @if (Model.RecentInquiries.Any())
@@ -430,7 +379,7 @@
                                             <p class="font-medium text-gray-900">@inquiry.Name</p>
                                             <p class="text-sm text-gray-500">@inquiry.Email</p>
                                         </div>
-                                        <span class="text-xs text-gray-400">@inquiry.CreatedAt.ToString("MMM d")</span>
+                                        @await Component.InvokeAsync("StatusBadge", new { text = inquiry.CreatedAt.ToString("MMM d"), color = "gray", size = "xs" })
                                     </div>
                                     <p class="text-sm text-gray-600 mt-2 line-clamp-2">@inquiry.Message</p>
                                 </div>
@@ -439,9 +388,10 @@
                     }
                     else
                     {
-                        <div class="text-center py-8">
-                            <p class="text-gray-500">No new inquiries</p>
-                        </div>
+                        @await Component.InvokeAsync("EmptyState", new {
+                            title = "No new inquiries",
+                            icon = "inbox"
+                        })
                     }
                 </div>
             </div>
