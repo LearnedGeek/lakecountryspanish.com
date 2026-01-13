@@ -1,0 +1,52 @@
+@model LakeCountrySpanish.Web.ViewComponents.StatCardViewModel
+
+@{
+    var wrapperTag = Model.IsLink ? "a" : "div";
+}
+
+@if (Model.IsLink)
+{
+    <a href="@Model.Href" class="bg-white rounded-lg shadow p-6 hover:shadow-md transition @Model.BorderClass">
+        <div class="flex items-center">
+            @if (!string.IsNullOrEmpty(Model.IconSvgPath))
+            {
+                <div class="flex-shrink-0 p-3 @Model.IconBgClass rounded-lg">
+                    <svg class="h-6 w-6 @Model.IconTextClass" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="@Model.IconSvgPath" />
+                    </svg>
+                </div>
+            }
+            <div class="@(string.IsNullOrEmpty(Model.IconSvgPath) ? "" : "ml-4")">
+                <p class="text-sm font-medium text-gray-500">@Model.Label</p>
+                <p class="text-2xl font-semibold text-gray-900">@Model.Value</p>
+                @if (!string.IsNullOrEmpty(Model.Subtitle))
+                {
+                    <p class="text-xs text-gray-400 mt-1">@Model.Subtitle</p>
+                }
+            </div>
+        </div>
+    </a>
+}
+else
+{
+    <div class="bg-white rounded-lg shadow p-6 @Model.BorderClass">
+        <div class="flex items-center">
+            @if (!string.IsNullOrEmpty(Model.IconSvgPath))
+            {
+                <div class="flex-shrink-0 p-3 @Model.IconBgClass rounded-lg">
+                    <svg class="h-6 w-6 @Model.IconTextClass" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="@Model.IconSvgPath" />
+                    </svg>
+                </div>
+            }
+            <div class="@(string.IsNullOrEmpty(Model.IconSvgPath) ? "" : "ml-4")">
+                <p class="text-sm font-medium text-gray-500">@Model.Label</p>
+                <p class="text-2xl font-semibold text-gray-900">@Model.Value</p>
+                @if (!string.IsNullOrEmpty(Model.Subtitle))
+                {
+                    <p class="text-xs text-gray-400 mt-1">@Model.Subtitle</p>
+                }
+            </div>
+        </div>
+    </div>
+}

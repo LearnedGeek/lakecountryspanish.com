@@ -5,101 +5,56 @@
 }
 
 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">Edit Badge</h1>
-        <a asp-action="Badges" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-            </svg>
-            Back
-        </a>
-    </div>
+    @await Component.InvokeAsync("PageHeader", new {
+        title = "Edit Badge",
+        backUrl = Url.Action("Badges")
+    })
 
-    <div class="max-w-2xl">
-        <div class="bg-white rounded-lg shadow">
-            <div class="p-6">
-                <form method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" asp-for="Id" />
-
-                    <div class="mb-4">
-                        <label asp-for="Name" class="block text-sm font-medium text-gray-700 mb-1">Badge Name</label>
-                        <input asp-for="Name" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" required>
-                        <span asp-validation-for="Name" class="text-red-600 text-sm"></span>
-                    </div>
-
-                    <div class="mb-4">
-                        <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                        <textarea asp-for="Description" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" rows="2" required></textarea>
-                        <span asp-validation-for="Description" class="text-red-600 text-sm"></span>
-                    </div>
-
-                    <div class="mb-4">
-                        <label asp-for="IconUrl" class="block text-sm font-medium text-gray-700 mb-1">Icon URL (optional)</label>
-                        <input asp-for="IconUrl" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        <p class="mt-1 text-xs text-gray-500">Leave empty to use the default trophy icon.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6">
+                    @await Html.PartialAsync("_BadgeForm", Model)
+                </div>
+            </div>
+        </div>
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Requirement Types</h2>
+                </div>
+                <div class="p-6">
+                    <dl class="space-y-3">
                         <div>
-                            <label asp-for="Category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select asp-for="Category" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" required>
-                                @foreach (BadgeCategory cat in Enum.GetValues(typeof(BadgeCategory)))
-                                {
-                                    <option value="@cat">@cat</option>
-                                }
-                            </select>
+                            <dt class="font-medium text-gray-900">Points</dt>
+                            <dd class="text-sm text-gray-500">Earn X total points</dd>
                         </div>
                         <div>
-                            <label asp-for="RequirementType" class="block text-sm font-medium text-gray-700 mb-1">Requirement Type</label>
-                            <select asp-for="RequirementType" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" required>
-                                @foreach (BadgeRequirementType req in Enum.GetValues(typeof(BadgeRequirementType)))
-                                {
-                                    <option value="@req">@req</option>
-                                }
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label asp-for="RequirementValue" class="block text-sm font-medium text-gray-700 mb-1">Requirement Value</label>
-                            <input asp-for="RequirementValue" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" min="0" required>
+                            <dt class="font-medium text-gray-900">Streak</dt>
+                            <dd class="text-sm text-gray-500">Maintain X-day activity streak</dd>
                         </div>
                         <div>
-                            <label asp-for="RequirementContext" class="block text-sm font-medium text-gray-700 mb-1">Requirement Context (optional)</label>
-                            <input asp-for="RequirementContext" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label asp-for="BonusPoints" class="block text-sm font-medium text-gray-700 mb-1">Bonus Points</label>
-                            <input asp-for="BonusPoints" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" min="0">
+                            <dt class="font-medium text-gray-900">ClassesCompleted</dt>
+                            <dd class="text-sm text-gray-500">Complete X classes</dd>
                         </div>
                         <div>
-                            <label asp-for="DisplayOrder" class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
-                            <input asp-for="DisplayOrder" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" min="0">
+                            <dt class="font-medium text-gray-900">PerfectScores</dt>
+                            <dd class="text-sm text-gray-500">Get X perfect scores on assignments</dd>
                         </div>
-                    </div>
-
-                    <div class="mb-6">
-                        <div class="flex items-center">
-                            <input asp-for="IsActive" class="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" type="checkbox">
-                            <label asp-for="IsActive" class="ml-2 text-sm text-gray-700">Active</label>
+                        <div>
+                            <dt class="font-medium text-gray-900">TopicAssignments</dt>
+                            <dd class="text-sm text-gray-500">Complete X assignments in a topic (use context)</dd>
                         </div>
-                    </div>
-
-                    <div class="flex gap-3">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
-                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                            </svg>
-                            Save Changes
-                        </button>
-                        <a asp-action="Badges" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancel</a>
-                    </div>
-                </form>
+                        <div>
+                            <dt class="font-medium text-gray-900">CefrLevel</dt>
+                            <dd class="text-sm text-gray-500">Reach CEFR level (use context for level)</dd>
+                        </div>
+                        <div>
+                            <dt class="font-medium text-gray-900">Custom</dt>
+                            <dd class="text-sm text-gray-500">Manually awarded by admin</dd>
+                        </div>
+                    </dl>
+                </div>
             </div>
         </div>
     </div>

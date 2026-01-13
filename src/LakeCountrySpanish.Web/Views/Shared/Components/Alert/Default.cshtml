@@ -1,0 +1,18 @@
+@model LakeCountrySpanish.Web.ViewComponents.AlertViewModel
+
+<div class="@Model.BackgroundColor border px-4 py-3 rounded-lg relative" role="alert">
+    <div class="flex items-center">
+        <svg class="h-5 w-5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="@Model.IconPath" />
+        </svg>
+        <span class="block sm:inline">@Model.Message</span>
+        @if (Model.Dismissible)
+        {
+            <button type="button" onclick="this.parentElement.parentElement.remove()" class="absolute top-0 bottom-0 right-0 px-4 py-3">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        }
+    </div>
+</div>

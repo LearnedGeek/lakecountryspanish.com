@@ -1,0 +1,12 @@
+@model LakeCountrySpanish.Web.ViewComponents.DataTableViewModel
+
+<div class="overflow-x-auto">
+    <table @(Model.Id != null ? $"id=\"{Model.Id}\"" : "") class="@Model.TableClasses">
+        <thead class="bg-gray-50">
+            @RenderSection("Header", required: false)
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            @RenderBody()
+        </tbody>
+    </table>
+</div>

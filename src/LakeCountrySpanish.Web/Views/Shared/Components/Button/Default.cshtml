@@ -1,0 +1,29 @@
+@model LakeCountrySpanish.Web.ViewComponents.ButtonViewModel
+
+@if (Model.IsLink)
+{
+    <a href="@Model.Href" class="@Model.AllClasses" @(Model.Disabled ? "aria-disabled=true tabindex=-1" : "")>
+        @if (!string.IsNullOrEmpty(Model.IconSvgPath))
+        {
+            <svg class="h-4 w-4 @(string.IsNullOrEmpty(Model.Text) ? "" : "mr-2")" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="@Model.IconSvgPath" />
+            </svg>
+        }
+        @Model.Text
+    </a>
+}
+else
+{
+    <button type="@(Model.Submit ? "submit" : "button")"
+            class="@Model.AllClasses"
+            @(Model.Disabled ? "disabled" : "")
+            @(string.IsNullOrEmpty(Model.OnClick) ? "" : $"onclick={Model.OnClick}")>
+        @if (!string.IsNullOrEmpty(Model.IconSvgPath))
+        {
+            <svg class="h-4 w-4 @(string.IsNullOrEmpty(Model.Text) ? "" : "mr-2")" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="@Model.IconSvgPath" />
+            </svg>
+        }
+        @Model.Text
+    </button>
+}
