@@ -20,3 +20,162 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+/* ==========================================
+   LLAMA MASCOT ANIMATIONS
+   ========================================== */
+
+/* Base llama mascot styles */
+.llama-mascot {
+  overflow: visible;
+}
+
+/* Gentle idle bounce animation */
+.llama-mascot .llama-body {
+  animation: llamaBounce 3s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes llamaBounce {
+  0%, 100% { transform: translate(45px, 55px) scale(0.5) translateY(0); }
+  50% { transform: translate(45px, 55px) scale(0.5) translateY(-2px); }
+}
+
+/* Head tilt animation */
+.llama-mascot .llama-head {
+  animation: llamaHeadTilt 4s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+@keyframes llamaHeadTilt {
+  0%, 100% { transform: translate(45px, 28px) scale(0.5) rotate(0deg); }
+  25% { transform: translate(45px, 28px) scale(0.5) rotate(2deg); }
+  75% { transform: translate(45px, 28px) scale(0.5) rotate(-2deg); }
+}
+
+/* Ear wiggle animation */
+.llama-mascot .llama-ears {
+  animation: llamaEarWiggle 2.5s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes llamaEarWiggle {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.05); }
+}
+
+/* Speech bubble pulse */
+.llama-mascot .llama-speech {
+  animation: speechPulse 2s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+@keyframes speechPulse {
+  0%, 100% { transform: translate(72px, 18px) scale(0.5); }
+  50% { transform: translate(72px, 18px) scale(0.52); }
+}
+
+/* Scarf wave animation */
+.llama-mascot .scarf-tail {
+  animation: scarfWave 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+@keyframes scarfWave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+}
+
+/* Globe spin (subtle) */
+.llama-mascot .book-globe {
+  animation: globeSpin 10s linear infinite;
+  transform-origin: center center;
+}
+
+@keyframes globeSpin {
+  0% { transform: translate(15px, 18px) rotate(0deg); }
+  100% { transform: translate(15px, 18px) rotate(360deg); }
+}
+
+/* Book position animation fix */
+.llama-mascot .llama-book {
+  transform: translate(23px, 58px) scale(0.5);
+}
+
+/* Scarf position fix */
+.llama-mascot .llama-scarf {
+  transform: translate(45px, 40px) scale(0.5);
+}
+
+/* Blink animation - triggered on hover */
+.llama-mascot:hover .llama-eyes {
+  animation: llamaBlink 0.3s ease-in-out;
+}
+
+@keyframes llamaBlink {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+
+/* Interactive states */
+.llama-mascot.llama-wave .llama-body {
+  animation: llamaWave 0.5s ease-in-out;
+}
+
+@keyframes llamaWave {
+  0%, 100% { transform: translate(45px, 55px) scale(0.5) rotate(0deg); }
+  25% { transform: translate(45px, 55px) scale(0.5) rotate(-5deg); }
+  75% { transform: translate(45px, 55px) scale(0.5) rotate(5deg); }
+}
+
+/* Happy jump animation for celebrations */
+.llama-mascot.llama-happy .llama-body {
+  animation: llamaHappyJump 0.6s ease-out;
+}
+
+@keyframes llamaHappyJump {
+  0%, 100% { transform: translate(45px, 55px) scale(0.5) translateY(0); }
+  50% { transform: translate(45px, 55px) scale(0.52) translateY(-8px); }
+}
+
+/* Thinking animation */
+.llama-mascot.llama-thinking .llama-head {
+  animation: llamaThink 1s ease-in-out infinite;
+}
+
+@keyframes llamaThink {
+  0%, 100% { transform: translate(45px, 28px) scale(0.5) rotate(0deg); }
+  50% { transform: translate(45px, 28px) scale(0.5) rotate(10deg) translateY(-2px); }
+}
+
+/* Sad/error animation */
+.llama-mascot.llama-sad .llama-ears {
+  animation: llamaSadEars 2s ease-in-out infinite;
+}
+
+@keyframes llamaSadEars {
+  0%, 100% { transform: scaleY(1) rotate(0deg); }
+  50% { transform: scaleY(0.9) rotate(-10deg); }
+}
+
+/* Static version - no animation */
+.llama-mascot.llama-static .llama-body,
+.llama-mascot.llama-static .llama-head,
+.llama-mascot.llama-static .llama-ears,
+.llama-mascot.llama-static .llama-speech,
+.llama-mascot.llama-static .scarf-tail,
+.llama-mascot.llama-static .book-globe {
+  animation: none;
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .llama-mascot .llama-body,
+  .llama-mascot .llama-head,
+  .llama-mascot .llama-ears,
+  .llama-mascot .llama-speech,
+  .llama-mascot .scarf-tail,
+  .llama-mascot .book-globe {
+    animation: none;
+  }
+}
