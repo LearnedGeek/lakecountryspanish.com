@@ -43,6 +43,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     // Ticket entities
     public DbSet<Ticket> Tickets => Set<Ticket>();
+    public DbSet<TicketRedemption> TicketRedemptions => Set<TicketRedemption>();
 
     // Assignment entities
     public DbSet<CurriculumTopic> CurriculumTopics => Set<CurriculumTopic>();
@@ -465,6 +466,36 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => new { e.StudentId, e.IsUsed, e.ExpiresAt });
             // Index for finding tickets by source
             entity.HasIndex(e => new { e.StudentId, e.Source });
+        });
+
+        // TicketRedemption configuration
+        builder.Entity<TicketRedemption>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DiscountAmount).HasColumnType("decimal(18,2)");
+
+            entity.HasOne(e => e.Ticket)
+                .WithMany()
+                .HasForeignKey(e => e.TicketId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ScheduledClass)
+                .WithMany()
+                .HasForeignKey(e => e.ScheduledClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.Payment)
+                .WithMany()
+                .HasForeignKey(e => e.PaymentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for finding redemptions by student
+            entity.HasIndex(e => new { e.StudentId, e.Type, e.RedeemedAt });
         });
 
         // CurriculumTopic configuration

@@ -106,4 +106,33 @@ public interface ITicketService
     /// Migrate all students' legacy credits to tickets.
     /// </summary>
     Task<int> MigrateAllLegacyCreditsAsync();
+
+    // Ticket Redemption (Free Class Rewards)
+
+    /// <summary>
+    /// Use a ticket to schedule a free extra class.
+    /// Returns the created TicketRedemption or null if no tickets available.
+    /// </summary>
+    Task<TicketRedemption?> UseTicketForFreeClassAsync(string studentId, int scheduledClassId);
+
+    /// <summary>
+    /// Apply tickets as discounts to a payment.
+    /// Returns the redemptions created.
+    /// </summary>
+    Task<IEnumerable<TicketRedemption>> ApplyTicketsAsDiscountAsync(string studentId, int ticketCount, int paymentId, decimal discountPerTicket);
+
+    /// <summary>
+    /// Get redemption history for a student.
+    /// </summary>
+    Task<IEnumerable<TicketRedemption>> GetRedemptionHistoryAsync(string studentId, int? limit = null);
+
+    /// <summary>
+    /// Calculate checkout total with optional ticket discounts.
+    /// Returns (subtotal, ticketDiscount, totalDue).
+    /// </summary>
+    Task<(decimal subtotal, decimal ticketDiscount, decimal totalDue)> CalculateCheckoutWithTicketsAsync(
+        string studentId,
+        int classCount,
+        decimal pricePerClass,
+        int ticketsToApply);
 }

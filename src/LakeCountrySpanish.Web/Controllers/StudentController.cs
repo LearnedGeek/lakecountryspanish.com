@@ -20,6 +20,7 @@ public class StudentController : Controller
     private readonly IPlacementTestService _placementTestService;
     private readonly ITokenService _tokenService;
     private readonly ITicketService _ticketService;
+    private readonly ISubscriptionService _subscriptionService;
 
     public StudentController(
         ApplicationDbContext context,
@@ -29,7 +30,8 @@ public class StudentController : Controller
         IGamificationService gamificationService,
         IPlacementTestService placementTestService,
         ITokenService tokenService,
-        ITicketService ticketService)
+        ITicketService ticketService,
+        ISubscriptionService subscriptionService)
     {
         _context = context;
         _userManager = userManager;
@@ -39,6 +41,7 @@ public class StudentController : Controller
         _placementTestService = placementTestService;
         _tokenService = tokenService;
         _ticketService = ticketService;
+        _subscriptionService = subscriptionService;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -87,11 +90,46 @@ public class StudentController : Controller
         var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
         var totalTokens = await _tokenService.GetTotalTokenBalanceAsync(user.Id);
 
+        // Get gamification progress (streak, badges, etc.)
+        var gamificationProgress = await _gamificationService.GetProgressAsync(user.Id);
+        var streak = await _gamificationService.GetStreakAsync(user.Id);
+        var unviewedBadges = await _gamificationService.GetUnviewedBadgesAsync(user.Id);
+        var recentBadges = gamificationProgress.RecentBadges.Take(5);
+
+        // Get activity stats
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var startOfWeek = now.AddDays(-(int)now.DayOfWeek);
+        var classesThisMonth = await _context.ScheduledClasses
+            .CountAsync(c => c.StudentId == user.Id && c.Status == ClassStatus.Completed && c.ClassDateTime >= startOfMonth);
+        var totalClassesCompleted = await _context.ScheduledClasses
+            .CountAsync(c => c.StudentId == user.Id && c.Status == ClassStatus.Completed);
+        var assignmentsThisWeek = await _context.StudentAssignments
+            .CountAsync(a => a.StudentId == user.Id && a.Status == StudentAssignmentStatus.Completed && a.CompletedAt >= startOfWeek);
+
+        // Get in-progress assignments
+        var inProgressAssignments = await _context.StudentAssignments
+            .Include(a => a.Assignment)
+            .Where(a => a.StudentId == user.Id && a.Status == StudentAssignmentStatus.InProgress)
+            .OrderBy(a => a.DueDate)
+            .Take(3)
+            .Select(a => new InProgressAssignmentViewModel
+            {
+                StudentAssignmentId = a.Id,
+                Title = a.Assignment.Title,
+                CefrLevel = a.Assignment.CefrLevel,
+                TotalPoints = a.Assignment.TotalPoints,
+                DueDate = a.DueDate
+            })
+            .ToListAsync();
+
+        var upcomingClasses = classes.Where(c => c.ClassDateTime >= now && c.Status == ClassStatus.Scheduled).ToList();
+        var nextClass = upcomingClasses.OrderBy(c => c.ClassDateTime).FirstOrDefault();
+
         var viewModel = new StudentDashboardViewModel
         {
             StudentName = user.FirstName,
             DefaultClassroomUrl = user.ClassroomUrl,
-            UpcomingClasses = classes.Where(c => c.ClassDateTime >= now && c.Status == ClassStatus.Scheduled),
+            UpcomingClasses = upcomingClasses,
             PastClasses = classes.Where(c => c.ClassDateTime < now || c.Status != ClassStatus.Scheduled).Take(10),
             Balance = await _paymentService.GetStudentBalanceAsync(user.Id),
 #pragma warning disable CS0618 // Legacy field
@@ -99,11 +137,50 @@ public class StudentController : Controller
 #pragma warning restore CS0618
             AvailableTickets = availableTickets,
             TotalTokens = totalTokens,
+            TotalPoints = user.TotalPoints,
             PointsToNextToken = 100 - (user.TotalPoints % 100),
             Documents = documents,
             ClassesNeedingFeedback = classesNeedingFeedback,
             CefrLevel = user.CefrLevel,
-            HasTakenPlacementTest = hasTakenPlacementTest
+            HasTakenPlacementTest = hasTakenPlacementTest,
+
+            // Gamification data
+            CurrentStreak = streak.CurrentStreak,
+            LongestStreak = streak.LongestStreak,
+            ActivityToday = gamificationProgress.WasActiveToday,
+            LastActivityDate = streak.LastActivityDate,
+            TotalBadgesEarned = gamificationProgress.TotalBadgesEarned,
+            RecentBadges = recentBadges.Select(sb => new StudentBadgeViewModel
+            {
+                BadgeId = sb.BadgeId,
+                Name = sb.Badge.Name,
+                Description = sb.Badge.Description,
+                Emoji = sb.Badge.Emoji,
+                IconUrl = sb.Badge.IconUrl,
+                Category = sb.Badge.Category,
+                EarnedAt = sb.EarnedAt,
+                IsNew = !sb.IsViewed
+            }).ToList(),
+            NewBadges = unviewedBadges.Select(sb => new StudentBadgeViewModel
+            {
+                BadgeId = sb.BadgeId,
+                Name = sb.Badge.Name,
+                Description = sb.Badge.Description,
+                Emoji = sb.Badge.Emoji,
+                IconUrl = sb.Badge.IconUrl,
+                Category = sb.Badge.Category,
+                EarnedAt = sb.EarnedAt,
+                IsNew = true
+            }).ToList(),
+
+            // Activity stats
+            ClassesThisMonth = classesThisMonth,
+            TotalClassesCompleted = totalClassesCompleted,
+            AssignmentsCompletedThisWeek = assignmentsThisWeek,
+
+            // Next class and in-progress
+            NextClass = nextClass,
+            InProgressAssignments = inProgressAssignments
         };
 
         return View(viewModel);
@@ -116,9 +193,9 @@ public class StudentController : Controller
         return RedirectToAction(nameof(TokenStore));
     }
 
-    // Scheduling - requires tickets (Weekly Calendar View)
+    // New unified scheduling page (replaces BookClass)
     [HttpGet]
-    public async Task<IActionResult> BookClass(DateTime? weekStart)
+    public async Task<IActionResult> MyClasses(DateTime? weekStart)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -126,15 +203,8 @@ public class StudentController : Controller
             return NotFound();
         }
 
-        // Use new ticket system
+        // Get available free class rewards (tickets)
         var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
-
-        // Redirect to token store if no tickets available
-        if (availableTickets == 0)
-        {
-            TempData["InfoMessage"] = "You need class tickets to schedule a lesson. Earn tokens and exchange them for tickets in the Token Store!";
-            return RedirectToAction(nameof(TokenStore));
-        }
 
         // Default to current week (Sunday start)
         var today = DateTime.Today;
@@ -142,15 +212,48 @@ public class StudentController : Controller
 
         var weeklyCalendar = await _scheduleService.GetWeeklyCalendarAsync(defaultWeekStart, user.Id);
 
-        var viewModel = new WeeklyBookingViewModel
+        // Get upcoming classes (filter student classes for future dates)
+        var allStudentClasses = await _scheduleService.GetStudentClassesAsync(user.Id);
+        var upcomingClasses = allStudentClasses
+            .Where(c => c.ClassDateTime >= DateTime.Now && c.Status != ClassStatus.Cancelled)
+            .OrderBy(c => c.ClassDateTime)
+            .Take(20)
+            .ToList();
+
+        // Get class price for the student
+        var classPrice = await _paymentService.GetClassPriceForStudentAsync(user.Id);
+
+        // Check if user has an active subscription
+        var activeSubscription = await _subscriptionService.GetActiveSubscriptionAsync(user.Id);
+
+        var viewModel = new MyClassesViewModel
         {
+            HasActiveSubscription = activeSubscription != null,
+            CurrentSubscription = activeSubscription,
+            AvailableTickets = availableTickets,
             WeeklyCalendar = weeklyCalendar,
-            AvailableCredits = availableTickets,
-            MaxRecurringWeeks = availableTickets,
-            ClassPrice = await _paymentService.GetClassPriceForStudentAsync(user.Id)
+            UpcomingClasses = upcomingClasses,
+            PendingCheckoutClasses = new List<ScheduledClass>(), // TODO: Implement pending checkout
+            SubscriptionClassesRemaining = activeSubscription?.ClassesRemainingThisMonth ?? 0,
+            CheckoutSummary = new SchedulingCheckoutSummary
+            {
+                ClassCount = 0,
+                PerClassPrice = classPrice,
+                Subtotal = 0,
+                TicketsApplied = 0,
+                TicketDiscount = 0,
+                TotalDue = 0
+            }
         };
 
         return View(viewModel);
+    }
+
+    // Legacy BookClass - redirects to MyClasses
+    [HttpGet]
+    public IActionResult BookClass(DateTime? weekStart)
+    {
+        return RedirectToAction(nameof(MyClasses), new { weekStart });
     }
 
     [HttpGet]

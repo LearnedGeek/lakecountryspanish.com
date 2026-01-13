@@ -506,4 +506,158 @@ public class TicketService : ITicketService
     }
 
     #endregion
+
+    #region Ticket Redemption (Free Class Rewards)
+
+    public async Task<TicketRedemption?> UseTicketForFreeClassAsync(string studentId, int scheduledClassId)
+    {
+        var tickets = await GetAvailableTicketsAsync(studentId);
+        var ticket = tickets.FirstOrDefault();
+
+        if (ticket == null)
+        {
+            _logger.LogWarning("No tickets available for free class redemption for student {StudentId}", studentId);
+            return null;
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Mark ticket as used
+            ticket.IsUsed = true;
+            ticket.UsedForClassId = scheduledClassId;
+            ticket.UsedAt = DateTime.UtcNow;
+
+            // Update the scheduled class to mark as paid with ticket
+            var scheduledClass = await _context.ScheduledClasses.FindAsync(scheduledClassId);
+            if (scheduledClass != null)
+            {
+                scheduledClass.PaymentStatus = PaymentStatus.PaidWithTicket;
+                scheduledClass.TicketId = ticket.Id;
+            }
+
+            // Create redemption record
+            var redemption = new TicketRedemption
+            {
+                TicketId = ticket.Id,
+                StudentId = studentId,
+                Type = TicketRedemptionType.FreeExtraClass,
+                ScheduledClassId = scheduledClassId,
+                DiscountAmount = 0, // Free class, not a discount
+                RedeemedAt = DateTime.UtcNow,
+                Notes = "Used ticket for free extra class"
+            };
+            _context.TicketRedemptions.Add(redemption);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Student {StudentId} used ticket {TicketId} for free class {ClassId}",
+                studentId, ticket.Id, scheduledClassId);
+
+            return redemption;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error using ticket for free class for student {StudentId}", studentId);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<TicketRedemption>> ApplyTicketsAsDiscountAsync(
+        string studentId,
+        int ticketCount,
+        int paymentId,
+        decimal discountPerTicket)
+    {
+        var tickets = (await GetAvailableTicketsAsync(studentId)).Take(ticketCount).ToList();
+
+        if (tickets.Count < ticketCount)
+        {
+            _logger.LogWarning("Not enough tickets for discount. Requested {Requested}, available {Available}",
+                ticketCount, tickets.Count);
+            throw new InvalidOperationException($"Not enough tickets. Requested {ticketCount}, but only {tickets.Count} available.");
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            var redemptions = new List<TicketRedemption>();
+
+            foreach (var ticket in tickets)
+            {
+                // Mark ticket as used
+                ticket.IsUsed = true;
+                ticket.UsedAt = DateTime.UtcNow;
+
+                // Create redemption record
+                var redemption = new TicketRedemption
+                {
+                    TicketId = ticket.Id,
+                    StudentId = studentId,
+                    Type = TicketRedemptionType.InvoiceDiscount,
+                    PaymentId = paymentId,
+                    DiscountAmount = discountPerTicket,
+                    RedeemedAt = DateTime.UtcNow,
+                    Notes = $"Applied as ${discountPerTicket:F2} discount on payment"
+                };
+                _context.TicketRedemptions.Add(redemption);
+                redemptions.Add(redemption);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Student {StudentId} applied {Count} tickets as ${Discount:F2} discount on payment {PaymentId}",
+                studentId, ticketCount, discountPerTicket * ticketCount, paymentId);
+
+            return redemptions;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error applying tickets as discount for student {StudentId}", studentId);
+            throw;
+        }
+    }
+
+    public async Task<IEnumerable<TicketRedemption>> GetRedemptionHistoryAsync(string studentId, int? limit = null)
+    {
+        var query = _context.TicketRedemptions
+            .Include(r => r.Ticket)
+            .Include(r => r.ScheduledClass)
+            .Include(r => r.Payment)
+            .Where(r => r.StudentId == studentId)
+            .OrderByDescending(r => r.RedeemedAt)
+            .AsQueryable();
+
+        if (limit.HasValue)
+            query = query.Take(limit.Value);
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<(decimal subtotal, decimal ticketDiscount, decimal totalDue)> CalculateCheckoutWithTicketsAsync(
+        string studentId,
+        int classCount,
+        decimal pricePerClass,
+        int ticketsToApply)
+    {
+        // Validate tickets available
+        var availableTickets = await GetAvailableTicketCountAsync(studentId);
+        var actualTicketsToApply = Math.Min(ticketsToApply, Math.Min(availableTickets, classCount));
+
+        // Calculate totals
+        var subtotal = classCount * pricePerClass;
+        var ticketDiscount = actualTicketsToApply * pricePerClass; // Each ticket discounts one class
+        var totalDue = subtotal - ticketDiscount;
+
+        // Ensure we don't go negative
+        if (totalDue < 0) totalDue = 0;
+
+        return (subtotal, ticketDiscount, totalDue);
+    }
+
+    #endregion
 }

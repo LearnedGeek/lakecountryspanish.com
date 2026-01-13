@@ -1,78 +1,454 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.StudentDashboardViewModel
 @{
     ViewData["Title"] = "My Dashboard";
+    var nextClassCountdown = Model.NextClass != null ? (Model.NextClass.ClassDateTime - DateTime.Now) : TimeSpan.Zero;
 }
 
-<div class="bg-gray-50 min-h-screen">
-    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Welcome back, @Model.StudentName!</h1>
-            <p class="mt-2 text-gray-600">Manage your Spanish lessons and track your progress.</p>
-        </div>
+<div class="bg-gradient-to-b from-indigo-50 via-white to-white min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-8">
-            @await Component.InvokeAsync("StatCard", new {
-                value = Model.UpcomingClasses.Count().ToString(),
-                label = "Upcoming Classes",
-                color = "primary",
-                icon = "calendar"
-            })
-            @await Component.InvokeAsync("StatCard", new {
-                value = Model.AvailableTickets.ToString(),
-                label = "Class Tickets",
-                color = "success",
-                icon = "ticket"
-            })
-            @await Component.InvokeAsync("StatCard", new {
-                value = "$" + Model.Balance.ToString("0.00"),
-                label = "Balance Due",
-                color = "warning",
-                icon = "currency"
-            })
-            @await Component.InvokeAsync("StatCard", new {
-                value = Model.Documents.Count().ToString(),
-                label = "Documents",
-                color = "purple",
-                icon = "document"
-            })
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 p-3 bg-indigo-100 rounded-lg">
-                        <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Spanish Level</p>
-                        @if (!string.IsNullOrEmpty(Model.CefrLevel))
+        <!-- Hero Section with Mascot and Greeting -->
+        <div class="relative bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl shadow-xl mb-8 overflow-hidden">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-10">
+                <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                    <pattern id="hero-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <circle cx="20" cy="20" r="2" fill="white"/>
+                    </pattern>
+                    <rect fill="url(#hero-pattern)" width="100%" height="100%"/>
+                </svg>
+            </div>
+
+            <div class="relative flex items-center justify-between p-6 lg:p-8">
+                <!-- Greeting and Quick Stats -->
+                <div class="flex-1">
+                    <h1 class="text-2xl lg:text-3xl font-bold text-white mb-2">@Model.GetGreeting()</h1>
+                    <p class="text-indigo-100 text-lg mb-4">Keep learning and earning!</p>
+
+                    <!-- Quick Action Buttons -->
+                    <div class="flex flex-wrap gap-3 mt-4">
+                        <a asp-action="MyClasses" class="inline-flex items-center px-4 py-2 bg-white text-indigo-600 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            Schedule Classes
+                        </a>
+                        @if (Model.InProgressAssignments.Any())
                         {
-                            <p class="text-2xl font-semibold text-indigo-600">@Model.CefrLevel</p>
+                            <a asp-controller="Assignment" asp-action="Take" asp-route-id="@Model.InProgressAssignments.First().StudentAssignmentId"
+                               class="inline-flex items-center px-4 py-2 bg-yellow-400 text-yellow-900 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Continue Learning
+                            </a>
                         }
-                        else
+                    </div>
+                </div>
+
+                <!-- Mascot (Llama) -->
+                <div class="hidden md:flex items-center justify-center ml-6">
+                    <div class="relative" id="mascot-container">
+                        @{
+                            var mascotSize = "w-32 h-32 lg:w-40 lg:h-40";
+                        }
+                        <div class="@mascotSize relative animate-bounce-slow" style="animation: gentle-bounce 3s ease-in-out infinite;">
+                            @switch (Model.MascotMood)
+                            {
+                                case "celebrating":
+                                    <!-- Celebrating Llama with confetti -->
+                                    <div class="text-8xl lg:text-9xl filter drop-shadow-lg">🦙</div>
+                                    <div class="absolute -top-2 -right-2 text-3xl animate-spin-slow">🎉</div>
+                                    <div class="absolute -top-4 left-0 text-2xl animate-bounce">⭐</div>
+                                    break;
+                                case "excited":
+                                    <!-- Excited Llama -->
+                                    <div class="text-8xl lg:text-9xl filter drop-shadow-lg transform hover:scale-110 transition">🦙</div>
+                                    <div class="absolute -top-2 right-0 text-3xl animate-pulse">🔥</div>
+                                    break;
+                                case "happy":
+                                    <!-- Happy Llama -->
+                                    <div class="text-8xl lg:text-9xl filter drop-shadow-lg">🦙</div>
+                                    <div class="absolute -top-1 right-2 text-2xl">✨</div>
+                                    break;
+                                case "missing-you":
+                                    <!-- Sad/Missing Llama -->
+                                    <div class="text-8xl lg:text-9xl filter drop-shadow-lg opacity-90">🦙</div>
+                                    <div class="absolute top-8 right-0 text-xl">💭</div>
+                                    break;
+                                case "ready":
+                                    <!-- Ready for class Llama -->
+                                    <div class="text-8xl lg:text-9xl filter drop-shadow-lg animate-pulse">🦙</div>
+                                    <div class="absolute -top-2 right-0 text-2xl">📚</div>
+                                    break;
+                                default:
+                                    <!-- Friendly Llama -->
+                                    <div class="text-8xl lg:text-9xl filter drop-shadow-lg">🦙</div>
+                                    <div class="absolute top-0 right-0 text-xl">👋</div>
+                                    break;
+                            }
+                        </div>
+                        <!-- Speech bubble for special messages -->
+                        @if (Model.NewBadges.Any())
                         {
-                            <p class="text-sm font-medium text-gray-400">Not assessed</p>
+                            <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white rounded-lg px-3 py-1 shadow-lg text-sm font-medium text-indigo-600 whitespace-nowrap animate-bounce">
+                                New badge! 🏆
+                            </div>
                         }
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Learning & Rewards Quick Access -->
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-4 mb-8">
-            <a asp-controller="Student" asp-action="Progress" class="flex items-center bg-white rounded-lg shadow p-4 hover:shadow-md transition group">
+        <!-- New Badge Celebration Modal -->
+        @if (Model.NewBadges.Any())
+        {
+            <div id="badgeCelebration" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md mx-4 text-center transform animate-pop-in">
+                    <div class="text-6xl mb-4 animate-bounce">🏆</div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Congratulations!</h2>
+                    <p class="text-gray-600 mb-4">You earned a new badge!</p>
+
+                    @foreach (var badge in Model.NewBadges.Take(1))
+                    {
+                        <div class="bg-gradient-to-r from-yellow-100 to-yellow-50 rounded-xl p-4 mb-4">
+                            <div class="text-5xl mb-2">@(badge.Emoji ?? "🌟")</div>
+                            <h3 class="text-xl font-bold text-gray-900">@badge.Name</h3>
+                            <p class="text-gray-600 text-sm">@badge.Description</p>
+                        </div>
+                    }
+
+                    <button onclick="dismissBadgeCelebration()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg transition transform hover:scale-105">
+                        Awesome!
+                    </button>
+                </div>
+            </div>
+        }
+
+        <!-- Gamification Stats Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <!-- Streak Card -->
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 @(Model.CurrentStreak >= 7 ? "border-orange-500" : Model.CurrentStreak > 0 ? "border-yellow-500" : "border-gray-300") transform hover:scale-105 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Streak</p>
+                        <p class="text-3xl font-bold @(Model.CurrentStreak >= 7 ? "text-orange-500" : Model.CurrentStreak > 0 ? "text-yellow-500" : "text-gray-400")">
+                            @Model.CurrentStreak
+                        </p>
+                        <p class="text-xs text-gray-400">days</p>
+                    </div>
+                    <div class="text-3xl">
+                        @if (Model.CurrentStreak >= 7)
+                        {
+                            <span class="animate-pulse">🔥</span>
+                        }
+                        else if (Model.CurrentStreak > 0)
+                        {
+                            <span>⚡</span>
+                        }
+                        else
+                        {
+                            <span class="opacity-50">💤</span>
+                        }
+                    </div>
+                </div>
+                @if (Model.CurrentStreak > 0 && !Model.ActivityToday)
+                {
+                    <p class="text-xs text-orange-600 mt-2 animate-pulse">Keep it going today!</p>
+                }
+            </div>
+
+            <!-- Tokens Card -->
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-yellow-400 transform hover:scale-105 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Tokens</p>
+                        <p class="text-3xl font-bold text-yellow-600">@Model.TotalTokens</p>
+                        <p class="text-xs text-gray-400">earned</p>
+                    </div>
+                    <div class="text-3xl">🪙</div>
+                </div>
+                <a asp-action="TokenStore" class="text-xs text-indigo-600 hover:underline mt-2 inline-block">Visit Store →</a>
+            </div>
+
+            <!-- Tickets Card (Free Class Rewards) -->
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 @(Model.AvailableTickets > 0 ? "border-green-500" : "border-gray-300") transform hover:scale-105 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Free Classes</p>
+                        <p class="text-3xl font-bold @(Model.AvailableTickets > 0 ? "text-green-600" : "text-gray-400")">@Model.AvailableTickets</p>
+                        <p class="text-xs text-gray-400">rewards</p>
+                    </div>
+                    <div class="text-3xl">🎁</div>
+                </div>
+                @if (Model.AvailableTickets > 0)
+                {
+                    <p class="text-xs text-green-600 font-medium mt-2">You have @Model.AvailableTickets free class@(Model.AvailableTickets > 1 ? "es" : "")!</p>
+                }
+                else
+                {
+                    <p class="text-xs text-gray-400 mt-2">Earn tokens to unlock</p>
+                }
+            </div>
+
+            <!-- Badges Card -->
+            <div class="bg-white rounded-xl shadow-md p-4 border-l-4 border-purple-500 transform hover:scale-105 transition">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wide">Badges</p>
+                        <p class="text-3xl font-bold text-purple-600">@Model.TotalBadgesEarned</p>
+                        <p class="text-xs text-gray-400">earned</p>
+                    </div>
+                    <div class="text-3xl">🏆</div>
+                </div>
+                <a asp-action="Progress" class="text-xs text-indigo-600 hover:underline mt-2 inline-block">View all →</a>
+            </div>
+        </div>
+
+        <!-- Points Progress Bar -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-2">📊</span>
+                    <div>
+                        <p class="font-semibold text-gray-900">Points to Next Token</p>
+                        <p class="text-sm text-gray-500">@Model.PointProgressPercent / 100 points</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-gray-500">@Model.PointsToNextToken more to go!</p>
+                </div>
+            </div>
+            <div class="relative w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-1000 ease-out"
+                     style="width: @Model.PointProgressPercent%"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></div>
+            </div>
+            <div class="flex justify-between mt-1 text-xs text-gray-400">
+                <span>0</span>
+                <span>25</span>
+                <span>50</span>
+                <span>75</span>
+                <span>100 🪙</span>
+            </div>
+        </div>
+
+        <!-- Badge Showcase -->
+        @if (Model.RecentBadges.Any())
+        {
+            <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-2">🏅</span>
+                        <h2 class="font-semibold text-gray-900">Recent Badges</h2>
+                    </div>
+                    <a asp-action="Progress" class="text-sm text-indigo-600 hover:underline">View all badges →</a>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    @foreach (var badge in Model.RecentBadges)
+                    {
+                        <div class="flex items-center bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg px-3 py-2 @(badge.IsNew ? "ring-2 ring-yellow-400 animate-pulse" : "")">
+                            <span class="text-2xl mr-2">@(badge.Emoji ?? "🌟")</span>
+                            <div>
+                                <p class="font-medium text-gray-900 text-sm">@badge.Name</p>
+                                <p class="text-xs text-gray-500">@badge.EarnedAt.ToString("MMM d")</p>
+                            </div>
+                            @if (badge.IsNew)
+                            {
+                                <span class="ml-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded">NEW</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Next Class Countdown -->
+        @if (Model.NextClass != null)
+        {
+            var isWithin24Hours = nextClassCountdown.TotalHours < 24;
+            var isWithin1Hour = nextClassCountdown.TotalHours < 1;
+            var classroomUrl = Model.NextClass.ClassroomUrlOverride ?? Model.DefaultClassroomUrl;
+
+            <div class="bg-gradient-to-r @(isWithin1Hour ? "from-green-500 to-emerald-600" : isWithin24Hours ? "from-blue-500 to-indigo-600" : "from-gray-700 to-gray-800") rounded-xl shadow-lg p-6 mb-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm opacity-80 uppercase tracking-wide">Next Class</p>
+                        <p class="text-xl font-bold">@Model.NextClass.ClassDateTime.ToString("dddd, MMMM d")</p>
+                        <p class="text-lg">@Model.NextClass.ClassDateTime.ToString("h:mm tt")</p>
+                    </div>
+                    <div class="text-center">
+                        @if (isWithin1Hour)
+                        {
+                            <p class="text-4xl font-bold animate-pulse">Starting Soon!</p>
+                            @if (!string.IsNullOrEmpty(classroomUrl))
+                            {
+                                <a href="@classroomUrl" target="_blank" class="inline-flex items-center mt-2 bg-white text-green-600 font-semibold px-4 py-2 rounded-lg hover:bg-green-50 transition">
+                                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                    </svg>
+                                    Join Now
+                                </a>
+                            }
+                        }
+                        else if (nextClassCountdown.TotalHours < 24)
+                        {
+                            <div id="countdown" class="font-mono">
+                                <span class="text-4xl font-bold" id="countdown-hours">@((int)nextClassCountdown.TotalHours)</span>
+                                <span class="text-lg">h</span>
+                                <span class="text-4xl font-bold" id="countdown-minutes">@nextClassCountdown.Minutes</span>
+                                <span class="text-lg">m</span>
+                            </div>
+                            <p class="text-sm opacity-80 mt-1">until class</p>
+                        }
+                        else
+                        {
+                            <div class="text-4xl font-bold">@((int)nextClassCountdown.TotalDays) days</div>
+                            <p class="text-sm opacity-80">until next class</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Continue Learning / In-Progress Assignments -->
+        @if (Model.InProgressAssignments.Any())
+        {
+            <div class="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                <div class="flex items-center mb-3">
+                    <span class="text-2xl mr-2">📝</span>
+                    <h2 class="font-semibold text-gray-900">Continue Where You Left Off</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    @foreach (var assignment in Model.InProgressAssignments)
+                    {
+                        <a asp-controller="Assignment" asp-action="Take" asp-route-id="@assignment.StudentAssignmentId"
+                           class="flex items-center bg-white rounded-lg p-3 shadow hover:shadow-md transition group @(assignment.IsOverdue ? "ring-2 ring-red-300" : "")">
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-900 group-hover:text-indigo-600 transition">@assignment.Title</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-xs bg-gray-100 px-2 py-0.5 rounded">@assignment.CefrLevel</span>
+                                    <span class="text-xs text-gray-500">@assignment.TotalPoints pts</span>
+                                    @if (assignment.IsOverdue)
+                                    {
+                                        <span class="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded">Overdue</span>
+                                    }
+                                </div>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- CEFR Level & Placement Test -->
+        @if (string.IsNullOrEmpty(Model.CefrLevel))
+        {
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="text-4xl mr-4">🎓</div>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Discover Your Spanish Level!</h3>
+                            <p class="text-gray-600">Take a 10-15 minute placement test to personalize your learning journey.</p>
+                        </div>
+                    </div>
+                    <a asp-controller="PlacementTest" asp-action="Index" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-lg transition transform hover:scale-105 whitespace-nowrap">
+                        Take Test
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- CEFR Progress Journey -->
+            <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-2">🗺️</span>
+                        <h2 class="font-semibold text-gray-900">Your Learning Journey</h2>
+                    </div>
+                    <span class="bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-lg">Level @Model.CefrLevel</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    @{
+                        var levels = new[] { "A1", "A2", "B1", "B2", "C1", "C2" };
+                        var currentIndex = Array.IndexOf(levels, Model.CefrLevel);
+                    }
+                    @foreach (var level in levels)
+                    {
+                        var levelIndex = Array.IndexOf(levels, level);
+                        var isCompleted = levelIndex < currentIndex;
+                        var isCurrent = level == Model.CefrLevel;
+                        <div class="flex-1 flex flex-col items-center relative">
+                            @if (levelIndex > 0)
+                            {
+                                <div class="absolute left-0 top-4 w-1/2 h-1 @(isCompleted || isCurrent ? "bg-indigo-500" : "bg-gray-200")"></div>
+                            }
+                            @if (levelIndex < levels.Length - 1)
+                            {
+                                <div class="absolute right-0 top-4 w-1/2 h-1 @(isCompleted ? "bg-indigo-500" : "bg-gray-200")"></div>
+                            }
+                            <div class="relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                                @(isCompleted ? "bg-indigo-500 text-white" : isCurrent ? "bg-indigo-600 text-white ring-4 ring-indigo-200" : "bg-gray-200 text-gray-500")">
+                                @if (isCompleted)
+                                {
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                }
+                                else
+                                {
+                                    @level[1]
+                                }
+                            </div>
+                            <span class="mt-1 text-xs @(isCurrent ? "font-bold text-indigo-600" : "text-gray-500")">@level</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Activity Stats -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex items-center mb-3">
+                <span class="text-2xl mr-2">📈</span>
+                <h2 class="font-semibold text-gray-900">Your Activity</h2>
+            </div>
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-2xl font-bold text-indigo-600">@Model.ClassesThisMonth</p>
+                    <p class="text-xs text-gray-500">Classes this month</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-2xl font-bold text-green-600">@Model.AssignmentsCompletedThisWeek</p>
+                    <p class="text-xs text-gray-500">Assignments this week</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <p class="text-2xl font-bold text-purple-600">@Model.TotalClassesCompleted</p>
+                    <p class="text-xs text-gray-500">Total classes completed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Navigation -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <a asp-controller="Student" asp-action="MyClasses" class="flex items-center bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition group ring-2 ring-indigo-200">
                 <div class="flex-shrink-0 p-3 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition">
                     <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="font-medium text-gray-900">My Progress</p>
-                    <p class="text-sm text-gray-500">Points, Badges & Streaks</p>
+                    <p class="font-medium text-gray-900">My Classes</p>
+                    <p class="text-sm text-gray-500">Schedule & Manage</p>
                 </div>
             </a>
-            <a asp-controller="Assignment" asp-action="Index" class="flex items-center bg-white rounded-lg shadow p-4 hover:shadow-md transition group">
+            <a asp-controller="Assignment" asp-action="Index" class="flex items-center bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition group">
                 <div class="flex-shrink-0 p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition">
                     <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
@@ -83,352 +459,176 @@
                     <p class="text-sm text-gray-500">Practice & Homework</p>
                 </div>
             </a>
-            <a asp-controller="Student" asp-action="TokenStore" class="flex items-center bg-white rounded-lg shadow p-4 hover:shadow-md transition group">
+            <a asp-controller="Student" asp-action="Progress" class="flex items-center bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition group">
+                <div class="flex-shrink-0 p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition">
+                    <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="font-medium text-gray-900">My Progress</p>
+                    <p class="text-sm text-gray-500">Points & Badges</p>
+                </div>
+            </a>
+            <a asp-controller="Student" asp-action="TokenStore" class="flex items-center bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition group">
                 <div class="flex-shrink-0 p-3 bg-yellow-100 rounded-lg group-hover:bg-yellow-200 transition">
                     <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="font-medium text-gray-900">Token Store</p>
-                    <p class="text-sm text-gray-500">Spend Tokens for Tickets</p>
-                </div>
-            </a>
-            <a asp-controller="Subscription" asp-action="Plans" class="flex items-center bg-white rounded-lg shadow p-4 hover:shadow-md transition group">
-                <div class="flex-shrink-0 p-3 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition">
-                    <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <p class="font-medium text-gray-900">Subscription Plans</p>
-                    <p class="text-sm text-gray-500">Upgrade & Benefits</p>
+                    <p class="font-medium text-gray-900">Rewards</p>
+                    <p class="text-sm text-gray-500">Earn Free Classes</p>
                 </div>
             </a>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-4 mb-8">
-            @if (Model.AvailableTickets > 0)
-            {
-                <a asp-action="BookClass" class="flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-lg p-4 transition">
-                    <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                    </svg>
-                    Schedule a Class
-                </a>
-            }
-            <a asp-action="TokenStore" class="flex items-center justify-center @(Model.AvailableTickets == 0 ? "bg-primary-600 hover:bg-primary-700 text-white" : "bg-white hover:bg-gray-50 text-gray-700 border border-gray-300") rounded-lg p-4 transition">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Token Store
-            </a>
-            <a asp-action="Payments" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                </svg>
-                Payment History
-            </a>
-            <a asp-action="Documents" class="flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 rounded-lg p-4 transition">
-                <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
-                My Documents
-            </a>
-        </div>
-
-        <!-- Placement Test Invitation -->
-        @if (string.IsNullOrEmpty(Model.CefrLevel))
-        {
-            <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-6 mb-8">
-                <div class="flex items-start justify-between">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342" />
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-indigo-800">Discover Your Spanish Level</h3>
-                            <p class="mt-1 text-sm text-indigo-700">
-                                Take our 10-15 minute placement test to determine your CEFR proficiency level. This helps us personalize your learning experience!
-                            </p>
-                        </div>
-                    </div>
-                    <div class="ml-4 flex-shrink-0">
-                        @await Component.InvokeAsync("Button", new {
-                            text = "Take Placement Test",
-                            href = Url.Action("Index", "PlacementTest"),
-                            type = "primary",
-                            icon = "academic"
-                        })
-                    </div>
-                </div>
-            </div>
-        }
-
-        <!-- Prompt when no tickets available -->
-        @if (Model.AvailableTickets == 0)
-        {
-            @await Component.InvokeAsync("Alert", new {
-                type = "info",
-                message = "No class tickets available. Earn tokens by completing activities, then visit the Token Store to get tickets!"
-            })
-        }
-
-        <!-- Leave Feedback Section -->
-        @if (Model.ClassesNeedingFeedback.Any())
-        {
-            <div class="bg-white rounded-lg shadow mb-8">
-                <div class="p-6 border-b border-gray-200">
-                    <div class="flex items-center">
-                        <svg class="h-6 w-6 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                        </svg>
-                        <h2 class="text-lg font-semibold text-gray-900">Leave Feedback</h2>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">Share your experience from recent classes</p>
-                </div>
-                <div class="p-6">
-                    <div class="space-y-3">
-                        @foreach (var cls in Model.ClassesNeedingFeedback)
-                        {
-                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                                <div>
-                                    <p class="font-medium text-gray-900">@cls.ClassDateTime.ToString("dddd, MMMM d")</p>
-                                    <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
-                                    @if (!string.IsNullOrEmpty(cls.TeacherNotes))
-                                    {
-                                        <p class="text-xs text-gray-400 mt-1 truncate max-w-xs">Notes: @cls.TeacherNotes</p>
-                                    }
-                                </div>
-                                @await Component.InvokeAsync("Button", new {
-                                    text = "Leave Feedback",
-                                    type = "primary",
-                                    icon = "star",
-                                    size = "sm",
-                                    onclick = "showFeedbackModal(" + cls.ClassId + ", '" + cls.ClassDateTime.ToString("MMMM d, yyyy") + "')"
-                                })
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-
-        <!-- Show Appreciation Card -->
-        <div class="bg-gradient-to-r from-pink-50 to-purple-50 rounded-lg shadow p-6 mb-8">
-            <div class="flex items-start justify-between">
-                <div>
-                    <div class="flex items-center">
-                        <svg class="h-6 w-6 text-pink-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                        </svg>
-                        <h3 class="text-lg font-semibold text-gray-900">Show Appreciation</h3>
-                    </div>
-                    <p class="text-sm text-gray-600 mt-1">Want to thank Karen for a great lesson?</p>
-                </div>
-                <button type="button" onclick="showTipModal()"
-                        class="inline-flex items-center bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition">
-                    <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                    </svg>
-                    Send a Tip
-                </button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Upcoming Classes -->
-            <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Upcoming Classes</h2>
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <span class="text-xl mr-2">📅</span>
+                        <h2 class="font-semibold text-gray-900">Upcoming Classes</h2>
+                    </div>
+                    <a asp-action="MyClasses" class="text-sm text-indigo-600 hover:underline">+ Schedule more</a>
                 </div>
-                <div class="p-6">
+                <div class="p-4">
                     @if (Model.UpcomingClasses.Any())
                     {
-                        <div class="space-y-4">
+                        <div class="space-y-3">
                             @foreach (var cls in Model.UpcomingClasses.Take(5))
                             {
                                 var hoursUntil = (cls.ClassDateTime - DateTime.Now).TotalHours;
                                 var isWithin24Hours = hoursUntil < 24 && hoursUntil > 1;
                                 var isWithin1Hour = hoursUntil <= 1;
                                 var classroomUrl = cls.ClassroomUrlOverride ?? Model.DefaultClassroomUrl;
-                                var paymentBadgeColor = cls.PaymentStatus == LakeCountrySpanish.Web.Models.Entities.PaymentStatus.Paid || cls.PaymentStatus == LakeCountrySpanish.Web.Models.Entities.PaymentStatus.PartOfPackage ? "green" : "yellow";
-                                <div class="p-4 bg-gray-50 rounded-lg">
+                                <div class="p-3 bg-gray-50 rounded-lg @(isWithin1Hour ? "ring-2 ring-green-400 bg-green-50" : isWithin24Hours ? "ring-2 ring-blue-300 bg-blue-50" : "")">
                                     <div class="flex items-center justify-between">
                                         <div>
                                             <p class="font-medium text-gray-900">@cls.ClassDateTime.ToString("dddd, MMMM d")</p>
-                                            <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt") - @cls.ClassDateTime.AddHours(1).ToString("h:mm tt")</p>
-                                            @await Component.InvokeAsync("StatusBadge", new { text = cls.PaymentStatus.ToString(), color = paymentBadgeColor })
-                                            @if (isWithin24Hours)
-                                            {
-                                                @await Component.InvokeAsync("StatusBadge", new { text = "Less than 24 hours", color = "yellow" })
-                                            }
+                                            <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
                                         </div>
-                                        @if (!isWithin1Hour)
+                                        @if (isWithin1Hour && !string.IsNullOrEmpty(classroomUrl))
+                                        {
+                                            <a href="@classroomUrl" target="_blank" class="bg-green-500 hover:bg-green-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+                                                Join Now
+                                            </a>
+                                        }
+                                        else if (!isWithin1Hour)
                                         {
                                             <button type="button"
                                                     onclick="showCancelModal(@cls.Id, '@cls.ClassDateTime.ToString("dddd, MMMM d \\a\\t h:mm tt")', @(isWithin24Hours ? "true" : "false"))"
-                                                    class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                                    class="text-red-600 hover:text-red-800 text-sm">
                                                 Cancel
                                             </button>
                                         }
-                                        else
-                                        {
-                                            <span class="text-gray-400 text-sm">Too late to cancel</span>
-                                        }
                                     </div>
-                                    @if (!string.IsNullOrEmpty(classroomUrl))
-                                    {
-                                        <div class="mt-3 pt-3 border-t border-gray-200">
-                                            <a href="@classroomUrl" target="_blank" rel="noopener noreferrer"
-                                               class="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700">
-                                                <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-                                                </svg>
-                                                Join Classroom
-                                                <svg class="h-3 w-3 ml-1" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
-                                                </svg>
-                                            </a>
-                                        </div>
-                                    }
                                 </div>
                             }
                         </div>
                     }
                     else
                     {
-                        @await Component.InvokeAsync("EmptyState", new {
-                            icon = "calendar",
-                            title = "No upcoming classes",
-                            message = Model.AvailableTickets > 0 ? "Schedule your next class" : "Get tickets to book",
-                            actionText = Model.AvailableTickets > 0 ? "Schedule your next class" : "Visit Token Store",
-                            actionUrl = Model.AvailableTickets > 0 ? Url.Action("BookClass") : Url.Action("TokenStore")
-                        })
+                        <div class="text-center py-8">
+                            <div class="text-4xl mb-3">📚</div>
+                            <p class="text-gray-600 mb-3">No upcoming classes</p>
+                            <a asp-action="MyClasses" class="inline-flex items-center text-indigo-600 hover:underline font-medium">
+                                Schedule your classes →
+                            </a>
+                        </div>
                     }
                 </div>
             </div>
 
-            <!-- Recent Documents -->
-            <div class="bg-white rounded-lg shadow">
-                <div class="p-6 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Recent Documents</h2>
+            <!-- Leave Feedback / Recent Documents -->
+            <div class="space-y-6">
+                @if (Model.ClassesNeedingFeedback.Any())
+                {
+                    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl shadow-md overflow-hidden">
+                        <div class="p-4 border-b border-yellow-200 flex items-center">
+                            <span class="text-xl mr-2">⭐</span>
+                            <h2 class="font-semibold text-gray-900">Leave Feedback</h2>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            @foreach (var cls in Model.ClassesNeedingFeedback.Take(3))
+                            {
+                                <div class="flex items-center justify-between p-3 bg-white rounded-lg">
+                                    <div>
+                                        <p class="font-medium text-gray-900">@cls.ClassDateTime.ToString("MMM d")</p>
+                                        <p class="text-sm text-gray-500">@cls.ClassDateTime.ToString("h:mm tt")</p>
+                                    </div>
+                                    <button onclick="showFeedbackModal(@cls.ClassId, '@cls.ClassDateTime.ToString("MMMM d, yyyy")')"
+                                            class="bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-3 py-1.5 rounded-lg transition">
+                                        Rate
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Show Appreciation -->
+                <div class="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl shadow-md p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-2">💝</span>
+                            <div>
+                                <p class="font-semibold text-gray-900">Show Appreciation</p>
+                                <p class="text-sm text-gray-600">Thank Karen for a great lesson</p>
+                            </div>
+                        </div>
+                        <button onclick="showTipModal()" class="bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2 rounded-lg transition">
+                            Send Tip
+                        </button>
+                    </div>
                 </div>
-                <div class="p-6">
-                    @if (Model.Documents.Any())
-                    {
-                        <div class="space-y-3">
-                            @foreach (var doc in Model.Documents.Take(5))
+
+                <!-- Recent Documents -->
+                @if (Model.Documents.Any())
+                {
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                            <div class="flex items-center">
+                                <span class="text-xl mr-2">📄</span>
+                                <h2 class="font-semibold text-gray-900">Recent Documents</h2>
+                            </div>
+                            <a asp-action="Documents" class="text-sm text-indigo-600 hover:underline">View all</a>
+                        </div>
+                        <div class="p-4 space-y-2">
+                            @foreach (var doc in Model.Documents.Take(3))
                             {
                                 <a asp-action="DownloadDocument" asp-route-id="@doc.Id"
-                                   class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
-                                    <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                   class="flex items-center p-2 rounded-lg hover:bg-gray-50 transition">
+                                    <svg class="h-6 w-6 text-gray-400 mr-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                     </svg>
-                                    <div class="ml-3">
+                                    <div>
                                         <p class="text-sm font-medium text-gray-900">@doc.Title</p>
-                                        <p class="text-xs text-gray-500">Uploaded @doc.UploadedAt.ToString("MMM d, yyyy")</p>
+                                        <p class="text-xs text-gray-500">@doc.UploadedAt.ToString("MMM d")</p>
                                     </div>
                                 </a>
                             }
                         </div>
-                        @if (Model.Documents.Count() > 5)
-                        {
-                            <div class="mt-4 text-center">
-                                <a asp-action="Documents" class="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                                    View all documents
-                                </a>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        @await Component.InvokeAsync("EmptyState", new {
-                            icon = "document",
-                            title = "No documents available yet"
-                        })
-                    }
-                </div>
+                    </div>
+                }
             </div>
         </div>
 
-        <!-- Class History Section -->
-        @if (Model.PastClasses.Any())
+        <!-- Balance Due Notice -->
+        @if (Model.Balance > 0)
         {
-            <div class="bg-white rounded-lg shadow mt-8">
-                <div class="p-6 border-b border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Class History</h2>
-                            <p class="text-sm text-gray-500 mt-1">Your recent completed and past classes</p>
-                        </div>
+            <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">💰</span>
+                    <div>
+                        <p class="font-semibold text-gray-900">Balance Due: $@Model.Balance.ToString("0.00")</p>
+                        <p class="text-sm text-gray-600">Please settle your balance when convenient</p>
                     </div>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach (var cls in Model.PastClasses)
-                            {
-                                var statusColor = cls.Status switch
-                                {
-                                    LakeCountrySpanish.Web.Models.Entities.ClassStatus.Completed => "green",
-                                    LakeCountrySpanish.Web.Models.Entities.ClassStatus.Cancelled => "red",
-                                    _ => "gray"
-                                };
-                                var needsFeedback = cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Completed &&
-                                    Model.ClassesNeedingFeedback.Any(c => c.ClassId == cls.Id);
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm font-medium text-gray-900">@cls.ClassDateTime.ToString("MMM d, yyyy")</div>
-                                        <div class="text-xs text-gray-500">@cls.ClassDateTime.ToString("dddd")</div>
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500">
-                                        @cls.ClassDateTime.ToString("h:mm tt")
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        @await Component.InvokeAsync("StatusBadge", new { text = cls.Status.ToString(), color = statusColor })
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
-                                        @(cls.TeacherNotes ?? "-")
-                                    </td>
-                                    <td class="px-6 py-4 text-right">
-                                        @if (needsFeedback)
-                                        {
-                                            <button type="button" onclick="showFeedbackModal(@cls.Id, '@cls.ClassDateTime.ToString("MMMM d, yyyy")')"
-                                                    class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 font-medium">
-                                                <svg class="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                                                </svg>
-                                                Leave Feedback
-                                            </button>
-                                        }
-                                        else if (cls.Status == LakeCountrySpanish.Web.Models.Entities.ClassStatus.Completed)
-                                        {
-                                            <span class="text-xs text-gray-400">
-                                                <svg class="h-4 w-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                                </svg>
-                                                Feedback submitted
-                                            </span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                <a asp-action="Payments" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium px-4 py-2 rounded-lg transition">
+                    View Payments
+                </a>
             </div>
         }
     </div>
@@ -522,7 +722,7 @@
                 <p id="tipConfirmation" class="text-sm text-pink-600 font-medium hidden"></p>
             </div>
 
-            <!-- Tip Message (shown when tip is selected) -->
+            <!-- Tip Message -->
             <div id="tipMessageSection" class="mb-6 hidden">
                 <label for="tipMessage" class="block text-sm font-medium text-gray-700 mb-2">
                     Add a message with your tip <span class="text-gray-400 font-normal">(optional)</span>
@@ -533,21 +733,19 @@
             </div>
 
             <div class="flex justify-end space-x-3">
-                @await Component.InvokeAsync("Button", new { text = "Cancel", type = "secondary", onclick = "hideFeedbackModal()" })
-                @await Component.InvokeAsync("Button", new { text = "Submit Feedback", type = "primary" })
+                <button type="button" onclick="hideFeedbackModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition">Submit Feedback</button>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Tip Modal (standalone) -->
+<!-- Tip Modal -->
 <div id="tipModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center">
-                <svg class="h-6 w-6 text-pink-500 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
+                <span class="text-2xl mr-2">💝</span>
                 <h3 class="text-lg font-semibold text-gray-900">Send a Tip</h3>
             </div>
             <button type="button" onclick="hideTipModal()" class="text-gray-400 hover:text-gray-600">
@@ -588,7 +786,7 @@
             </div>
 
             <div class="flex justify-end space-x-3">
-                @await Component.InvokeAsync("Button", new { text = "Cancel", type = "secondary", onclick = "hideTipModal()" })
+                <button type="button" onclick="hideTipModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Cancel</button>
                 <button type="submit" id="submitTipBtn" disabled
                         class="bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition">
                     Send Tip
@@ -598,7 +796,7 @@
     </div>
 </div>
 
-<!-- Cancel Class Modal -->
+<!-- Cancel Modal -->
 <div id="cancelModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">Cancel Class</h3>
@@ -606,20 +804,12 @@
             <span id="cancelClassDisplay" class="font-medium"></span>
         </p>
 
-        <!-- Standard cancellation message -->
-        <div id="standardCancelMessage" class="hidden mb-4">
-            @await Component.InvokeAsync("Alert", new {
-                type = "success",
-                message = "Your ticket will be restored. Since you're cancelling more than 24 hours in advance, your class ticket will be returned to your account."
-            })
+        <div id="standardCancelMessage" class="hidden mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+            <p class="text-green-800 text-sm">Your ticket will be restored since you're cancelling more than 24 hours in advance.</p>
         </div>
 
-        <!-- Late cancellation forfeit warning -->
-        <div id="forfeitWarning" class="hidden mb-4">
-            @await Component.InvokeAsync("Alert", new {
-                type = "warning",
-                message = "Late Cancellation - Ticket Will Be Forfeited. Because this class is within 24 hours, cancelling will forfeit your class ticket."
-            })
+        <div id="forfeitWarning" class="hidden mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p class="text-yellow-800 text-sm"><strong>Late Cancellation:</strong> Because this class is within 24 hours, your ticket will be forfeited.</p>
         </div>
 
         <form asp-action="CancelClass" method="post" id="cancelForm">
@@ -627,16 +817,56 @@
             <input type="hidden" name="acceptForfeit" id="acceptForfeit" value="false" />
 
             <div class="flex justify-end space-x-3">
-                @await Component.InvokeAsync("Button", new { text = "Keep Class", type = "secondary", onclick = "hideCancelModal()" })
-                @await Component.InvokeAsync("Button", new { text = "Cancel Class", type = "danger" })
+                <button type="button" onclick="hideCancelModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">Keep Class</button>
+                <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">Cancel Class</button>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
+    <style>
+        @@keyframes gentle-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @@keyframes pop-in {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @@keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .animate-bounce-slow {
+            animation: gentle-bounce 3s ease-in-out infinite;
+        }
+
+        .animate-spin-slow {
+            animation: spin 3s linear infinite;
+        }
+
+        .animate-pop-in {
+            animation: pop-in 0.3s ease-out;
+        }
+
+        .animate-shimmer {
+            animation: shimmer 2s ease-in-out infinite;
+        }
+    </style>
+
     <script>
-        // ===== Cancel Modal =====
+        // Badge celebration dismissal
+        function dismissBadgeCelebration() {
+            document.getElementById('badgeCelebration')?.classList.add('hidden');
+            // Mark badges as viewed via AJAX
+            fetch('@Url.Action("MarkBadgesViewed", "Student")', { method: 'POST' });
+        }
+
+        // Cancel Modal
         function showCancelModal(classId, displayText, willForfeit) {
             document.getElementById('cancelClassId').value = classId;
             document.getElementById('cancelClassDisplay').textContent = displayText;
@@ -657,7 +887,7 @@
             document.getElementById('cancelModal').classList.add('hidden');
         }
 
-        // ===== Feedback Modal =====
+        // Feedback Modal
         let currentRating = 0;
         let currentTipAmount = null;
 
@@ -758,7 +988,7 @@
             });
         }
 
-        // ===== Standalone Tip Modal =====
+        // Standalone Tip Modal
         let standaloneTipAmount = null;
 
         function showTipModal() {
@@ -826,34 +1056,57 @@
             });
         }
 
-        // ===== Global Event Handlers =====
+        // Global Event Handlers
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 hideCancelModal();
                 hideFeedbackModal();
                 hideTipModal();
+                dismissBadgeCelebration();
             }
         });
 
-        document.getElementById('cancelModal').addEventListener('click', function(e) {
+        document.getElementById('cancelModal')?.addEventListener('click', function(e) {
             if (e.target === this) hideCancelModal();
         });
 
-        document.getElementById('feedbackModal').addEventListener('click', function(e) {
+        document.getElementById('feedbackModal')?.addEventListener('click', function(e) {
             if (e.target === this) hideFeedbackModal();
         });
 
-        document.getElementById('tipModal').addEventListener('click', function(e) {
+        document.getElementById('tipModal')?.addEventListener('click', function(e) {
             if (e.target === this) hideTipModal();
         });
 
+        document.getElementById('badgeCelebration')?.addEventListener('click', function(e) {
+            if (e.target === this) dismissBadgeCelebration();
+        });
+
         // Validate feedback form before submit
-        document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+        document.getElementById('feedbackForm')?.addEventListener('submit', function(e) {
             const rating = parseInt(document.getElementById('ratingInput').value);
             if (rating < 1 || rating > 5) {
                 e.preventDefault();
                 alert('Please select a rating before submitting.');
             }
         });
+
+        // Countdown timer for next class
+        @if (Model.NextClass != null && nextClassCountdown.TotalHours < 24)
+        {
+            <text>
+            let countdownTarget = new Date('@Model.NextClass.ClassDateTime.ToString("yyyy-MM-ddTHH:mm:ss")');
+            setInterval(function() {
+                let now = new Date();
+                let diff = countdownTarget - now;
+                if (diff > 0) {
+                    let hours = Math.floor(diff / (1000 * 60 * 60));
+                    let minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    document.getElementById('countdown-hours')?.textContent = hours;
+                    document.getElementById('countdown-minutes')?.textContent = minutes;
+                }
+            }, 60000);
+            </text>
+        }
     </script>
 }

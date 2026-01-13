@@ -55,6 +55,17 @@ public class ScheduledClass
     public string? TeacherNotes { get; set; }          // Notes on student progress after completion
     public bool CreditForfeited { get; set; } = false; // True if cancelled within 24 hours (no refund)
 
+    // Checkout flow fields (for pay-per-session model)
+    /// <summary>
+    /// True if this class is pending checkout (selected but not yet paid)
+    /// </summary>
+    public bool IsPendingCheckout { get; set; } = false;
+
+    /// <summary>
+    /// Groups pending classes in the same checkout session
+    /// </summary>
+    public Guid? CheckoutBatchId { get; set; }
+
     // Student feedback (after class completion)
     /// <summary>
     /// Student's rating of the class (1-5 stars)

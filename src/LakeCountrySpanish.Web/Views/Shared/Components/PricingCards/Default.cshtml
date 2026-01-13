@@ -1,0 +1,239 @@
+@model LakeCountrySpanish.Web.ViewComponents.PricingCardsViewModel
+
+<div class="grid gap-6 lg:grid-cols-@(Model.ShowTrialCard ? "4" : "3")">
+    @if (Model.ShowTrialCard)
+    {
+        <!-- Trial / Single Class Card -->
+        <div class="relative flex flex-col rounded-2xl border-2 border-secondary-400 shadow-md bg-gradient-to-b from-secondary-50 to-white p-6">
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span class="bg-secondary-500 text-white text-sm font-semibold px-4 py-1 rounded-full">New Students</span>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-xl font-semibold text-gray-900">Try It Out</h3>
+                <p class="mt-1 text-sm text-gray-500">Single class</p>
+
+                <p class="mt-4 flex items-baseline">
+                    <span class="text-2xl font-medium text-gray-400 line-through mr-2">$30</span>
+                    <span class="text-3xl font-bold tracking-tight text-secondary-600">Special</span>
+                </p>
+                <p class="mt-1 text-sm text-secondary-600 font-medium">New student pricing available!</p>
+
+                <p class="mt-4 text-gray-600 text-sm">Perfect for trying your first lesson. Contact Karen for special introductory rates.</p>
+
+                <ul class="mt-5 space-y-2">
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-secondary-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        1-hour personalized lesson
+                    </li>
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-secondary-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        No commitment required
+                    </li>
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-secondary-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Trial packages available
+                    </li>
+                </ul>
+            </div>
+            <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-secondary-500 hover:bg-secondary-600 py-3 text-center text-sm font-semibold text-white transition">
+                Get Trial Pricing
+            </a>
+        </div>
+    }
+
+    @if (Model.Tiers.Any())
+    {
+        @foreach (var tier in Model.Tiers.Take(3))
+        {
+            var isCurrentTier = Model.CurrentTierId == tier.Id;
+            var isHighlighted = tier.IsPopular || tier.IsBestValue;
+            var borderClass = tier.IsPopular ? "border-primary-500" : (tier.IsBestValue ? "border-green-500" : "border-gray-200");
+            var shadowClass = isHighlighted ? "shadow-xl" : "shadow-sm";
+            var badgeClass = tier.IsPopular ? "bg-primary-500" : "bg-green-500";
+            var buttonClass = tier.IsPopular ? "bg-primary-600 hover:bg-primary-700" : (tier.IsBestValue ? "bg-green-600 hover:bg-green-700" : "bg-gray-800 hover:bg-gray-900");
+            var badgeText = tier.IsPopular ? "Most Popular" : (tier.IsBestValue ? "Best Value" : "");
+
+            <div class="relative flex flex-col rounded-2xl border-2 @borderClass @shadowClass bg-white p-6">
+                @if (!string.IsNullOrEmpty(badgeText))
+                {
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <span class="@badgeClass text-white text-sm font-semibold px-4 py-1 rounded-full">@badgeText</span>
+                    </div>
+                }
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold text-gray-900">@tier.Name</h3>
+                    <p class="mt-1 text-sm text-gray-500">@tier.FrequencyDescription</p>
+
+                    <p class="mt-4 flex items-baseline">
+                        <span class="text-3xl font-bold tracking-tight text-gray-900">$@tier.PerClassPrice.ToString("0")</span>
+                        <span class="ml-1 text-sm text-gray-500">/class</span>
+                    </p>
+                    <p class="mt-1 text-sm text-gray-500">@tier.ClassesPerMonth classes = $@tier.MonthlyPrice.ToString("0")/mo</p>
+
+                    @if (tier.SavingsPercent > 0)
+                    {
+                        <div class="mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Save @tier.SavingsPercent%
+                        </div>
+                    }
+
+                    <p class="mt-3 text-gray-600 text-sm">@tier.Description</p>
+
+                    <ul class="mt-4 space-y-2">
+                        <li class="flex items-center text-gray-600 text-sm">
+                            <svg class="h-4 w-4 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            You set your schedule
+                        </li>
+                        <li class="flex items-center text-gray-600 text-sm">
+                            <svg class="h-4 w-4 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            Earn rewards &amp; free classes
+                        </li>
+                        <li class="flex items-center text-gray-600 text-sm">
+                            <svg class="h-4 w-4 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            Adjust monthly
+                        </li>
+                    </ul>
+                </div>
+
+                @if (isCurrentTier)
+                {
+                    <a asp-controller="Subscription" asp-action="Manage" class="mt-6 block w-full rounded-lg bg-gray-100 py-3 text-center text-sm font-semibold text-gray-900 hover:bg-gray-200 transition">
+                        Current Plan
+                    </a>
+                }
+                else if (Model.IsLoggedIn && Model.ShowScheduleButton)
+                {
+                    <a asp-controller="Student" asp-action="MyClasses" class="mt-6 block w-full rounded-lg @buttonClass py-3 text-center text-sm font-semibold text-white transition">
+                        Schedule Classes
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg @buttonClass py-3 text-center text-sm font-semibold text-white transition">
+                        Contact Karen
+                    </a>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Fallback tiers when no data -->
+        <!-- Starter tier -->
+        <div class="relative flex flex-col rounded-2xl border-2 border-gray-200 shadow-sm bg-white p-6">
+            <div class="flex-1">
+                <h3 class="text-xl font-semibold text-gray-900">Starter</h3>
+                <p class="mt-1 text-sm text-gray-500">~1x per week</p>
+                <p class="mt-4 flex items-baseline">
+                    <span class="text-3xl font-bold tracking-tight text-gray-900">$25</span>
+                    <span class="ml-1 text-sm text-gray-500">/class</span>
+                </p>
+                <p class="mt-1 text-sm text-gray-500">4 classes = $100/mo</p>
+                <ul class="mt-4 space-y-2">
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        You set your schedule
+                    </li>
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Earn rewards
+                    </li>
+                </ul>
+            </div>
+            <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-gray-800 hover:bg-gray-900 py-3 text-center text-sm font-semibold text-white transition">
+                Contact Karen
+            </a>
+        </div>
+
+        <!-- Standard tier -->
+        <div class="relative flex flex-col rounded-2xl border-2 border-primary-500 shadow-xl bg-white p-6">
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span class="bg-primary-500 text-white text-sm font-semibold px-4 py-1 rounded-full">Most Popular</span>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-xl font-semibold text-gray-900">Standard</h3>
+                <p class="mt-1 text-sm text-gray-500">~2x per week</p>
+                <p class="mt-4 flex items-baseline">
+                    <span class="text-3xl font-bold tracking-tight text-gray-900">$22</span>
+                    <span class="ml-1 text-sm text-gray-500">/class</span>
+                </p>
+                <p class="mt-1 text-sm text-gray-500">8 classes = $176/mo</p>
+                <div class="mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Save 27%
+                </div>
+                <ul class="mt-4 space-y-2">
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        You set your schedule
+                    </li>
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Earn rewards &amp; free classes
+                    </li>
+                </ul>
+            </div>
+            <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-primary-600 hover:bg-primary-700 py-3 text-center text-sm font-semibold text-white transition">
+                Contact Karen
+            </a>
+        </div>
+
+        <!-- Intensive tier -->
+        <div class="relative flex flex-col rounded-2xl border-2 border-green-500 shadow-xl bg-white p-6">
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span class="bg-green-500 text-white text-sm font-semibold px-4 py-1 rounded-full">Best Value</span>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-xl font-semibold text-gray-900">Intensive</h3>
+                <p class="mt-1 text-sm text-gray-500">~3x per week</p>
+                <p class="mt-4 flex items-baseline">
+                    <span class="text-3xl font-bold tracking-tight text-gray-900">$20</span>
+                    <span class="ml-1 text-sm text-gray-500">/class</span>
+                </p>
+                <p class="mt-1 text-sm text-gray-500">12 classes = $240/mo</p>
+                <div class="mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Save 33%
+                </div>
+                <ul class="mt-4 space-y-2">
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        You set your schedule
+                    </li>
+                    <li class="flex items-center text-gray-600 text-sm">
+                        <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                        Earn rewards &amp; free classes
+                    </li>
+                </ul>
+            </div>
+            <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-green-600 hover:bg-green-700 py-3 text-center text-sm font-semibold text-white transition">
+                Contact Karen
+            </a>
+        </div>
+    }
+</div>

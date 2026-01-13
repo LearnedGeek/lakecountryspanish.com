@@ -158,3 +158,85 @@ public class ScheduledClassWithConflict
     public ScheduledClass Class { get; set; } = null!;
     public bool HasBlockedDateConflict { get; set; }
 }
+
+/// <summary>
+/// View model for the unified My Classes scheduling page.
+/// </summary>
+public class MyClassesViewModel
+{
+    /// <summary>
+    /// Whether the student has an active subscription.
+    /// </summary>
+    public bool HasActiveSubscription { get; set; }
+
+    /// <summary>
+    /// Current subscription details (if any).
+    /// </summary>
+    public Subscription? CurrentSubscription { get; set; }
+
+    /// <summary>
+    /// Number of free class rewards (tickets) available.
+    /// </summary>
+    public int AvailableTickets { get; set; }
+
+    /// <summary>
+    /// Weekly calendar data for scheduling.
+    /// </summary>
+    public WeeklyCalendarData WeeklyCalendar { get; set; } = null!;
+
+    /// <summary>
+    /// Upcoming confirmed classes.
+    /// </summary>
+    public IEnumerable<ScheduledClass> UpcomingClasses { get; set; } = new List<ScheduledClass>();
+
+    /// <summary>
+    /// Classes that have been selected but not yet paid for.
+    /// </summary>
+    public IEnumerable<ScheduledClass> PendingCheckoutClasses { get; set; } = new List<ScheduledClass>();
+
+    /// <summary>
+    /// Checkout summary for non-subscribers.
+    /// </summary>
+    public SchedulingCheckoutSummary CheckoutSummary { get; set; } = new();
+
+    /// <summary>
+    /// For subscribers: remaining classes in their allocation.
+    /// </summary>
+    public int SubscriptionClassesRemaining { get; set; }
+}
+
+/// <summary>
+/// Summary of pricing for class checkout.
+/// </summary>
+public class SchedulingCheckoutSummary
+{
+    /// <summary>
+    /// Number of classes selected.
+    /// </summary>
+    public int ClassCount { get; set; }
+
+    /// <summary>
+    /// Price per class.
+    /// </summary>
+    public decimal PerClassPrice { get; set; }
+
+    /// <summary>
+    /// Subtotal before any discounts.
+    /// </summary>
+    public decimal Subtotal { get; set; }
+
+    /// <summary>
+    /// Number of free class rewards being applied.
+    /// </summary>
+    public int TicketsApplied { get; set; }
+
+    /// <summary>
+    /// Total discount from tickets.
+    /// </summary>
+    public decimal TicketDiscount { get; set; }
+
+    /// <summary>
+    /// Final amount due after discounts.
+    /// </summary>
+    public decimal TotalDue { get; set; }
+}
