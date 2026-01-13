@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<BlockedDate> BlockedDates => Set<BlockedDate>();
     public DbSet<ClassFeedback> ClassFeedbacks => Set<ClassFeedback>();
     public DbSet<Tip> Tips => Set<Tip>();
+    public DbSet<Testimonial> Testimonials => Set<Testimonial>();
 
     // Subscription entities
     public DbSet<SubscriptionTier> SubscriptionTiers => Set<SubscriptionTier>();
@@ -199,9 +200,33 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(e => e.ScheduledClass)
-                .WithMany()
-                .HasForeignKey(e => e.ScheduledClassId)
+                .WithOne(c => c.Tip)
+                .HasForeignKey<Tip>(e => e.ScheduledClassId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Testimonial configuration
+        builder.Entity<Testimonial>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ReviewedBy)
+                .WithMany()
+                .HasForeignKey(e => e.ReviewedById)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(e => e.RelatedClass)
+                .WithMany()
+                .HasForeignKey(e => e.RelatedClassId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Index for finding approved testimonials
+            entity.HasIndex(e => new { e.Status, e.IsFeatured, e.DisplayOrder });
         });
 
         // SubscriptionTier configuration

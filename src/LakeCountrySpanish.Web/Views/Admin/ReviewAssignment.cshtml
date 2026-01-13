@@ -3,103 +3,128 @@
     ViewData["Title"] = "Review Assignment";
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>
-            <i class="bi bi-clipboard-check text-warning"></i> Review Assignment
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <svg class="h-8 w-8 text-yellow-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            Review Assignment
         </h1>
-        <a asp-action="Assignments" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Back
+        <a asp-action="Assignments" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
         </a>
     </div>
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <svg class="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
         </div>
     }
 
-    <div class="row">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column - Assignment Info -->
-        <div class="col-lg-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Assignment Details</h5>
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Assignment Details</h2>
                 </div>
-                <div class="card-body">
-                    <h4>@Model.Title</h4>
-                    <p class="text-muted">@Model.Description</p>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">@Model.Title</h3>
+                    <p class="text-gray-500 mb-4">@Model.Description</p>
 
-                    <hr>
+                    <hr class="border-gray-200 mb-4">
 
-                    <div class="row text-center mb-3">
-                        <div class="col-4">
-                            <small class="text-muted d-block">Level</small>
-                            <span class="badge bg-secondary fs-6">@Model.CefrLevel</span>
+                    <div class="grid grid-cols-3 gap-4 text-center mb-4">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">Level</p>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800">@Model.CefrLevel</span>
                         </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Type</small>
-                            <strong>@Model.Type</strong>
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">Type</p>
+                            <p class="font-semibold text-gray-900">@Model.Type</p>
                         </div>
-                        <div class="col-4">
-                            <small class="text-muted d-block">Points</small>
-                            <strong>@Model.TotalPoints</strong>
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">Points</p>
+                            <p class="font-semibold text-gray-900">@Model.TotalPoints</p>
                         </div>
                     </div>
 
                     @if (!string.IsNullOrEmpty(Model.TopicName))
                     {
-                        <p class="mb-2">
-                            <small class="text-muted">Topic:</small><br>
-                            <strong>@Model.TopicName</strong>
-                        </p>
+                        <div class="mb-3">
+                            <p class="text-xs text-gray-500">Topic</p>
+                            <p class="font-semibold text-gray-900">@Model.TopicName</p>
+                        </div>
                     }
 
-                    <p class="mb-0">
-                        <small class="text-muted">Est. Time:</small>
-                        <strong>~@Model.EstimatedMinutes minutes</strong>
-                    </p>
+                    <div>
+                        <p class="text-xs text-gray-500">Est. Time</p>
+                        <p class="font-semibold text-gray-900">~@Model.EstimatedMinutes minutes</p>
+                    </div>
                 </div>
             </div>
 
             @if (Model.IsAiGenerated && !string.IsNullOrEmpty(Model.GenerationPrompt))
             {
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h6 class="mb-0"><i class="bi bi-robot"></i> AI Generation Info</h6>
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900 flex items-center">
+                            <svg class="h-4 w-4 text-cyan-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            AI Generation Info
+                        </h3>
                     </div>
-                    <div class="card-body">
-                        <small class="text-muted">Generation Prompt:</small>
-                        <p class="small mb-0">@Model.GenerationPrompt</p>
+                    <div class="p-6">
+                        <p class="text-xs text-gray-500 mb-1">Generation Prompt</p>
+                        <p class="text-sm text-gray-700">@Model.GenerationPrompt</p>
                     </div>
                 </div>
             }
 
             <!-- Review Actions -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Review Decision</h5>
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Review Decision</h2>
                 </div>
-                <div class="card-body">
+                <div class="p-6">
                     <form id="reviewForm">
-                        <div class="mb-3">
-                            <label class="form-label">Review Notes (Optional)</label>
-                            <textarea id="reviewNotes" class="form-control" rows="3"
+                        @Html.AntiForgeryToken()
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Review Notes (Optional)</label>
+                            <textarea id="reviewNotes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" rows="3"
                                       placeholder="Add notes about this assignment...">@Model.ReviewNotes</textarea>
                         </div>
 
-                        <div class="d-grid gap-2">
-                            <button type="button" class="btn btn-success btn-lg" onclick="approveAssignment()">
-                                <i class="bi bi-check-circle"></i> Approve
+                        <div class="space-y-3">
+                            <button type="button" class="w-full inline-flex justify-center items-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700" onclick="approveAssignment()">
+                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Approve
                             </button>
-                            <button type="button" class="btn btn-danger" onclick="rejectAssignment()">
-                                <i class="bi bi-x-circle"></i> Reject
+                            <button type="button" class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700" onclick="rejectAssignment()">
+                                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Reject
                             </button>
                             <a asp-action="EditAssignment" asp-route-id="@Model.Id"
-                               class="btn btn-outline-primary">
-                                <i class="bi bi-pencil"></i> Edit First
+                               class="w-full inline-flex justify-center items-center px-4 py-2 border border-indigo-600 text-sm font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50">
+                                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Edit First
                             </a>
                         </div>
                     </form>
@@ -108,12 +133,12 @@
         </div>
 
         <!-- Right Column - Questions Preview -->
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Questions Preview</h5>
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Questions Preview</h2>
                 </div>
-                <div class="card-body" id="questionsPreview">
+                <div class="p-6" id="questionsPreview">
                     <!-- Questions will be rendered here -->
                 </div>
             </div>
@@ -142,32 +167,33 @@
         }
 
         if (!Array.isArray(questionsJson) || questionsJson.length === 0) {
-            container.innerHTML = '<p class="text-muted">No questions found.</p>';
+            container.innerHTML = '<p class="text-gray-500 text-center py-4">No questions found.</p>';
             return;
         }
 
-        let html = '';
+        let html = '<div class="space-y-4">';
         questionsJson.forEach((q, index) => {
             const questionId = q.id || index + 1;
             const correctAnswer = answers[questionId] || q.correctAnswer || '';
 
             html += `
-                <div class="card mb-3">
-                    <div class="card-header d-flex justify-content-between">
-                        <span><strong>Question ${index + 1}</strong> - ${q.type || 'Unknown'}</span>
-                        <span class="badge bg-secondary">${q.points || 1} pts</span>
+                <div class="bg-gray-50 rounded-lg overflow-hidden">
+                    <div class="px-4 py-3 bg-gray-100 flex justify-between items-center">
+                        <span class="font-medium text-gray-900">Question ${index + 1} - <span class="text-gray-600">${q.type || 'Unknown'}</span></span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800">${q.points || 1} pts</span>
                     </div>
-                    <div class="card-body">
-                        <p class="mb-3">${escapeHtml(q.question)}</p>
+                    <div class="p-4">
+                        <p class="text-gray-900 mb-3">${escapeHtml(q.question)}</p>
                         ${renderQuestionContent(q)}
-                        <div class="alert alert-success mb-0 mt-3">
-                            <strong>Correct Answer:</strong> ${escapeHtml(correctAnswer)}
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3 mt-3">
+                            <p class="text-sm"><span class="font-semibold text-green-800">Correct Answer:</span> <span class="text-green-700">${escapeHtml(correctAnswer)}</span></p>
                         </div>
-                        ${q.explanation ? `<div class="mt-2"><small class="text-muted">Explanation: ${escapeHtml(q.explanation)}</small></div>` : ''}
+                        ${q.explanation ? `<p class="mt-2 text-sm text-gray-500 italic">Explanation: ${escapeHtml(q.explanation)}</p>` : ''}
                     </div>
                 </div>
             `;
         });
+        html += '</div>';
 
         container.innerHTML = html;
     }
@@ -176,24 +202,24 @@
         const type = (q.type || '').toLowerCase().replace(/_/g, '');
 
         if (type === 'multiplechoice' && q.options) {
-            let html = '<div class="list-group">';
+            let html = '<div class="space-y-2">';
             q.options.forEach((opt, i) => {
                 const letter = String.fromCharCode(65 + i);
-                html += `<div class="list-group-item">${letter}. ${escapeHtml(opt)}</div>`;
+                html += `<div class="p-2 bg-white rounded border border-gray-200 text-sm"><span class="font-medium text-gray-700">${letter}.</span> ${escapeHtml(opt)}</div>`;
             });
             html += '</div>';
             return html;
         }
 
         if (type === 'translation') {
-            return `<p class="text-muted"><em>Direction: ${q.direction || 'Spanish to English'}</em></p>`;
+            return `<p class="text-sm text-gray-500 italic">Direction: ${q.direction || 'Spanish to English'}</p>`;
         }
 
         if (type === 'fillintheblank') {
-            return '<p class="text-muted"><em>Fill in the blank question</em></p>';
+            return '<p class="text-sm text-gray-500 italic">Fill in the blank question</p>';
         }
 
-        return '<p class="text-muted"><em>Text input answer</em></p>';
+        return '<p class="text-sm text-gray-500 italic">Text input answer</p>';
     }
 
     function escapeHtml(text) {
@@ -242,8 +268,7 @@
         const token = document.createElement('input');
         token.type = 'hidden';
         token.name = '__RequestVerificationToken';
-        token.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value ||
-                     '@Html.AntiForgeryToken()'.match(/value="([^"]+)"/)?.[1] || '';
+        token.value = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
         form.appendChild(token);
 
         document.body.appendChild(form);

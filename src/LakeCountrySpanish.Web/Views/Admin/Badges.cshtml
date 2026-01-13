@@ -4,125 +4,124 @@
     ViewData["Title"] = "Badge Management";
 }
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Badge Management</h1>
-        <a asp-action="CreateBadge" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Create Badge
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Badge Management</h1>
+        <a asp-action="CreateBadge" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Create Badge
         </a>
     </div>
 
     <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label">Category</label>
-                    <select name="category" class="form-select">
-                        <option value="">All Categories</option>
-                        @foreach (BadgeCategory cat in Enum.GetValues(typeof(BadgeCategory)))
+    <div class="bg-white rounded-lg shadow mb-6 p-4">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="w-48">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select name="category" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">All Categories</option>
+                    @foreach (BadgeCategory cat in Enum.GetValues(typeof(BadgeCategory)))
+                    {
+                        if (Model.FilterCategory == cat)
                         {
-                            if (Model.FilterCategory == cat)
-                            {
-                                <option value="@cat" selected>@cat</option>
-                            }
-                            else
-                            {
-                                <option value="@cat">@cat</option>
-                            }
+                            <option value="@cat" selected>@cat</option>
                         }
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" name="showInactive" value="true"
-                               id="showInactive" @(Model.ShowInactive ? "checked" : "")>
-                        <label class="form-check-label" for="showInactive">Show inactive badges</label>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-secondary">Filter</button>
-                    <a asp-action="Badges" class="btn btn-outline-secondary">Clear</a>
-                </div>
-            </form>
-        </div>
+                        else
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="flex items-center">
+                <input type="checkbox" class="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" name="showInactive" value="true"
+                       id="showInactive" @(Model.ShowInactive ? "checked" : "")>
+                <label class="ml-2 text-sm text-gray-700" for="showInactive">Show inactive badges</label>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Filter</button>
+                <a asp-action="Badges" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Clear</a>
+            </div>
+        </form>
     </div>
 
     @if (!Model.Badges.Any())
     {
-        <div class="alert alert-info">
-            No badges found. <a asp-action="CreateBadge">Create your first badge</a>.
+        <div class="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-4">
+            No badges found. <a asp-action="CreateBadge" class="underline hover:text-blue-900">Create your first badge</a>.
         </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <th>Badge</th>
-                        <th>Category</th>
-                        <th>Requirement</th>
-                        <th>Bonus Points</th>
-                        <th>Times Earned</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Badge</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requirement</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Bonus Points</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Times Earned</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="bg-white divide-y divide-gray-200">
                     @foreach (var badge in Model.Badges)
                     {
-                        <tr class="@(!badge.IsActive ? "table-secondary" : "")">
-                            <td>
-                                <div class="d-flex align-items-center">
+                        <tr class="hover:bg-gray-50 @(!badge.IsActive ? "bg-gray-100" : "")">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
                                     @if (!string.IsNullOrEmpty(badge.IconUrl))
                                     {
-                                        <img src="@badge.IconUrl" alt="" style="width: 32px; height: 32px;" class="me-2">
+                                        <img src="@badge.IconUrl" alt="" class="w-8 h-8 mr-3">
                                     }
                                     else
                                     {
-                                        <span class="me-2" style="font-size: 24px;">🏆</span>
+                                        <span class="mr-3 text-2xl">🏆</span>
                                     }
                                     <div>
-                                        <strong>@badge.Name</strong>
-                                        <br><small class="text-muted">@badge.Description</small>
+                                        <div class="font-medium text-gray-900">@badge.Name</div>
+                                        <div class="text-sm text-gray-500">@badge.Description</div>
                                     </div>
                                 </div>
                             </td>
-                            <td>@badge.Category</td>
-                            <td>
-                                @badge.RequirementType: @badge.RequirementValue
+                            <td class="px-6 py-4 text-sm text-gray-500">@badge.Category</td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900">@badge.RequirementType: @badge.RequirementValue</div>
                                 @if (!string.IsNullOrEmpty(badge.RequirementContext))
                                 {
-                                    <br><small class="text-muted">(@badge.RequirementContext)</small>
+                                    <div class="text-xs text-gray-500">(@badge.RequirementContext)</div>
                                 }
                             </td>
-                            <td>@badge.BonusPoints</td>
-                            <td>
-                                @badge.TimesEarned
+                            <td class="px-6 py-4 text-center text-sm text-gray-500">@badge.BonusPoints</td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="text-sm text-gray-900">@badge.TimesEarned</div>
                                 @if (badge.LastEarnedAt.HasValue)
                                 {
-                                    <br><small class="text-muted">Last: @badge.LastEarnedAt.Value.ToString("MMM d")</small>
+                                    <div class="text-xs text-gray-500">Last: @badge.LastEarnedAt.Value.ToString("MMM d")</div>
                                 }
                             </td>
-                            <td>
+                            <td class="px-6 py-4 text-center">
                                 @if (badge.IsActive)
                                 {
-                                    <span class="badge bg-success">Active</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-secondary">Inactive</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">Inactive</span>
                                 }
                             </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <a asp-action="EditBadge" asp-route-id="@badge.Id" class="btn btn-outline-primary">Edit</a>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex justify-end space-x-2">
+                                    <a asp-action="EditBadge" asp-route-id="@badge.Id" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">Edit</a>
                                     @if (badge.IsActive)
                                     {
-                                        <form method="post" asp-action="DisableBadge" asp-route-id="@badge.Id" class="d-inline">
+                                        <form method="post" asp-action="DisableBadge" asp-route-id="@badge.Id" class="inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-warning"
+                                            <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-yellow-300 text-xs font-medium rounded text-yellow-700 bg-white hover:bg-yellow-50"
                                                     onclick="return confirm('Disable this badge? Students who earned it will keep it.');">
                                                 Disable
                                             </button>
@@ -130,9 +129,9 @@
                                     }
                                     else
                                     {
-                                        <form method="post" asp-action="EnableBadge" asp-route-id="@badge.Id" class="d-inline">
+                                        <form method="post" asp-action="EnableBadge" asp-route-id="@badge.Id" class="inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-outline-success">Enable</button>
+                                            <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-green-300 text-xs font-medium rounded text-green-700 bg-white hover:bg-green-50">Enable</button>
                                         </form>
                                     }
                                 </div>

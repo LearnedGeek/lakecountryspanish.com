@@ -1,0 +1,285 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.ViewAssignmentViewModel
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">@Model.Title</h1>
+            @if (!string.IsNullOrEmpty(Model.TopicName))
+            {
+                <p class="mt-1 text-gray-500">@Model.TopicName</p>
+            }
+        </div>
+        <div class="flex space-x-2">
+            <a asp-action="Assignments" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back
+            </a>
+            <a asp-action="EditAssignment" asp-route-id="@Model.Id" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Edit
+            </a>
+            @if (Model.Status == LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Approved)
+            {
+                <a asp-action="AssignToStudents" asp-route-id="@Model.Id" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    Assign
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column - Details -->
+        <div class="lg:col-span-1 space-y-6">
+            <!-- Basic Info Card -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Details</h2>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div class="flex flex-wrap gap-2">
+                        @{
+                            var statusColor = Model.Status switch
+                            {
+                                LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Draft => "bg-gray-100 text-gray-800",
+                                LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.PendingReview => "bg-yellow-100 text-yellow-800",
+                                LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Approved => "bg-green-100 text-green-800",
+                                LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Rejected => "bg-red-100 text-red-800",
+                                _ => "bg-gray-100 text-gray-800"
+                            };
+                        }
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @statusColor">
+                            @Model.Status
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                            @Model.CefrLevel
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            @Model.Type
+                        </span>
+                        @if (Model.IsAiGenerated)
+                        {
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                                AI Generated
+                            </span>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div>
+                            <p class="text-sm text-gray-600">@Model.Description</p>
+                        </div>
+                    }
+
+                    <div class="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-indigo-600">@Model.TotalPoints</p>
+                            <p class="text-xs text-gray-500">Points</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-yellow-600">@Model.BonusPoints</p>
+                            <p class="text-xs text-gray-500">Bonus</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-600">@Model.EstimatedMinutes</p>
+                            <p class="text-xs text-gray-500">Minutes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Card -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Statistics</h2>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            <p class="text-2xl font-bold text-gray-900">@Model.SubmissionCount</p>
+                            <p class="text-sm text-gray-500">Submissions</p>
+                        </div>
+                        <div class="text-center p-4 bg-gray-50 rounded-lg">
+                            @if (Model.AverageScore.HasValue)
+                            {
+                                var scoreColor = Model.AverageScore >= 80 ? "text-green-600" : Model.AverageScore >= 60 ? "text-yellow-600" : "text-red-600";
+                                <p class="text-2xl font-bold @scoreColor">@Model.AverageScore.Value.ToString("0")%</p>
+                            }
+                            else
+                            {
+                                <p class="text-2xl font-bold text-gray-400">-</p>
+                            }
+                            <p class="text-sm text-gray-500">Avg Score</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metadata Card -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">History</h2>
+                </div>
+                <div class="p-6 space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Created</span>
+                        <span class="text-gray-900">@Model.CreatedAt.ToString("MMM d, yyyy")</span>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.CreatedByName))
+                    {
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Created By</span>
+                            <span class="text-gray-900">@Model.CreatedByName</span>
+                        </div>
+                    }
+                    @if (Model.ReviewedAt.HasValue)
+                    {
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Reviewed</span>
+                            <span class="text-gray-900">@Model.ReviewedAt.Value.ToString("MMM d, yyyy")</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ReviewedByName))
+                    {
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">Reviewed By</span>
+                            <span class="text-gray-900">@Model.ReviewedByName</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ReviewNotes))
+                    {
+                        <div class="pt-3 border-t border-gray-200">
+                            <p class="text-gray-500 mb-1">Review Notes</p>
+                            <p class="text-gray-900">@Model.ReviewNotes</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Questions & Assigned Students -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Questions -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Questions</h2>
+                </div>
+                <div class="p-6" id="questionsContainer">
+                    <!-- Questions rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Assigned Students -->
+            @if (Model.AssignedStudents.Any())
+            {
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Assigned Students (@Model.AssignedStudents.Count)</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assigned</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Due</th>
+                                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                @foreach (var student in Model.AssignedStudents)
+                                {
+                                    var studentStatusColor = student.Status switch
+                                    {
+                                        LakeCountrySpanish.Web.Models.Entities.StudentAssignmentStatus.Assigned => "bg-blue-100 text-blue-800",
+                                        LakeCountrySpanish.Web.Models.Entities.StudentAssignmentStatus.InProgress => "bg-yellow-100 text-yellow-800",
+                                        LakeCountrySpanish.Web.Models.Entities.StudentAssignmentStatus.Completed => "bg-green-100 text-green-800",
+                                        _ => "bg-gray-100 text-gray-800"
+                                    };
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">@student.StudentName</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @studentStatusColor">
+                                                @student.Status
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">@student.AssignedAt.ToString("MMM d")</td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">@(student.DueDate?.ToString("MMM d") ?? "-")</td>
+                                        <td class="px-6 py-4 text-center">
+                                            @if (student.BestScore.HasValue)
+                                            {
+                                                var scoreColor = student.BestScore >= 80 ? "text-green-600" : student.BestScore >= 60 ? "text-yellow-600" : "text-red-600";
+                                                <span class="@scoreColor font-medium">@student.BestScore.Value.ToString("0")%</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-gray-400">-</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const questionsJson = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.QuestionsJson));
+        const container = document.getElementById('questionsContainer');
+
+        try {
+            const questions = JSON.parse(questionsJson);
+            if (questions.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">No questions defined</p>';
+                return;
+            }
+
+            let html = '<div class="space-y-4">';
+            questions.forEach((q, i) => {
+                html += `
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="font-medium text-gray-900">Question ${i + 1}</span>
+                            <span class="text-xs text-gray-500 bg-white px-2 py-1 rounded">${q.type || 'unknown'} • ${q.points || 1} pt</span>
+                        </div>
+                        <p class="text-gray-700">${q.question || '(No question text)'}</p>
+                `;
+
+                if (q.options && q.options.length > 0) {
+                    html += '<div class="mt-2 grid grid-cols-2 gap-2">';
+                    const letters = ['A', 'B', 'C', 'D'];
+                    q.options.forEach((opt, j) => {
+                        html += `<div class="text-sm text-gray-600"><span class="font-medium">${letters[j]}.</span> ${opt}</div>`;
+                    });
+                    html += '</div>';
+                }
+
+                if (q.explanation) {
+                    html += `<p class="mt-2 text-sm text-gray-500 italic">Explanation: ${q.explanation}</p>`;
+                }
+
+                html += '</div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<p class="text-red-500">Error loading questions</p>';
+        }
+    });
+</script>

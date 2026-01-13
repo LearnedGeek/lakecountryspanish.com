@@ -3,178 +3,238 @@
     ViewData["Title"] = "Generate Assignment with AI";
 }
 
-<div class="container py-4">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>
-                    <i class="bi bi-robot text-primary"></i> Generate Assignment
-                </h1>
-                <a asp-action="Assignments" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Back
-                </a>
-            </div>
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-3xl mx-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <svg class="h-8 w-8 text-indigo-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                Generate Assignment
+            </h1>
+            <a asp-action="Assignments" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back
+            </a>
+        </div>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    @TempData["ErrorMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4 mb-6">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>@TempData["ErrorMessage"]</span>
                 </div>
-            }
+            </div>
+        }
 
-            @if (Model.ShowLibraryOptions)
-            {
-                <div class="card mb-4 border-success">
-                    <div class="card-header bg-success text-white">
-                        <i class="bi bi-book"></i> Library Matches Found
-                    </div>
-                    <div class="card-body">
-                        <p>Existing approved assignments match your criteria. Choose one to reuse and save time:</p>
-                        <div class="list-group mb-3">
-                            @foreach (var match in Model.LibraryMatches)
-                            {
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong>@match.Title</strong>
-                                        <br />
-                                        <small class="text-muted">
-                                            @match.Type | @match.TotalPoints pts | ~@match.EstimatedMinutes min
-                                            @if (match.CurriculumTopic != null)
-                                            {
-                                                <span>| Topic: @match.CurriculumTopic.Name</span>
-                                            }
-                                        </small>
-                                    </div>
-                                    <form asp-action="UseFromLibrary" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="sourceAssignmentId" value="@match.Id" />
-                                        <button type="submit" class="btn btn-success btn-sm">
-                                            <i class="bi bi-check-circle"></i> Use This
-                                        </button>
-                                    </form>
+        @if (Model.ShowLibraryOptions)
+        {
+            <div class="bg-white rounded-lg shadow border-2 border-green-500 mb-6">
+                <div class="bg-green-600 px-6 py-4 text-white rounded-t-lg flex items-center">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    Library Matches Found
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-700 mb-4">Existing approved assignments match your criteria. Choose one to reuse and save time:</p>
+                    <div class="space-y-3 mb-4">
+                        @foreach (var match in Model.LibraryMatches)
+                        {
+                            <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-gray-900">@match.Title</p>
+                                    <p class="text-sm text-gray-500">
+                                        @match.Type | @match.TotalPoints pts | ~@match.EstimatedMinutes min
+                                        @if (match.CurriculumTopic != null)
+                                        {
+                                            <span>| Topic: @match.CurriculumTopic.Name</span>
+                                        }
+                                    </p>
                                 </div>
-                            }
+                                <form asp-action="UseFromLibrary" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="sourceAssignmentId" value="@match.Id" />
+                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                        Use This
+                                    </button>
+                                </form>
+                            </div>
+                        }
+                    </div>
+                    <hr class="border-gray-200" />
+                    <p class="text-sm text-gray-500 mt-4 flex items-center">
+                        <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Or generate a new assignment with AI below.
+                    </p>
+                </div>
+            </div>
+        }
+
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">AI Assignment Generator</h2>
+            </div>
+            <div class="p-6">
+                <div class="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-4 mb-6">
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-blue-400 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Claude AI will generate a complete assignment based on your specifications. You'll be able to review and edit before approving.</span>
+                    </div>
+                </div>
+
+                <form asp-action="GenerateAssignment" method="post" id="generateForm">
+                    @Html.AntiForgeryToken()
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label asp-for="CefrLevel" class="block text-sm font-medium text-gray-700 mb-1">CEFR Level</label>
+                            <select asp-for="CefrLevel" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" id="cefrLevelSelect">
+                                <option value="A1">A1 - Beginner</option>
+                                <option value="A2">A2 - Elementary</option>
+                                <option value="B1">B1 - Intermediate</option>
+                                <option value="B2">B2 - Upper Intermediate</option>
+                                <option value="C1">C1 - Advanced</option>
+                                <option value="C2">C2 - Mastery</option>
+                            </select>
                         </div>
-                        <hr />
-                        <p class="mb-0 text-muted">
-                            <i class="bi bi-info-circle"></i> Or generate a new assignment with AI below.
+                        <div>
+                            <label asp-for="Type" class="block text-sm font-medium text-gray-700 mb-1">Assignment Type</label>
+                            <select asp-for="Type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" id="typeSelect">
+                                @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
+                                {
+                                    <option value="@type">@type</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label asp-for="TopicId" class="block text-sm font-medium text-gray-700 mb-1">Curriculum Topic (Optional)</label>
+                            <select asp-for="TopicId" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" id="topicSelect">
+                                <option value="">-- General / No specific topic --</option>
+                                @foreach (var topic in Model.AvailableTopics)
+                                {
+                                    <option value="@topic.Id">[@topic.CefrLevel] @topic.Name</option>
+                                }
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500">Select a topic to focus the assignment on specific content.</p>
+                        </div>
+                        <div>
+                            <label asp-for="QuestionCount" class="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label>
+                            <select asp-for="QuestionCount" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                <option value="3">3 questions</option>
+                                <option value="5" selected>5 questions</option>
+                                <option value="7">7 questions</option>
+                                <option value="10">10 questions</option>
+                                <option value="15">15 questions</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="AdditionalInstructions" class="block text-sm font-medium text-gray-700 mb-1">
+                            Additional Instructions (Optional)
+                        </label>
+                        <textarea asp-for="AdditionalInstructions" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" rows="3"
+                                  placeholder="E.g., 'Focus on food vocabulary' or 'Include past tense verbs' or 'Make it about traveling in Mexico'"></textarea>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Give specific guidance to the AI about what you want in the assignment.
                         </p>
                     </div>
-                </div>
-            }
 
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">AI Assignment Generator</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        Claude AI will generate a complete assignment based on your specifications.
-                        You'll be able to review and edit before approving.
+                    <div class="mb-6">
+                        <div class="flex items-start">
+                            <input type="checkbox" class="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500 mt-0.5" asp-for="ForceNewGeneration" id="forceNewGeneration" />
+                            <label class="ml-2 text-sm text-gray-700" asp-for="ForceNewGeneration">
+                                Force new AI generation (bypass content library)
+                            </label>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 ml-6">
+                            Check this to always generate a new assignment, even if matching ones exist in the library.
+                        </p>
                     </div>
 
-                    <form asp-action="GenerateAssignment" method="post" id="generateForm">
-                        @Html.AntiForgeryToken()
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label asp-for="CefrLevel" class="form-label">CEFR Level</label>
-                                <select asp-for="CefrLevel" class="form-select" id="cefrLevelSelect">
-                                    <option value="A1">A1 - Beginner</option>
-                                    <option value="A2">A2 - Elementary</option>
-                                    <option value="B1">B1 - Intermediate</option>
-                                    <option value="B2">B2 - Upper Intermediate</option>
-                                    <option value="C1">C1 - Advanced</option>
-                                    <option value="C2">C2 - Mastery</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="Type" class="form-label">Assignment Type</label>
-                                <select asp-for="Type" class="form-select" id="typeSelect">
-                                    @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
-                                    {
-                                        <option value="@type">@type</option>
-                                    }
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label asp-for="TopicId" class="form-label">Curriculum Topic (Optional)</label>
-                                <select asp-for="TopicId" class="form-select" id="topicSelect">
-                                    <option value="">-- General / No specific topic --</option>
-                                    @foreach (var topic in Model.AvailableTopics)
-                                    {
-                                        <option value="@topic.Id">[@topic.CefrLevel] @topic.Name</option>
-                                    }
-                                </select>
-                                <small class="text-muted">Select a topic to focus the assignment on specific content.</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label asp-for="QuestionCount" class="form-label">Number of Questions</label>
-                                <select asp-for="QuestionCount" class="form-select">
-                                    <option value="3">3 questions</option>
-                                    <option value="5" selected>5 questions</option>
-                                    <option value="7">7 questions</option>
-                                    <option value="10">10 questions</option>
-                                    <option value="15">15 questions</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="AdditionalInstructions" class="form-label">
-                                Additional Instructions (Optional)
-                            </label>
-                            <textarea asp-for="AdditionalInstructions" class="form-control" rows="3"
-                                      placeholder="E.g., 'Focus on food vocabulary' or 'Include past tense verbs' or 'Make it about traveling in Mexico'"></textarea>
-                            <small class="text-muted">
-                                Give specific guidance to the AI about what you want in the assignment.
-                            </small>
-                        </div>
-
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" asp-for="ForceNewGeneration" id="forceNewGeneration" />
-                                <label class="form-check-label" asp-for="ForceNewGeneration">
-                                    Force new AI generation (bypass content library)
-                                </label>
-                            </div>
-                            <small class="text-muted">
-                                Check this to always generate a new assignment, even if matching ones exist in the library.
-                            </small>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-primary" id="checkLibraryBtn">
-                                <i class="bi bi-search"></i> Check Library
-                            </button>
-                            <button type="submit" class="btn btn-primary flex-grow-1" id="generateBtn">
-                                <i class="bi bi-robot"></i> Generate Assignment
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                    <div class="flex gap-3">
+                        <button type="button" class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 rounded-md hover:bg-indigo-50 text-sm font-medium" id="checkLibraryBtn">
+                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            Check Library
+                        </button>
+                        <button type="submit" class="flex-1 inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700" id="generateBtn">
+                            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            Generate Assignment
+                        </button>
+                    </div>
+                </form>
             </div>
+        </div>
 
-            <!-- Tips Card -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="bi bi-lightbulb"></i> Tips for Better Results</h6>
-                </div>
-                <div class="card-body">
-                    <ul class="mb-0">
-                        <li><strong>Check the library first!</strong> Reusing approved assignments is faster and more consistent.</li>
-                        <li>Select a curriculum topic to ensure alignment with your teaching plan</li>
-                        <li>Use specific instructions like vocabulary themes or grammar points</li>
-                        <li>Generated assignments go to "Pending Review" - always review before using</li>
-                        <li>You can edit any generated content before approving</li>
-                        <li>Multiple choice and fill-in-the-blank work best for auto-grading</li>
-                    </ul>
-                </div>
+        <!-- Tips Card -->
+        <div class="bg-white rounded-lg shadow mt-6">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-900 flex items-center">
+                    <svg class="h-4 w-4 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"/>
+                    </svg>
+                    Tips for Better Results
+                </h3>
+            </div>
+            <div class="p-6">
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li class="flex items-start">
+                        <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span><strong>Check the library first!</strong> Reusing approved assignments is faster and more consistent.</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Select a curriculum topic to ensure alignment with your teaching plan</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Use specific instructions like vocabulary themes or grammar points</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Generated assignments go to "Pending Review" - always review before using</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>You can edit any generated content before approving</span>
+                    </li>
+                    <li class="flex items-start">
+                        <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        <span>Multiple choice and fill-in-the-blank work best for auto-grading</span>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
@@ -199,7 +259,8 @@
     document.getElementById('generateForm').addEventListener('submit', function() {
         const btn = document.getElementById('generateBtn');
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating with AI...';
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating with AI...';
     });
 </script>
 }

@@ -234,6 +234,10 @@ public class AssignToStudentsViewModel
 {
     public int AssignmentId { get; set; }
     public string AssignmentTitle { get; set; } = string.Empty;
+    public string? AssignmentDescription { get; set; }
+    public string CefrLevel { get; set; } = string.Empty;
+    public AssignmentType AssignmentType { get; set; }
+    public int TotalPoints { get; set; }
     public List<string> SelectedStudentIds { get; set; } = new();
     public DateTime? DueDate { get; set; }
     public IEnumerable<StudentSelectViewModel> AvailableStudents { get; set; } = new List<StudentSelectViewModel>();
@@ -247,8 +251,48 @@ public class StudentSelectViewModel
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string CefrLevel { get; set; } = string.Empty;
+    public string? CefrLevel { get; set; }
     public bool AlreadyAssigned { get; set; }
+}
+
+/// <summary>
+/// View model for viewing assignment details (read-only).
+/// </summary>
+public class ViewAssignmentViewModel
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string CefrLevel { get; set; } = string.Empty;
+    public AssignmentType Type { get; set; }
+    public AssignmentStatus Status { get; set; }
+    public string? TopicName { get; set; }
+    public int TotalPoints { get; set; }
+    public int BonusPoints { get; set; }
+    public int EstimatedMinutes { get; set; }
+    public string QuestionsJson { get; set; } = "[]";
+    public bool IsAiGenerated { get; set; }
+    public string? CreatedByName { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? ReviewedByName { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public string? ReviewNotes { get; set; }
+    public int SubmissionCount { get; set; }
+    public decimal? AverageScore { get; set; }
+    public List<AssignedStudentInfo> AssignedStudents { get; set; } = new();
+}
+
+/// <summary>
+/// Info about a student assigned to an assignment.
+/// </summary>
+public class AssignedStudentInfo
+{
+    public string StudentName { get; set; } = string.Empty;
+    public StudentAssignmentStatus Status { get; set; }
+    public DateTime AssignedAt { get; set; }
+    public DateTime? DueDate { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public decimal? BestScore { get; set; }
 }
 
 // Curriculum Topic view models

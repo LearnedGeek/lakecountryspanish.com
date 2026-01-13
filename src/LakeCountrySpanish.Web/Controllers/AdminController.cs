@@ -1990,6 +1990,62 @@ public class AdminController : Controller
     }
 
     [HttpGet]
+    public async Task<IActionResult> ViewAssignment(int id)
+    {
+        var assignment = await _context.Assignments
+            .Include(a => a.CurriculumTopic)
+            .Include(a => a.CreatedBy)
+            .Include(a => a.ReviewedBy)
+            .FirstOrDefaultAsync(a => a.Id == id);
+
+        if (assignment == null) return NotFound();
+
+        // Get submission stats
+        var submissions = await _context.AssignmentSubmissions
+            .Where(s => s.AssignmentId == id)
+            .ToListAsync();
+
+        // Get student assignments
+        var studentAssignments = await _context.StudentAssignments
+            .Include(sa => sa.Student)
+            .Where(sa => sa.AssignmentId == id)
+            .OrderByDescending(sa => sa.AssignedAt)
+            .ToListAsync();
+
+        return View(new ViewAssignmentViewModel
+        {
+            Id = assignment.Id,
+            Title = assignment.Title,
+            Description = assignment.Description,
+            CefrLevel = assignment.CefrLevel,
+            Type = assignment.Type,
+            Status = assignment.Status,
+            TopicName = assignment.CurriculumTopic?.Name,
+            TotalPoints = assignment.TotalPoints,
+            BonusPoints = assignment.BonusPoints,
+            EstimatedMinutes = assignment.EstimatedMinutes,
+            QuestionsJson = assignment.QuestionsJson,
+            IsAiGenerated = assignment.IsAiGenerated,
+            CreatedByName = assignment.CreatedBy?.FullName,
+            CreatedAt = assignment.CreatedAt,
+            ReviewedByName = assignment.ReviewedBy?.FullName,
+            ReviewedAt = assignment.ReviewedAt,
+            ReviewNotes = assignment.ReviewNotes,
+            SubmissionCount = submissions.Count,
+            AverageScore = submissions.Any() ? submissions.Average(s => s.PercentageScore) : null,
+            AssignedStudents = studentAssignments.Select(sa => new AssignedStudentInfo
+            {
+                StudentName = sa.Student.FullName,
+                Status = sa.Status,
+                AssignedAt = sa.AssignedAt,
+                DueDate = sa.DueDate,
+                CompletedAt = sa.CompletedAt,
+                BestScore = sa.BestScore
+            }).ToList()
+        });
+    }
+
+    [HttpGet]
     public async Task<IActionResult> EditAssignment(int id)
     {
         var assignment = await _assignmentService.GetAssignmentByIdAsync(id);
@@ -2136,6 +2192,10 @@ public class AdminController : Controller
         {
             AssignmentId = id,
             AssignmentTitle = assignment.Title,
+            AssignmentDescription = assignment.Description,
+            CefrLevel = assignment.CefrLevel,
+            AssignmentType = assignment.Type,
+            TotalPoints = assignment.TotalPoints,
             AvailableStudents = studentViewModels
         });
     }

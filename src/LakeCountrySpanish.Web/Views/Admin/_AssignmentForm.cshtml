@@ -1,18 +1,20 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.EditAssignmentViewModel
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>@(Model.IsNew ? "Create Assignment" : "Edit Assignment")</h1>
-        <a asp-action="Assignments" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Back
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">@(Model.IsNew ? "Create Assignment" : "Edit Assignment")</h1>
+        <a asp-action="Assignments" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
         </a>
     </div>
 
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
 
@@ -20,38 +22,38 @@
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
 
-        <div class="row">
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
             <!-- Left Column - Basic Info -->
-            <div class="col-lg-5">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Basic Information</h5>
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label asp-for="Title" class="form-label">Title</label>
-                            <input asp-for="Title" class="form-control" required />
-                            <span asp-validation-for="Title" class="text-danger"></span>
+                    <div class="p-6 space-y-4">
+                        <div>
+                            <label asp-for="Title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                            <input asp-for="Title" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required />
+                            <span asp-validation-for="Title" class="text-sm text-red-600"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Description" class="form-label">Description</label>
-                            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                        <div>
+                            <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea asp-for="Description" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label asp-for="CefrLevel" class="form-label">CEFR Level</label>
-                                <select asp-for="CefrLevel" class="form-select">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label asp-for="CefrLevel" class="block text-sm font-medium text-gray-700 mb-1">CEFR Level</label>
+                                <select asp-for="CefrLevel" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
                                     {
                                         <option value="@level">@level</option>
                                     }
                                 </select>
                             </div>
-                            <div class="col-md-6">
-                                <label asp-for="Type" class="form-label">Type</label>
-                                <select asp-for="Type" class="form-select">
+                            <div>
+                                <label asp-for="Type" class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <select asp-for="Type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
                                     {
                                         <option value="@type">@type</option>
@@ -60,9 +62,9 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="CurriculumTopicId" class="form-label">Curriculum Topic</label>
-                            <select asp-for="CurriculumTopicId" class="form-select">
+                        <div>
+                            <label asp-for="CurriculumTopicId" class="block text-sm font-medium text-gray-700 mb-1">Curriculum Topic</label>
+                            <select asp-for="CurriculumTopicId" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">-- None --</option>
                                 @foreach (var topic in Model.AvailableTopics)
                                 {
@@ -71,18 +73,18 @@
                             </select>
                         </div>
 
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label asp-for="TotalPoints" class="form-label">Total Points</label>
-                                <input asp-for="TotalPoints" type="number" class="form-control" min="1" />
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label asp-for="TotalPoints" class="block text-sm font-medium text-gray-700 mb-1">Total Points</label>
+                                <input asp-for="TotalPoints" type="number" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
                             </div>
-                            <div class="col-md-4">
-                                <label asp-for="BonusPoints" class="form-label">Bonus Points</label>
-                                <input asp-for="BonusPoints" type="number" class="form-control" min="0" />
+                            <div>
+                                <label asp-for="BonusPoints" class="block text-sm font-medium text-gray-700 mb-1">Bonus Points</label>
+                                <input asp-for="BonusPoints" type="number" min="0" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
                             </div>
-                            <div class="col-md-4">
-                                <label asp-for="EstimatedMinutes" class="form-label">Est. Minutes</label>
-                                <input asp-for="EstimatedMinutes" type="number" class="form-control" min="1" />
+                            <div>
+                                <label asp-for="EstimatedMinutes" class="block text-sm font-medium text-gray-700 mb-1">Est. Minutes</label>
+                                <input asp-for="EstimatedMinutes" type="number" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
                             </div>
                         </div>
                     </div>
@@ -90,16 +92,19 @@
             </div>
 
             <!-- Right Column - Questions & Answers -->
-            <div class="col-lg-7">
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Questions</h5>
-                        <button type="button" class="btn btn-sm btn-primary" onclick="addQuestion()">
-                            <i class="bi bi-plus-lg"></i> Add Question
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-lg shadow mb-6">
+                    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                        <h2 class="text-lg font-semibold text-gray-900">Questions</h2>
+                        <button type="button" onclick="addQuestion()" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Add Question
                         </button>
                     </div>
-                    <div class="card-body">
-                        <div id="questionsContainer">
+                    <div class="p-6">
+                        <div id="questionsContainer" class="space-y-4">
                             <!-- Questions will be added here -->
                         </div>
                         <input type="hidden" asp-for="QuestionsJson" id="questionsJsonInput" />
@@ -107,12 +112,19 @@
                     </div>
                 </div>
 
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-outline-secondary" onclick="previewQuestions()">
-                        <i class="bi bi-eye"></i> Preview
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="previewQuestions()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        Preview
                     </button>
-                    <button type="submit" class="btn btn-primary" onclick="prepareSubmit()">
-                        <i class="bi bi-check-lg"></i> @(Model.IsNew ? "Create Assignment" : "Save Changes")
+                    <button type="submit" onclick="prepareSubmit()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        @(Model.IsNew ? "Create Assignment" : "Save Changes")
                     </button>
                 </div>
             </div>
@@ -122,43 +134,45 @@
 
 <!-- Question Template -->
 <template id="questionTemplate">
-    <div class="card mb-3 question-card" data-index="">
-        <div class="card-header d-flex justify-content-between align-items-center py-2">
-            <span class="question-number">Question 1</span>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(this)">
-                <i class="bi bi-trash"></i>
+    <div class="bg-gray-50 rounded-lg border border-gray-200 question-card" data-index="">
+        <div class="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+            <span class="font-medium text-gray-900 question-number">Question 1</span>
+            <button type="button" onclick="removeQuestion(this)" class="text-red-600 hover:text-red-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
             </button>
         </div>
-        <div class="card-body">
-            <div class="mb-2">
-                <label class="form-label small">Question Text</label>
-                <textarea class="form-control question-text" rows="2" placeholder="Enter the question..."></textarea>
+        <div class="p-4 space-y-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Question Text</label>
+                <textarea class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm question-text" rows="2" placeholder="Enter the question..."></textarea>
             </div>
-            <div class="row mb-2">
-                <div class="col-md-6">
-                    <label class="form-label small">Question Type</label>
-                    <select class="form-select form-select-sm question-type" onchange="updateQuestionType(this)">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Question Type</label>
+                    <select class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm question-type" onchange="updateQuestionType(this)">
                         <option value="multiple_choice">Multiple Choice</option>
                         <option value="fill_in_the_blank">Fill in the Blank</option>
                         <option value="translation">Translation</option>
                         <option value="short_answer">Short Answer</option>
                     </select>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label small">Points</label>
-                    <input type="number" class="form-control form-control-sm question-points" value="1" min="1" />
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Points</label>
+                    <input type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm question-points" value="1" min="1" />
                 </div>
             </div>
             <div class="question-options-container">
                 <!-- Options for multiple choice -->
             </div>
-            <div class="mb-2">
-                <label class="form-label small">Correct Answer</label>
-                <input type="text" class="form-control form-control-sm correct-answer" placeholder="Enter correct answer..." />
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Correct Answer</label>
+                <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm correct-answer" placeholder="Enter correct answer..." />
             </div>
-            <div class="mb-0">
-                <label class="form-label small">Explanation (shown after answering)</label>
-                <input type="text" class="form-control form-control-sm explanation" placeholder="Optional explanation..." />
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Explanation <span class="text-gray-400 font-normal">(shown after answering)</span></label>
+                <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm explanation" placeholder="Optional explanation..." />
             </div>
         </div>
     </div>
@@ -168,7 +182,6 @@
     let questions = [];
 
     document.addEventListener('DOMContentLoaded', function() {
-        // Load existing questions if editing
         const existingJson = document.getElementById('questionsJsonInput').value;
         if (existingJson && existingJson !== '[]') {
             try {
@@ -180,7 +193,7 @@
         }
 
         if (questions.length === 0) {
-            addQuestion(); // Start with one empty question
+            addQuestion();
         }
     });
 
@@ -214,7 +227,6 @@
         document.getElementById('questionsContainer').appendChild(clone);
         updateQuestionType(card.querySelector('.question-type'));
 
-        // Set options if multiple choice
         if (q.type === 'multiple_choice' && q.options) {
             const optionInputs = card.querySelectorAll('.option-input');
             q.options.forEach((opt, i) => {
@@ -246,19 +258,21 @@
 
         if (type === 'multiple_choice') {
             container.innerHTML = `
-                <label class="form-label small">Options</label>
-                <div class="row g-2 mb-2">
-                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option A" /></div>
-                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option B" /></div>
-                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option C" /></div>
-                    <div class="col-6"><input type="text" class="form-control form-control-sm option-input" placeholder="Option D" /></div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Options</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm option-input" placeholder="Option A" />
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm option-input" placeholder="Option B" />
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm option-input" placeholder="Option C" />
+                        <input type="text" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm option-input" placeholder="Option D" />
+                    </div>
                 </div>
             `;
         } else if (type === 'translation') {
             container.innerHTML = `
-                <div class="mb-2">
-                    <label class="form-label small">Translation Direction</label>
-                    <select class="form-select form-select-sm translation-direction">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Translation Direction</label>
+                    <select class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm translation-direction">
                         <option value="Spanish to English">Spanish to English</option>
                         <option value="English to Spanish">English to Spanish</option>
                     </select>

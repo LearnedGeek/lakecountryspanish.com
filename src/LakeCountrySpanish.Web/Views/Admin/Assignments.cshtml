@@ -3,238 +3,233 @@
     ViewData["Title"] = "Manage Assignments";
 }
 
-<div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Assignments</h1>
-        <div>
-            <a asp-action="Topics" class="btn btn-outline-secondary me-2">
-                <i class="bi bi-book"></i> Curriculum Topics
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Assignments</h1>
+        <div class="flex space-x-2">
+            <a asp-action="Topics" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+                Curriculum Topics
             </a>
-            <a asp-action="GenerateAssignment" class="btn btn-primary me-2">
-                <i class="bi bi-robot"></i> AI Generate
+            <a asp-action="GenerateAssignment" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                AI Generate
             </a>
-            <a asp-action="CreateAssignment" class="btn btn-success">
-                <i class="bi bi-plus-lg"></i> Create Manual
+            <a asp-action="CreateAssignment" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create Manual
             </a>
         </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
     <!-- Stats Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-2">
-            <div class="card bg-secondary text-white h-100">
-                <div class="card-body text-center">
-                    <h3 class="mb-0">@Model.Stats.DraftCount</h3>
-                    <small>Draft</small>
-                </div>
-            </div>
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+        <div class="bg-gray-500 rounded-lg shadow p-4 text-center text-white">
+            <p class="text-3xl font-bold">@Model.Stats.DraftCount</p>
+            <p class="text-sm opacity-90">Draft</p>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-warning text-dark h-100">
-                <div class="card-body text-center">
-                    <h3 class="mb-0">@Model.Stats.PendingReviewCount</h3>
-                    <small>Pending Review</small>
-                </div>
-            </div>
+        <div class="bg-yellow-500 rounded-lg shadow p-4 text-center text-white">
+            <p class="text-3xl font-bold">@Model.Stats.PendingReviewCount</p>
+            <p class="text-sm opacity-90">Pending Review</p>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-success text-white h-100">
-                <div class="card-body text-center">
-                    <h3 class="mb-0">@Model.Stats.ApprovedCount</h3>
-                    <small>Approved</small>
-                </div>
-            </div>
+        <div class="bg-green-500 rounded-lg shadow p-4 text-center text-white">
+            <p class="text-3xl font-bold">@Model.Stats.ApprovedCount</p>
+            <p class="text-sm opacity-90">Approved</p>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-danger text-white h-100">
-                <div class="card-body text-center">
-                    <h3 class="mb-0">@Model.Stats.RejectedCount</h3>
-                    <small>Rejected</small>
-                </div>
-            </div>
+        <div class="bg-red-500 rounded-lg shadow p-4 text-center text-white">
+            <p class="text-3xl font-bold">@Model.Stats.RejectedCount</p>
+            <p class="text-sm opacity-90">Rejected</p>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-info text-white h-100">
-                <div class="card-body text-center">
-                    <h3 class="mb-0">@Model.Stats.AiGeneratedCount</h3>
-                    <small>AI Generated</small>
-                </div>
-            </div>
+        <div class="bg-cyan-500 rounded-lg shadow p-4 text-center text-white">
+            <p class="text-3xl font-bold">@Model.Stats.AiGeneratedCount</p>
+            <p class="text-sm opacity-90">AI Generated</p>
         </div>
-        <div class="col-md-2">
-            <div class="card bg-primary text-white h-100">
-                <div class="card-body text-center">
-                    <h3 class="mb-0">@Model.Stats.TotalSubmissions</h3>
-                    <small>Submissions</small>
-                </div>
-            </div>
+        <div class="bg-indigo-500 rounded-lg shadow p-4 text-center text-white">
+            <p class="text-3xl font-bold">@Model.Stats.TotalSubmissions</p>
+            <p class="text-sm opacity-90">Submissions</p>
         </div>
     </div>
 
     <!-- Filters -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <form method="get" class="row g-3 align-items-end">
-                <div class="col-md-3">
-                    <label class="form-label">CEFR Level</label>
-                    <select name="cefrLevel" class="form-select">
-                        <option value="">All Levels</option>
-                        @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
-                        {
-                            <option value="@level" selected="@(Model.FilterCefrLevel == level)">@level</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        <option value="">All Status</option>
-                        @foreach (var status in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentStatus>())
-                        {
-                            <option value="@status" selected="@(Model.FilterStatus == status)">@status</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Type</label>
-                    <select name="type" class="form-select">
-                        <option value="">All Types</option>
-                        @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
-                        {
-                            <option value="@type" selected="@(Model.FilterType == type)">@type</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="bi bi-funnel"></i> Filter
-                    </button>
-                    <a asp-action="Assignments" class="btn btn-outline-secondary">Clear</a>
-                </div>
-            </form>
-        </div>
+    <div class="bg-white rounded-lg shadow mb-6 p-4">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="w-40">
+                <label class="block text-sm font-medium text-gray-700 mb-1">CEFR Level</label>
+                <select name="cefrLevel" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">All Levels</option>
+                    @foreach (var level in new[] { "A1", "A2", "B1", "B2", "C1", "C2" })
+                    {
+                        <option value="@level" selected="@(Model.FilterCefrLevel == level)">@level</option>
+                    }
+                </select>
+            </div>
+            <div class="w-40">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">All Status</option>
+                    @foreach (var status in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentStatus>())
+                    {
+                        <option value="@status" selected="@(Model.FilterStatus == status)">@status</option>
+                    }
+                </select>
+            </div>
+            <div class="w-40">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <select name="type" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                    <option value="">All Types</option>
+                    @foreach (var type in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.AssignmentType>())
+                    {
+                        <option value="@type" selected="@(Model.FilterType == type)">@type</option>
+                    }
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    Filter
+                </button>
+                <a asp-action="Assignments" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Clear
+                </a>
+            </div>
+        </form>
     </div>
 
     <!-- Assignments Table -->
     @if (!Model.Assignments.Any())
     {
-        <div class="text-center py-5">
-            <i class="bi bi-journal-x display-1 text-muted"></i>
-            <h4 class="mt-3 text-muted">No assignments found</h4>
-            <p class="text-muted">Create your first assignment or generate one with AI!</p>
+        <div class="text-center py-12">
+            <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h3 class="mt-4 text-lg font-medium text-gray-900">No assignments found</h3>
+            <p class="mt-2 text-gray-500">Create your first assignment or generate one with AI!</p>
         </div>
     }
     else
     {
-        <div class="card">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Title</th>
-                            <th>Level</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th class="text-center">Points</th>
-                            <th class="text-center">Submissions</th>
-                            <th class="text-center">Avg Score</th>
-                            <th>Created</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var assignment in Model.Assignments)
-                        {
-                            <tr>
-                                <td>
-                                    <strong>@assignment.Title</strong>
-                                    @if (assignment.IsAiGenerated)
-                                    {
-                                        <span class="badge bg-info ms-1" title="AI Generated">
-                                            <i class="bi bi-robot"></i>
-                                        </span>
-                                    }
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Points</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Submissions</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Avg Score</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach (var assignment in Model.Assignments)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <a asp-action="ViewAssignment" asp-route-id="@assignment.Id" class="block">
+                                    <div class="font-medium text-indigo-600 hover:text-indigo-900">
+                                        @assignment.Title
+                                        @if (assignment.IsAiGenerated)
+                                        {
+                                            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-100 text-cyan-800" title="AI Generated">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                                </svg>
+                                                AI
+                                            </span>
+                                        }
+                                    </div>
                                     @if (!string.IsNullOrEmpty(assignment.TopicName))
                                     {
-                                        <br>
-                                        <small class="text-muted">@assignment.TopicName</small>
+                                        <div class="text-sm text-gray-500">@assignment.TopicName</div>
                                     }
-                                </td>
-                                <td><span class="badge bg-secondary">@assignment.CefrLevel</span></td>
-                                <td>@assignment.Type</td>
-                                <td><span class="badge @assignment.StatusBadgeClass">@assignment.Status</span></td>
-                                <td class="text-center">@assignment.TotalPoints</td>
-                                <td class="text-center">@assignment.SubmissionCount</td>
-                                <td class="text-center">
-                                    @if (assignment.AverageScore.HasValue)
+                                </a>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    @assignment.CefrLevel
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">@assignment.Type</td>
+                            <td class="px-6 py-4">
+                                @{
+                                    var statusColor = assignment.Status switch
                                     {
-                                        <span class="@(assignment.AverageScore >= 80 ? "text-success" : assignment.AverageScore >= 60 ? "text-warning" : "text-danger")">
-                                            @assignment.AverageScore.Value.ToString("0")%
-                                        </span>
-                                    }
-                                    else
+                                        LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Draft => "bg-gray-100 text-gray-800",
+                                        LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.PendingReview => "bg-yellow-100 text-yellow-800",
+                                        LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Approved => "bg-green-100 text-green-800",
+                                        LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Rejected => "bg-red-100 text-red-800",
+                                        _ => "bg-gray-100 text-gray-800"
+                                    };
+                                }
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @statusColor">
+                                    @assignment.Status
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-500">@assignment.TotalPoints</td>
+                            <td class="px-6 py-4 text-center text-sm text-gray-500">@assignment.SubmissionCount</td>
+                            <td class="px-6 py-4 text-center text-sm">
+                                @if (assignment.AverageScore.HasValue)
+                                {
+                                    var scoreColor = assignment.AverageScore >= 80 ? "text-green-600" : assignment.AverageScore >= 60 ? "text-yellow-600" : "text-red-600";
+                                    <span class="@scoreColor font-medium">@assignment.AverageScore.Value.ToString("0")%</span>
+                                }
+                                else
+                                {
+                                    <span class="text-gray-400">-</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-sm text-gray-500">
+                                @assignment.CreatedAt.ToString("MMM d")
+                                @if (assignment.ReviewedAt.HasValue)
+                                {
+                                    <div class="text-xs text-gray-400">Reviewed @assignment.ReviewedAt.Value.ToString("MMM d")</div>
+                                }
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex justify-end space-x-2">
+                                    @if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.PendingReview)
                                     {
-                                        <span class="text-muted">-</span>
-                                    }
-                                </td>
-                                <td>
-                                    @assignment.CreatedAt.ToString("MMM d")
-                                    @if (assignment.ReviewedAt.HasValue)
-                                    {
-                                        <br>
-                                        <small class="text-muted">Reviewed @assignment.ReviewedAt.Value.ToString("MMM d")</small>
-                                    }
-                                </td>
-                                <td class="text-end">
-                                    <div class="btn-group">
-                                        @if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.PendingReview)
-                                        {
-                                            <a asp-action="ReviewAssignment" asp-route-id="@assignment.Id"
-                                               class="btn btn-sm btn-warning">
-                                                <i class="bi bi-eye"></i> Review
-                                            </a>
-                                        }
-                                        else if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Approved)
-                                        {
-                                            <a asp-action="AssignToStudents" asp-route-id="@assignment.Id"
-                                               class="btn btn-sm btn-success">
-                                                <i class="bi bi-people"></i> Assign
-                                            </a>
-                                        }
-                                        <a asp-action="EditAssignment" asp-route-id="@assignment.Id"
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-pencil"></i>
+                                        <a asp-action="ReviewAssignment" asp-route-id="@assignment.Id"
+                                           class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-yellow-500 hover:bg-yellow-600">
+                                            Review
                                         </a>
-                                        <form asp-action="DeleteAssignment" asp-route-id="@assignment.Id"
-                                              method="post" class="d-inline"
-                                              onsubmit="return confirm('Delete this assignment?')">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
+                                    }
+                                    else if (assignment.Status == LakeCountrySpanish.Web.Models.Entities.AssignmentStatus.Approved)
+                                    {
+                                        <a asp-action="AssignToStudents" asp-route-id="@assignment.Id"
+                                           class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700">
+                                            Assign
+                                        </a>
+                                    }
+                                    <a asp-action="EditAssignment" asp-route-id="@assignment.Id"
+                                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                                        Edit
+                                    </a>
+                                    <form asp-action="DeleteAssignment" asp-route-id="@assignment.Id"
+                                          method="post" class="inline"
+                                          onsubmit="return confirm('Delete this assignment?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     }
 </div>

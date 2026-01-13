@@ -48,6 +48,22 @@ public class ScheduledClass
     public string? TeacherNotes { get; set; }          // Notes on student progress after completion
     public bool CreditForfeited { get; set; } = false; // True if cancelled within 24 hours (no refund)
 
+    // Student feedback (after class completion)
+    /// <summary>
+    /// Student's rating of the class (1-5 stars)
+    /// </summary>
+    public int? StudentRating { get; set; }
+
+    /// <summary>
+    /// Student's private feedback/comment about the class
+    /// </summary>
+    public string? StudentComment { get; set; }
+
+    /// <summary>
+    /// When the student submitted their feedback
+    /// </summary>
+    public DateTime? FeedbackSubmittedAt { get; set; }
+
     // Navigation properties
     public virtual ApplicationUser Student { get; set; } = null!;
     public virtual TimeSlot TimeSlot { get; set; } = null!;
@@ -55,4 +71,5 @@ public class ScheduledClass
     public virtual StudentPackage? StudentPackage { get; set; }
     public virtual Subscription? Subscription { get; set; }
     public virtual RecurringSchedule? RecurringSchedule { get; set; }
+    public virtual Tip? Tip { get; set; }
 }

@@ -3,58 +3,71 @@
     ViewData["Title"] = $"Adjust Points - {Model.StudentName}";
 }
 
-<div class="container py-4">
-    <h1 class="mb-4">Adjust Points for @Model.StudentName</h1>
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Adjust Points for @Model.StudentName</h1>
+        <a asp-action="StudentGamification" asp-route-id="@Model.StudentId" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
+        </a>
+    </div>
 
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <strong>Current Balance:</strong> @Model.CurrentPoints.ToString("N0") points
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6">
+                    <div class="bg-blue-50 border border-blue-200 text-blue-700 rounded-lg p-4 mb-6">
+                        <span class="font-semibold">Current Balance:</span> @Model.CurrentPoints.ToString("N0") points
                     </div>
 
                     <form method="post">
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="StudentId" />
 
-                        <div class="mb-3">
-                            <label asp-for="Adjustment" class="form-label">Point Adjustment</label>
-                            <input asp-for="Adjustment" type="number" class="form-control"
+                        <div class="mb-4">
+                            <label asp-for="Adjustment" class="block text-sm font-medium text-gray-700 mb-1">Point Adjustment</label>
+                            <input asp-for="Adjustment" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
                                    placeholder="e.g., 50 or -25" required>
-                            <div class="form-text">
+                            <p class="mt-1 text-xs text-gray-500">
                                 Enter a positive number to add points, negative to remove.
-                            </div>
-                            <span asp-validation-for="Adjustment" class="text-danger"></span>
+                            </p>
+                            <span asp-validation-for="Adjustment" class="text-red-600 text-sm"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Reason" class="form-label">Reason</label>
-                            <textarea asp-for="Reason" class="form-control" rows="3"
+                        <div class="mb-6">
+                            <label asp-for="Reason" class="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+                            <textarea asp-for="Reason" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" rows="3"
                                       placeholder="Explain why this adjustment is being made..." required></textarea>
-                            <span asp-validation-for="Reason" class="text-danger"></span>
+                            <span asp-validation-for="Reason" class="text-red-600 text-sm"></span>
                         </div>
 
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">Apply Adjustment</button>
+                        <div class="flex gap-3">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Apply Adjustment
+                            </button>
                             <a asp-action="StudentGamification" asp-route-id="@Model.StudentId"
-                               class="btn btn-outline-secondary">Cancel</a>
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancel</a>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Point Adjustments</h5>
+        <div>
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Point Adjustments</h2>
                 </div>
-                <div class="card-body">
-                    <p class="text-muted">
+                <div class="p-6">
+                    <p class="text-gray-700 mb-4">
                         Manual point adjustments are logged and visible in the student's point history.
                     </p>
-                    <h6>Common Reasons:</h6>
-                    <ul class="text-muted small mb-0">
+                    <h3 class="font-medium text-gray-900 mb-2">Common Reasons:</h3>
+                    <ul class="list-disc list-inside text-sm text-gray-500 space-y-1">
                         <li>Correction for system error</li>
                         <li>Bonus for special achievement</li>
                         <li>Contest or challenge reward</li>

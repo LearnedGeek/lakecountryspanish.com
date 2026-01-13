@@ -1,51 +1,63 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.BadgeEditViewModel
 @using LakeCountrySpanish.Web.Models.Entities
 @{
-    ViewData["Title"] = "Create Badge";
+    ViewData["Title"] = Model.Id.HasValue ? "Edit Badge" : "Create Badge";
 }
 
-<div class="container py-4">
-    <h1 class="mb-4">Create Badge</h1>
+<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">@(Model.Id.HasValue ? "Edit Badge" : "Create Badge")</h1>
+        <a asp-action="Badges" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back
+        </a>
+    </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-body">
-                    <form method="post">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6">
+                    <form method="post" asp-action="@(Model.Id.HasValue ? "EditBadge" : "CreateBadge")">
                         @Html.AntiForgeryToken()
+                        @if (Model.Id.HasValue)
+                        {
+                            <input type="hidden" asp-for="Id" />
+                        }
 
-                        <div class="mb-3">
-                            <label asp-for="Name" class="form-label">Badge Name</label>
-                            <input asp-for="Name" class="form-control" placeholder="e.g., First Steps" required>
-                            <span asp-validation-for="Name" class="text-danger"></span>
+                        <div class="mb-4">
+                            <label asp-for="Name" class="block text-sm font-medium text-gray-700 mb-1">Badge Name</label>
+                            <input asp-for="Name" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="e.g., First Steps" required>
+                            <span asp-validation-for="Name" class="text-red-600 text-sm"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Description" class="form-label">Description</label>
-                            <textarea asp-for="Description" class="form-control" rows="2"
+                        <div class="mb-4">
+                            <label asp-for="Description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                            <textarea asp-for="Description" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" rows="2"
                                       placeholder="e.g., Complete your first lesson" required></textarea>
-                            <span asp-validation-for="Description" class="text-danger"></span>
+                            <span asp-validation-for="Description" class="text-red-600 text-sm"></span>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="IconUrl" class="form-label">Icon URL (optional)</label>
-                            <input asp-for="IconUrl" class="form-control" placeholder="https://example.com/badge-icon.png">
-                            <div class="form-text">Leave empty to use the default trophy icon.</div>
+                        <div class="mb-4">
+                            <label asp-for="IconUrl" class="block text-sm font-medium text-gray-700 mb-1">Icon URL (optional)</label>
+                            <input asp-for="IconUrl" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="https://example.com/badge-icon.png">
+                            <p class="mt-1 text-xs text-gray-500">Leave empty to use the default trophy icon.</p>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="Category" class="form-label">Category</label>
-                                <select asp-for="Category" class="form-select" required>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label asp-for="Category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select asp-for="Category" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" required>
                                     @foreach (BadgeCategory cat in Enum.GetValues(typeof(BadgeCategory)))
                                     {
                                         <option value="@cat">@cat</option>
                                     }
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="RequirementType" class="form-label">Requirement Type</label>
-                                <select asp-for="RequirementType" class="form-select" required>
+                            <div>
+                                <label asp-for="RequirementType" class="block text-sm font-medium text-gray-700 mb-1">Requirement Type</label>
+                                <select asp-for="RequirementType" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" required>
                                     @foreach (BadgeRequirementType req in Enum.GetValues(typeof(BadgeRequirementType)))
                                     {
                                         <option value="@req">@req</option>
@@ -54,75 +66,88 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="RequirementValue" class="form-label">Requirement Value</label>
-                                <input asp-for="RequirementValue" type="number" class="form-control" min="0" required>
-                                <div class="form-text">e.g., 100 for "Earn 100 points"</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label asp-for="RequirementValue" class="block text-sm font-medium text-gray-700 mb-1">Requirement Value</label>
+                                <input asp-for="RequirementValue" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" min="0" required>
+                                <p class="mt-1 text-xs text-gray-500">e.g., 100 for "Earn 100 points"</p>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="RequirementContext" class="form-label">Requirement Context (optional)</label>
-                                <input asp-for="RequirementContext" class="form-control" placeholder="e.g., Grammar, A2">
-                                <div class="form-text">Additional context for topic-specific badges.</div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="BonusPoints" class="form-label">Bonus Points</label>
-                                <input asp-for="BonusPoints" type="number" class="form-control" min="0">
-                                <div class="form-text">Points awarded when badge is earned.</div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="DisplayOrder" class="form-label">Display Order</label>
-                                <input asp-for="DisplayOrder" type="number" class="form-control" min="0">
-                                <div class="form-text">Lower numbers display first.</div>
+                            <div>
+                                <label asp-for="RequirementContext" class="block text-sm font-medium text-gray-700 mb-1">Requirement Context (optional)</label>
+                                <input asp-for="RequirementContext" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" placeholder="e.g., Grammar, A2">
+                                <p class="mt-1 text-xs text-gray-500">Additional context for topic-specific badges.</p>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input asp-for="IsActive" class="form-check-input" type="checkbox">
-                                <label asp-for="IsActive" class="form-check-label">Active</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label asp-for="BonusPoints" class="block text-sm font-medium text-gray-700 mb-1">Bonus Points</label>
+                                <input asp-for="BonusPoints" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" min="0">
+                                <p class="mt-1 text-xs text-gray-500">Points awarded when badge is earned.</p>
                             </div>
-                            <div class="form-text">Inactive badges won't be awarded to new students.</div>
+                            <div>
+                                <label asp-for="DisplayOrder" class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+                                <input asp-for="DisplayOrder" type="number" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm" min="0">
+                                <p class="mt-1 text-xs text-gray-500">Lower numbers display first.</p>
+                            </div>
                         </div>
 
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary">Create Badge</button>
-                            <a asp-action="Badges" class="btn btn-outline-secondary">Cancel</a>
+                        <div class="mb-6">
+                            <div class="flex items-center">
+                                <input asp-for="IsActive" class="h-4 w-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" type="checkbox">
+                                <label asp-for="IsActive" class="ml-2 text-sm text-gray-700">Active</label>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500 ml-6">Inactive badges won't be awarded to new students.</p>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                                <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                @(Model.Id.HasValue ? "Save Changes" : "Create Badge")
+                            </button>
+                            <a asp-action="Badges" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancel</a>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">Requirement Types</h5>
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Requirement Types</h2>
                 </div>
-                <div class="card-body">
-                    <dl class="mb-0">
-                        <dt>Points</dt>
-                        <dd class="text-muted">Earn X total points</dd>
-
-                        <dt>Streak</dt>
-                        <dd class="text-muted">Maintain X-day activity streak</dd>
-
-                        <dt>ClassesCompleted</dt>
-                        <dd class="text-muted">Complete X classes</dd>
-
-                        <dt>PerfectScores</dt>
-                        <dd class="text-muted">Get X perfect scores on assignments</dd>
-
-                        <dt>TopicAssignments</dt>
-                        <dd class="text-muted">Complete X assignments in a topic (use context)</dd>
-
-                        <dt>CefrLevel</dt>
-                        <dd class="text-muted">Reach CEFR level (use context for level)</dd>
-
-                        <dt>Custom</dt>
-                        <dd class="text-muted mb-0">Manually awarded by admin</dd>
+                <div class="p-6">
+                    <dl class="space-y-3">
+                        <div>
+                            <dt class="font-medium text-gray-900">Points</dt>
+                            <dd class="text-sm text-gray-500">Earn X total points</dd>
+                        </div>
+                        <div>
+                            <dt class="font-medium text-gray-900">Streak</dt>
+                            <dd class="text-sm text-gray-500">Maintain X-day activity streak</dd>
+                        </div>
+                        <div>
+                            <dt class="font-medium text-gray-900">ClassesCompleted</dt>
+                            <dd class="text-sm text-gray-500">Complete X classes</dd>
+                        </div>
+                        <div>
+                            <dt class="font-medium text-gray-900">PerfectScores</dt>
+                            <dd class="text-sm text-gray-500">Get X perfect scores on assignments</dd>
+                        </div>
+                        <div>
+                            <dt class="font-medium text-gray-900">TopicAssignments</dt>
+                            <dd class="text-sm text-gray-500">Complete X assignments in a topic (use context)</dd>
+                        </div>
+                        <div>
+                            <dt class="font-medium text-gray-900">CefrLevel</dt>
+                            <dd class="text-sm text-gray-500">Reach CEFR level (use context for level)</dd>
+                        </div>
+                        <div>
+                            <dt class="font-medium text-gray-900">Custom</dt>
+                            <dd class="text-sm text-gray-500">Manually awarded by admin</dd>
+                        </div>
                     </dl>
                 </div>
             </div>
