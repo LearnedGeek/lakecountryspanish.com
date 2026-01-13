@@ -182,8 +182,10 @@ public class StudentBadgeViewModel
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string? IconUrl { get; set; }
-    public string Category { get; set; } = string.Empty;
+    public string? Emoji { get; set; }
+    public BadgeCategory Category { get; set; }
     public DateTime EarnedAt { get; set; }
+    public bool IsNew { get; set; }
 }
 
 /// <summary>

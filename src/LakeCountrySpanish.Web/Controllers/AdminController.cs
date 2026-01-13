@@ -1537,8 +1537,10 @@ public class AdminController : Controller
                 Name = sb.Badge.Name,
                 Description = sb.Badge.Description,
                 IconUrl = sb.Badge.IconUrl,
-                Category = sb.Badge.Category.ToString(),
-                EarnedAt = sb.EarnedAt
+                Emoji = sb.Badge.Emoji,
+                Category = sb.Badge.Category,
+                EarnedAt = sb.EarnedAt,
+                IsNew = !sb.IsViewed
             }).ToList()
         };
 

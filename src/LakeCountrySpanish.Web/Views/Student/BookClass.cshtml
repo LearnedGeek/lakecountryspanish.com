@@ -4,67 +4,105 @@
     var dayNames = new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
 }
 
-<div class="bg-gray-50 min-h-screen">
+<div class="bg-gradient-to-b from-blue-50 via-white to-white min-h-screen">
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        @await Component.InvokeAsync("PageHeader", new {
-            title = "Schedule a Class",
-            subtitle = "Click on an available time slot to book your Spanish lesson.",
-            backUrl = Url.Action("Dashboard"),
-            backText = "Back to Dashboard"
-        })
 
-        <!-- Tickets Available -->
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+        <!-- Hero Header -->
+        <div class="relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl shadow-xl mb-8 overflow-hidden">
+            <div class="absolute inset-0 opacity-10">
+                <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                    <pattern id="calendar-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <circle cx="20" cy="20" r="2" fill="white"/>
+                    </pattern>
+                    <rect fill="url(#calendar-pattern)" width="100%" height="100%"/>
+                </svg>
+            </div>
+            <div class="relative p-6 lg:p-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <a asp-action="Dashboard" class="inline-flex items-center text-blue-200 hover:text-white mb-2 transition">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            Dashboard
+                        </a>
+                        <h1 class="text-3xl font-bold text-white mb-2">Schedule a Class</h1>
+                        <p class="text-blue-100">Click on an available time slot to book your Spanish lesson</p>
+                    </div>
+                    <div class="hidden md:block text-8xl">📅</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tickets Available Banner -->
+        <div class="@(Model.AvailableCredits > 0 ? "bg-gradient-to-r from-green-500 to-emerald-600" : "bg-gradient-to-r from-yellow-500 to-orange-500") rounded-xl shadow-lg p-5 mb-6 text-white">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
-                    <div class="flex-shrink-0 p-2 bg-green-100 rounded-lg">
-                        <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-green-800">Available Tickets: <span class="text-lg font-bold">@Model.AvailableCredits</span></p>
+                    <div class="text-4xl mr-4">🎫</div>
+                    <div>
+                        <p class="text-xl font-bold">@Model.AvailableCredits Available Ticket@(Model.AvailableCredits != 1 ? "s" : "")</p>
+                        <p class="text-white/80 text-sm">
+                            @if (Model.AvailableCredits > 0)
+                            {
+                                @:Ready to book your next class!
+                            }
+                            else
+                            {
+                                @:You need tickets to book classes
+                            }
+                        </p>
                     </div>
                 </div>
-                <a asp-action="TokenStore" class="text-green-700 hover:text-green-800 text-sm font-medium">
-                    Get more
-                </a>
+                @if (Model.AvailableCredits == 0)
+                {
+                    <a asp-action="TokenStore" class="bg-white text-yellow-600 font-semibold px-4 py-2 rounded-lg hover:bg-yellow-50 transition">
+                        Get Tickets
+                    </a>
+                }
             </div>
         </div>
 
         <!-- Legend -->
-        <div class="flex flex-wrap gap-4 mb-4 text-sm">
-            <div class="flex items-center">
-                <div class="w-4 h-4 rounded bg-green-100 border border-green-300 mr-2"></div>
-                <span class="text-gray-600">Available</span>
-            </div>
-            <div class="flex items-center">
-                <div class="w-4 h-4 rounded bg-gray-100 border border-gray-300 mr-2"></div>
-                <span class="text-gray-600">Booked / Unavailable</span>
-            </div>
-            <div class="flex items-center">
-                <div class="w-4 h-4 rounded bg-red-100 border border-red-300 mr-2"></div>
-                <span class="text-gray-600">Blocked Date</span>
-            </div>
-            <div class="flex items-center">
-                <div class="w-4 h-4 rounded bg-yellow-100 border border-yellow-300 mr-2"></div>
-                <span class="text-gray-600">Past Booking Cutoff</span>
+        <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+            <div class="flex flex-wrap gap-4 text-sm">
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-lg bg-green-100 border-2 border-green-400 mr-2 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </div>
+                    <span class="text-gray-700 font-medium">Available</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-lg bg-gray-100 border-2 border-gray-300 mr-2"></div>
+                    <span class="text-gray-600">Booked</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-lg bg-red-100 border-2 border-red-300 mr-2"></div>
+                    <span class="text-gray-600">Blocked</span>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-6 h-6 rounded-lg bg-yellow-100 border-2 border-yellow-300 mr-2"></div>
+                    <span class="text-gray-600">Past Cutoff</span>
+                </div>
             </div>
         </div>
 
-        <!-- Week Navigation -->
-        <div class="bg-white rounded-lg shadow mb-6">
-            <div class="flex items-center justify-between p-4 border-b border-gray-200">
-                <button type="button" onclick="navigateWeek(-1)" class="p-2 hover:bg-gray-100 rounded-lg transition">
-                    <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <!-- Calendar -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+            <!-- Week Navigation -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
+                <button type="button" onclick="navigateWeek(-1)" class="p-2 hover:bg-white rounded-lg transition shadow-sm bg-white/50">
+                    <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                     </svg>
                 </button>
-                <h2 class="text-lg font-semibold text-gray-900" id="weekDisplay">
+                <h2 class="text-lg font-bold text-gray-900 flex items-center" id="weekDisplay">
+                    <span class="text-xl mr-2">📆</span>
                     @Model.WeeklyCalendar.WeekStart.ToString("MMM d") - @Model.WeeklyCalendar.WeekEnd.ToString("MMM d, yyyy")
                 </h2>
-                <button type="button" onclick="navigateWeek(1)" class="p-2 hover:bg-gray-100 rounded-lg transition">
-                    <svg class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <button type="button" onclick="navigateWeek(1)" class="p-2 hover:bg-white rounded-lg transition shadow-sm bg-white/50">
+                    <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
                 </button>
@@ -75,77 +113,127 @@
                 <table class="min-w-full" id="calendarTable">
                     <thead>
                         <tr class="bg-gray-50">
-                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-24">Time</th>
+                            <th class="px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Time
+                                </span>
+                            </th>
                             @foreach (var day in Model.WeeklyCalendar.Days)
                             {
                                 var isToday = day.Date.Date == DateTime.Today;
-                                <th class="px-2 py-3 text-center text-xs font-medium uppercase @(isToday ? "bg-primary-50 text-primary-700" : "text-gray-500")">
-                                    <div>@dayNames[(int)day.Date.DayOfWeek]</div>
-                                    <div class="text-sm font-semibold @(isToday ? "text-primary-700" : "text-gray-900")">@day.Date.Day</div>
+                                <th class="px-2 py-4 text-center @(isToday ? "bg-indigo-100" : "")">
+                                    <div class="text-xs font-medium uppercase @(isToday ? "text-indigo-600" : "text-gray-500")">@dayNames[(int)day.Date.DayOfWeek]</div>
+                                    <div class="@(isToday ? "bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center mx-auto mt-1" : "text-lg font-semibold text-gray-900 mt-1")">
+                                        @day.Date.Day
+                                    </div>
+                                    @if (isToday)
+                                    {
+                                        <div class="text-xs text-indigo-600 font-medium mt-1">Today</div>
+                                    }
                                 </th>
                             }
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200" id="calendarBody">
+                    <tbody class="divide-y divide-gray-100" id="calendarBody">
                         @foreach (var timeSlot in Model.WeeklyCalendar.AllTimeSlots)
                         {
-                            <tr>
+                            <tr class="hover:bg-gray-50">
                                 <td class="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
                                     @(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt"))
                                 </td>
                                 @foreach (var day in Model.WeeklyCalendar.Days)
                                 {
-                                    // Match by StartTime, not by ID (different days have different slot IDs)
                                     var slot = day.TimeSlots.FirstOrDefault(ts => ts.StartTime == timeSlot.StartTime);
-                                    var cellClass = "bg-gray-50 text-gray-400";
+                                    var isToday = day.Date.Date == DateTime.Today;
+
+                                    string cellBg, cellBorder, cellHover, icon;
                                     var clickable = false;
                                     var tooltip = "";
 
                                     if (day.IsBlocked)
                                     {
-                                        cellClass = "bg-red-50 text-red-400";
+                                        cellBg = "bg-red-50";
+                                        cellBorder = "border-red-200";
+                                        cellHover = "";
+                                        icon = "blocked";
                                         tooltip = day.BlockedReason ?? "Blocked";
                                     }
                                     else if (slot == null || !slot.SlotExistsForDay)
                                     {
-                                        cellClass = "bg-gray-50 text-gray-300";
+                                        cellBg = "bg-gray-50";
+                                        cellBorder = "border-gray-100";
+                                        cellHover = "";
+                                        icon = "none";
                                         tooltip = "Not available";
                                     }
                                     else if (slot.IsPastBookingCutoff)
                                     {
-                                        cellClass = "bg-yellow-50 text-yellow-500";
-                                        tooltip = "Past booking cutoff (1 hour)";
+                                        cellBg = "bg-yellow-50";
+                                        cellBorder = "border-yellow-200";
+                                        cellHover = "";
+                                        icon = "past";
+                                        tooltip = "Past booking cutoff";
                                     }
                                     else if (!slot.IsAvailable)
                                     {
-                                        cellClass = "bg-gray-100 text-gray-500";
+                                        cellBg = "bg-gray-100";
+                                        cellBorder = "border-gray-200";
+                                        cellHover = "";
+                                        icon = "booked";
                                         tooltip = "Already booked";
                                     }
                                     else
                                     {
-                                        cellClass = "bg-green-50 text-green-700 hover:bg-green-100 cursor-pointer";
+                                        cellBg = "bg-green-50";
+                                        cellBorder = "border-green-300";
+                                        cellHover = "hover:bg-green-100 hover:border-green-400 cursor-pointer hover:scale-105 transition-all";
+                                        icon = "available";
                                         clickable = true;
-                                        tooltip = "Click to book";
+                                        tooltip = "Click to book!";
                                     }
 
-                                    <td class="px-2 py-3 text-center">
+                                    <td class="px-2 py-2 @(isToday ? "bg-indigo-50/50" : "")">
                                         @if (clickable && slot != null)
                                         {
                                             <button type="button"
-                                                    class="w-full py-2 px-1 rounded @cellClass transition text-sm"
+                                                    class="w-full py-3 px-2 rounded-lg @cellBg border-2 @cellBorder @cellHover text-center"
                                                     onclick="openBookingModal(@slot.TimeSlotId, '@day.Date.ToString("yyyy-MM-dd")', '@(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt"))', '@day.Date.ToString("dddd, MMM d")')"
                                                     title="@tooltip">
-                                                <svg class="h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                                </svg>
+                                                <div class="flex items-center justify-center">
+                                                    <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                                    </svg>
+                                                </div>
                                             </button>
                                         }
                                         else
                                         {
-                                            <div class="w-full py-2 px-1 rounded @cellClass text-sm" title="@tooltip">
-                                                <svg class="h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                                                </svg>
+                                            <div class="w-full py-3 px-2 rounded-lg @cellBg border @cellBorder text-center" title="@tooltip">
+                                                @if (icon == "blocked")
+                                                {
+                                                    <svg class="h-5 w-5 mx-auto text-red-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                    </svg>
+                                                }
+                                                else if (icon == "booked")
+                                                {
+                                                    <svg class="h-5 w-5 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                }
+                                                else if (icon == "past")
+                                                {
+                                                    <svg class="h-5 w-5 mx-auto text-yellow-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                }
+                                                else
+                                                {
+                                                    <div class="h-5"></div>
+                                                }
                                             </div>
                                         }
                                     </td>
@@ -158,81 +246,115 @@
 
             @if (!Model.WeeklyCalendar.AllTimeSlots.Any())
             {
-                @await Component.InvokeAsync("EmptyState", new {
-                    icon = "calendar",
-                    title = "No time slots have been configured",
-                    message = "Please check back later."
-                })
+                <div class="p-12 text-center">
+                    <div class="text-5xl mb-4">📭</div>
+                    <h3 class="text-lg font-semibold text-gray-900">No time slots available</h3>
+                    <p class="text-gray-500 mt-1">Please check back later for availability.</p>
+                </div>
             }
         </div>
+
+        <!-- Quick Tips -->
+        <div class="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-100">
+            <h3 class="font-semibold text-indigo-900 mb-3 flex items-center">
+                <span class="text-xl mr-2">💡</span>
+                Booking Tips
+            </h3>
+            <ul class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-indigo-800">
+                <li class="flex items-start">
+                    <svg class="w-5 h-5 text-indigo-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Book at least 1 hour in advance
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-5 h-5 text-indigo-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Cancel 24+ hours ahead to save your ticket
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-5 h-5 text-indigo-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Book recurring classes for regular practice
+                </li>
+                <li class="flex items-start">
+                    <svg class="w-5 h-5 text-indigo-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Navigate weeks to see future availability
+                </li>
+            </ul>
+        </div>
+
     </div>
 </div>
 
 <!-- Booking Modal -->
-<div id="bookingModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">Book a Class</h3>
-        <p class="text-gray-600 mb-4">
-            <span id="modalDate" class="font-medium"></span> at <span id="modalTime" class="font-medium"></span>
-        </p>
+<div id="bookingModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all">
+        <div class="text-center mb-6">
+            <div class="text-5xl mb-3">📚</div>
+            <h3 class="text-xl font-bold text-gray-900">Book Your Class</h3>
+            <p class="text-gray-600 mt-2">
+                <span id="modalDate" class="font-medium text-indigo-600"></span> at <span id="modalTime" class="font-medium text-indigo-600"></span>
+            </p>
+        </div>
 
         <div class="space-y-4">
             <!-- Single Booking -->
             <form asp-action="BookClass" method="post" id="singleBookForm">
                 <input type="hidden" name="timeSlotId" id="singleTimeSlotId" />
                 <input type="hidden" name="classDateTime" id="singleDateTime" />
-                @await Component.InvokeAsync("Button", new {
-                    text = "Book This Class (1 Ticket)",
-                    type = "primary",
-                    icon = "calendar",
-                    cssClass = "w-full justify-center"
-                })
+                <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg transform hover:scale-102 transition flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    Book This Class (1 Ticket)
+                </button>
             </form>
 
             @if (Model.AvailableCredits > 1)
             {
-                <div class="relative">
+                <div class="relative py-4">
                     <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-300"></div>
+                        <div class="w-full border-t border-gray-200"></div>
                     </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="bg-white px-2 text-gray-500">or book recurring</span>
+                    <div class="relative flex justify-center">
+                        <span class="bg-white px-4 text-sm text-gray-500">or book recurring</span>
                     </div>
                 </div>
 
                 <!-- Recurring Booking -->
-                <form asp-action="BookRecurringClasses" method="post" id="recurringBookForm">
+                <form asp-action="BookRecurringClasses" method="post" id="recurringBookForm" class="bg-gray-50 rounded-xl p-4">
                     <input type="hidden" name="timeSlotId" id="recurringTimeSlotId" />
                     <input type="hidden" name="startDate" id="recurringStartDate" />
                     <div class="flex items-center space-x-3">
-                        <label class="text-sm text-gray-700 whitespace-nowrap">Book for</label>
-                        <select name="weekCount" id="weekCount" class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                        <label class="text-sm text-gray-700 whitespace-nowrap font-medium">Book for</label>
+                        <select name="weekCount" id="weekCount" class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @for (int i = 2; i <= Math.Min(Model.AvailableCredits, 12); i++)
                             {
-                                <option value="@i">@i weeks</option>
+                                <option value="@i">@i weeks (@i tickets)</option>
                             }
                         </select>
-                        @await Component.InvokeAsync("Button", new {
-                            text = "Book Recurring",
-                            type = "success",
-                            size = "sm"
-                        })
+                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                            Book
+                        </button>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">
-                        Same time slot, same day of week. Conflicts will be skipped.
+                    <p class="text-xs text-gray-500 mt-3 flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Same time slot, same day each week. Conflicts will be skipped.
                     </p>
                 </form>
             }
         </div>
 
-        <div class="mt-6 pt-4 border-t border-gray-200">
-            @await Component.InvokeAsync("Button", new {
-                text = "Cancel",
-                type = "secondary",
-                onclick = "closeBookingModal()",
-                cssClass = "w-full justify-center"
-            })
-        </div>
+        <button onclick="closeBookingModal()" class="mt-6 w-full py-3 text-gray-600 hover:text-gray-800 font-medium transition">
+            Cancel
+        </button>
     </div>
 </div>
 
@@ -254,10 +376,12 @@
             document.getElementById('modalDate').textContent = displayDate;
             document.getElementById('modalTime').textContent = timeStr;
             document.getElementById('bookingModal').classList.remove('hidden');
+            document.getElementById('bookingModal').classList.add('flex');
         }
 
         function closeBookingModal() {
             document.getElementById('bookingModal').classList.add('hidden');
+            document.getElementById('bookingModal').classList.remove('flex');
         }
 
         // Close modal on escape key
@@ -275,3 +399,9 @@
         });
     </script>
 }
+
+<style>
+    .hover\:scale-102:hover {
+        transform: scale(1.02);
+    }
+</style>

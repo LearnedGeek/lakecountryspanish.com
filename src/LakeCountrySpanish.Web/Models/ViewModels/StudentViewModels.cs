@@ -22,9 +22,81 @@ public class StudentDashboardViewModel
     public string? CefrLevel { get; set; }
     public bool HasTakenPlacementTest { get; set; }
 
-    // Gamification quick stats
+    // Gamification stats
     public int TotalTokens { get; set; }
+    public int TotalPoints { get; set; }
     public int PointsToNextToken { get; set; }
+    public int PointProgressPercent => TotalPoints % 100;
+
+    // Streak tracking
+    public int CurrentStreak { get; set; }
+    public int LongestStreak { get; set; }
+    public bool ActivityToday { get; set; }
+    public DateTime? LastActivityDate { get; set; }
+
+    // Badges
+    public IEnumerable<StudentBadgeViewModel> RecentBadges { get; set; } = new List<StudentBadgeViewModel>();
+    public int TotalBadgesEarned { get; set; }
+    public IEnumerable<StudentBadgeViewModel> NewBadges { get; set; } = new List<StudentBadgeViewModel>(); // Unviewed badges
+
+    // Activity stats
+    public int ClassesThisMonth { get; set; }
+    public int AssignmentsCompletedThisWeek { get; set; }
+    public int TotalClassesCompleted { get; set; }
+
+    // Next class countdown
+    public ScheduledClass? NextClass { get; set; }
+
+    // In-progress assignments
+    public IEnumerable<InProgressAssignmentViewModel> InProgressAssignments { get; set; } = new List<InProgressAssignmentViewModel>();
+
+    // Mascot state (based on activity/progress)
+    public string MascotMood => GetMascotMood();
+
+    private string GetMascotMood()
+    {
+        if (NewBadges.Any()) return "celebrating";
+        if (CurrentStreak >= 7) return "excited";
+        if (ActivityToday) return "happy";
+        if (CurrentStreak == 0 && LastActivityDate.HasValue && (DateTime.Now - LastActivityDate.Value).TotalDays > 3) return "missing-you";
+        if (UpcomingClasses.Any() && NextClass != null && (NextClass.ClassDateTime - DateTime.Now).TotalHours < 2) return "ready";
+        return "friendly";
+    }
+
+    // Personalized greeting
+    public string GetGreeting()
+    {
+        var hour = DateTime.Now.Hour;
+        var greeting = hour switch
+        {
+            < 12 => "Buenos dias",
+            < 17 => "Buenas tardes",
+            _ => "Buenas noches"
+        };
+
+        if (NewBadges.Any())
+            return $"{greeting}, {StudentName}! You earned a new badge!";
+        if (CurrentStreak >= 7)
+            return $"{greeting}, {StudentName}! You're on fire with a {CurrentStreak}-day streak!";
+        if (CurrentStreak > 0 && ActivityToday)
+            return $"{greeting}, {StudentName}! Keep that {CurrentStreak}-day streak going!";
+        if (NextClass != null && (NextClass.ClassDateTime - DateTime.Now).TotalHours < 24)
+            return $"{greeting}, {StudentName}! Your next class is coming up soon!";
+        if (InProgressAssignments.Any())
+            return $"{greeting}, {StudentName}! Ready to continue learning?";
+
+        return $"{greeting}, {StudentName}!";
+    }
+}
+
+public class InProgressAssignmentViewModel
+{
+    public int StudentAssignmentId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string? CefrLevel { get; set; }
+    public int TotalPoints { get; set; }
+    public DateTime? DueDate { get; set; }
+    public bool IsOverdue => DueDate.HasValue && DueDate.Value < DateTime.Now;
 }
 
 public class CreateStudentViewModel
