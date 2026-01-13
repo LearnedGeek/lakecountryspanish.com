@@ -92,6 +92,47 @@ public static class SeedData
             await context.SaveChangesAsync();
         }
 
+        // Seed subscription tiers if none exist
+        if (!context.SubscriptionTiers.Any())
+        {
+            var subscriptionTiers = new List<SubscriptionTier>
+            {
+                new SubscriptionTier
+                {
+                    Name = "Starter",
+                    Description = "Perfect for casual learners. One class per week to build a consistent foundation.",
+                    ClassesPerMonth = 4,
+                    MonthlyPrice = 100.00m,
+                    PointsMultiplier = 1.5m,
+                    DisplayOrder = 1,
+                    IsActive = true
+                },
+                new SubscriptionTier
+                {
+                    Name = "Standard",
+                    Description = "Our most popular plan. Twice weekly classes for steady, noticeable progress.",
+                    ClassesPerMonth = 8,
+                    MonthlyPrice = 176.00m,
+                    PointsMultiplier = 1.5m,
+                    DisplayOrder = 2,
+                    IsActive = true
+                },
+                new SubscriptionTier
+                {
+                    Name = "Intensive",
+                    Description = "Accelerate your learning with three classes per week. Best value per class!",
+                    ClassesPerMonth = 12,
+                    MonthlyPrice = 240.00m,
+                    PointsMultiplier = 1.5m,
+                    DisplayOrder = 3,
+                    IsActive = true
+                }
+            };
+
+            context.SubscriptionTiers.AddRange(subscriptionTiers);
+            await context.SaveChangesAsync();
+        }
+
         // Seed default badges if none exist
         if (!context.Badges.Any())
         {

@@ -13,9 +13,10 @@
         <p class="text-gray-600 mb-8">
             You don't have permission to access this page.
         </p>
-        <a asp-controller="Home" asp-action="Index"
-           class="inline-flex items-center justify-center rounded-md bg-primary-600 px-6 py-3 text-sm font-semibold text-white hover:bg-primary-700 transition">
-            Go to Home
-        </a>
+        @await Component.InvokeAsync("Button", new {
+            text = "Go to Home",
+            href = Url.Action("Index", "Home"),
+            type = "primary"
+        })
     </div>
 </div>

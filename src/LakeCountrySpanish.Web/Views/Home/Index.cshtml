@@ -1,4 +1,4 @@
-@model IEnumerable<LakeCountrySpanish.Web.Models.Entities.Package>
+@model LakeCountrySpanish.Web.Models.ViewModels.HomeViewModel
 @{
     ViewData["Title"] = "Home";
 }
@@ -72,66 +72,325 @@
 <div class="bg-gray-50 py-16">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Simple, Transparent Pricing</h2>
-            <p class="mt-4 text-lg text-gray-600">Choose the package that works best for your learning goals</p>
+            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Flexible Pricing Options</h2>
+            <p class="mt-4 text-lg text-gray-600">Start with a trial class or subscribe monthly. You choose your schedule, you control your budget!</p>
+            <p class="mt-2 text-sm text-gray-500">All lessons include personalized curriculum, learning materials, and flexible scheduling.</p>
         </div>
 
-        <div class="mt-12 grid gap-8 lg:grid-cols-4">
-            @foreach (var package in Model)
+        <div class="mt-12 grid gap-6 lg:grid-cols-4">
+            <!-- Trial / Single Class Card -->
+            <div class="relative flex flex-col rounded-2xl border-2 border-secondary-400 shadow-md bg-gradient-to-b from-secondary-50 to-white p-6">
+                <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <span class="bg-secondary-500 text-white text-sm font-semibold px-4 py-1 rounded-full">New Students</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-xl font-semibold text-gray-900">Try It Out</h3>
+                    <p class="mt-1 text-sm text-gray-500">Single class</p>
+
+                    <p class="mt-4 flex items-baseline">
+                        <span class="text-2xl font-medium text-gray-400 line-through mr-2">$30</span>
+                        <span class="text-3xl font-bold tracking-tight text-secondary-600">Special</span>
+                    </p>
+                    <p class="mt-1 text-sm text-secondary-600 font-medium">New student pricing available!</p>
+
+                    <p class="mt-4 text-gray-600 text-sm">Perfect for trying your first lesson. Contact Karen for special introductory rates.</p>
+
+                    <ul class="mt-5 space-y-2">
+                        <li class="flex items-center text-gray-600 text-sm">
+                            <svg class="h-4 w-4 text-secondary-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            1-hour personalized lesson
+                        </li>
+                        <li class="flex items-center text-gray-600 text-sm">
+                            <svg class="h-4 w-4 text-secondary-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            No commitment required
+                        </li>
+                        <li class="flex items-center text-gray-600 text-sm">
+                            <svg class="h-4 w-4 text-secondary-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                            Trial packages available
+                        </li>
+                    </ul>
+                </div>
+                <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-secondary-500 hover:bg-secondary-600 py-3 text-center text-sm font-semibold text-white transition">
+                    Get Trial Pricing
+                </a>
+            </div>
+
+            <!-- Subscription Tiers -->
+            @if (Model.SubscriptionTiers.Any())
             {
-                var isPopular = package.ClassCount == 10;
-                <div class="relative flex flex-col rounded-2xl border @(isPopular ? "border-primary-500 border-2" : "border-gray-200") bg-white p-8 shadow-sm">
-                    @if (isPopular)
-                    {
-                        <div class="absolute -top-4 left-1/2 -translate-x-1/2">
-                            <span class="bg-primary-500 text-white text-sm font-semibold px-4 py-1 rounded-full">Most Popular</span>
-                        </div>
-                    }
-                    <div class="flex-1">
-                        <h3 class="text-xl font-semibold text-gray-900">@package.Name</h3>
-                        <p class="mt-4 flex items-baseline">
-                            <span class="text-4xl font-bold tracking-tight text-gray-900">$@package.Price.ToString("0")</span>
-                            @if (package.ClassCount > 1)
+                @foreach (var tier in Model.SubscriptionTiers.Take(3))
+                {
+                    var isHighlighted = tier.IsPopular || tier.IsBestValue;
+                    <div class="relative flex flex-col rounded-2xl border-2 @(isHighlighted ? (tier.IsPopular ? "border-primary-500" : "border-green-500") + " shadow-xl" : "border-gray-200 shadow-sm") bg-white p-6">
+                        @if (tier.IsPopular)
+                        {
+                            <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                                <span class="bg-primary-500 text-white text-sm font-semibold px-4 py-1 rounded-full">Most Popular</span>
+                            </div>
+                        }
+                        else if (tier.IsBestValue)
+                        {
+                            <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                                <span class="bg-green-500 text-white text-sm font-semibold px-4 py-1 rounded-full">Best Value</span>
+                            </div>
+                        }
+                        <div class="flex-1">
+                            <h3 class="text-xl font-semibold text-gray-900">@tier.Name</h3>
+                            <p class="mt-1 text-sm text-gray-500">@tier.FrequencyDescription</p>
+
+                            <p class="mt-4 flex items-baseline">
+                                <span class="text-3xl font-bold tracking-tight text-gray-900">$@tier.PerClassPrice.ToString("0")</span>
+                                <span class="ml-1 text-sm text-gray-500">/class</span>
+                            </p>
+                            <p class="mt-1 text-sm text-gray-500">@tier.ClassesPerMonth classes = $@tier.MonthlyPrice.ToString("0")/mo</p>
+
+                            @if (tier.SavingsPercent > 0)
                             {
-                                <span class="ml-2 text-sm text-gray-500">($@((package.Price / package.ClassCount).ToString("0.00"))/class)</span>
+                                <div class="mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <svg class="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    Save @tier.SavingsPercent%
+                                </div>
                             }
+
+                            <p class="mt-3 text-gray-600 text-sm">@tier.Description</p>
+
+                            <ul class="mt-4 space-y-2">
+                                <li class="flex items-center text-gray-600 text-sm">
+                                    <svg class="h-4 w-4 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                    </svg>
+                                    You set your schedule
+                                </li>
+                                <li class="flex items-center text-gray-600 text-sm">
+                                    <svg class="h-4 w-4 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                    </svg>
+                                    Earn rewards &amp; free classes
+                                </li>
+                                <li class="flex items-center text-gray-600 text-sm">
+                                    <svg class="h-4 w-4 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                    </svg>
+                                    Adjust monthly
+                                </li>
+                            </ul>
+                        </div>
+                        <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg @(tier.IsPopular ? "bg-primary-600 hover:bg-primary-700" : tier.IsBestValue ? "bg-green-600 hover:bg-green-700" : "bg-gray-800 hover:bg-gray-900") py-3 text-center text-sm font-semibold text-white transition">
+                            Contact Karen
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <!-- Fallback: Starter tier -->
+                <div class="relative flex flex-col rounded-2xl border-2 border-gray-200 shadow-sm bg-white p-6">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-gray-900">Starter</h3>
+                        <p class="mt-1 text-sm text-gray-500">~1x per week</p>
+                        <p class="mt-4 flex items-baseline">
+                            <span class="text-3xl font-bold tracking-tight text-gray-900">$25</span>
+                            <span class="ml-1 text-sm text-gray-500">/class</span>
                         </p>
-                        <p class="mt-4 text-gray-600">@package.Description</p>
-                        <ul class="mt-6 space-y-3">
-                            <li class="flex items-center text-gray-600">
-                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <p class="mt-1 text-sm text-gray-500">4 classes = $100/mo</p>
+                        <ul class="mt-4 space-y-2">
+                            <li class="flex items-center text-gray-600 text-sm">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                 </svg>
-                                @package.ClassCount hour-long @(package.ClassCount == 1 ? "lesson" : "lessons")
+                                You set your schedule
                             </li>
-                            <li class="flex items-center text-gray-600">
-                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <li class="flex items-center text-gray-600 text-sm">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                 </svg>
-                                Personalized curriculum
-                            </li>
-                            <li class="flex items-center text-gray-600">
-                                <svg class="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                                Learning materials included
+                                Earn rewards
                             </li>
                         </ul>
                     </div>
-                    <a asp-controller="Contact" asp-action="Index" class="mt-8 block w-full rounded-lg @(isPopular ? "bg-primary-600 hover:bg-primary-700" : "bg-gray-800 hover:bg-gray-900") py-3 text-center text-sm font-semibold text-white transition">
-                        Get Started
+                    <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-gray-800 hover:bg-gray-900 py-3 text-center text-sm font-semibold text-white transition">
+                        Contact Karen
+                    </a>
+                </div>
+
+                <!-- Fallback: Standard tier -->
+                <div class="relative flex flex-col rounded-2xl border-2 border-primary-500 shadow-xl bg-white p-6">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <span class="bg-primary-500 text-white text-sm font-semibold px-4 py-1 rounded-full">Most Popular</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-gray-900">Standard</h3>
+                        <p class="mt-1 text-sm text-gray-500">~2x per week</p>
+                        <p class="mt-4 flex items-baseline">
+                            <span class="text-3xl font-bold tracking-tight text-gray-900">$22</span>
+                            <span class="ml-1 text-sm text-gray-500">/class</span>
+                        </p>
+                        <p class="mt-1 text-sm text-gray-500">8 classes = $176/mo</p>
+                        <div class="mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Save 27%
+                        </div>
+                        <ul class="mt-4 space-y-2">
+                            <li class="flex items-center text-gray-600 text-sm">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                You set your schedule
+                            </li>
+                            <li class="flex items-center text-gray-600 text-sm">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                Earn rewards &amp; free classes
+                            </li>
+                        </ul>
+                    </div>
+                    <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-primary-600 hover:bg-primary-700 py-3 text-center text-sm font-semibold text-white transition">
+                        Contact Karen
+                    </a>
+                </div>
+
+                <!-- Fallback: Intensive tier -->
+                <div class="relative flex flex-col rounded-2xl border-2 border-green-500 shadow-xl bg-white p-6">
+                    <div class="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <span class="bg-green-500 text-white text-sm font-semibold px-4 py-1 rounded-full">Best Value</span>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-semibold text-gray-900">Intensive</h3>
+                        <p class="mt-1 text-sm text-gray-500">~3x per week</p>
+                        <p class="mt-4 flex items-baseline">
+                            <span class="text-3xl font-bold tracking-tight text-gray-900">$20</span>
+                            <span class="ml-1 text-sm text-gray-500">/class</span>
+                        </p>
+                        <p class="mt-1 text-sm text-gray-500">12 classes = $240/mo</p>
+                        <div class="mt-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Save 33%
+                        </div>
+                        <ul class="mt-4 space-y-2">
+                            <li class="flex items-center text-gray-600 text-sm">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                You set your schedule
+                            </li>
+                            <li class="flex items-center text-gray-600 text-sm">
+                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                                Earn rewards &amp; free classes
+                            </li>
+                        </ul>
+                    </div>
+                    <a asp-controller="Contact" asp-action="Index" class="mt-6 block w-full rounded-lg bg-green-600 hover:bg-green-700 py-3 text-center text-sm font-semibold text-white transition">
+                        Contact Karen
                     </a>
                 </div>
             }
+        </div>
+
+        <!-- Pricing Info -->
+        <div class="mt-10 text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-gray-200">
+                <svg class="h-5 w-5 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm text-gray-600">
+                    <strong>Subscriptions are flexible:</strong> You choose how many classes to schedule each month. Renews automatically unless you adjust by the 3rd week.
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rewards Section -->
+<div class="bg-gradient-to-r from-secondary-500 to-secondary-600 py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+            <div class="text-white">
+                <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Earn Rewards While You Learn</h2>
+                <p class="mt-4 text-lg text-secondary-100">
+                    Learning Spanish is more fun when you're earning rewards! Complete assignments, earn badges,
+                    and unlock free classes as you progress.
+                </p>
+                <ul class="mt-8 space-y-4">
+                    <li class="flex items-start">
+                        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Earn Points</h4>
+                            <p class="text-secondary-100 text-sm">Complete exercises, give feedback, and stay consistent to earn points.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Collect Badges</h4>
+                            <p class="text-secondary-100 text-sm">Unlock achievements for milestones, streaks, and mastering topics.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">Redeem Rewards</h4>
+                            <p class="text-secondary-100 text-sm">Use your points for free classes, bring-a-friend passes, and more!</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="mt-10 lg:mt-0">
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-secondary-100 mb-4">
+                            <svg class="w-8 h-8 text-secondary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Subscribers Earn 1.5x Points!</h3>
+                        <p class="mt-2 text-gray-600">Monthly subscribers earn bonus points on every activity,
+                        helping you unlock free classes faster.</p>
+                    </div>
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-primary-600">100</div>
+                                <div class="text-xs text-gray-500">Points = 1 Free Class</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-secondary-600">15+</div>
+                                <div class="text-xs text-gray-500">Badges to Earn</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-green-600">Never</div>
+                                <div class="text-xs text-gray-500">Points Expire</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Testimonials Section -->
-@{
-    var testimonials = ViewBag.Testimonials as IEnumerable<LakeCountrySpanish.Web.Models.ViewModels.TestimonialDisplayViewModel>;
-}
-@if (testimonials != null && testimonials.Any())
+@if (Model.Testimonials.Any())
 {
     <div class="bg-white py-16">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -141,7 +400,7 @@
             </div>
 
             <div class="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                @foreach (var testimonial in testimonials.Take(6))
+                @foreach (var testimonial in Model.Testimonials)
                 {
                     <div class="bg-gray-50 rounded-xl p-6 shadow-sm">
                         <div class="flex items-center mb-4">
@@ -162,34 +421,41 @@
 }
 
 <!-- How It Works Section -->
-<div class="bg-white py-16">
+<div class="bg-gray-50 py-16">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
             <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">How It Works</h2>
             <p class="mt-4 text-lg text-gray-600">Getting started is easy</p>
         </div>
 
-        <div class="mt-12 grid gap-8 md:grid-cols-3">
+        <div class="mt-12 grid gap-8 md:grid-cols-4">
             <div class="text-center">
                 <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
                     <span class="text-2xl font-bold">1</span>
                 </div>
                 <h3 class="mt-6 text-lg font-semibold text-gray-900">Contact Karen</h3>
-                <p class="mt-2 text-gray-600">Fill out the contact form to introduce yourself and discuss your learning goals.</p>
+                <p class="mt-2 text-gray-600 text-sm">Fill out the contact form to introduce yourself and discuss your learning goals. Karen will create your personalized account.</p>
             </div>
             <div class="text-center">
                 <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
                     <span class="text-2xl font-bold">2</span>
                 </div>
-                <h3 class="mt-6 text-lg font-semibold text-gray-900">Schedule Classes</h3>
-                <p class="mt-2 text-gray-600">Once enrolled, easily book lessons that fit your schedule through your student portal.</p>
+                <h3 class="mt-6 text-lg font-semibold text-gray-900">Choose Your Plan</h3>
+                <p class="mt-2 text-gray-600 text-sm">Select a monthly subscription that fits your schedule. The more classes you take, the more you save per lesson!</p>
             </div>
             <div class="text-center">
                 <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
                     <span class="text-2xl font-bold">3</span>
                 </div>
-                <h3 class="mt-6 text-lg font-semibold text-gray-900">Start Learning</h3>
-                <p class="mt-2 text-gray-600">Join your online lessons and begin your journey to Spanish fluency!</p>
+                <h3 class="mt-6 text-lg font-semibold text-gray-900">Set Your Schedule</h3>
+                <p class="mt-2 text-gray-600 text-sm">Pick your preferred recurring class times. Your schedule auto-renews each month unless you make changes.</p>
+            </div>
+            <div class="text-center">
+                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                    <span class="text-2xl font-bold">4</span>
+                </div>
+                <h3 class="mt-6 text-lg font-semibold text-gray-900">Learn &amp; Earn</h3>
+                <p class="mt-2 text-gray-600 text-sm">Attend classes, complete assignments, and earn points toward free lessons and rewards!</p>
             </div>
         </div>
     </div>

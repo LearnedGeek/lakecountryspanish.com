@@ -20,9 +20,22 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var packages = await _context.Packages
-            .Where(p => p.IsActive)
-            .OrderBy(p => p.ClassCount)
+        // Load subscription tiers for pricing display
+        var tiers = await _context.SubscriptionTiers
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.DisplayOrder)
+            .Select(t => new HomeSubscriptionTierViewModel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                Description = t.Description,
+                ClassesPerMonth = t.ClassesPerMonth,
+                MonthlyPrice = t.MonthlyPrice,
+                DisplayOrder = t.DisplayOrder,
+                // Mark 8 classes/month (2x/week) as popular, 12 classes (3x/week) as best value
+                IsPopular = t.ClassesPerMonth == 8,
+                IsBestValue = t.ClassesPerMonth == 12
+            })
             .ToListAsync();
 
         // Load approved testimonials, prioritizing featured ones
@@ -42,8 +55,13 @@ public class HomeController : Controller
             })
             .ToListAsync();
 
-        ViewBag.Testimonials = testimonials;
-        return View(packages);
+        var viewModel = new HomeViewModel
+        {
+            SubscriptionTiers = tiers,
+            Testimonials = testimonials
+        };
+
+        return View(viewModel);
     }
 
     public IActionResult About()

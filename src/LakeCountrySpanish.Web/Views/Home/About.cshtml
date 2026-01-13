@@ -86,9 +86,11 @@
             <h2 class="text-3xl font-bold text-gray-900">Ready to Start Your Spanish Journey?</h2>
             <p class="mt-4 text-lg text-gray-600">Contact me today to discuss your goals and schedule your first lesson.</p>
             <div class="mt-8">
-                <a asp-controller="Contact" asp-action="Index" class="inline-flex items-center justify-center rounded-md bg-primary-600 px-8 py-3 text-base font-medium text-white hover:bg-primary-700 transition">
-                    Get in Touch
-                </a>
+                @await Component.InvokeAsync("Button", new {
+                    text = "Get in Touch",
+                    href = Url.Action("Index", "Contact"),
+                    type = "primary"
+                })
             </div>
         </div>
     </div>
