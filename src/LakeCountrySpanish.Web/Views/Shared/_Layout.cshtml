@@ -4,25 +4,109 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Lake Country Spanish</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="@(ViewData["Description"] ?? "Personalized online Spanish lessons with Karen, a native Peruvian teacher. Learn conversational Spanish, improve pronunciation, and discover Latin American culture. Flexible scheduling, earn rewards, and have fun learning!")" />
+    <meta name="keywords" content="Spanish lessons, learn Spanish, Spanish tutor, online Spanish classes, Peruvian Spanish teacher, conversational Spanish, Lake Country Wisconsin, private Spanish lessons" />
+    <meta name="author" content="Lake Country Spanish - Karen" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="@ViewData["Title"] - Lake Country Spanish" />
+    <meta property="og:description" content="@(ViewData["Description"] ?? "Fun, personalized online Spanish lessons with a native Peruvian teacher. Flexible scheduling, gamified learning with rewards!")" />
+    <meta property="og:image" content="~/img/lake-country-spanish-logo.png" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content="Lake Country Spanish" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@ViewData["Title"] - Lake Country Spanish" />
+    <meta name="twitter:description" content="@(ViewData["Description"] ?? "Fun, personalized online Spanish lessons with a native Peruvian teacher!")" />
+    <meta name="twitter:image" content="~/img/lake-country-spanish-logo.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="~/img/lake-country-spanish-logo-no-text.png" />
+    <link rel="apple-touch-icon" href="~/img/lake-country-spanish-logo-no-text.png" />
+
+    <!-- LocalBusiness Schema Markup -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "LocalBusiness",
+        "name": "Lake Country Spanish",
+        "description": "Personalized online Spanish lessons with a native Peruvian teacher. Learn conversational Spanish, improve pronunciation, and discover Latin American culture.",
+        "image": "~/img/lake-country-spanish-logo.png",
+        "priceRange": "$20-$30",
+        "address": {
+            "@@type": "PostalAddress",
+            "addressLocality": "Lake Country",
+            "addressRegion": "WI",
+            "addressCountry": "US"
+        },
+        "areaServed": {
+            "@@type": "Place",
+            "name": "Online - Worldwide"
+        },
+        "serviceType": ["Spanish Language Lessons", "Online Tutoring", "Language Education"],
+        "hasOfferCatalog": {
+            "@@type": "OfferCatalog",
+            "name": "Spanish Lesson Packages",
+            "itemListElement": [
+                {
+                    "@@type": "Offer",
+                    "itemOffered": {
+                        "@@type": "Service",
+                        "name": "Trial Spanish Lesson",
+                        "description": "Single class trial for new students"
+                    }
+                },
+                {
+                    "@@type": "Offer",
+                    "itemOffered": {
+                        "@@type": "Service",
+                        "name": "Monthly Spanish Subscription",
+                        "description": "Flexible monthly subscription plans with 4, 8, or 12 classes"
+                    }
+                }
+            ]
+        }
+    }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
+                        // Navy blue from logo - professional, trustworthy
                         primary: {
-                            50: '#fef3f2',
-                            100: '#fee4e2',
-                            200: '#fecdca',
-                            300: '#fca5a0',
-                            400: '#f87168',
-                            500: '#ef4444',
-                            600: '#dc2626',
-                            700: '#b91c1c',
-                            800: '#991b1b',
-                            900: '#7f1d1d',
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            200: '#bcccdc',
+                            300: '#9fb3c8',
+                            400: '#829ab1',
+                            500: '#627d98',
+                            600: '#486581',
+                            700: '#334e68',
+                            800: '#243b53',
+                            900: '#1e3a5f',
                         },
+                        // Coral/terracotta from logo - warm, inviting, fun
                         secondary: {
+                            50: '#fef6f4',
+                            100: '#fde8e4',
+                            200: '#fbd0c7',
+                            300: '#f7a999',
+                            400: '#f0806b',
+                            500: '#e85a42',
+                            600: '#c84b31',
+                            700: '#a73d28',
+                            800: '#883220',
+                            900: '#6f291a',
+                        },
+                        // Accent gold for highlights and celebrations
+                        accent: {
                             50: '#fffbeb',
                             100: '#fef3c7',
                             200: '#fde68a',
@@ -34,6 +118,9 @@
                             800: '#92400e',
                             900: '#78350f',
                         }
+                    },
+                    fontFamily: {
+                        'display': ['Georgia', 'serif'],
                     }
                 }
             }

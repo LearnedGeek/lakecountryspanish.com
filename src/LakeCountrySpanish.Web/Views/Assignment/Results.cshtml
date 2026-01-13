@@ -5,18 +5,40 @@
 
 <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
     <!-- Score Header -->
-    <div class="bg-white rounded-lg shadow mb-6 @(Model.IsPerfectScore ? "ring-4 ring-green-400" : "")">
+    <div class="bg-white rounded-xl shadow-lg mb-6 @(Model.IsPerfectScore ? "ring-4 ring-accent-400" : "")">
         <div class="py-10 text-center">
             @if (Model.IsPerfectScore)
             {
-                <div class="mb-4">
-                    <span class="text-6xl">🏆</span>
+                <!-- Celebration llama for perfect scores -->
+                <div class="relative mb-4 inline-block">
+                    <img src="~/img/lake-country-spanish-logo-no-text.png" alt="Llama mascot" class="h-24 w-24 mx-auto" />
+                    <div class="absolute -top-2 -right-8 bg-accent-100 rounded-full px-3 py-1 border-2 border-accent-400 transform rotate-12">
+                        <span class="text-accent-700 font-bold text-sm">Perfecto!</span>
+                    </div>
+                    <span class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-4xl">🏆</span>
                 </div>
                 <h1 class="text-3xl font-bold text-green-600">Perfect Score!</h1>
+            }
+            else if (Model.PercentageScore >= 80)
+            {
+                <!-- Happy llama for great scores -->
+                <div class="relative mb-4 inline-block">
+                    <img src="~/img/lake-country-spanish-logo-no-text.png" alt="Llama mascot" class="h-20 w-20 mx-auto" />
+                    <div class="absolute -top-2 -right-6 bg-green-100 rounded-full px-3 py-1 border-2 border-green-400 transform rotate-6">
+                        <span class="text-green-700 font-bold text-sm">Muy bien!</span>
+                    </div>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-900">Great Job!</h1>
+            }
+            else if (Model.PercentageScore >= 60)
+            {
+                <h1 class="text-3xl font-bold text-gray-900">Assignment Complete</h1>
+                <p class="text-sm text-gray-500 mt-1">Keep practicing - you're getting there!</p>
             }
             else
             {
                 <h1 class="text-3xl font-bold text-gray-900">Assignment Complete</h1>
+                <p class="text-sm text-gray-500 mt-1">Don't worry - practice makes perfect!</p>
             }
 
             @{
@@ -125,13 +147,13 @@
 
     <!-- Actions -->
     <div class="flex justify-between mt-6">
-        <a asp-action="Index" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+        <a asp-action="Index" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
             <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
             Back to Assignments
         </a>
-        <a asp-controller="Student" asp-action="Progress" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+        <a asp-controller="Student" asp-action="Progress" class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-secondary-500 hover:bg-secondary-600 transition">
             <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
             </svg>

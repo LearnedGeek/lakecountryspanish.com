@@ -156,216 +156,258 @@ public static class SeedData
     {
         var badges = new List<Badge>
         {
-            // Milestone badges (points-based)
+            // Milestone badges (points-based) - Llama themed!
             new Badge
             {
-                Name = "First Steps",
-                Description = "Earn your first 50 points",
+                Name = "Baby Llama",
+                Description = "Earn your first 50 points - every llama starts somewhere!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.Points,
                 RequirementValue = 50,
+                Emoji = "🦙",
                 BonusPoints = 10,
                 IsActive = true,
                 DisplayOrder = 1
             },
             new Badge
             {
-                Name = "Century Club",
-                Description = "Earn 100 total points",
+                Name = "Llama Trot",
+                Description = "Earn 100 total points - you're picking up the pace!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.Points,
                 RequirementValue = 100,
+                Emoji = "🏃",
                 BonusPoints = 25,
                 IsActive = true,
                 DisplayOrder = 2
             },
             new Badge
             {
-                Name = "Point Master",
-                Description = "Earn 500 total points",
+                Name = "Llama Leader",
+                Description = "Earn 500 total points - leading the herd!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.Points,
                 RequirementValue = 500,
+                Emoji = "👑",
                 BonusPoints = 50,
                 IsActive = true,
                 DisplayOrder = 3
             },
             new Badge
             {
-                Name = "Point Champion",
-                Description = "Earn 1,000 total points",
+                Name = "Legendary Llama",
+                Description = "Earn 1,000 total points - you're a Spanish legend!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.Points,
                 RequirementValue = 1000,
+                Emoji = "🌟",
                 BonusPoints = 100,
                 IsActive = true,
                 DisplayOrder = 4
             },
 
-            // Consistency badges (streak-based)
+            // Consistency badges (streak-based) - Mountain climbing theme
             new Badge
             {
-                Name = "Getting Started",
-                Description = "Maintain a 3-day streak",
+                Name = "Trailblazer",
+                Description = "Maintain a 3-day streak - starting the climb!",
                 Category = BadgeCategory.Consistency,
                 RequirementType = BadgeRequirementType.Streak,
                 RequirementValue = 3,
+                Emoji = "🥾",
                 BonusPoints = 15,
                 IsActive = true,
                 DisplayOrder = 1
             },
             new Badge
             {
-                Name = "Weekly Warrior",
-                Description = "Maintain a 7-day streak",
+                Name = "Mountain Climber",
+                Description = "Maintain a 7-day streak - one week strong!",
                 Category = BadgeCategory.Consistency,
                 RequirementType = BadgeRequirementType.Streak,
                 RequirementValue = 7,
+                Emoji = "⛰️",
                 BonusPoints = 30,
                 IsActive = true,
                 DisplayOrder = 2
             },
             new Badge
             {
-                Name = "Committed Learner",
-                Description = "Maintain a 14-day streak",
+                Name = "Andes Explorer",
+                Description = "Maintain a 14-day streak - conquering the heights!",
                 Category = BadgeCategory.Consistency,
                 RequirementType = BadgeRequirementType.Streak,
                 RequirementValue = 14,
+                Emoji = "🏔️",
                 BonusPoints = 50,
                 IsActive = true,
                 DisplayOrder = 3
             },
             new Badge
             {
-                Name = "Monthly Master",
-                Description = "Maintain a 30-day streak",
+                Name = "Summit Master",
+                Description = "Maintain a 30-day streak - you've reached the peak!",
                 Category = BadgeCategory.Consistency,
                 RequirementType = BadgeRequirementType.Streak,
                 RequirementValue = 30,
+                Emoji = "🚩",
                 BonusPoints = 100,
                 IsActive = true,
                 DisplayOrder = 4
             },
 
-            // Class completion badges
+            // Class completion badges - Journey themed
             new Badge
             {
-                Name = "First Class",
-                Description = "Complete your first class",
+                Name = "First Hoofprint",
+                Description = "Complete your first class - the journey begins!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.ClassesCompleted,
                 RequirementValue = 1,
+                Emoji = "👣",
                 BonusPoints = 20,
                 IsActive = true,
                 DisplayOrder = 5
             },
             new Badge
             {
-                Name = "Dedicated Student",
-                Description = "Complete 10 classes",
+                Name = "Steady Trekker",
+                Description = "Complete 10 classes - you're on the trail!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.ClassesCompleted,
                 RequirementValue = 10,
+                Emoji = "🎒",
                 BonusPoints = 50,
                 IsActive = true,
                 DisplayOrder = 6
             },
             new Badge
             {
-                Name = "Class Veteran",
-                Description = "Complete 25 classes",
+                Name = "Trail Veteran",
+                Description = "Complete 25 classes - a seasoned traveler!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.ClassesCompleted,
                 RequirementValue = 25,
+                Emoji = "🗺️",
                 BonusPoints = 100,
                 IsActive = true,
                 DisplayOrder = 7
             },
             new Badge
             {
-                Name = "Spanish Scholar",
-                Description = "Complete 50 classes",
+                Name = "Spanish Safari Champion",
+                Description = "Complete 50 classes - master explorer!",
                 Category = BadgeCategory.Milestone,
                 RequirementType = BadgeRequirementType.ClassesCompleted,
                 RequirementValue = 50,
+                Emoji = "🏆",
                 BonusPoints = 200,
                 IsActive = true,
                 DisplayOrder = 8
             },
 
-            // CEFR Level badges
+            // CEFR Level badges - Peruvian culture themed
             new Badge
             {
-                Name = "A1 Achieved",
-                Description = "Reach CEFR level A1 (Beginner)",
+                Name = "Machu Picchu Seeker",
+                Description = "Reach CEFR level A1 (Beginner) - discovering the path!",
                 Category = BadgeCategory.LevelProgress,
                 RequirementType = BadgeRequirementType.CefrLevel,
                 RequirementValue = 1,
                 RequirementContext = "A1",
+                Emoji = "🏛️",
                 BonusPoints = 50,
                 IsActive = true,
                 DisplayOrder = 1
             },
             new Badge
             {
-                Name = "A2 Achieved",
-                Description = "Reach CEFR level A2 (Elementary)",
+                Name = "Nazca Navigator",
+                Description = "Reach CEFR level A2 (Elementary) - reading the signs!",
                 Category = BadgeCategory.LevelProgress,
                 RequirementType = BadgeRequirementType.CefrLevel,
                 RequirementValue = 2,
                 RequirementContext = "A2",
+                Emoji = "🌀",
                 BonusPoints = 100,
                 IsActive = true,
                 DisplayOrder = 2
             },
             new Badge
             {
-                Name = "B1 Achieved",
-                Description = "Reach CEFR level B1 (Intermediate)",
+                Name = "Inca Insider",
+                Description = "Reach CEFR level B1 (Intermediate) - unlocking secrets!",
                 Category = BadgeCategory.LevelProgress,
                 RequirementType = BadgeRequirementType.CefrLevel,
                 RequirementValue = 3,
                 RequirementContext = "B1",
+                Emoji = "🔓",
                 BonusPoints = 150,
                 IsActive = true,
                 DisplayOrder = 3
             },
             new Badge
             {
-                Name = "B2 Achieved",
-                Description = "Reach CEFR level B2 (Upper Intermediate)",
+                Name = "Cusco Conqueror",
+                Description = "Reach CEFR level B2 (Upper Intermediate) - ruling the empire!",
                 Category = BadgeCategory.LevelProgress,
                 RequirementType = BadgeRequirementType.CefrLevel,
                 RequirementValue = 4,
                 RequirementContext = "B2",
+                Emoji = "🌞",
                 BonusPoints = 200,
                 IsActive = true,
                 DisplayOrder = 4
             },
 
-            // Special badges (manually awarded)
+            // Special badges (manually awarded) - Fun llama themed!
             new Badge
             {
-                Name = "Star Student",
-                Description = "Awarded for exceptional effort and progress",
+                Name = "Golden Llama",
+                Description = "Awarded for exceptional effort and progress - Karen's favorite!",
                 Category = BadgeCategory.Special,
                 RequirementType = BadgeRequirementType.Custom,
                 RequirementValue = 0,
+                Emoji = "✨",
                 BonusPoints = 75,
                 IsActive = true,
                 DisplayOrder = 1
             },
             new Badge
             {
-                Name = "Referral Champion",
-                Description = "Referred a friend who became a student",
+                Name = "Llama Ambassador",
+                Description = "Referred a friend who became a student - spreading the herd!",
                 Category = BadgeCategory.Special,
                 RequirementType = BadgeRequirementType.Custom,
                 RequirementValue = 0,
+                Emoji = "🤝",
                 BonusPoints = 100,
                 IsActive = true,
                 DisplayOrder = 2
+            },
+            new Badge
+            {
+                Name = "Alpaca Achievement",
+                Description = "Completed an extra challenging assignment - above and beyond!",
+                Category = BadgeCategory.Special,
+                RequirementType = BadgeRequirementType.Custom,
+                RequirementValue = 0,
+                Emoji = "💪",
+                BonusPoints = 50,
+                IsActive = true,
+                DisplayOrder = 3
+            },
+            new Badge
+            {
+                Name = "Fiesta Friend",
+                Description = "Participated in a special cultural event or celebration",
+                Category = BadgeCategory.Special,
+                RequirementType = BadgeRequirementType.Custom,
+                RequirementValue = 0,
+                Emoji = "🎊",
+                BonusPoints = 40,
+                IsActive = true,
+                DisplayOrder = 4
             }
         };
 

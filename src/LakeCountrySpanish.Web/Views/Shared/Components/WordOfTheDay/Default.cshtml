@@ -1,0 +1,35 @@
+@model LakeCountrySpanish.Web.ViewComponents.SpanishWord
+
+<div class="bg-gradient-to-br from-primary-800 to-primary-900 rounded-xl shadow-lg overflow-hidden">
+    <div class="p-6">
+        <!-- Header with llama -->
+        <div class="flex items-center gap-3 mb-4">
+            <img src="~/img/lake-country-spanish-logo-no-text.png" alt="Llama" class="h-10 w-10" />
+            <div>
+                <h3 class="text-white font-semibold">Word of the Day</h3>
+                <p class="text-primary-300 text-xs">Palabra del Día</p>
+            </div>
+        </div>
+
+        <!-- Main word -->
+        <div class="bg-white/10 rounded-lg p-4 mb-4">
+            <div class="text-center">
+                <p class="text-3xl font-bold text-white mb-1">@Model.Spanish</p>
+                <p class="text-secondary-300 text-sm italic">/@Model.Pronunciation/</p>
+                <p class="text-primary-200 text-lg mt-2">@Model.English</p>
+            </div>
+        </div>
+
+        <!-- Example sentence -->
+        <div class="border-l-4 border-secondary-400 pl-4">
+            <p class="text-white text-sm italic">"@Model.ExampleSpanish"</p>
+            <p class="text-primary-300 text-xs mt-1">@Model.ExampleEnglish</p>
+        </div>
+
+        <!-- Fun tip -->
+        <div class="mt-4 flex items-start gap-2 text-xs text-primary-300">
+            <span class="text-accent-400">💡</span>
+            <span>Practice using this word in a sentence today!</span>
+        </div>
+    </div>
+</div>

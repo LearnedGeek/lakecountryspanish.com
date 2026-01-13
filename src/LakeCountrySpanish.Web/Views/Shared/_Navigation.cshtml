@@ -3,27 +3,28 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<nav class="bg-gradient-to-r from-primary-600 to-primary-700 shadow-lg">
+<nav class="bg-gradient-to-r from-primary-800 to-primary-900 shadow-lg">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
             <div class="flex items-center">
-                <a asp-controller="Home" asp-action="Index" class="flex-shrink-0">
-                    <span class="text-2xl font-bold text-white">Lake Country Spanish</span>
+                <a asp-controller="Home" asp-action="Index" class="flex-shrink-0 flex items-center gap-3 group">
+                    <img src="~/img/lake-country-spanish-logo-no-text.png" alt="Lake Country Spanish" class="h-12 w-12 rounded-full bg-white p-0.5 group-hover:scale-105 transition-transform" />
+                    <span class="text-xl font-bold text-white hidden sm:block">Lake Country Spanish</span>
                 </a>
                 <div class="hidden md:block ml-10">
                     <div class="flex items-baseline space-x-4">
-                        <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">Home</a>
-                        <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">About</a>
-                        <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">Contact</a>
+                        <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Home</a>
+                        <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">About</a>
+                        <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Contact</a>
                         @if (SignInManager.IsSignedIn(User))
                         {
                             @if (User.IsInRole("Admin"))
                             {
-                                <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">Admin Dashboard</a>
+                                <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Admin Dashboard</a>
                             }
                             else
                             {
-                                <a asp-controller="Student" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 rounded-md px-3 py-2 text-sm font-medium">My Dashboard</a>
+                                <a asp-controller="Student" asp-action="Dashboard" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">My Dashboard</a>
                             }
                         }
                     </div>
@@ -34,16 +35,16 @@
                     @if (SignInManager.IsSignedIn(User))
                     {
                         var user = await UserManager.GetUserAsync(User);
-                        <span class="text-white text-sm mr-4">Welcome, @user?.FirstName</span>
+                        <span class="text-primary-200 text-sm mr-4">Welcome, @user?.FirstName</span>
                         <form asp-controller="Account" asp-action="Logout" method="post">
-                            <button type="submit" class="bg-primary-800 hover:bg-primary-900 text-white rounded-md px-4 py-2 text-sm font-medium transition">
+                            <button type="submit" class="bg-primary-700 hover:bg-primary-600 text-white rounded-md px-4 py-2 text-sm font-medium transition">
                                 Sign Out
                             </button>
                         </form>
                     }
                     else
                     {
-                        <a asp-controller="Account" asp-action="Login" class="bg-white text-primary-600 hover:bg-gray-100 rounded-md px-4 py-2 text-sm font-medium transition">
+                        <a asp-controller="Account" asp-action="Login" class="bg-secondary-500 text-white hover:bg-secondary-600 rounded-md px-4 py-2 text-sm font-medium transition shadow-sm">
                             Sign In
                         </a>
                     }
@@ -51,7 +52,7 @@
             </div>
             <!-- Mobile menu button -->
             <div class="md:hidden">
-                <button type="button" onclick="toggleMobileMenu()" class="text-white hover:bg-primary-500 hover:bg-opacity-75 p-2 rounded-md">
+                <button type="button" onclick="toggleMobileMenu()" class="text-white hover:bg-primary-700 p-2 rounded-md transition">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                     </svg>
@@ -62,29 +63,29 @@
 
     <!-- Mobile menu -->
     <div class="md:hidden hidden" id="mobile-menu">
-        <div class="space-y-1 px-2 pb-3 pt-2">
-            <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Home</a>
-            <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">About</a>
-            <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Contact</a>
+        <div class="space-y-1 px-2 pb-3 pt-2 border-t border-primary-700">
+            <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Home</a>
+            <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">About</a>
+            <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Contact</a>
             @if (SignInManager.IsSignedIn(User))
             {
                 @if (User.IsInRole("Admin"))
                 {
-                    <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Admin Dashboard</a>
+                    <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Admin Dashboard</a>
                 }
                 else
                 {
-                    <a asp-controller="Student" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">My Dashboard</a>
+                    <a asp-controller="Student" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">My Dashboard</a>
                 }
                 <form asp-controller="Account" asp-action="Logout" method="post" class="mt-2">
-                    <button type="submit" class="w-full text-left text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">
+                    <button type="submit" class="w-full text-left text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">
                         Sign Out
                     </button>
                 </form>
             }
             else
             {
-                <a asp-controller="Account" asp-action="Login" class="text-white hover:bg-primary-500 hover:bg-opacity-75 block rounded-md px-3 py-2 text-base font-medium">Sign In</a>
+                <a asp-controller="Account" asp-action="Login" class="bg-secondary-500 text-white hover:bg-secondary-600 block rounded-md px-3 py-2 text-base font-medium text-center mt-2 transition">Sign In</a>
             }
         </div>
     </div>

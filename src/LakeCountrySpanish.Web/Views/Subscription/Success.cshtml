@@ -5,10 +5,15 @@
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
         <div class="text-center">
-            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
-                <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                </svg>
+            <!-- Llama celebration with confetti effect -->
+            <div class="relative mb-8">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-6xl animate-bounce opacity-20">🎉</span>
+                </div>
+                <img src="~/img/lake-country-spanish-logo-no-text.png" alt="Llama mascot" class="mx-auto h-28 w-28 relative z-10" />
+                <div class="absolute top-0 right-1/3 bg-accent-100 rounded-full px-3 py-1 border-2 border-accent-400 transform -rotate-12">
+                    <span class="text-accent-700 font-bold text-sm">Bienvenido!</span>
+                </div>
             </div>
 
             <h1 class="text-3xl font-bold text-gray-900 mb-4">Welcome to Your Subscription!</h1>
@@ -16,19 +21,19 @@
                 Your subscription has been successfully activated. You can now enjoy automatic class scheduling and all subscriber benefits.
             </p>
 
-            <div class="bg-white rounded-lg shadow p-8 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8 border border-gray-100">
                 <h2 class="text-xl font-semibold text-gray-900 mb-4">What's Next?</h2>
                 <ul class="text-left space-y-4">
                     <li class="flex items-start">
-                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold mr-3">1</span>
+                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-secondary-100 text-secondary-600 flex items-center justify-center text-sm font-bold mr-3">1</span>
                         <span class="text-gray-700"><strong>Set your schedule:</strong> Choose your preferred class times and we'll automatically book them for you each month.</span>
                     </li>
                     <li class="flex items-start">
-                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold mr-3">2</span>
+                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-secondary-100 text-secondary-600 flex items-center justify-center text-sm font-bold mr-3">2</span>
                         <span class="text-gray-700"><strong>Check your email:</strong> You'll receive a confirmation email with your subscription details.</span>
                     </li>
                     <li class="flex items-start">
-                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-bold mr-3">3</span>
+                        <span class="flex-shrink-0 h-6 w-6 rounded-full bg-secondary-100 text-secondary-600 flex items-center justify-center text-sm font-bold mr-3">3</span>
                         <span class="text-gray-700"><strong>Start learning:</strong> Your classes will be scheduled automatically based on your preferences.</span>
                     </li>
                 </ul>
@@ -36,11 +41,11 @@
 
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
                 <a href="@Url.Action("Manage")"
-                   class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">
+                   class="inline-flex items-center justify-center px-6 py-3 bg-secondary-500 text-white font-semibold rounded-lg hover:bg-secondary-600 transition shadow-md">
                     Set Up Your Schedule
                 </a>
                 <a href="@Url.Action("Dashboard", "Student")"
-                   class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200">
+                   class="inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
                     Go to Dashboard
                 </a>
             </div>
