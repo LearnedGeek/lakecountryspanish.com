@@ -147,7 +147,7 @@
                                 {
                                     <tr class="border-t border-gray-100">
                                         <td class="py-3 px-2 text-sm text-gray-600 font-medium whitespace-nowrap">
-                                            @timeSlot.StartTime.ToString(@"h\:mm") - @timeSlot.EndTime.ToString(@"h\:mm")
+                                            @(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt")) - @(DateTime.Today.Add(timeSlot.EndTime).ToString("h:mm tt"))
                                         </td>
                                         @foreach (var day in Model.WeeklyCalendar.Days)
                                         {
@@ -178,7 +178,7 @@
                                                 else
                                                 {
                                                     <button type="button"
-                                                            onclick="selectSlot(@timeSlot.Id, '@day.Date.ToString("yyyy-MM-dd")', '@timeSlot.StartTime.ToString(@"h\:mm tt")')"
+                                                            onclick="selectSlot(@timeSlot.Id, '@day.Date.ToString("yyyy-MM-dd")', '@(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt"))')"
                                                             class="w-full h-12 bg-green-50 hover:bg-green-100 border-2 border-dashed border-green-300 hover:border-green-500 rounded-lg flex items-center justify-center transition group">
                                                         <svg class="w-5 h-5 text-green-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>

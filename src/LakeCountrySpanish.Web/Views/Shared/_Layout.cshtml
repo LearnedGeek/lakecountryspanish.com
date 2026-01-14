@@ -127,6 +127,11 @@
         }
     </script>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <!-- Gamification Libraries - Toast Notifications -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js@@1.12.0/src/toastify.min.css" />
+    <link rel="stylesheet" href="~/css/gamification.css" asp-append-version="true" />
+
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="h-full bg-gray-50">
@@ -141,9 +146,23 @@
         @await Html.PartialAsync("_Footer")
     </div>
 
+    <!-- Core Scripts -->
     <script src="~/js/modals.js" asp-append-version="true"></script>
     <script src="~/js/forms.js" asp-append-version="true"></script>
     <script src="~/js/ratings.js" asp-append-version="true"></script>
+
+    <!-- Gamification Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://unpkg.com/@@lottiefiles/lottie-player@@2.0.8/dist/lottie-player.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@@1.9.3/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js@@1.12.0/src/toastify.min.js"></script>
+
+    <!-- Gamification Services -->
+    <script src="~/js/sound-service.js" asp-append-version="true"></script>
+    <script src="~/js/animation-service.js" asp-append-version="true"></script>
+    <script src="~/js/gamification-effects.js" asp-append-version="true"></script>
+
     <script>
         function toggleMobileMenu() {
             var menu = document.getElementById('mobile-menu');

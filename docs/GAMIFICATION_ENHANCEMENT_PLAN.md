@@ -6,6 +6,81 @@ Transform the current static experience into an engaging, Duolingo-style interac
 
 ---
 
+## Implementation TODO Checklist
+
+### Phase 1: Foundation Setup
+- [x] Add CDN libraries to `_Layout.cshtml` (GSAP, Howler, Lottie, Confetti, Toastify)
+- [x] Create `wwwroot/css/gamification.css` with toast and animation styles
+- [x] Create `wwwroot/js/sound-service.js`
+- [x] Create `wwwroot/js/animation-service.js`
+- [x] Create `wwwroot/js/gamification-effects.js`
+
+### Phase 2: Sound System
+- [ ] Download correct.mp3 (0.5s) from Mixkit
+- [ ] Download wrong.mp3 (0.5s) from Mixkit
+- [ ] Download complete.mp3 (1.5s) from Mixkit
+- [ ] Download perfect.mp3 (2s) from Mixkit
+- [ ] Download badge.mp3 (1.5s) from Freesound
+- [ ] Download points.mp3 (0.5s) from Mixkit
+- [ ] Download streak.mp3 (1s) from Freesound
+- [ ] Download click.mp3 (0.2s) from Mixkit
+- [ ] Download levelup.mp3 (2s) from Mixkit
+- [ ] Create `wwwroot/sounds/` directory with all sound files
+- [ ] Add sound toggle button to navigation/dashboard
+
+### Phase 3: Lottie Animations
+- [ ] Download confetti.json from LottieFiles
+- [ ] Download checkmark.json from LottieFiles
+- [ ] Download wrong-x.json from LottieFiles
+- [ ] Download star-burst.json from LottieFiles
+- [ ] Download fire.json from LottieFiles
+- [ ] Download trophy.json from LottieFiles
+- [ ] Download coin-spin.json from LottieFiles
+- [ ] Download llama-celebrate.json from LottieFiles
+- [ ] Create `wwwroot/animations/` directory with all animation files
+
+### Phase 4: Toast Notification System
+- [x] Create toast styles in gamification.css
+- [x] Implement Toast helpers in gamification-effects.js
+- [ ] Test toast notifications across pages
+
+### Phase 5: Assignment/Quiz Enhancements
+- [ ] Add answer selection feedback (pulse/shake animations)
+- [ ] Add question card stagger animations
+- [ ] Enhance timer with color/animation changes
+- [ ] Add click sounds to answer selections
+
+### Phase 6: Results Page Celebrations
+- [ ] Add score-based celebration sequences
+- [ ] Implement animated score counter
+- [ ] Add per-question result animations
+- [ ] Add floating points animation
+
+### Phase 7: Dashboard Enhancements
+- [ ] Enhance badge celebration modal with animations
+- [ ] Add stat cards stagger animation
+- [ ] Add progress bar shimmer effect
+- [ ] Animate badge emoji on unlock
+
+### Phase 8: Streak System Enhancements
+- [ ] Replace static fire emoji with Lottie animation for 30+ streaks
+- [ ] Add streak milestone celebration (7, 14, 30, 60, 90 days)
+- [ ] Animate streak number on milestone
+
+### Phase 9: Micro-Interactions & Polish
+- [ ] Add button press effects (.btn-interactive)
+- [ ] Add card hover lift effects (.card-interactive)
+- [ ] Add ripple effect to buttons
+- [ ] Add page transition animations
+- [ ] Add global click sound to interactive elements
+
+### Phase 10: Accessibility & User Preferences
+- [ ] Add prefers-reduced-motion checks to all animations
+- [ ] Implement user preference storage service
+- [ ] Add sound/animation toggle UI
+
+---
+
 ## Phase 1: Foundation Setup (Sound & Animation Libraries)
 
 ### 1.1 Add Required CDN Libraries to `_Layout.cshtml`
