@@ -1,0 +1,52 @@
+name: Deploy to SmarterASP.NET
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/LakeCountrySpanish.Web/LakeCountrySpanish.Web.csproj
+
+      - name: Build
+        run: dotnet build src/LakeCountrySpanish.Web/LakeCountrySpanish.Web.csproj --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish src/LakeCountrySpanish.Web/LakeCountrySpanish.Web.csproj --configuration Release --no-build --output ./publish
+
+      - name: Deploy to SmarterASP.NET
+        run: |
+          $sourcePath = "${{ github.workspace }}\publish"
+          $destUrl = "${{ secrets.WEBDEPLOY_URL }}"
+          $siteName = "${{ secrets.WEBDEPLOY_SITE }}"
+          $username = "${{ secrets.WEBDEPLOY_USERNAME }}"
+          $password = "${{ secrets.WEBDEPLOY_PASSWORD }}"
+
+          # Use MSDeploy to publish
+          & "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe" `
+            -verb:sync `
+            -source:contentPath="$sourcePath" `
+            -dest:contentPath="$siteName",computerName="$destUrl",userName="$username",password="$password",authType="Basic" `
+            -enableRule:AppOffline `
+            -allowUntrusted:true
+        shell: pwsh
