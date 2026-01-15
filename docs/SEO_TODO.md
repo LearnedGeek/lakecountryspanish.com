@@ -109,3 +109,67 @@ ViewData["OgImage"] = "/img/about-og.jpg"; // Optional override
 - `wwwroot/robots.txt` - Created
 - `Controllers/SitemapController.cs` - Created
 - `Views/Shared/_Layout.cshtml` - Updated with canonical, OG, and Twitter tags
+
+---
+
+## 7. Local SEO (Lake Country Area)
+
+Target searches like "Oconomowoc Spanish", "Waukesha Spanish lessons", "Spanish classes near me", etc.
+
+### Google Business Profile
+- [ ] Create Google Business Profile for Lake Country Spanish
+- [ ] Set service area to cover all Lake Country communities
+- [ ] Add business hours, photos, and description
+- [ ] Request reviews from students
+
+### Schema Markup Enhancement
+- [ ] Expand `areaServed` in LocalBusiness schema to include specific towns:
+  - Oconomowoc
+  - Waukesha
+  - Delafield
+  - Hartland
+  - Pewaukee
+  - Brookfield
+  - Menomonee Falls
+  - Muskego
+  - New Berlin
+  - Wales
+  - Dousman
+  - Summit
+
+### Location Landing Pages
+Create dedicated pages targeting specific communities:
+- [ ] `/spanish-lessons-oconomowoc` - "Spanish Lessons for Oconomowoc Residents"
+- [ ] `/spanish-lessons-waukesha` - "Spanish Lessons in Waukesha County"
+- [ ] `/spanish-lessons-delafield` - "Online Spanish Classes for Delafield"
+- [ ] `/spanish-lessons-hartland` - "Learn Spanish - Hartland Area"
+- [ ] `/spanish-lessons-pewaukee` - "Spanish Tutoring for Pewaukee"
+- [ ] `/spanish-lessons-brookfield` - "Spanish Lessons - Brookfield WI"
+
+Each page should include:
+- Unique content mentioning that community
+- Local landmarks or references
+- Why online lessons work great for that area
+- Proper meta tags with location keywords
+- LocalBusiness schema with that specific location
+
+### Content Optimization
+- [ ] Add "Serving Lake Country Wisconsin" to home page hero
+- [ ] Update About page to mention communities served
+- [ ] Add location keywords naturally throughout existing content
+- [ ] Consider blog posts: "Learning Spanish in Lake Country: From Oconomowoc to Waukesha"
+
+### Keywords to Target
+| Primary | Secondary |
+|---------|-----------|
+| Spanish lessons Oconomowoc | Learn Spanish Lake Country |
+| Spanish tutor Waukesha | Online Spanish classes Wisconsin |
+| Spanish classes Delafield | Private Spanish lessons near me |
+| Spanish teacher Hartland | Spanish tutoring Waukesha County |
+| Spanish lessons Pewaukee | Conversational Spanish Wisconsin |
+
+### Priority Order
+1. **Google Business Profile** - Critical for "near me" searches (FREE, high impact)
+2. **Schema markup update** - Quick code change
+3. **Home/About page keywords** - Natural integration
+4. **2-3 location pages** - Start with largest cities (Waukesha, Brookfield, Oconomowoc)
