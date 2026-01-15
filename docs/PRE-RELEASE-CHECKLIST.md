@@ -193,19 +193,21 @@
 
 ## 10. Legal & Compliance
 
-- [ ] **Privacy Policy**
-  - Privacy.cshtml exists but has placeholder content
-  - Need to add actual privacy policy content
-  - Include cookie policy if applicable
+- [x] **Privacy Policy** ✅ COMPLETE
+  - [x] Full privacy policy content added to Privacy.cshtml
+  - [x] Covers: data collection, cookies, data sharing, security, user rights
+  - [x] Cookie policy section included with table of cookies used
 
 - [ ] **Terms of Service**
   - Create terms of service page
   - Include cancellation/refund policy
   - Include payment terms
 
-- [ ] **Cookie Consent**
-  - Add cookie consent banner if using tracking cookies
-  - Document cookies used
+- [x] **Cookie Consent** ✅ COMPLETE
+  - [x] Cookie consent banner implemented (_CookieConsent.cshtml)
+  - [x] Only essential authentication cookie used (no tracking)
+  - [x] Banner explains cookie purpose and links to Privacy Policy
+  - [x] Consent stored in localStorage
 
 ## 11. Testing Before Launch
 
@@ -341,7 +343,7 @@ All critical payment issues identified during review have been fixed:
 3. [ ] Configure database backups
 
 ### Important (Should Do)
-4. [ ] Add actual content to Privacy Policy page
+4. [x] ~~Add actual content to Privacy Policy page~~ ✅ DONE
 5. [ ] Create Terms of Service page
 6. [ ] Test email deliverability (spam score)
 7. [ ] Set up monitoring/alerting
@@ -349,7 +351,7 @@ All critical payment issues identified during review have been fixed:
 ### Nice to Have
 8. [ ] Add welcome email template
 9. [ ] Add class booking confirmation email
-10. [ ] Add cookie consent banner (if using tracking)
+10. [x] ~~Add cookie consent banner~~ ✅ DONE (essential cookies only, banner implemented)
 11. [ ] Add health check endpoints
 12. [ ] Configure Serilog for file-based logging
 

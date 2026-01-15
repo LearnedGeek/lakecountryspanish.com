@@ -1,0 +1,45 @@
+@* Cookie Consent Banner - Essential Cookies Only Notice *@
+<div id="cookieConsent" class="fixed bottom-0 left-0 right-0 bg-primary-900 text-white p-4 shadow-lg z-50 transform translate-y-full transition-transform duration-300" style="display: none;">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex-1 text-center sm:text-left">
+            <p class="text-sm">
+                We use essential cookies to keep you logged in and provide a secure experience.
+                No tracking or advertising cookies are used.
+                <a href="/Home/Privacy" class="underline hover:text-secondary-300 ml-1">Learn more</a>
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="acceptCookies()"
+                    class="px-6 py-2 bg-secondary-500 hover:bg-secondary-600 text-white rounded-lg font-medium transition-colors">
+                Got it
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Check if user has already acknowledged
+        if (!localStorage.getItem('cookieConsent')) {
+            var banner = document.getElementById('cookieConsent');
+            if (banner) {
+                banner.style.display = 'block';
+                // Trigger animation after display
+                setTimeout(function() {
+                    banner.classList.remove('translate-y-full');
+                }, 100);
+            }
+        }
+    })();
+
+    function acceptCookies() {
+        localStorage.setItem('cookieConsent', 'accepted');
+        var banner = document.getElementById('cookieConsent');
+        if (banner) {
+            banner.classList.add('translate-y-full');
+            setTimeout(function() {
+                banner.style.display = 'none';
+            }, 300);
+        }
+    }
+</script>
