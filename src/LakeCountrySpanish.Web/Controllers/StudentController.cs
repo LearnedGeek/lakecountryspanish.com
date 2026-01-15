@@ -218,7 +218,9 @@ public class StudentController : Controller
         // Get upcoming classes (filter student classes for future dates)
         var allStudentClasses = await _scheduleService.GetStudentClassesAsync(user.Id);
         var upcomingClasses = allStudentClasses
-            .Where(c => c.ClassDateTime >= DateTime.Now && c.Status != ClassStatus.Cancelled)
+            .Where(c => c.ClassDateTime >= DateTime.Now
+                     && c.Status != ClassStatus.Cancelled
+                     && !c.IsPendingCheckout) // Exclude pending checkout - those show in cart
             .OrderBy(c => c.ClassDateTime)
             .Take(20)
             .ToList();

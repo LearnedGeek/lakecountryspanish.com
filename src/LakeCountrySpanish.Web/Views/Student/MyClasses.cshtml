@@ -746,13 +746,19 @@
             const emptyMsg = document.getElementById('emptyCartMessage');
             if (emptyMsg) emptyMsg.remove();
 
+            // Parse the date string and format consistently
+            const dateObj = new Date(dateTimeStr);
+            const dateFormatted = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const timeFormatted = dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
             // Add new item
             const item = document.createElement('div');
             item.className = 'flex items-center justify-between p-2 bg-gray-50 rounded-lg cart-item';
             item.setAttribute('data-class-id', classId);
             item.innerHTML = `
                 <div>
-                    <p class="text-sm font-medium text-gray-900">${dateTimeStr}</p>
+                    <p class="text-sm font-medium text-gray-900">${dateFormatted}</p>
+                    <p class="text-xs text-gray-500">${timeFormatted}</p>
                 </div>
                 <button type="button" onclick="removeFromCart(${classId})" class="text-red-500 hover:text-red-700">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

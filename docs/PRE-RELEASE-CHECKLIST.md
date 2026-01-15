@@ -2,32 +2,31 @@
 
 ## 1. Domain & Hosting
 
-- [ ] **Domain Registration**
-  - Register domain name (e.g., lakecountryspanish.com)
-  - Configure DNS records to point to hosting provider
+- [x] **Domain Registration**
+  - Register domain name (lakecountryspanish.com) ✅
+  - Configure DNS records to point to hosting provider ✅
 
-- [ ] **Hosting Setup**
-  - Choose hosting provider (Azure App Service, AWS, DigitalOcean, etc.)
-  - Provision server/app service with appropriate tier
-  - Configure deployment pipeline (GitHub Actions, Azure DevOps, etc.)
+- [x] **Hosting Setup**
+  - Hosting provider: Site4Now (Azure-based) ✅
+  - Server provisioned ✅
+  - Deployment configured ✅
 
-- [ ] **SSL Certificate**
-  - Obtain SSL certificate (Let's Encrypt free, or paid certificate)
-  - Configure HTTPS redirect in production
-  - Update `appsettings.Production.json` with correct base URL
+- [x] **SSL Certificate**
+  - SSL certificate configured ✅
+  - HTTPS redirect in production (`app.UseHttpsRedirection()`) ✅
+  - Base URL configured in appsettings ✅
 
 ## 2. Database Configuration
 
-- [ ] **Production Database**
-  - Provision SQL Server database (Azure SQL, AWS RDS, or self-hosted)
-  - Create database user with appropriate permissions
-  - Update connection string in production secrets/environment variables
-  - **DO NOT** store connection strings in appsettings.json for production
+- [x] **Production Database**
+  - SQL Server database provisioned ✅
+  - Connection string configured in production ✅
+  - Credentials stored securely ✅
 
-- [ ] **Database Migration**
-  - Run all migrations on production database
-  - Verify schema is correct
-  - Seed initial data (admin user, default packages)
+- [x] **Database Migration**
+  - Automatic migrations on startup (`context.Database.Migrate()`) ✅
+  - Schema verified ✅
+  - Seed data configured (SeedData.cs) ✅
 
 - [ ] **Backup Strategy**
   - Configure automated database backups
@@ -36,33 +35,20 @@
 
 ## 3. Stripe Payment Configuration
 
-- [ ] **Stripe Account Setup**
-  - Create Stripe account at https://stripe.com
-  - Complete business verification
-  - Set up bank account for payouts
+- [x] **Stripe Account Setup**
+  - Stripe account created ✅
+  - Business verification complete ✅
+  - Bank account configured ✅
 
-- [ ] **API Keys**
-  - Get **Live** API keys from Stripe Dashboard > Developers > API Keys
-  - Store `Publishable Key` and `Secret Key` securely
-  - **IMPORTANT**: Use Live keys, not Test keys for production
+- [x] **API Keys**
+  - Live API keys obtained (pk_live_, sk_live_) ✅
+  - Keys stored in configuration ✅
+  - Using Live keys for production ✅
 
-- [ ] **Webhook Configuration**
-  - Create webhook endpoint in Stripe Dashboard
-  - URL: `https://yourdomain.com/api/payment/webhook`
-  - Select events: `checkout.session.completed`
-  - Copy Webhook Signing Secret
-
-- [ ] **Update Configuration**
-  ```json
-  // Store these in environment variables or secrets manager, NOT in code
-  {
-    "Stripe": {
-      "PublishableKey": "pk_live_...",
-      "SecretKey": "sk_live_...",
-      "WebhookSecret": "whsec_..."
-    }
-  }
-  ```
+- [x] **Webhook Configuration**
+  - Payment webhook endpoint: `/api/payment/webhook` ✅
+  - Subscription webhook endpoint: `/Subscription/Webhook` ✅
+  - Webhook signing secret configured ✅
 
 - [ ] **Test Payment Flow**
   - Process a real small payment ($1) to verify integration
@@ -70,126 +56,100 @@
   - Confirm payment appears in Stripe Dashboard
   - Refund test payment
 
-- [ ] **Payment Error Handling (Critical)**
-  - [ ] Add logging to webhook exception handlers (currently silent failures)
-  - [ ] Fix webhook endpoints to return proper HTTP codes (500 on failure, not 200)
-  - [ ] Add email notification for failed subscription payments
-  - [ ] Consider adding refund event handling (`charge.refunded`)
+- [x] **Payment Error Handling (Critical)** ✅ ALL FIXED
+  - [x] Added logging to webhook exception handlers
+  - [x] Webhook endpoints return proper HTTP codes (400/500/200)
+  - [x] Email notification for failed subscription payments
+  - [x] Refund event handling (`charge.refunded`)
 
-- [ ] **Subscription Webhook Events**
-  - [ ] Verify these events are configured in Stripe Dashboard:
-    - `customer.subscription.created`
-    - `customer.subscription.updated`
-    - `customer.subscription.deleted`
-    - `invoice.payment_succeeded`
-    - `invoice.payment_failed`
-  - [ ] Create separate webhook endpoint for subscriptions if not already done
-  - [ ] URL: `https://yourdomain.com/Subscription/Webhook`
+- [x] **Subscription Webhook Events** ✅ ALL IMPLEMENTED
+  - [x] `customer.subscription.created`
+  - [x] `customer.subscription.updated`
+  - [x] `customer.subscription.deleted`
+  - [x] `invoice.payment_succeeded`
+  - [x] `invoice.payment_failed`
+  - [x] Separate webhook endpoint for subscriptions
 
 ## 4. Email/SMTP Configuration
 
-- [ ] **Email Service Provider**
-  Choose one:
-  - [ ] SendGrid (recommended for transactional email)
-  - [ ] Mailgun
-  - [ ] Amazon SES
-  - [ ] SMTP relay (Gmail, Outlook 365)
+- [x] **Email Service Provider**
+  - SMTP relay configured (Site4Now mail server) ✅
+  - SSL/TLS enabled (port 587) ✅
 
-- [ ] **SendGrid Setup** (if using SendGrid)
-  - Create account at https://sendgrid.com
-  - Verify sender identity/domain
-  - Create API key with Mail Send permissions
-  - Configure DNS records (SPF, DKIM, DMARC) for deliverability
+- [x] **SMTP Configuration**
+  - Host: mail5010.site4now.net ✅
+  - From: noreply@lakecountryspanish.com ✅
+  - From Name: Lake Country Spanish ✅
 
-- [ ] **Update Configuration**
-  ```json
-  {
-    "Email": {
-      "Provider": "SendGrid",
-      "ApiKey": "SG.xxxxx",
-      "FromEmail": "karen@lakecountryspanish.com",
-      "FromName": "Lake Country Spanish"
-    }
-  }
-  ```
-
-- [ ] **Email Templates**
-  - Review all email templates for correct branding
+- [ ] **Email Deliverability**
+  - Configure DNS records (SPF, DKIM, DMARC) for better deliverability
   - Test email delivery to multiple providers (Gmail, Outlook, Yahoo)
   - Check spam score using mail-tester.com
 
-- [ ] **Emails to Configure**
-  - [ ] Welcome email (new student registration)
-  - [ ] Password reset
-  - [ ] Class booking confirmation
-  - [ ] Class reminder (24 hours before)
-  - [ ] Class cancellation notification
-  - [ ] Class rescheduled notification
-  - [ ] Payment confirmation
+- [x] **Email Templates** ✅ IMPLEMENTED
+  - [x] Class reminder (24 hours before)
+  - [x] Class cancellation notification
+  - [x] Class rescheduled notification
+  - [x] Payment confirmation
+  - [x] Payment failed notification
+  - [x] Subscription renewal notification
+  - [x] Assignment assigned notification
+  - [x] Weekly progress report
+  - [x] Badge earned notification
+  - [x] Point milestone notification
+  - [ ] Welcome email (new student registration) - Not implemented
+  - [ ] Class booking confirmation - Not implemented
 
 ## 5. Application Configuration
 
-- [ ] **appsettings.Production.json**
-  ```json
-  {
-    "AppSettings": {
-      "BaseUrl": "https://lakecountryspanish.com",
-      "DefaultClassPrice": 25.00
-    },
-    "Logging": {
-      "LogLevel": {
-        "Default": "Warning",
-        "Microsoft.AspNetCore": "Warning"
-      }
-    }
-  }
-  ```
+- [x] **appsettings.Production.json** ✅
+  - BaseUrl configured ✅
+  - DefaultClassPrice: 25.00 ✅
+  - Logging levels configured ✅
 
-- [ ] **Environment Variables** (recommended over config files)
-  ```
-  ASPNETCORE_ENVIRONMENT=Production
-  ConnectionStrings__DefaultConnection=Server=...
-  Stripe__SecretKey=sk_live_...
-  Stripe__WebhookSecret=whsec_...
-  Email__ApiKey=SG.xxx...
-  ```
+- [x] **Configuration Structure** ✅
+  - Stripe keys in config ✅
+  - Email settings in config ✅
+  - Database connection configured ✅
 
 - [ ] **Secret Management**
-  - Use Azure Key Vault, AWS Secrets Manager, or similar
-  - Never commit secrets to source control
+  - Consider Azure Key Vault or similar for enhanced security
   - Rotate secrets periodically
 
 ## 6. Security Checklist
 
-- [ ] **Authentication**
-  - Verify password requirements are strong (min 8 chars, complexity)
-  - Enable account lockout after failed attempts
-  - Review MustChangePassword flow works correctly
+- [x] **Authentication** ✅ COMPLETE
+  - [x] Password minimum 8 characters
+  - [x] Requires uppercase letter
+  - [x] Requires lowercase letter
+  - [x] Requires digit
+  - [x] Unique email required
+  - [x] Account lockout configured (5 attempts, 5 min lockout)
+  - [x] MustChangePassword flow implemented
 
-- [ ] **HTTPS**
-  - Force HTTPS redirect
-  - Set HSTS headers
-  - Verify no mixed content warnings
+- [x] **HTTPS** ✅ COMPLETE
+  - [x] HTTPS redirect enabled (`app.UseHttpsRedirection()`)
+  - [x] HSTS headers enabled (`app.UseHsts()`)
+  - [ ] Verify no mixed content warnings (requires browser testing)
 
 - [ ] **Data Protection**
   - Configure Data Protection keys for production
   - Store keys in persistent location (not in-memory)
 
-- [ ] **Anti-Forgery**
-  - Verify all forms include anti-forgery tokens
-  - Verify AJAX calls include tokens where needed
+- [x] **Anti-Forgery** ✅ COMPLETE
+  - [x] `[ValidateAntiForgeryToken]` on all POST actions (69 instances)
+  - [x] AJAX calls include tokens where needed
 
-- [ ] **File Uploads**
-  - Verify upload directory exists and has correct permissions
-  - Configure max file size limits
-  - Validate file types on upload
+- [x] **File Uploads** ✅ CONFIGURED
+  - Upload handling in DocumentService
+  - File type validation implemented
+  - Max file size limits configured
 
 ## 7. Admin Account Setup
 
-- [ ] **Create Production Admin**
-  - Update SeedData or manually create admin account
-  - Use strong, unique password
-  - Store credentials securely (password manager)
+- [x] **Create Production Admin** ✅
+  - Admin account seeded via SeedData.cs
+  - Default credentials configured (should be changed on first login)
 
 - [ ] **Remove Test Data**
   - Remove or update test student accounts
@@ -198,15 +158,17 @@
 
 ## 8. Monitoring & Logging
 
+- [x] **Logging** ✅ IMPLEMENTED
+  - [x] ILogger<T> injected in all key services
+  - [x] Structured logging with named properties
+  - [x] Error logging in catch blocks
+  - [x] Information logging for key operations
+  - [ ] Consider Serilog for file-based rotation (optional)
+
 - [ ] **Application Monitoring**
   - Set up Application Insights (Azure) or similar
   - Configure error alerting
   - Set up uptime monitoring (UptimeRobot, Pingdom)
-
-- [ ] **Logging**
-  - Configure structured logging (Serilog recommended)
-  - Set appropriate log levels for production
-  - Configure log retention/rotation
 
 - [ ] **Health Checks**
   - Add health check endpoint
@@ -215,14 +177,14 @@
 
 ## 9. Performance & Optimization
 
+- [x] **Database** ✅ OPTIMIZED
+  - [x] Indexes on frequently queried columns
+  - [x] Unique constraints for data integrity
+  - [x] Connection pooling (default EF Core behavior)
+
 - [ ] **Caching**
   - Enable response caching where appropriate
   - Configure static file caching headers
-
-- [ ] **Database**
-  - Add appropriate indexes
-  - Review query performance
-  - Enable connection pooling
 
 - [ ] **Static Files**
   - Minify CSS/JS if not using CDN
@@ -232,8 +194,8 @@
 ## 10. Legal & Compliance
 
 - [ ] **Privacy Policy**
-  - Create privacy policy page
-  - Detail data collection and usage
+  - Privacy.cshtml exists but has placeholder content
+  - Need to add actual privacy policy content
   - Include cookie policy if applicable
 
 - [ ] **Terms of Service**
@@ -278,14 +240,14 @@
 
 ## 12. Deployment Steps
 
-1. [ ] Create production database and run migrations
-2. [ ] Configure all environment variables/secrets
-3. [ ] Deploy application to hosting
-4. [ ] Configure SSL certificate
-5. [ ] Verify DNS propagation
+1. [x] Create production database and run migrations ✅
+2. [x] Configure all environment variables/secrets ✅
+3. [x] Deploy application to hosting ✅
+4. [x] Configure SSL certificate ✅
+5. [x] Verify DNS propagation ✅
 6. [ ] Test all critical flows
 7. [ ] Set up monitoring and alerts
-8. [ ] Create production admin account
+8. [x] Create production admin account ✅
 9. [ ] Configure automated backups
 10. [ ] Document deployment process
 
@@ -309,20 +271,20 @@
 
 ## Quick Reference: Required Secrets
 
-| Secret | Description | Where to Get |
-|--------|-------------|--------------|
-| `ConnectionStrings:DefaultConnection` | SQL Server connection string | Your database provider |
-| `Stripe:SecretKey` | Stripe API secret key | Stripe Dashboard > Developers > API Keys |
-| `Stripe:PublishableKey` | Stripe API publishable key | Stripe Dashboard > Developers > API Keys |
-| `Stripe:WebhookSecret` | Webhook signing secret | Stripe Dashboard > Developers > Webhooks |
-| `Email:ApiKey` | SendGrid/email provider API key | SendGrid Dashboard > Settings > API Keys |
-| `AppSettings:BaseUrl` | Production URL | Your domain (https://lakecountryspanish.com) |
+| Secret | Description | Status |
+|--------|-------------|--------|
+| `ConnectionStrings:DefaultConnection` | SQL Server connection string | ✅ Configured |
+| `Stripe:SecretKey` | Stripe API secret key | ✅ Configured |
+| `Stripe:PublishableKey` | Stripe API publishable key | ✅ Configured |
+| `Stripe:WebhookSecret` | Webhook signing secret | ✅ Configured |
+| `EmailSettings:SmtpHost` | SMTP server | ✅ Configured |
+| `AppSettings:BaseUrl` | Production URL | ✅ Configured |
 
 ---
 
-## 14. Payment Code Fixes (Technical)
+## 14. Payment Code Fixes (Technical) ✅ ALL COMPLETE
 
-These are specific code issues identified during review that have been fixed:
+All critical payment issues identified during review have been fixed:
 
 - [x] **StripePaymentService.cs - Silent Failures** ✅ FIXED
   - Added ILogger to StripePaymentService
@@ -353,36 +315,60 @@ These are specific code issues identified during review that have been fixed:
 
 - [x] **Database Constraints** ✅ ADDED
   - Added unique filtered index on Payment.StripePaymentIntentId
-  - Prevents duplicate payment processing at database level
+  - Added unique filtered index on Subscription.StripeSubscriptionId
+  - Prevents duplicate payment/subscription processing at database level
 
 - [x] **Subscription Ticket Race Condition** ✅ FIXED
   - GrantSubscriptionTicketsAsync now uses transactions
   - Double-checks within transaction to handle concurrent webhook calls
   - Returns existing tickets if already granted for the period
 
-### Remaining Items (Lower Priority)
+- [x] **ProcessTipWebhookAsync Error Handling** ✅ FIXED
+  - Added logging for all error paths
+  - Added idempotency check for already-paid tips
 
-These items were identified in the audit but are lower priority or require design decisions:
+- [x] **Hardcoded Fallback Price Warning** ✅ FIXED
+  - Logs warning when using $25 fallback price
+  - Alerts when AppSettings:DefaultClassPrice is not configured
 
-- [ ] **ProcessTipWebhookAsync Error Handling**
-  - Currently catches StripeException silently and returns false
-  - Consider adding logging for tip payment failures
+---
 
-- [ ] **Hardcoded Fallback Price**
-  - StripePaymentService line ~229: Falls back to $25 if config missing
-  - Consider: Log a warning when using fallback, or fail explicitly
+## Summary: Remaining Action Items
 
-- [ ] **Null Check Improvements**
-  - Various places could benefit from defensive null checks
-  - Not critical but would improve robustness
+### Critical (Before Launch)
+1. [ ] Test real payment flow with small transaction
+2. [ ] Complete functional testing checklist
+3. [ ] Configure database backups
 
-- [ ] **Subscription Unique Constraint**
-  - Consider adding unique index on Subscription.StripeSubscriptionId
-  - Would prevent duplicate subscription records at database level
+### Important (Should Do)
+4. [ ] Add actual content to Privacy Policy page
+5. [ ] Create Terms of Service page
+6. [ ] Test email deliverability (spam score)
+7. [ ] Set up monitoring/alerting
 
-- [ ] **Payment Success Email**
-  - Consider sending confirmation email when payment succeeds
-  - Currently only sends on failure
+### Nice to Have
+8. [ ] Add welcome email template
+9. [ ] Add class booking confirmation email
+10. [ ] Add cookie consent banner (if using tracking)
+11. [ ] Add health check endpoints
+12. [ ] Configure Serilog for file-based logging
+
+---
+
+## Future Feature Requests
+
+These are features to consider for future development:
+
+1. [ ] **Group Classes** - Allow multiple students to be enrolled in the same class session
+   - Would require changes to ScheduledClass entity (many-to-many with students)
+   - Admin UI for creating group class slots
+   - Student UI for joining group classes
+   - Different pricing model for group vs private lessons
+
+2. [ ] **Cart Reservation Expiration** - Auto-release cart reservations after timeout
+   - Currently slots are held indefinitely when added to cart
+   - Consider 15-30 minute timeout with warning
+   - Background job to clean up stale reservations
 
 ---
 
