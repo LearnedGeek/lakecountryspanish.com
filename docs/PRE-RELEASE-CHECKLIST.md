@@ -203,11 +203,10 @@
   - Include cancellation/refund policy
   - Include payment terms
 
-- [x] **Cookie Consent** ✅ COMPLETE
-  - [x] Cookie consent banner implemented (_CookieConsent.cshtml)
+- [x] **Cookie Consent** ✅ NOT REQUIRED
   - [x] Only essential authentication cookie used (no tracking)
-  - [x] Banner explains cookie purpose and links to Privacy Policy
-  - [x] Consent stored in localStorage
+  - [x] Essential cookies are exempt from consent requirements under GDPR
+  - [x] Cookie usage documented in Privacy Policy
 
 ## 11. Testing Before Launch
 
@@ -351,7 +350,7 @@ All critical payment issues identified during review have been fixed:
 ### Nice to Have
 8. [ ] Add welcome email template
 9. [ ] Add class booking confirmation email
-10. [x] ~~Add cookie consent banner~~ ✅ DONE (essential cookies only, banner implemented)
+10. [x] ~~Add cookie consent banner~~ ✅ NOT NEEDED (essential cookies only, exempt from consent)
 11. [ ] Add health check endpoints
 12. [ ] Configure Serilog for file-based logging
 
