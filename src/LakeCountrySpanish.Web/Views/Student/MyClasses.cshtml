@@ -141,7 +141,7 @@
                     <div class="bg-white rounded-xl shadow-md overflow-hidden">
                         <!-- Week Navigation -->
                         <div class="p-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-gray-50 to-white">
-                        <a asp-action="MyClasses" asp-route-weekStart="@previousWeekStart.ToString("yyyy-MM-dd")"
+                        <a asp-action="MyClasses" asp-route-weekStart="@previousWeekStart.ToString("yyyy-MM-dd")" asp-route-tab="calendar"
                            class="flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition">
                             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
@@ -153,7 +153,7 @@
                                 @Model.WeeklyCalendar.WeekStart.ToString("MMMM d") - @Model.WeeklyCalendar.WeekEnd.ToString("MMMM d, yyyy")
                             </h2>
                         </div>
-                        <a asp-action="MyClasses" asp-route-weekStart="@nextWeekStart.ToString("yyyy-MM-dd")"
+                        <a asp-action="MyClasses" asp-route-weekStart="@nextWeekStart.ToString("yyyy-MM-dd")" asp-route-tab="calendar"
                            class="flex items-center text-indigo-600 hover:text-indigo-800 font-medium transition">
                             Next
                             <svg class="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,8 +216,9 @@
                                                 }
                                                 else
                                                 {
+                                                    var classDateTime = day.Date.Add(timeSlot.StartTime);
                                                     <button type="button"
-                                                            onclick="selectSlot(@timeSlot.Id, '@day.Date.ToString("yyyy-MM-dd")', '@(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt"))')"
+                                                            onclick="selectSlot(@timeSlot.Id, '@classDateTime.ToString("yyyy-MM-ddTHH:mm:ss")', '@(DateTime.Today.Add(timeSlot.StartTime).ToString("h:mm tt"))')"
                                                             class="w-full h-12 bg-green-50 hover:bg-green-100 border-2 border-dashed border-green-300 hover:border-green-500 rounded-lg flex items-center justify-center transition group">
                                                         <svg class="w-5 h-5 text-green-500 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
@@ -362,7 +363,11 @@
                                             </div>
                                             @if (hoursUntil > 1)
                                             {
-                                                <button type="button" class="text-xs text-red-600 hover:text-red-800">Cancel</button>
+                                                <button type="button" onclick="cancelUpcomingClass(@cls.Id, false)" class="text-xs text-red-600 hover:text-red-800">Cancel</button>
+                                            }
+                                            else if (hoursUntil > 0)
+                                            {
+                                                <button type="button" onclick="cancelUpcomingClass(@cls.Id, true)" class="text-xs text-orange-600 hover:text-orange-800" title="Within 24 hours - ticket may be forfeited">Cancel*</button>
                                             }
                                         </div>
                                     </div>
@@ -665,6 +670,35 @@
                 }
             } catch (error) {
                 console.error('Error clearing cart:', error);
+            }
+        }
+
+        async function cancelUpcomingClass(classId, willForfeit) {
+            const message = willForfeit
+                ? 'This class is within 24 hours. Cancelling may forfeit your credit. Continue?'
+                : 'Are you sure you want to cancel this class?';
+
+            if (!confirm(message)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Student/CancelClass?id=${classId}&acceptForfeit=${willForfeit}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                });
+
+                if (response.ok) {
+                    showToast('Class cancelled successfully', 'success');
+                    location.reload();
+                } else {
+                    showToast('Failed to cancel class', 'error');
+                }
+            } catch (error) {
+                console.error('Error cancelling class:', error);
+                showToast('Failed to cancel class', 'error');
             }
         }
 
