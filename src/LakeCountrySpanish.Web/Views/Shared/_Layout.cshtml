@@ -61,10 +61,30 @@
             "addressRegion": "WI",
             "addressCountry": "US"
         },
-        "areaServed": {
-            "@@type": "Place",
-            "name": "Online - Worldwide"
-        },
+        "areaServed": [
+            {
+                "@@type": "State",
+                "name": "Wisconsin",
+                "containsPlace": [
+                    { "@@type": "City", "name": "Oconomowoc" },
+                    { "@@type": "City", "name": "Waukesha" },
+                    { "@@type": "City", "name": "Delafield" },
+                    { "@@type": "City", "name": "Hartland" },
+                    { "@@type": "City", "name": "Pewaukee" },
+                    { "@@type": "City", "name": "Brookfield" },
+                    { "@@type": "City", "name": "Menomonee Falls" },
+                    { "@@type": "City", "name": "Muskego" },
+                    { "@@type": "City", "name": "New Berlin" },
+                    { "@@type": "City", "name": "Wales" },
+                    { "@@type": "City", "name": "Dousman" },
+                    { "@@type": "City", "name": "Summit" }
+                ]
+            },
+            {
+                "@@type": "Place",
+                "name": "Online - Worldwide"
+            }
+        ],
         "serviceType": ["Spanish Language Lessons", "Online Tutoring", "Language Education"],
         "hasOfferCatalog": {
             "@@type": "OfferCatalog",

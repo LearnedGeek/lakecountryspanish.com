@@ -123,7 +123,7 @@ Target searches like "Oconomowoc Spanish", "Waukesha Spanish lessons", "Spanish 
 - [ ] Request reviews from students
 
 ### Schema Markup Enhancement
-- [ ] Expand `areaServed` in LocalBusiness schema to include specific towns:
+- [x] Expand `areaServed` in LocalBusiness schema to include specific towns:
   - Oconomowoc
   - Waukesha
   - Delafield
@@ -154,9 +154,9 @@ Each page should include:
 - LocalBusiness schema with that specific location
 
 ### Content Optimization
-- [ ] Add "Serving Lake Country Wisconsin" to home page hero
-- [ ] Update About page to mention communities served
-- [ ] Add location keywords naturally throughout existing content
+- [x] Add "Serving Lake Country Wisconsin" to home page hero
+- [x] Update About page to mention communities served (added "Communities Served" section)
+- [x] Add location keywords naturally throughout existing content (meta descriptions + hero text)
 - [ ] Consider blog posts: "Learning Spanish in Lake Country: From Oconomowoc to Waukesha"
 
 ### Keywords to Target
