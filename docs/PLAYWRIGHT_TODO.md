@@ -253,6 +253,113 @@ The test student may have no available time slots. Either:
 
 ---
 
+## Manual Testing Procedures
+
+### Pre-Launch Testing Checklist
+
+Before going live, complete these manual tests in addition to running Playwright:
+
+#### 1. Payment Flow (Critical)
+
+**Setup:**
+```bash
+# Terminal 1 - Run the app locally
+cd src/LakeCountrySpanish.Web
+dotnet run
+
+# Terminal 2 - Forward Stripe webhooks
+stripe listen --forward-to https://localhost:5001/api/payment/webhook
+```
+
+**Test Steps:**
+1. Login as test student
+2. Go to /Student/MyClasses
+3. Add a class to cart
+4. Click Checkout
+5. On Stripe checkout, use test card: `4242 4242 4242 4242` (any future date, any CVC)
+6. Complete payment
+7. Verify:
+   - [ ] Redirected to success page
+   - [ ] Payment shows as "Completed" in database
+   - [ ] Class shows in "Upcoming Classes"
+   - [ ] Webhook received (check stripe listen terminal)
+
+**Test Refund:**
+1. Go to Stripe Dashboard → Payments
+2. Find the test payment and issue refund
+3. Verify webhook updates payment status to "Refunded"
+
+#### 2. Subscription Flow
+
+1. Login as test student without subscription
+2. Go to /Subscription/Plans
+3. Select a plan and checkout
+4. Verify:
+   - [ ] Subscription created in Stripe
+   - [ ] Subscription shows in student dashboard
+   - [ ] Tickets/classes allocated correctly
+
+#### 3. Email Deliverability
+
+1. Trigger a test email (class reminder, payment confirmation)
+2. Check inbox (including spam folder)
+3. Use [mail-tester.com](https://mail-tester.com) to check spam score
+
+#### 4. Cross-Browser Quick Check
+
+Test these critical flows in each browser:
+- [ ] Chrome: Login → Dashboard → Schedule class
+- [ ] Firefox: Login → Dashboard → Schedule class
+- [ ] Safari: Login → Dashboard → Schedule class
+- [ ] Edge: Login → Dashboard → Schedule class
+- [ ] Mobile (Chrome/Safari): Login → Dashboard
+
+#### 5. Admin Functions
+
+Login as admin and verify:
+- [ ] Can view all students
+- [ ] Can manage schedule/time slots
+- [ ] Can approve testimonials
+- [ ] Can view payment history
+- [ ] Dashboard analytics load
+
+### Production Smoke Test
+
+After deploying to production, run these quick checks:
+
+```bash
+# Run read-only tests against production
+$env:TEST_ENVIRONMENT = "production"
+$env:TEST_BASE_URL = "https://lakecountryspanish.com"
+dotnet test src/LakeCountrySpanish.Playwright --filter "FullyQualifiedName~PublicPagesTests"
+```
+
+**Manual checks:**
+- [ ] Home page loads with correct branding
+- [ ] SSL certificate valid (padlock in browser)
+- [ ] Login page accessible
+- [ ] Contact form visible
+- [ ] No console errors (F12 → Console)
+
+### Test Credentials Reference
+
+| Environment | Email | Password | Notes |
+|-------------|-------|----------|-------|
+| Local Dev | teststudent@test.com | Test123! | Seeded by SeedData.cs |
+| Local Admin | admin@lakecountryspanish.com | Admin123! | Seeded by SeedData.cs |
+| Production | (create test account) | (secure password) | Create via registration |
+
+### Stripe Test Cards
+
+| Card Number | Scenario |
+|-------------|----------|
+| 4242 4242 4242 4242 | Success |
+| 4000 0000 0000 0002 | Declined |
+| 4000 0000 0000 3220 | 3D Secure required |
+| 4000 0025 0000 3155 | Requires authentication |
+
+---
+
 ## Notes
 
 - Tests marked with `IsProduction` check will skip write operations against production
