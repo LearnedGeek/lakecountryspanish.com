@@ -15,6 +15,7 @@ public class StudentController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IScheduleService _scheduleService;
+    private readonly IClassSchedulingService _classSchedulingService;
     private readonly IPaymentService _paymentService;
     private readonly IGamificationService _gamificationService;
     private readonly IPlacementTestService _placementTestService;
@@ -26,6 +27,7 @@ public class StudentController : Controller
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         IScheduleService scheduleService,
+        IClassSchedulingService classSchedulingService,
         IPaymentService paymentService,
         IGamificationService gamificationService,
         IPlacementTestService placementTestService,
@@ -36,6 +38,7 @@ public class StudentController : Controller
         _context = context;
         _userManager = userManager;
         _scheduleService = scheduleService;
+        _classSchedulingService = classSchedulingService;
         _paymentService = paymentService;
         _gamificationService = gamificationService;
         _placementTestService = placementTestService;
@@ -195,7 +198,7 @@ public class StudentController : Controller
 
     // New unified scheduling page (replaces BookClass)
     [HttpGet]
-    public async Task<IActionResult> MyClasses(DateTime? weekStart)
+    public async Task<IActionResult> MyClasses(DateTime? weekStart, string? tab)
     {
         var user = await _userManager.GetUserAsync(User);
         if (user == null)
@@ -226,6 +229,19 @@ public class StudentController : Controller
         // Check if user has an active subscription
         var activeSubscription = await _subscriptionService.GetActiveSubscriptionAsync(user.Id);
 
+        // Get pending checkout classes (non-subscribers only)
+        var pendingClasses = await _classSchedulingService.GetPendingCheckoutAsync(user.Id);
+        var pendingClassesList = pendingClasses.ToList();
+
+        // Calculate checkout summary
+        var checkoutSummary = await _classSchedulingService.GetCheckoutSummaryAsync(user.Id, 0);
+
+        // Get reserved classes for Preply-style Lessons view (next 2 months)
+        var reservedClasses = await _scheduleService.GetReservedClassesAsync(
+            user.Id,
+            DateTime.Today,
+            DateTime.Today.AddMonths(2));
+
         var viewModel = new MyClassesViewModel
         {
             HasActiveSubscription = activeSubscription != null,
@@ -233,21 +249,285 @@ public class StudentController : Controller
             AvailableTickets = availableTickets,
             WeeklyCalendar = weeklyCalendar,
             UpcomingClasses = upcomingClasses,
-            PendingCheckoutClasses = new List<ScheduledClass>(), // TODO: Implement pending checkout
+            PendingCheckoutClasses = pendingClassesList,
             SubscriptionClassesRemaining = activeSubscription?.ClassesRemainingThisMonth ?? 0,
-            CheckoutSummary = new SchedulingCheckoutSummary
-            {
-                ClassCount = 0,
-                PerClassPrice = classPrice,
-                Subtotal = 0,
-                TicketsApplied = 0,
-                TicketDiscount = 0,
-                TotalDue = 0
-            }
+            CheckoutSummary = checkoutSummary,
+            ReservedClasses = reservedClasses.ToList(),
+            ActiveTab = tab ?? "lessons"
         };
 
         return View(viewModel);
     }
+
+    #region Class Scheduling AJAX Endpoints
+
+    /// <summary>
+    /// Adds a class to the pending checkout cart (AJAX).
+    /// For subscribers: uses subscription allocation by default, or ticket if useTicket=true.
+    /// For non-subscribers: adds to checkout cart.
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> AddToCart(int timeSlotId, DateTime classDateTime, bool useTicket = false)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Json(new { success = false, error = "Unauthorized" });
+        }
+
+        // Check if user has active subscription
+        var subscription = await _subscriptionService.GetActiveSubscriptionAsync(user.Id);
+
+        // If subscriber wants to use a ticket for an extra class
+        if (subscription != null && useTicket)
+        {
+            var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
+            if (availableTickets <= 0)
+            {
+                return Json(new { success = false, error = "No free class rewards available." });
+            }
+
+            // Schedule the class and consume a ticket
+            var scheduledClass = await _classSchedulingService.AddClassToCheckoutAsync(
+                user.Id, timeSlotId, classDateTime);
+
+            if (scheduledClass == null)
+            {
+                return Json(new { success = false, error = "Unable to schedule class. The slot may no longer be available." });
+            }
+
+            // Use ticket to confirm this class immediately
+            var redemption = await _ticketService.UseTicketForFreeClassAsync(user.Id, scheduledClass.Id);
+            if (redemption == null)
+            {
+                // Rollback the pending class
+                await _classSchedulingService.RemoveFromCheckoutAsync(scheduledClass.Id, user.Id);
+                return Json(new { success = false, error = "Unable to use free class reward." });
+            }
+
+            // Mark the class as confirmed (no longer pending)
+            scheduledClass.IsPendingCheckout = false;
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                confirmed = true,
+                usedTicket = true,
+                classId = scheduledClass.Id,
+                classDateTime = scheduledClass.ClassDateTime.ToString("ddd, MMM d 'at' h:mm tt"),
+                ticketsRemaining = availableTickets - 1
+            });
+        }
+
+        // Normal subscriber flow: schedule immediately with subscription
+        if (subscription != null && subscription.ClassesRemainingThisMonth > 0)
+        {
+            var scheduledClass = await _classSchedulingService.ScheduleWithSubscriptionAsync(
+                user.Id, timeSlotId, classDateTime);
+
+            if (scheduledClass == null)
+            {
+                return Json(new { success = false, error = "Unable to schedule class. The slot may no longer be available." });
+            }
+
+            return Json(new
+            {
+                success = true,
+                confirmed = true,
+                classId = scheduledClass.Id,
+                classDateTime = scheduledClass.ClassDateTime.ToString("ddd, MMM d 'at' h:mm tt"),
+                subscriptionClassesRemaining = subscription.ClassesRemainingThisMonth - 1
+            });
+        }
+
+        // Non-subscriber flow: add to checkout cart
+        var pendingClass = await _classSchedulingService.AddClassToCheckoutAsync(
+            user.Id, timeSlotId, classDateTime);
+
+        if (pendingClass == null)
+        {
+            return Json(new { success = false, error = "Unable to add class. The slot may no longer be available." });
+        }
+
+        var summary = await _classSchedulingService.GetCheckoutSummaryAsync(user.Id, 0);
+
+        return Json(new
+        {
+            success = true,
+            confirmed = false,
+            classId = pendingClass.Id,
+            classDateTime = pendingClass.ClassDateTime.ToString("ddd, MMM d 'at' h:mm tt"),
+            summary = new
+            {
+                classCount = summary.ClassCount,
+                perClassPrice = summary.PerClassPrice,
+                subtotal = summary.Subtotal,
+                totalDue = summary.TotalDue
+            }
+        });
+    }
+
+    /// <summary>
+    /// Removes a class from the pending checkout cart (AJAX).
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> RemoveFromCart(int classId)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Json(new { success = false, error = "Unauthorized" });
+        }
+
+        var result = await _classSchedulingService.RemoveFromCheckoutAsync(classId, user.Id);
+        if (!result)
+        {
+            return Json(new { success = false, error = "Unable to remove class from cart." });
+        }
+
+        var summary = await _classSchedulingService.GetCheckoutSummaryAsync(user.Id, 0);
+
+        return Json(new
+        {
+            success = true,
+            summary = new
+            {
+                classCount = summary.ClassCount,
+                perClassPrice = summary.PerClassPrice,
+                subtotal = summary.Subtotal,
+                totalDue = summary.TotalDue
+            }
+        });
+    }
+
+    /// <summary>
+    /// Gets the current checkout summary with optional ticket discount (AJAX).
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetCheckoutSummary(int ticketsToApply = 0)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Json(new { error = "Unauthorized" });
+        }
+
+        var summary = await _classSchedulingService.GetCheckoutSummaryAsync(user.Id, ticketsToApply);
+        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
+
+        return Json(new
+        {
+            classCount = summary.ClassCount,
+            perClassPrice = summary.PerClassPrice,
+            subtotal = summary.Subtotal,
+            ticketsApplied = summary.TicketsApplied,
+            ticketDiscount = summary.TicketDiscount,
+            totalDue = summary.TotalDue,
+            availableTickets = availableTickets
+        });
+    }
+
+    /// <summary>
+    /// Gets the pending checkout cart items (AJAX).
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetPendingCart()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Json(new { error = "Unauthorized" });
+        }
+
+        var pendingClasses = await _classSchedulingService.GetPendingCheckoutAsync(user.Id);
+
+        return Json(pendingClasses.Select(c => new
+        {
+            id = c.Id,
+            dateTime = c.ClassDateTime,
+            formattedDateTime = c.ClassDateTime.ToString("ddd, MMM d 'at' h:mm tt"),
+            timeSlot = new
+            {
+                id = c.TimeSlotId,
+                startTime = c.TimeSlot.StartTime.ToString(@"hh\:mm"),
+                endTime = c.TimeSlot.EndTime.ToString(@"hh\:mm")
+            }
+        }));
+    }
+
+    /// <summary>
+    /// Clears all pending checkout items (AJAX).
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> ClearCart()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return Json(new { success = false, error = "Unauthorized" });
+        }
+
+        var clearedCount = await _classSchedulingService.ClearPendingCheckoutAsync(user.Id);
+
+        return Json(new { success = true, clearedCount });
+    }
+
+    /// <summary>
+    /// Initiates Stripe checkout for pending classes.
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Checkout(int ticketsToApply = 0)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        var successUrl = Url.Action("CheckoutSuccess", "Student", null, Request.Scheme)!;
+        var cancelUrl = Url.Action("MyClasses", "Student", null, Request.Scheme)!;
+
+        var checkoutUrl = await _classSchedulingService.CreateCheckoutSessionAsync(
+            user.Id, ticketsToApply, successUrl, cancelUrl);
+
+        if (checkoutUrl == null)
+        {
+            TempData["ErrorMessage"] = "Unable to create checkout session. Please try again.";
+            return RedirectToAction(nameof(MyClasses));
+        }
+
+        // If it's a free checkout (all covered by tickets), redirect to success
+        if (checkoutUrl.Contains("free=true"))
+        {
+            TempData["SuccessMessage"] = "Classes scheduled successfully using your free class rewards!";
+            return RedirectToAction(nameof(MyClasses));
+        }
+
+        return Redirect(checkoutUrl);
+    }
+
+    /// <summary>
+    /// Handle successful checkout return from Stripe.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> CheckoutSuccess(Guid? batchId, int tickets = 0)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        // The webhook will handle marking classes as confirmed
+        // This just shows the success message
+        TempData["SuccessMessage"] = "Your classes have been scheduled successfully!";
+
+        return RedirectToAction(nameof(MyClasses));
+    }
+
+    #endregion
 
     // Legacy BookClass - redirects to MyClasses
     [HttpGet]
@@ -285,117 +565,24 @@ public class StudentController : Controller
         }));
     }
 
+    // Legacy POST BookClass - deprecated in favor of MyClasses checkout flow
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> BookClass(int timeSlotId, DateTime classDateTime)
+    [Obsolete("Use MyClasses checkout flow instead. This action now redirects to MyClasses.")]
+    public IActionResult BookClass(int timeSlotId, DateTime classDateTime)
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        // Check 1-hour booking restriction
-        if (!_scheduleService.CanBookClass(classDateTime))
-        {
-            TempData["ErrorMessage"] = "Classes must be booked at least 1 hour in advance.";
-            return RedirectToAction(nameof(BookClass));
-        }
-
-        // Verify student has tickets available
-        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
-        if (availableTickets == 0)
-        {
-            TempData["ErrorMessage"] = "You need class tickets to schedule a lesson. Visit the Token Store to get tickets!";
-            return RedirectToAction(nameof(TokenStore));
-        }
-
-        // Book the class
-        var scheduledClass = await _scheduleService.BookClassAsync(user.Id, timeSlotId, classDateTime);
-        if (scheduledClass == null)
-        {
-            TempData["ErrorMessage"] = "This time slot is no longer available. Please choose another time.";
-            return RedirectToAction(nameof(BookClass));
-        }
-
-        // Use a ticket for the class
-        var ticket = await _ticketService.UseTicketForClassAsync(user.Id, scheduledClass.Id);
-        if (ticket == null)
-        {
-            // Rollback the booking if ticket usage fails
-            _context.ScheduledClasses.Remove(scheduledClass);
-            await _context.SaveChangesAsync();
-            TempData["ErrorMessage"] = "Failed to use ticket for booking. Please try again.";
-            return RedirectToAction(nameof(BookClass));
-        }
-
-        scheduledClass.TicketId = ticket.Id;
-        scheduledClass.PaymentStatus = PaymentStatus.PaidWithTicket;
-        await _context.SaveChangesAsync();
-
-        var remainingTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
-        TempData["SuccessMessage"] = $"Class booked successfully! You have {remainingTickets} ticket{(remainingTickets == 1 ? "" : "s")} remaining.";
-        return RedirectToAction(nameof(Dashboard));
+        TempData["InfoMessage"] = "Please use the new scheduling page to book classes.";
+        return RedirectToAction(nameof(MyClasses));
     }
 
+    // Legacy BookRecurringClasses - deprecated in favor of subscription recurring schedules
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> BookRecurringClasses(int timeSlotId, DateTime startDate, int weekCount)
+    [Obsolete("Use subscription recurring schedules instead. This action now redirects to MyClasses.")]
+    public IActionResult BookRecurringClasses(int timeSlotId, DateTime startDate, int weekCount)
     {
-        var user = await _userManager.GetUserAsync(User);
-        if (user == null)
-        {
-            return NotFound();
-        }
-
-        // Check 1-hour booking restriction for the first class
-        if (!_scheduleService.CanBookClass(startDate))
-        {
-            TempData["ErrorMessage"] = "The first class must be booked at least 1 hour in advance.";
-            return RedirectToAction(nameof(BookClass));
-        }
-
-        // Use new ticket system
-        var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
-
-        if (weekCount > availableTickets)
-        {
-            TempData["ErrorMessage"] = $"You only have {availableTickets} ticket{(availableTickets == 1 ? "" : "s")} available. Please select fewer weeks.";
-            return RedirectToAction(nameof(BookClass));
-        }
-
-        var result = await _scheduleService.BookRecurringClassesAsync(user.Id, timeSlotId, startDate, weekCount);
-
-        if (result.BookedClasses.Any())
-        {
-            // Use tickets for booked classes
-            foreach (var bookedClass in result.BookedClasses)
-            {
-                var ticket = await _ticketService.UseTicketForClassAsync(user.Id, bookedClass.Id);
-                if (ticket != null)
-                {
-                    bookedClass.TicketId = ticket.Id;
-                    bookedClass.PaymentStatus = PaymentStatus.PaidWithTicket;
-                }
-            }
-            await _context.SaveChangesAsync();
-        }
-
-        if (result.ConflictDates.Any())
-        {
-            var conflictMessage = string.Join(", ", result.ConflictDates.Select(d => d.ToString("MMM d")));
-            TempData["WarningMessage"] = $"Booked {result.BookedClasses.Count} class(es). Skipped dates with conflicts: {conflictMessage}";
-        }
-        else if (result.Success)
-        {
-            TempData["SuccessMessage"] = $"Successfully booked {result.BookedClasses.Count} recurring class(es)!";
-        }
-        else
-        {
-            TempData["ErrorMessage"] = "Unable to book any classes. All selected dates have conflicts.";
-        }
-
-        return RedirectToAction(nameof(Dashboard));
+        TempData["InfoMessage"] = "Recurring classes are now managed through your subscription. Please use the scheduling page.";
+        return RedirectToAction(nameof(MyClasses));
     }
 
     [HttpGet]

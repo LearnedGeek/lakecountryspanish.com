@@ -203,6 +203,16 @@ public class MyClassesViewModel
     /// For subscribers: remaining classes in their allocation.
     /// </summary>
     public int SubscriptionClassesRemaining { get; set; }
+
+    /// <summary>
+    /// Reserved classes from recurring schedules (future billing periods).
+    /// </summary>
+    public IEnumerable<ReservedClassViewModel> ReservedClasses { get; set; } = new List<ReservedClassViewModel>();
+
+    /// <summary>
+    /// Currently active tab: "lessons" or "calendar".
+    /// </summary>
+    public string ActiveTab { get; set; } = "lessons";
 }
 
 /// <summary>
@@ -239,4 +249,67 @@ public class SchedulingCheckoutSummary
     /// Final amount due after discounts.
     /// </summary>
     public decimal TotalDue { get; set; }
+}
+
+/// <summary>
+/// View model for reserved (future) classes that will be auto-scheduled.
+/// Used in the Preply-style Lessons list view.
+/// </summary>
+public class ReservedClassViewModel
+{
+    /// <summary>
+    /// The date/time for this reserved class.
+    /// </summary>
+    public DateTime ClassDateTime { get; set; }
+
+    /// <summary>
+    /// The time slot for this class.
+    /// </summary>
+    public TimeSlot TimeSlot { get; set; } = null!;
+
+    /// <summary>
+    /// Day of week for recurring schedules.
+    /// </summary>
+    public DayOfWeek DayOfWeek { get; set; }
+
+    /// <summary>
+    /// Status message displayed to student (e.g., "Reserved - confirms on Feb 1").
+    /// </summary>
+    public string StatusMessage { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Whether this class is from a recurring schedule.
+    /// </summary>
+    public bool IsFromRecurringSchedule { get; set; }
+}
+
+/// <summary>
+/// View model for the LessonsList ViewComponent.
+/// </summary>
+public class LessonsListViewModel
+{
+    /// <summary>
+    /// Confirmed upcoming classes.
+    /// </summary>
+    public IList<ScheduledClass> UpcomingClasses { get; set; } = new List<ScheduledClass>();
+
+    /// <summary>
+    /// Reserved classes from recurring schedules (not yet confirmed).
+    /// </summary>
+    public IList<ReservedClassViewModel> ReservedClasses { get; set; } = new List<ReservedClassViewModel>();
+
+    /// <summary>
+    /// Current subscription (if any).
+    /// </summary>
+    public Subscription? Subscription { get; set; }
+
+    /// <summary>
+    /// Next billing date when reserved classes will be confirmed.
+    /// </summary>
+    public DateTime? NextBillingDate { get; set; }
+
+    /// <summary>
+    /// Whether the student has any upcoming or reserved classes.
+    /// </summary>
+    public bool HasAnyLessons => UpcomingClasses.Any() || ReservedClasses.Any();
 }

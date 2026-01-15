@@ -40,4 +40,11 @@ public interface IScheduleService
 
     // Enhanced completion with notes
     Task<bool> CompleteClassWithNotesAsync(int classId, string? notes);
+
+    // Reserved classes (for Preply-style Lessons view)
+    /// <summary>
+    /// Gets reserved classes from recurring schedules for the specified date range.
+    /// These are future classes that will be auto-scheduled when the subscription renews.
+    /// </summary>
+    Task<IEnumerable<ReservedClassViewModel>> GetReservedClassesAsync(string studentId, DateTime fromDate, DateTime toDate);
 }

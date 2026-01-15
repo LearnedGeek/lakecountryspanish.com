@@ -1,0 +1,182 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.LessonsListViewModel
+@using LakeCountrySpanish.Web.Models.Entities
+
+@if (!Model.HasAnyLessons)
+{
+    <div class="text-center py-12">
+        <div class="text-6xl mb-4">📭</div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No lessons scheduled</h3>
+        <p class="text-gray-500 text-sm">Use the calendar tab to schedule your classes.</p>
+    </div>
+}
+else
+{
+    <div class="space-y-4">
+        @* Confirmed Upcoming Classes *@
+        @if (Model.UpcomingClasses.Any())
+        {
+            <div class="mb-6">
+                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3 flex items-center">
+                    <svg class="w-4 h-4 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Confirmed Lessons
+                </h4>
+
+                <div class="space-y-3">
+                    @foreach (var cls in Model.UpcomingClasses.OrderBy(c => c.ClassDateTime))
+                    {
+                        var isToday = cls.ClassDateTime.Date == DateTime.Today;
+                        var isTomorrow = cls.ClassDateTime.Date == DateTime.Today.AddDays(1);
+                        var hoursUntil = (cls.ClassDateTime - DateTime.Now).TotalHours;
+                        var isStartingSoon = hoursUntil <= 1 && hoursUntil > 0;
+
+                        <div class="bg-white rounded-lg border @(isStartingSoon ? "border-blue-400 ring-2 ring-blue-100" : "border-gray-200") p-4 hover:shadow-md transition">
+                            <div class="flex items-start justify-between">
+                                <div class="flex items-start space-x-4">
+                                    <!-- Date Badge -->
+                                    <div class="flex-shrink-0 w-14 text-center">
+                                        <div class="bg-green-100 rounded-t-lg py-1 text-green-800 text-xs font-semibold uppercase">
+                                            @cls.ClassDateTime.ToString("MMM")
+                                        </div>
+                                        <div class="bg-white border border-t-0 border-green-200 rounded-b-lg py-2">
+                                            <div class="text-2xl font-bold text-gray-900">@cls.ClassDateTime.Day</div>
+                                            <div class="text-xs text-gray-500">@cls.ClassDateTime.ToString("ddd")</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Class Details -->
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-sm font-semibold text-gray-900">
+                                                @cls.ClassDateTime.ToString("h:mm tt") - @cls.ClassDateTime.AddHours(1).ToString("h:mm tt")
+                                            </span>
+                                            @if (isToday)
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Today
+                                                </span>
+                                            }
+                                            else if (isTomorrow)
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                                    Tomorrow
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <p class="mt-1 text-sm text-gray-600">Spanish Lesson with Karen</p>
+
+                                        @if (isStartingSoon)
+                                        {
+                                            <div class="mt-2 flex items-center text-blue-600">
+                                                <svg class="w-4 h-4 mr-1 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span class="text-sm font-medium">Starting soon!</span>
+                                            </div>
+                                        }
+
+                                        <!-- Status indicator -->
+                                        <div class="mt-2 flex items-center">
+                                            <svg class="w-4 h-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="text-xs text-green-600 font-medium">Confirmed</span>
+                                            @if (cls.PaymentStatus == PaymentStatus.PartOfSubscription)
+                                            {
+                                                <span class="ml-2 text-xs text-gray-400">Subscription</span>
+                                            }
+                                            else if (cls.PaymentStatus == PaymentStatus.PaidWithTicket)
+                                            {
+                                                <span class="ml-2 text-xs text-yellow-600">Free reward</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex items-center space-x-2">
+                                    @if (hoursUntil > 1)
+                                    {
+                                        <button type="button"
+                                                class="text-sm text-gray-400 hover:text-red-600 transition"
+                                                title="Cancel class">
+                                            Cancel
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* Reserved Classes (Future Billing Period) *@
+        @if (Model.ReservedClasses.Any())
+        {
+            <div>
+                <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3 flex items-center">
+                    <svg class="w-4 h-4 text-amber-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Reserved (Future)
+                </h4>
+
+                @if (Model.NextBillingDate.HasValue)
+                {
+                    <div class="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-amber-500 mr-2 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-sm text-amber-800">
+                                These times are reserved for you and will be booked automatically after your subscription renews on <strong>@Model.NextBillingDate.Value.ToString("MMMM d, yyyy")</strong>.
+                            </p>
+                        </div>
+                    </div>
+                }
+
+                <div class="space-y-3">
+                    @foreach (var cls in Model.ReservedClasses)
+                    {
+                        <div class="bg-amber-50 rounded-lg border border-amber-200 border-dashed p-4">
+                            <div class="flex items-start space-x-4">
+                                <!-- Date Badge -->
+                                <div class="flex-shrink-0 w-14 text-center">
+                                    <div class="bg-amber-100 rounded-t-lg py-1 text-amber-800 text-xs font-semibold uppercase">
+                                        @cls.ClassDateTime.ToString("MMM")
+                                    </div>
+                                    <div class="bg-white border border-t-0 border-amber-200 rounded-b-lg py-2">
+                                        <div class="text-2xl font-bold text-gray-700">@cls.ClassDateTime.Day</div>
+                                        <div class="text-xs text-gray-500">@cls.ClassDateTime.ToString("ddd")</div>
+                                    </div>
+                                </div>
+
+                                <!-- Class Details -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-sm font-semibold text-gray-700">
+                                            @cls.ClassDateTime.ToString("h:mm tt") - @cls.ClassDateTime.AddHours(1).ToString("h:mm tt")
+                                        </span>
+                                    </div>
+
+                                    <p class="mt-1 text-sm text-gray-500">Spanish Lesson with Karen</p>
+
+                                    <!-- Status indicator -->
+                                    <div class="mt-2 flex items-center">
+                                        <svg class="w-4 h-4 text-amber-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span class="text-xs text-amber-700 font-medium">@cls.StatusMessage</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

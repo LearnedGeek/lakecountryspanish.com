@@ -39,6 +39,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Add services
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IClassSchedulingService, ClassSchedulingService>();
 builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 builder.Services.AddScoped<ISubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<ITokenService, LakeCountrySpanish.Web.Services.TokenService>();

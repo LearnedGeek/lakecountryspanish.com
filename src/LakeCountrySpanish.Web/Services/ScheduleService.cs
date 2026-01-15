@@ -555,4 +555,75 @@ public class ScheduleService : IScheduleService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<IEnumerable<ReservedClassViewModel>> GetReservedClassesAsync(
+        string studentId, DateTime fromDate, DateTime toDate)
+    {
+        // Get active subscription with recurring schedules
+        var subscription = await _context.Subscriptions
+            .Include(s => s.RecurringSchedules)
+            .ThenInclude(rs => rs.TimeSlot)
+            .Include(s => s.Tier)
+            .FirstOrDefaultAsync(s => s.StudentId == studentId && s.Status == SubscriptionStatus.Active);
+
+        if (subscription == null || !subscription.RecurringSchedules.Any())
+            return Enumerable.Empty<ReservedClassViewModel>();
+
+        var reserved = new List<ReservedClassViewModel>();
+        var nextBillingDate = subscription.CurrentPeriodEnd ?? DateTime.UtcNow.AddMonths(1);
+
+        // Get existing scheduled classes to avoid duplicates
+        var existingClassDates = await _context.ScheduledClasses
+            .Where(sc => sc.StudentId == studentId
+                && sc.ClassDateTime >= fromDate
+                && sc.ClassDateTime <= toDate
+                && sc.Status != ClassStatus.Cancelled)
+            .Select(sc => sc.ClassDateTime)
+            .ToListAsync();
+
+        // Get blocked dates to exclude
+        var blockedDates = await _context.BlockedDates
+            .Where(bd => bd.EndDate >= fromDate && bd.StartDate <= toDate)
+            .ToListAsync();
+
+        // Generate reserved slots from recurring schedules
+        foreach (var schedule in subscription.RecurringSchedules.Where(rs => rs.IsActive))
+        {
+            var date = fromDate.Date;
+            while (date <= toDate.Date)
+            {
+                // Only show reserved classes after the current billing period end
+                if (date.DayOfWeek == schedule.DayOfWeek && date >= nextBillingDate.Date)
+                {
+                    var classDateTime = date.Add(schedule.Time);
+
+                    // Skip if class already exists
+                    if (existingClassDates.Any(ec => ec.Date == classDateTime.Date && ec.TimeOfDay == classDateTime.TimeOfDay))
+                    {
+                        date = date.AddDays(1);
+                        continue;
+                    }
+
+                    // Skip if date is blocked
+                    if (blockedDates.Any(bd => date >= bd.StartDate && date <= bd.EndDate))
+                    {
+                        date = date.AddDays(1);
+                        continue;
+                    }
+
+                    reserved.Add(new ReservedClassViewModel
+                    {
+                        ClassDateTime = classDateTime,
+                        TimeSlot = schedule.TimeSlot,
+                        DayOfWeek = schedule.DayOfWeek,
+                        IsFromRecurringSchedule = true,
+                        StatusMessage = $"Reserved - will be confirmed when your subscription renews on {nextBillingDate:MMM d}"
+                    });
+                }
+                date = date.AddDays(1);
+            }
+        }
+
+        return reserved.OrderBy(r => r.ClassDateTime);
+    }
 }
