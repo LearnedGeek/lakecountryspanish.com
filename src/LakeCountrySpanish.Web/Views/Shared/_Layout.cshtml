@@ -1,29 +1,46 @@
+@{
+    var baseUrl = "https://lakecountryspanish.com";
+    var currentPath = Context.Request.Path.ToString();
+    var canonicalUrl = $"{baseUrl}{currentPath}";
+    var ogImage = ViewData["OgImage"]?.ToString() ?? $"{baseUrl}/img/og-image.jpg";
+    var pageTitle = ViewData["Title"]?.ToString() ?? "Home";
+    var fullTitle = $"{pageTitle} | Lake Country Spanish";
+    var metaDescription = ViewData["MetaDescription"]?.ToString()
+        ?? ViewData["Description"]?.ToString()
+        ?? "Personalized online Spanish lessons with Karen, a native Peruvian teacher. Learn conversational Spanish, improve pronunciation, and discover Latin American culture. Flexible scheduling, earn rewards, and have fun learning!";
+}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Lake Country Spanish</title>
+    <title>@fullTitle</title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="@canonicalUrl" />
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="@(ViewData["Description"] ?? "Personalized online Spanish lessons with Karen, a native Peruvian teacher. Learn conversational Spanish, improve pronunciation, and discover Latin American culture. Flexible scheduling, earn rewards, and have fun learning!")" />
+    <meta name="description" content="@metaDescription" />
     <meta name="keywords" content="Spanish lessons, learn Spanish, Spanish tutor, online Spanish classes, Peruvian Spanish teacher, conversational Spanish, Lake Country Wisconsin, private Spanish lessons" />
     <meta name="author" content="Lake Country Spanish - Karen" />
     <meta name="robots" content="index, follow" />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="@ViewData["Title"] - Lake Country Spanish" />
-    <meta property="og:description" content="@(ViewData["Description"] ?? "Fun, personalized online Spanish lessons with a native Peruvian teacher. Flexible scheduling, gamified learning with rewards!")" />
-    <meta property="og:image" content="~/img/lake-country-spanish-logo.png" />
+    <meta property="og:url" content="@canonicalUrl" />
+    <meta property="og:title" content="@fullTitle" />
+    <meta property="og:description" content="@metaDescription" />
+    <meta property="og:image" content="@ogImage" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content="Lake Country Spanish" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="@ViewData["Title"] - Lake Country Spanish" />
-    <meta name="twitter:description" content="@(ViewData["Description"] ?? "Fun, personalized online Spanish lessons with a native Peruvian teacher!")" />
-    <meta name="twitter:image" content="~/img/lake-country-spanish-logo.png" />
+    <meta name="twitter:title" content="@fullTitle" />
+    <meta name="twitter:description" content="@metaDescription" />
+    <meta name="twitter:image" content="@ogImage" />
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="~/img/lake-country-spanish-logo.png" />
@@ -36,7 +53,7 @@
         "@@type": "LocalBusiness",
         "name": "Lake Country Spanish",
         "description": "Personalized online Spanish lessons with a native Peruvian teacher. Learn conversational Spanish, improve pronunciation, and discover Latin American culture.",
-        "image": "~/img/lake-country-spanish-logo.png",
+        "image": "https://lakecountryspanish.com/img/lake-country-spanish-logo.png",
         "priceRange": "$20-$30",
         "address": {
             "@@type": "PostalAddress",

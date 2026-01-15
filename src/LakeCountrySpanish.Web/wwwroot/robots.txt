@@ -1,0 +1,19 @@
+# robots.txt for Lake Country Spanish
+# https://lakecountryspanish.com
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://lakecountryspanish.com/sitemap.xml
+
+# Disallow admin and student portal areas
+Disallow: /Admin/
+Disallow: /Student/
+Disallow: /Account/
+Disallow: /api/
+
+# Disallow common non-content paths
+Disallow: /lib/
+Disallow: /css/
+Disallow: /js/
