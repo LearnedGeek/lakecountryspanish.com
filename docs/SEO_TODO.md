@@ -71,14 +71,14 @@ This document tracks SEO improvements needed for the Lake Country Spanish websit
 
 ---
 
-## 5. Per-Page Meta Descriptions (TODO)
+## 5. Per-Page Meta Descriptions
 
 Add unique meta descriptions to key public pages:
 
-- [ ] Home/Index: "Private Spanish lessons with Karen, a native Peruvian teacher..."
-- [ ] Home/About: "Meet Karen - your personal Spanish tutor..."
-- [ ] Contact/Index: "Get in touch to schedule your first Spanish lesson..."
-- [ ] Subscription/Plans: "Choose from flexible Spanish lesson plans..."
+- [x] Home/Index: "Learn Spanish with Karen, a native Peruvian teacher offering personalized online lessons..."
+- [x] Home/About: "Meet Karen, a native Peruvian Spanish teacher with over a decade of experience..."
+- [x] Contact/Index: "Contact Karen to schedule your first Spanish lesson or ask questions..."
+- [x] Subscription/Plans: "Choose from flexible Spanish lesson subscription plans: 4, 8, or 12 classes per month..."
 
 ---
 
