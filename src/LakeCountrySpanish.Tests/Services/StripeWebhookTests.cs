@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
@@ -14,6 +15,7 @@ public class StripeWebhookTests : IDisposable
 {
     private readonly ApplicationDbContext _context;
     private readonly Mock<IConfiguration> _configMock;
+    private readonly Mock<ILogger<StripePaymentService>> _loggerMock;
     private readonly StripePaymentService _service;
     private readonly ApplicationUser _testStudent;
     private readonly Package _testPackage;
@@ -22,11 +24,12 @@ public class StripeWebhookTests : IDisposable
     {
         _context = TestDbContextFactory.Create();
         _configMock = new Mock<IConfiguration>();
+        _loggerMock = new Mock<ILogger<StripePaymentService>>();
 
         _configMock.Setup(c => c["Stripe:WebhookSecret"]).Returns("whsec_test_secret");
         _configMock.Setup(c => c["AppSettings:DefaultClassPrice"]).Returns("25.00");
 
-        _service = new StripePaymentService(_context, _configMock.Object);
+        _service = new StripePaymentService(_context, _configMock.Object, _loggerMock.Object);
 
         // Setup test data
         _testStudent = new ApplicationUser
@@ -56,7 +59,7 @@ public class StripeWebhookTests : IDisposable
     }
 
     [Fact]
-    public async Task ProcessWebhookAsync_ReturnsNull_WhenInvalidSignature()
+    public async Task ProcessWebhookAsync_ReturnsSignatureInvalid_WhenInvalidSignature()
     {
         // Arrange - invalid JSON/signature will fail Stripe's validation
         var invalidJson = "{}";
@@ -66,7 +69,9 @@ public class StripeWebhookTests : IDisposable
         var result = await _service.ProcessWebhookAsync(invalidJson, invalidSignature);
 
         // Assert
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.True(result.IsSignatureInvalid);
+        Assert.False(result.Success);
     }
 
     [Fact]

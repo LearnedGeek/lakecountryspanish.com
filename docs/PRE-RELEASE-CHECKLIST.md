@@ -70,6 +70,22 @@
   - Confirm payment appears in Stripe Dashboard
   - Refund test payment
 
+- [ ] **Payment Error Handling (Critical)**
+  - [ ] Add logging to webhook exception handlers (currently silent failures)
+  - [ ] Fix webhook endpoints to return proper HTTP codes (500 on failure, not 200)
+  - [ ] Add email notification for failed subscription payments
+  - [ ] Consider adding refund event handling (`charge.refunded`)
+
+- [ ] **Subscription Webhook Events**
+  - [ ] Verify these events are configured in Stripe Dashboard:
+    - `customer.subscription.created`
+    - `customer.subscription.updated`
+    - `customer.subscription.deleted`
+    - `invoice.payment_succeeded`
+    - `invoice.payment_failed`
+  - [ ] Create separate webhook endpoint for subscriptions if not already done
+  - [ ] URL: `https://yourdomain.com/Subscription/Webhook`
+
 ## 4. Email/SMTP Configuration
 
 - [ ] **Email Service Provider**
@@ -301,6 +317,72 @@
 | `Stripe:WebhookSecret` | Webhook signing secret | Stripe Dashboard > Developers > Webhooks |
 | `Email:ApiKey` | SendGrid/email provider API key | SendGrid Dashboard > Settings > API Keys |
 | `AppSettings:BaseUrl` | Production URL | Your domain (https://lakecountryspanish.com) |
+
+---
+
+## 14. Payment Code Fixes (Technical)
+
+These are specific code issues identified during review that have been fixed:
+
+- [x] **StripePaymentService.cs - Silent Failures** ✅ FIXED
+  - Added ILogger to StripePaymentService
+  - ProcessWebhookAsync now returns `WebhookProcessingResult` with detailed status
+  - All errors are logged with appropriate severity levels
+  - Added comprehensive logging for all webhook processing steps
+
+- [x] **PaymentController.cs - Always Returns OK** ✅ FIXED
+  - Webhook endpoint now returns proper HTTP codes based on processing result
+  - Returns 400 for invalid signatures (Stripe won't retry)
+  - Returns 500 for processing failures (Stripe will retry)
+  - Returns 200 only for success or duplicate processing
+
+- [x] **StripeSubscriptionService.cs - Missing Email Notification** ✅ FIXED
+  - Implemented `SendPaymentFailedAsync` email notification
+  - HandleInvoicePaymentFailed now sends email to student when subscription payment fails
+  - Email includes subscription tier, amount, and instructions to update payment method
+
+- [x] **Missing Refund Handling** ✅ FIXED
+  - Added `charge.refunded` event handler in StripePaymentService
+  - Payment status is updated to Refunded when refund occurs in Stripe Dashboard
+
+- [x] **Idempotency Checks** ✅ ADDED
+  - ProcessWebhookAsync checks if payment is already completed before processing
+  - Checks if StripePaymentIntentId was already processed for ANY payment
+  - StudentPackage creation checks for existing package before creating
+  - GrantSubscriptionTicketsAsync checks for existing tickets before granting
+
+- [x] **Database Constraints** ✅ ADDED
+  - Added unique filtered index on Payment.StripePaymentIntentId
+  - Prevents duplicate payment processing at database level
+
+- [x] **Subscription Ticket Race Condition** ✅ FIXED
+  - GrantSubscriptionTicketsAsync now uses transactions
+  - Double-checks within transaction to handle concurrent webhook calls
+  - Returns existing tickets if already granted for the period
+
+### Remaining Items (Lower Priority)
+
+These items were identified in the audit but are lower priority or require design decisions:
+
+- [ ] **ProcessTipWebhookAsync Error Handling**
+  - Currently catches StripeException silently and returns false
+  - Consider adding logging for tip payment failures
+
+- [ ] **Hardcoded Fallback Price**
+  - StripePaymentService line ~229: Falls back to $25 if config missing
+  - Consider: Log a warning when using fallback, or fail explicitly
+
+- [ ] **Null Check Improvements**
+  - Various places could benefit from defensive null checks
+  - Not critical but would improve robustness
+
+- [ ] **Subscription Unique Constraint**
+  - Consider adding unique index on Subscription.StripeSubscriptionId
+  - Would prevent duplicate subscription records at database level
+
+- [ ] **Payment Success Email**
+  - Consider sending confirmation email when payment succeeds
+  - Currently only sends on failure
 
 ---
 

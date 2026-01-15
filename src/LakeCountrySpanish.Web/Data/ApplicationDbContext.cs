@@ -137,6 +137,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany(u => u.Payments)
                 .HasForeignKey(e => e.StudentId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Unique index on StripePaymentIntentId to prevent duplicate processing
+            // Filtered to only include non-null values (allowing multiple null values)
+            entity.HasIndex(e => e.StripePaymentIntentId)
+                .IsUnique()
+                .HasFilter("[StripePaymentIntentId] IS NOT NULL");
+
+            // Unique index on StripeSessionId for efficient lookup
+            entity.HasIndex(e => e.StripeSessionId)
+                .HasFilter("[StripeSessionId] IS NOT NULL");
         });
 
         // Document configuration
@@ -258,6 +268,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Index for finding active subscription by student
             entity.HasIndex(e => new { e.StudentId, e.Status });
+
+            // Unique index on StripeSubscriptionId to prevent duplicate subscription processing
+            // Filtered to only include non-null values (allowing multiple null values for legacy records)
+            entity.HasIndex(e => e.StripeSubscriptionId)
+                .IsUnique()
+                .HasFilter("[StripeSubscriptionId] IS NOT NULL");
         });
 
         // RecurringSchedule configuration

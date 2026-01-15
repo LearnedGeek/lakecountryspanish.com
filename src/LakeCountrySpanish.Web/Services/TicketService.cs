@@ -415,30 +415,81 @@ public class TicketService : ITicketService
         int quantity,
         DateTime expiresAt)
     {
-        var tickets = new List<Ticket>();
+        // IDEMPOTENCY CHECK: Check if tickets for this period already exist
+        // We identify the period by the expiration date (end of billing period)
+        var existingTickets = await _context.Tickets
+            .Where(t => t.StudentId == studentId &&
+                       t.SubscriptionId == subscriptionId &&
+                       t.Source == TicketSource.Subscription &&
+                       t.ExpiresAt == expiresAt)
+            .ToListAsync();
 
-        for (int i = 0; i < quantity; i++)
+        if (existingTickets.Any())
         {
-            var ticket = new Ticket
-            {
-                StudentId = studentId,
-                Source = TicketSource.Subscription,
-                AcquiredAt = DateTime.UtcNow,
-                ExpiresAt = expiresAt,
-                IsUsed = false,
-                SubscriptionId = subscriptionId,
-                Notes = $"Monthly subscription grant"
-            };
-            _context.Tickets.Add(ticket);
-            tickets.Add(ticket);
+            _logger.LogInformation(
+                "Subscription tickets already granted for student {StudentId}, subscription {SubscriptionId}, period ending {ExpiresAt}. Returning existing {Count} tickets.",
+                studentId, subscriptionId, expiresAt, existingTickets.Count);
+            return existingTickets;
         }
 
-        await _context.SaveChangesAsync();
+        // Use transaction to ensure atomicity
+        await using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // Double-check within transaction (handle race condition)
+            var doubleCheck = await _context.Tickets
+                .AnyAsync(t => t.StudentId == studentId &&
+                              t.SubscriptionId == subscriptionId &&
+                              t.Source == TicketSource.Subscription &&
+                              t.ExpiresAt == expiresAt);
 
-        _logger.LogInformation("Granted {Quantity} subscription tickets to student {StudentId} from subscription {SubscriptionId}",
-            quantity, studentId, subscriptionId);
+            if (doubleCheck)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning(
+                    "Race condition detected: Tickets already granted for student {StudentId}, subscription {SubscriptionId}",
+                    studentId, subscriptionId);
+                return await _context.Tickets
+                    .Where(t => t.StudentId == studentId &&
+                               t.SubscriptionId == subscriptionId &&
+                               t.Source == TicketSource.Subscription &&
+                               t.ExpiresAt == expiresAt)
+                    .ToListAsync();
+            }
 
-        return tickets;
+            var tickets = new List<Ticket>();
+
+            for (int i = 0; i < quantity; i++)
+            {
+                var ticket = new Ticket
+                {
+                    StudentId = studentId,
+                    Source = TicketSource.Subscription,
+                    AcquiredAt = DateTime.UtcNow,
+                    ExpiresAt = expiresAt,
+                    IsUsed = false,
+                    SubscriptionId = subscriptionId,
+                    Notes = $"Monthly subscription grant"
+                };
+                _context.Tickets.Add(ticket);
+                tickets.Add(ticket);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            _logger.LogInformation("Granted {Quantity} subscription tickets to student {StudentId} from subscription {SubscriptionId}",
+                quantity, studentId, subscriptionId);
+
+            return tickets;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error granting subscription tickets for student {StudentId}, subscription {SubscriptionId}",
+                studentId, subscriptionId);
+            throw;
+        }
     }
 
     #endregion

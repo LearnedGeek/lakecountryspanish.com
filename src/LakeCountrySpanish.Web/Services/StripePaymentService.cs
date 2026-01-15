@@ -10,11 +10,16 @@ public class StripePaymentService : IPaymentService
 {
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<StripePaymentService> _logger;
 
-    public StripePaymentService(ApplicationDbContext context, IConfiguration configuration)
+    public StripePaymentService(
+        ApplicationDbContext context,
+        IConfiguration configuration,
+        ILogger<StripePaymentService> logger)
     {
         _context = context;
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task<string> CreateCheckoutSessionAsync(string studentId, int? packageId, int? classId, decimal amount, string successUrl, string cancelUrl)
@@ -101,28 +106,91 @@ public class StripePaymentService : IPaymentService
         return session.Url!;
     }
 
-    public async Task<Payment?> ProcessWebhookAsync(string json, string stripeSignature)
+    public async Task<WebhookProcessingResult> ProcessWebhookAsync(string json, string stripeSignature)
     {
         var webhookSecret = _configuration["Stripe:WebhookSecret"];
 
+        Event stripeEvent;
         try
         {
-            var stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, webhookSecret);
+            stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, webhookSecret);
+        }
+        catch (StripeException ex)
+        {
+            _logger.LogError(ex, "Stripe webhook signature validation failed");
+            return WebhookProcessingResult.SignatureInvalid();
+        }
 
+        _logger.LogInformation("Processing Stripe webhook event: {EventType}, ID: {EventId}",
+            stripeEvent.Type, stripeEvent.Id);
+
+        try
+        {
             if (stripeEvent.Type == EventTypes.CheckoutSessionCompleted)
             {
                 var session = stripeEvent.Data.Object as Session;
-                if (session == null) return null;
+                if (session == null)
+                {
+                    _logger.LogWarning("Webhook event {EventId} had null session object", stripeEvent.Id);
+                    return WebhookProcessingResult.Failed("Session object was null");
+                }
 
-                var paymentIdStr = session.Metadata["paymentId"];
-                if (!int.TryParse(paymentIdStr, out int paymentId))
-                    return null;
+                // Check for tip payment type
+                if (session.Metadata.TryGetValue("type", out var paymentType) && paymentType == "tip")
+                {
+                    _logger.LogInformation("Webhook is for tip payment, skipping standard processing");
+                    return WebhookProcessingResult.Skipped("Tip payment handled separately");
+                }
+
+                // Safely get paymentId from metadata - CLI test events won't have it
+                if (!session.Metadata.TryGetValue("paymentId", out var paymentIdStr) ||
+                    !int.TryParse(paymentIdStr, out int paymentId))
+                {
+                    _logger.LogInformation("Webhook event {EventId} missing paymentId metadata (likely CLI test)", stripeEvent.Id);
+                    return WebhookProcessingResult.Skipped("No paymentId in metadata");
+                }
 
                 var payment = await _context.Payments
                     .Include(p => p.Student)
                     .FirstOrDefaultAsync(p => p.Id == paymentId);
 
-                if (payment == null) return null;
+                if (payment == null)
+                {
+                    _logger.LogWarning("Payment {PaymentId} not found for webhook event {EventId}",
+                        paymentId, stripeEvent.Id);
+                    return WebhookProcessingResult.Failed($"Payment {paymentId} not found");
+                }
+
+                // IDEMPOTENCY CHECK: If payment is already completed with this PaymentIntentId, skip
+                if (payment.Status == PaymentStatusType.Completed)
+                {
+                    if (payment.StripePaymentIntentId == session.PaymentIntentId)
+                    {
+                        _logger.LogInformation("Payment {PaymentId} already completed with PaymentIntent {PaymentIntentId}, skipping duplicate",
+                            paymentId, session.PaymentIntentId);
+                        return WebhookProcessingResult.Duplicate();
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Payment {PaymentId} already completed but with different PaymentIntent. Existing: {ExistingPI}, New: {NewPI}",
+                            paymentId, payment.StripePaymentIntentId, session.PaymentIntentId);
+                        return WebhookProcessingResult.Duplicate();
+                    }
+                }
+
+                // Additional idempotency: Check if this PaymentIntentId was already processed for ANY payment
+                if (!string.IsNullOrEmpty(session.PaymentIntentId))
+                {
+                    var existingWithSamePI = await _context.Payments
+                        .AnyAsync(p => p.StripePaymentIntentId == session.PaymentIntentId &&
+                                       p.Status == PaymentStatusType.Completed);
+                    if (existingWithSamePI)
+                    {
+                        _logger.LogWarning("PaymentIntent {PaymentIntentId} already processed for another payment",
+                            session.PaymentIntentId);
+                        return WebhookProcessingResult.Duplicate();
+                    }
+                }
 
                 payment.Status = PaymentStatusType.Completed;
                 payment.StripePaymentIntentId = session.PaymentIntentId;
@@ -136,14 +204,31 @@ public class StripePaymentService : IPaymentService
                     var package = await _context.Packages.FindAsync(packageId);
                     if (package != null)
                     {
-                        var studentPackage = new StudentPackage
+                        // Check if StudentPackage already exists for this payment (idempotency)
+                        var existingStudentPackage = await _context.StudentPackages
+                            .AnyAsync(sp => sp.PaymentId == payment.Id);
+
+                        if (!existingStudentPackage)
                         {
-                            StudentId = payment.StudentId,
-                            PackageId = packageId,
-                            ClassesRemaining = package.ClassCount,
-                            PaymentId = payment.Id
-                        };
-                        _context.StudentPackages.Add(studentPackage);
+                            var studentPackage = new StudentPackage
+                            {
+                                StudentId = payment.StudentId,
+                                PackageId = packageId,
+                                ClassesRemaining = package.ClassCount,
+                                PaymentId = payment.Id
+                            };
+                            _context.StudentPackages.Add(studentPackage);
+                            _logger.LogInformation("Created StudentPackage for payment {PaymentId}, package {PackageId}, {ClassCount} classes",
+                                payment.Id, packageId, package.ClassCount);
+                        }
+                        else
+                        {
+                            _logger.LogInformation("StudentPackage already exists for payment {PaymentId}", payment.Id);
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Package {PackageId} not found for payment {PaymentId}", packageId, payment.Id);
                     }
                 }
 
@@ -157,18 +242,48 @@ public class StripePaymentService : IPaymentService
                     {
                         scheduledClass.PaymentId = payment.Id;
                         scheduledClass.PaymentStatus = PaymentStatus.Paid;
+                        _logger.LogInformation("Marked class {ClassId} as paid for payment {PaymentId}", classId, payment.Id);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("ScheduledClass {ClassId} not found for payment {PaymentId}", classId, payment.Id);
                     }
                 }
 
                 await _context.SaveChangesAsync();
-                return payment;
+                _logger.LogInformation("Successfully processed payment {PaymentId} for amount {Amount}",
+                    payment.Id, payment.Amount);
+                return WebhookProcessingResult.Succeeded(payment);
             }
 
-            return null;
+            // Handle refund event
+            if (stripeEvent.Type == "charge.refunded")
+            {
+                var charge = stripeEvent.Data.Object as Charge;
+                if (charge != null && !string.IsNullOrEmpty(charge.PaymentIntentId))
+                {
+                    var payment = await _context.Payments
+                        .FirstOrDefaultAsync(p => p.StripePaymentIntentId == charge.PaymentIntentId);
+
+                    if (payment != null)
+                    {
+                        payment.Status = PaymentStatusType.Refunded;
+                        await _context.SaveChangesAsync();
+                        _logger.LogInformation("Payment {PaymentId} marked as refunded", payment.Id);
+                        return WebhookProcessingResult.Succeeded(payment);
+                    }
+                }
+                _logger.LogInformation("Refund event received but no matching payment found");
+            }
+
+            _logger.LogInformation("Unhandled Stripe event type: {EventType}", stripeEvent.Type);
+            return WebhookProcessingResult.Skipped($"Unhandled event type: {stripeEvent.Type}");
         }
-        catch (StripeException)
+        catch (Exception ex)
         {
-            return null;
+            _logger.LogError(ex, "Error processing webhook event {EventId} of type {EventType}",
+                stripeEvent.Id, stripeEvent.Type);
+            return WebhookProcessingResult.Failed(ex.Message);
         }
     }
 
@@ -225,7 +340,14 @@ public class StripePaymentService : IPaymentService
             return student.CustomHourlyRate.Value;
 
         var defaultPrice = _configuration.GetValue<decimal>("AppSettings:DefaultClassPrice");
-        return defaultPrice > 0 ? defaultPrice : 25.00m;
+        if (defaultPrice > 0)
+            return defaultPrice;
+
+        // CRITICAL: Configuration is missing - log warning and use emergency fallback
+        _logger.LogWarning(
+            "AppSettings:DefaultClassPrice is not configured or is 0. Using emergency fallback of $25.00. " +
+            "This should be configured in appsettings.json for production!");
+        return 25.00m;
     }
 
     public async Task<string?> CreateTipCheckoutSessionAsync(string studentId, decimal amount, string? message, int? classId)
@@ -300,9 +422,11 @@ public class StripePaymentService : IPaymentService
 
             return session.Url;
         }
-        catch (StripeException)
+        catch (StripeException ex)
         {
             // Remove the tip record if Stripe session creation fails
+            _logger.LogError(ex, "Failed to create Stripe checkout session for tip. StudentId: {StudentId}, Amount: {Amount}",
+                studentId, amount);
             _context.Tips.Remove(tip);
             await _context.SaveChangesAsync();
             return null;
@@ -312,11 +436,17 @@ public class StripePaymentService : IPaymentService
     public async Task<bool> ProcessTipWebhookAsync(string sessionId)
     {
         if (string.IsNullOrEmpty(sessionId))
+        {
+            _logger.LogWarning("ProcessTipWebhookAsync called with empty sessionId");
             return false;
+        }
 
         var tip = await _context.Tips.FirstOrDefaultAsync(t => t.StripeSessionId == sessionId);
         if (tip == null)
+        {
+            _logger.LogWarning("Tip not found for session {SessionId}", sessionId);
             return false;
+        }
 
         // Check with Stripe if the session is paid
         try
@@ -326,16 +456,29 @@ public class StripePaymentService : IPaymentService
 
             if (session.PaymentStatus == "paid")
             {
+                // Idempotency check: if already paid, don't process again
+                if (tip.IsPaid)
+                {
+                    _logger.LogInformation("Tip {TipId} already marked as paid, skipping duplicate processing", tip.Id);
+                    return true;
+                }
+
                 tip.IsPaid = true;
                 tip.StripePaymentIntentId = session.PaymentIntentId;
                 await _context.SaveChangesAsync();
+                _logger.LogInformation("Tip {TipId} marked as paid. Amount: {Amount}, StudentId: {StudentId}",
+                    tip.Id, tip.Amount, tip.StudentId);
                 return true;
             }
 
+            _logger.LogInformation("Tip {TipId} session {SessionId} not yet paid. Status: {Status}",
+                tip.Id, sessionId, session.PaymentStatus);
             return false;
         }
-        catch (StripeException)
+        catch (StripeException ex)
         {
+            _logger.LogError(ex, "Stripe error while processing tip webhook for session {SessionId}, tip {TipId}",
+                sessionId, tip.Id);
             return false;
         }
     }

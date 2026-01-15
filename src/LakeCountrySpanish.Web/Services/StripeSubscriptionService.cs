@@ -19,17 +19,20 @@ public class StripeSubscriptionService : ISubscriptionService
     private readonly IConfiguration _configuration;
     private readonly ILogger<StripeSubscriptionService> _logger;
     private readonly ITicketService _ticketService;
+    private readonly IEmailService _emailService;
 
     public StripeSubscriptionService(
         ApplicationDbContext context,
         IConfiguration configuration,
         ILogger<StripeSubscriptionService> logger,
-        ITicketService ticketService)
+        ITicketService ticketService,
+        IEmailService emailService)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
         _ticketService = ticketService;
+        _emailService = emailService;
     }
 
     #region Tier Queries
@@ -448,6 +451,8 @@ public class StripeSubscriptionService : ISubscriptionService
         if (!string.IsNullOrEmpty(stripeSubscriptionId))
         {
             subscription = await _context.Subscriptions
+                .Include(s => s.Student)
+                .Include(s => s.Tier)
                 .FirstOrDefaultAsync(s => s.StripeSubscriptionId == stripeSubscriptionId);
         }
         else
@@ -457,11 +462,17 @@ public class StripeSubscriptionService : ISubscriptionService
             if (!string.IsNullOrEmpty(customerId))
             {
                 subscription = await _context.Subscriptions
+                    .Include(s => s.Student)
+                    .Include(s => s.Tier)
                     .FirstOrDefaultAsync(s => s.StripeCustomerId == customerId && s.Status == SubscriptionStatus.Active);
             }
         }
 
-        if (subscription == null) return;
+        if (subscription == null)
+        {
+            _logger.LogWarning("Could not find subscription for failed payment invoice {InvoiceId}", invoice.Id);
+            return;
+        }
 
         subscription.Status = SubscriptionStatus.PastDue;
         subscription.UpdatedAt = DateTime.UtcNow;
@@ -470,7 +481,36 @@ public class StripeSubscriptionService : ISubscriptionService
         await AddHistoryEntry(subscription.Id, SubscriptionEvent.PaymentFailed,
             $"Payment failed for invoice {invoice.Id}");
 
-        // TODO: Send notification email to student
+        // Send notification email to student
+        try
+        {
+            if (subscription.Student != null && !string.IsNullOrEmpty(subscription.Student.Email))
+            {
+                var amount = invoice.AmountDue / 100m; // Stripe uses cents
+                var tierName = subscription.Tier?.Name ?? "Subscription";
+
+                // Note: In Stripe.net v50+, the Charge object is not directly accessible from Invoice
+                // in webhook events. The failure reason would need to be fetched separately if needed.
+                // For now, we send the notification without a specific failure reason.
+                string? failureReason = null;
+
+                await _emailService.SendPaymentFailedAsync(
+                    subscription.Student.Email,
+                    subscription.Student.FullName ?? subscription.Student.Email,
+                    tierName,
+                    amount,
+                    failureReason);
+
+                _logger.LogInformation("Sent payment failure notification to student {StudentId} for subscription {SubscriptionId}",
+                    subscription.StudentId, subscription.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log but don't fail the webhook processing if email fails
+            _logger.LogError(ex, "Failed to send payment failure notification email for subscription {SubscriptionId}",
+                subscription.Id);
+        }
     }
 
     private SubscriptionStatus MapStripeStatus(string stripeStatus)

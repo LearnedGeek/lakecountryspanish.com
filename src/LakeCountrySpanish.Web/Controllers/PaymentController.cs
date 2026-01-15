@@ -136,15 +136,30 @@ public class PaymentController : Controller
     public async Task<IActionResult> Webhook()
     {
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-        var signature = Request.Headers["Stripe-Signature"];
+        var signature = Request.Headers["Stripe-Signature"].ToString();
 
         if (string.IsNullOrEmpty(signature))
         {
-            return BadRequest();
+            return BadRequest("Missing Stripe-Signature header");
         }
 
-        var payment = await _paymentService.ProcessWebhookAsync(json, signature!);
+        var result = await _paymentService.ProcessWebhookAsync(json, signature);
 
+        // Return appropriate status code based on result
+        // Stripe will retry on 5xx errors, so we must be careful
+        if (result.IsSignatureInvalid)
+        {
+            // 400 - Don't retry, signature is invalid
+            return BadRequest("Invalid signature");
+        }
+
+        if (!result.Success && !result.AlreadyProcessed)
+        {
+            // 500 - Stripe should retry this webhook
+            return StatusCode(500, result.ErrorMessage);
+        }
+
+        // 200 - Success or already processed (duplicate)
         return Ok();
     }
 

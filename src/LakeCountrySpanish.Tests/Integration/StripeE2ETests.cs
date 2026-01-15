@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Moq;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Services;
@@ -11,10 +13,11 @@ namespace LakeCountrySpanish.Tests.Integration;
 /// End-to-end integration tests that hit the real Stripe Test API.
 ///
 /// PREREQUISITES:
-/// 1. Set environment variable STRIPE_TEST_SECRET_KEY to your test secret key (sk_test_...)
-/// 2. For webhook tests, run: stripe listen --forward-to https://localhost:5001/api/payment/webhook
+/// 1. Either set environment variable STRIPE_TEST_SECRET_KEY, or
+/// 2. Configure Stripe:SecretKey in appsettings.Development.json
+/// 3. For webhook tests, run: stripe listen --forward-to http://localhost:5028/api/payment/webhook
 ///
-/// These tests are skipped if STRIPE_TEST_SECRET_KEY is not set.
+/// These tests are skipped if no Stripe key is available.
 /// Run with: dotnet test --filter "Category=StripeIntegration"
 /// </summary>
 [Trait("Category", "StripeIntegration")]
@@ -22,6 +25,7 @@ public class StripeE2ETests : IDisposable
 {
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly Mock<ILogger<StripePaymentService>> _loggerMock;
     private readonly StripePaymentService _service;
     private readonly ApplicationUser _testStudent;
     private readonly Package _testPackage;
@@ -29,7 +33,27 @@ public class StripeE2ETests : IDisposable
 
     public StripeE2ETests()
     {
+        // First try environment variable (for CI/CD)
         _stripeSecretKey = Environment.GetEnvironmentVariable("STRIPE_TEST_SECRET_KEY");
+
+        // Fall back to appsettings.Development.json (for local development)
+        if (string.IsNullOrEmpty(_stripeSecretKey))
+        {
+            var devConfigPath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "..", "..", "..", "..",
+                "LakeCountrySpanish.Web",
+                "appsettings.Development.json");
+
+            if (System.IO.File.Exists(devConfigPath))
+            {
+                var devConfig = new ConfigurationBuilder()
+                    .AddJsonFile(devConfigPath, optional: true)
+                    .Build();
+
+                _stripeSecretKey = devConfig["Stripe:SecretKey"];
+            }
+        }
 
         if (!string.IsNullOrEmpty(_stripeSecretKey))
         {
@@ -37,6 +61,7 @@ public class StripeE2ETests : IDisposable
         }
 
         _context = TestDbContextFactory.Create();
+        _loggerMock = new Mock<ILogger<StripePaymentService>>();
 
         var configBuilder = new ConfigurationBuilder();
         configBuilder.AddInMemoryCollection(new Dictionary<string, string?>
@@ -48,7 +73,7 @@ public class StripeE2ETests : IDisposable
         });
         _configuration = configBuilder.Build();
 
-        _service = new StripePaymentService(_context, _configuration);
+        _service = new StripePaymentService(_context, _configuration, _loggerMock.Object);
 
         // Setup test data
         _testStudent = new ApplicationUser
@@ -81,7 +106,7 @@ public class StripeE2ETests : IDisposable
     {
         if (string.IsNullOrEmpty(_stripeSecretKey))
         {
-            Assert.Fail("STRIPE_TEST_SECRET_KEY environment variable not set. Skipping Stripe integration test.");
+            Assert.Fail("No Stripe key found. Set STRIPE_TEST_SECRET_KEY env var or configure Stripe:SecretKey in appsettings.Development.json.");
         }
     }
 

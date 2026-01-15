@@ -16,4 +16,7 @@ public interface IEmailService
     Task SendSubscriptionRenewalAsync(string email, string name, string tierName, decimal amount, DateTime nextRenewalDate);
     Task SendAssignmentAssignedAsync(string email, string name, string assignmentTitle, DateTime? dueDate);
     Task SendWeeklyProgressReportAsync(string email, string name, WeeklyProgressData progress);
+
+    // Payment failure notification
+    Task SendPaymentFailedAsync(string email, string name, string tierName, decimal amount, string? failureReason);
 }

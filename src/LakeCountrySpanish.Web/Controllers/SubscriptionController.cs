@@ -301,9 +301,16 @@ public class SubscriptionController : Controller
         var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
         var signature = Request.Headers["Stripe-Signature"].ToString();
 
+        if (string.IsNullOrEmpty(signature))
+        {
+            return BadRequest("Missing Stripe-Signature header");
+        }
+
         var result = await _subscriptionService.ProcessSubscriptionWebhookAsync(json, signature);
 
-        return result ? Ok() : BadRequest();
+        // Return 500 on failure so Stripe will retry
+        // Return 200 on success or if we want Stripe to stop retrying
+        return result ? Ok() : StatusCode(500, "Webhook processing failed");
     }
 }
 

@@ -591,4 +591,72 @@ public class SmtpEmailService : IEmailService
 
         await SendEmailAsync(email, name, subject, htmlBody);
     }
+
+    public async Task SendPaymentFailedAsync(string email, string name, string tierName, decimal amount, string? failureReason)
+    {
+        var subject = "Action Required: Payment Failed - Lake Country Spanish";
+
+        var reasonText = !string.IsNullOrEmpty(failureReason)
+            ? $"<p><strong>Reason:</strong> {failureReason}</p>"
+            : "";
+
+        var htmlBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background-color: #DC2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }}
+        .content {{ background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }}
+        .alert-box {{ background-color: #FEF2F2; padding: 20px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #DC2626; }}
+        .action-box {{ background-color: #EEF2FF; padding: 20px; border-radius: 8px; margin: 15px 0; text-align: center; }}
+        .footer {{ padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1 style='margin: 0;'>Payment Failed</h1>
+        </div>
+        <div class='content'>
+            <p>Hi {name},</p>
+            <p>We were unable to process your subscription payment. Your subscription may be affected if this isn't resolved.</p>
+
+            <div class='alert-box'>
+                <table style='width: 100%;'>
+                    <tr>
+                        <td><strong>Subscription:</strong></td>
+                        <td style='text-align: right;'>{tierName}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Amount:</strong></td>
+                        <td style='text-align: right;'>${amount:F2}</td>
+                    </tr>
+                </table>
+                {reasonText}
+            </div>
+
+            <div class='action-box'>
+                <p style='margin: 0 0 15px 0;'><strong>What to do:</strong></p>
+                <p style='margin: 0;'>Please update your payment method or contact your card issuer to resolve this issue.</p>
+                <p style='margin: 15px 0 0 0;'>
+                    <a href='#' style='background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;'>Update Payment Method</a>
+                </p>
+            </div>
+
+            <p>If you need any assistance or have questions, please don't hesitate to contact me directly.</p>
+
+            <p>Thank you,</p>
+            <p>Karen<br/>Lake Country Spanish</p>
+        </div>
+        <div class='footer'>
+            <p>This is an automated message from Lake Country Spanish.</p>
+        </div>
+    </div>
+</body>
+</html>";
+
+        await SendEmailAsync(email, name, subject, htmlBody);
+    }
 }
