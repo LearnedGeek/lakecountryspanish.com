@@ -26,6 +26,7 @@ public class SitemapController : Controller
         {
             new(baseUrl, DateTime.UtcNow, ChangeFrequency.Weekly, 1.0),
             new($"{baseUrl}/Home/About", DateTime.UtcNow, ChangeFrequency.Monthly, 0.8),
+            new($"{baseUrl}/Home/AreasWeServe", DateTime.UtcNow, ChangeFrequency.Monthly, 0.7),
             new($"{baseUrl}/Contact", DateTime.UtcNow, ChangeFrequency.Monthly, 0.7),
             new($"{baseUrl}/Subscription/Plans", DateTime.UtcNow, ChangeFrequency.Weekly, 0.9),
         };
