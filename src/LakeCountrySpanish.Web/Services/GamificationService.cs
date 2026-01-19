@@ -384,7 +384,7 @@ public class GamificationService : IGamificationService
                 ) >= badge.RequirementValue,
 
             BadgeRequirementType.CefrLevel =>
-                CompareCefrLevel(student.CefrLevel, badge.RequirementContext ?? "A1") >= 0,
+                CompareCefrLevel(student.CefrLevel ?? "A1", badge.RequirementContext ?? "A1") >= 0,
 
             _ => false // Custom badges require manual award
         };

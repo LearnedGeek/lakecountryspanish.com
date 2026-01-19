@@ -771,11 +771,11 @@ public static class SeedData
         // Seed test students if none exist
         if (!await userManager.Users.AnyAsync(u => u.Email != "admin@lakecountryspanish.com"))
         {
-            var testStudents = new[]
+            var testStudents = new (string Email, string FirstName, string LastName, string? ClassroomUrl)[]
             {
-                new { Email = "john.doe@test.com", FirstName = "John", LastName = "Doe", ClassroomUrl = "https://zoom.us/j/1234567890" },
-                new { Email = "jane.smith@test.com", FirstName = "Jane", LastName = "Smith", ClassroomUrl = "https://meet.google.com/abc-defg-hij" },
-                new { Email = "bob.wilson@test.com", FirstName = "Bob", LastName = "Wilson", ClassroomUrl = (string?)null },
+                ("john.doe@test.com", "John", "Doe", "https://zoom.us/j/1234567890"),
+                ("jane.smith@test.com", "Jane", "Smith", "https://meet.google.com/abc-defg-hij"),
+                ("bob.wilson@test.com", "Bob", "Wilson", null),
             };
 
             foreach (var student in testStudents)

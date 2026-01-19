@@ -924,7 +924,7 @@ public class StudentController : Controller
             Id = b.Id,
             Name = b.Name,
             Description = b.Description,
-            IconUrl = b.IconUrl,
+            IconUrl = b.IconUrl ?? string.Empty,
             Category = b.Category,
             RequirementType = b.RequirementType,
             RequirementValue = b.RequirementValue,
