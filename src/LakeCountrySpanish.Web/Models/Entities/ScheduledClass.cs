@@ -66,6 +66,17 @@ public class ScheduledClass
     /// </summary>
     public Guid? CheckoutBatchId { get; set; }
 
+    // Reminder tracking
+    /// <summary>
+    /// True if 24-hour reminder email has been sent
+    /// </summary>
+    public bool Reminder24HrSent { get; set; } = false;
+
+    /// <summary>
+    /// True if 1-hour reminder email has been sent
+    /// </summary>
+    public bool Reminder1HrSent { get; set; } = false;
+
     // Student feedback (after class completion)
     /// <summary>
     /// Student's rating of the class (1-5 stars)

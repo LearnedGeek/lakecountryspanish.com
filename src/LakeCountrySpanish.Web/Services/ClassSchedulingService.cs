@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Models.ViewModels;
@@ -17,6 +19,7 @@ public class ClassSchedulingService : IClassSchedulingService
     private readonly IPaymentService _paymentService;
     private readonly ITicketService _ticketService;
     private readonly ISubscriptionService _subscriptionService;
+    private readonly ILogger<ClassSchedulingService> _logger;
 
     public ClassSchedulingService(
         ApplicationDbContext context,
@@ -24,7 +27,8 @@ public class ClassSchedulingService : IClassSchedulingService
         IScheduleService scheduleService,
         IPaymentService paymentService,
         ITicketService ticketService,
-        ISubscriptionService subscriptionService)
+        ISubscriptionService subscriptionService,
+        ILogger<ClassSchedulingService> logger)
     {
         _context = context;
         _configuration = configuration;
@@ -32,54 +36,73 @@ public class ClassSchedulingService : IClassSchedulingService
         _paymentService = paymentService;
         _ticketService = ticketService;
         _subscriptionService = subscriptionService;
+        _logger = logger;
     }
 
     public async Task<ScheduledClass?> AddClassToCheckoutAsync(string studentId, int timeSlotId, DateTime classDateTime)
     {
-        // Verify the slot is available
-        if (!await _scheduleService.IsTimeSlotAvailableAsync(timeSlotId, classDateTime))
-        {
-            return null;
-        }
-
-        // Check booking restrictions (must be > 1 hour from now)
+        // Check booking restrictions first (no DB needed)
         if (!_scheduleService.CanBookClass(classDateTime))
         {
             return null;
         }
 
-        // Check if student already has this slot in pending checkout
-        var existingPending = await _context.ScheduledClasses
-            .AnyAsync(sc => sc.StudentId == studentId
-                && sc.TimeSlotId == timeSlotId
-                && sc.ClassDateTime == classDateTime
-                && sc.IsPendingCheckout);
+        // Use a transaction with SERIALIZABLE isolation to prevent race conditions
+        // This ensures that between checking availability and inserting, no other
+        // transaction can insert a conflicting class
+        await using var transaction = await _context.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.Serializable);
 
-        if (existingPending)
+        try
         {
+            // Verify the slot is available (within transaction)
+            if (!await _scheduleService.IsTimeSlotAvailableAsync(timeSlotId, classDateTime))
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
+
+            // Check if student already has this slot in pending checkout
+            var existingPending = await _context.ScheduledClasses
+                .AnyAsync(sc => sc.StudentId == studentId
+                    && sc.TimeSlotId == timeSlotId
+                    && sc.ClassDateTime == classDateTime
+                    && sc.IsPendingCheckout);
+
+            if (existingPending)
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
+
+            // Create the pending class
+            var scheduledClass = new ScheduledClass
+            {
+                StudentId = studentId,
+                TimeSlotId = timeSlotId,
+                ClassDateTime = classDateTime,
+                Status = ClassStatus.Scheduled,
+                PaymentStatus = PaymentStatus.Unpaid,
+                IsPendingCheckout = true,
+                CheckoutBatchId = Guid.NewGuid(),
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.ScheduledClasses.Add(scheduledClass);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Load the time slot for the response
+            await _context.Entry(scheduledClass).Reference(sc => sc.TimeSlot).LoadAsync();
+
+            return scheduledClass;
+        }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogWarning(ex, "Concurrent booking attempt for TimeSlot {TimeSlotId} on {ClassDateTime}", timeSlotId, classDateTime);
             return null;
         }
-
-        // Create the pending class
-        var scheduledClass = new ScheduledClass
-        {
-            StudentId = studentId,
-            TimeSlotId = timeSlotId,
-            ClassDateTime = classDateTime,
-            Status = ClassStatus.Scheduled,
-            PaymentStatus = PaymentStatus.Unpaid,
-            IsPendingCheckout = true,
-            CheckoutBatchId = Guid.NewGuid(),
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.ScheduledClasses.Add(scheduledClass);
-        await _context.SaveChangesAsync();
-
-        // Load the time slot for the response
-        await _context.Entry(scheduledClass).Reference(sc => sc.TimeSlot).LoadAsync();
-
-        return scheduledClass;
     }
 
     public async Task<bool> RemoveFromCheckoutAsync(int classId, string studentId)
@@ -235,49 +258,67 @@ public class ClassSchedulingService : IClassSchedulingService
 
     public async Task<ScheduledClass?> ScheduleWithSubscriptionAsync(string studentId, int timeSlotId, DateTime classDateTime)
     {
-        // Get active subscription
-        var subscription = await _subscriptionService.GetActiveSubscriptionAsync(studentId);
-        if (subscription == null || subscription.ClassesRemainingThisMonth <= 0)
-        {
-            return null;
-        }
-
-        // Verify the slot is available
-        if (!await _scheduleService.IsTimeSlotAvailableAsync(timeSlotId, classDateTime))
-        {
-            return null;
-        }
-
-        // Check booking restrictions
+        // Check booking restrictions first (no DB needed)
         if (!_scheduleService.CanBookClass(classDateTime))
         {
             return null;
         }
 
-        // Create confirmed class
-        var scheduledClass = new ScheduledClass
+        // Use a transaction with SERIALIZABLE isolation to prevent race conditions
+        // This ensures that between checking availability and inserting, no other
+        // transaction can insert a conflicting class
+        await using var transaction = await _context.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.Serializable);
+
+        try
         {
-            StudentId = studentId,
-            TimeSlotId = timeSlotId,
-            ClassDateTime = classDateTime,
-            Status = ClassStatus.Scheduled,
-            PaymentStatus = PaymentStatus.PartOfSubscription,
-            SubscriptionId = subscription.Id,
-            IsPendingCheckout = false,
-            CreatedAt = DateTime.UtcNow
-        };
+            // Get active subscription (within transaction)
+            var subscription = await _subscriptionService.GetActiveSubscriptionAsync(studentId);
+            if (subscription == null || subscription.ClassesRemainingThisMonth <= 0)
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
 
-        _context.ScheduledClasses.Add(scheduledClass);
+            // Verify the slot is available (within transaction)
+            if (!await _scheduleService.IsTimeSlotAvailableAsync(timeSlotId, classDateTime))
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
 
-        // Increment subscription usage (ClassesRemainingThisMonth is calculated from Tier.ClassesPerMonth - ClassesUsedThisMonth)
-        subscription.ClassesUsedThisMonth++;
+            // Create confirmed class
+            var scheduledClass = new ScheduledClass
+            {
+                StudentId = studentId,
+                TimeSlotId = timeSlotId,
+                ClassDateTime = classDateTime,
+                Status = ClassStatus.Scheduled,
+                PaymentStatus = PaymentStatus.PartOfSubscription,
+                SubscriptionId = subscription.Id,
+                IsPendingCheckout = false,
+                CreatedAt = DateTime.UtcNow
+            };
 
-        await _context.SaveChangesAsync();
+            _context.ScheduledClasses.Add(scheduledClass);
 
-        // Load time slot for response
-        await _context.Entry(scheduledClass).Reference(sc => sc.TimeSlot).LoadAsync();
+            // Increment subscription usage (ClassesRemainingThisMonth is calculated from Tier.ClassesPerMonth - ClassesUsedThisMonth)
+            subscription.ClassesUsedThisMonth++;
 
-        return scheduledClass;
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            // Load time slot for response
+            await _context.Entry(scheduledClass).Reference(sc => sc.TimeSlot).LoadAsync();
+
+            return scheduledClass;
+        }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogWarning(ex, "Concurrent subscription booking attempt for TimeSlot {TimeSlotId} on {ClassDateTime}", timeSlotId, classDateTime);
+            return null;
+        }
     }
 
     public async Task<int> CleanupStalePendingClassesAsync(int olderThanMinutes = 30)

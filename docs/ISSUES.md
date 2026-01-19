@@ -1,10 +1,11 @@
 # ISSUES.md - Production RAID Log
 
 **Status**: LIVE PRODUCTION SITE
-**Last Updated**: 2026-01-18
-**Critical Issues**: 5
-**High Priority**: 7
-**Medium Priority**: 5
+**Last Updated**: 2026-01-19
+**Critical Issues**: 2 open, 3 resolved/partial (P0)
+**High Priority**: 0 open, 7 resolved (P1)
+**Medium Priority**: 5 open (P2)
+**Low Priority**: 3 open (P3)
 
 ---
 
@@ -30,9 +31,10 @@
 ---
 
 ### ISSUE-002: Email Notifications Not Wired Up
-**Status**: OPEN
+**Status**: PARTIALLY RESOLVED
 **Severity**: CRITICAL - Functionality
 **Component**: Multiple Services
+**Resolved Date**: 2026-01-19
 
 **Description**: IEmailService defines notification methods that are implemented but NEVER CALLED:
 - `SendBadgeEarnedAsync` - Never called when badges awarded
@@ -46,14 +48,17 @@
 
 **Impact**: Students receive NO automatic notifications for important events.
 
-**Fix Required**:
-1. Wire notifications in GamificationService (badges, milestones)
-2. Wire notifications in AssignmentService (assignment)
-3. Wire notifications in payment webhook handlers
-4. Implement background job for class reminders and weekly reports
+**Resolution (Partial)**:
+1. **WIRED**: `SendBadgeEarnedAsync` - Added to `GamificationService.AwardBadgeAsync`
+2. **WIRED**: `SendPointMilestoneAsync` - Added to `GamificationService.CheckAndConvertPointsToTokensAsync`
+3. **WIRED**: `SendAssignmentAssignedAsync` - Added to `AssignmentService.AssignToStudentAsync`
+4. **WIRED**: `SendPaymentConfirmationAsync` - Added to `StripePaymentService.ProcessWebhookAsync`
+5. **WIRED**: `SendPaymentFailedAsync` - Already was wired in `StripeSubscriptionService`
+6. **WIRED**: `SendSubscriptionRenewalAsync` - Added to `StripeSubscriptionService.ProcessSuccessfulPayment`
+7. **WIRED**: `SendClassReminderAsync` - Added to `ScheduledTasksController.SendClassReminders` (ISSUE-004)
+8. **NOT WIRED**: `SendWeeklyProgressReportAsync` - Requires complex data gathering, deferred to next sprint
 
-**Assigned**: Unassigned
-**Due**: This Sprint
+**Remaining Work**: Item 8 (weekly progress reports) deferred - requires gathering student progress data across multiple entities.
 
 ---
 
@@ -89,9 +94,10 @@
 ---
 
 ### ISSUE-004: Background Job Scheduler Not Implemented
-**Status**: OPEN
+**Status**: PARTIALLY RESOLVED
 **Severity**: CRITICAL - Functionality
-**Component**: NotificationScheduler.cs, NotificationBackgroundService.cs
+**Component**: ScheduledTasksController.cs (new)
+**Resolved Date**: 2026-01-19
 
 **Description**: Infrastructure exists for background jobs but no scheduled tasks run:
 - Class reminders (1hr and 24hr before) not sent
@@ -100,13 +106,30 @@
 
 **Impact**: Students miss classes, no engagement emails sent.
 
-**Fix**: Implement scheduled job execution using:
-- Hangfire (recommended)
-- Azure Functions Timer Trigger
-- Or custom IHostedService with timer
+**Resolution (Partial)**: Created HTTP endpoint-based scheduled tasks using SmarterASP's task scheduler:
 
-**Assigned**: Unassigned
-**Due**: This Sprint
+**New Controller**: `ScheduledTasksController.cs` at `/api/tasks/`
+- `GET /api/tasks/send-class-reminders?key={secret}` - Sends 24hr and 1hr class reminders
+- `GET /api/tasks/cleanup-stale-checkouts?key={secret}` - Removes abandoned cart items (30min+)
+- `GET /api/tasks/check-expired-tickets?key={secret}` - Reports on expired tickets
+- `GET /api/tasks/health` - Health check (no auth required)
+
+**Security**: All task endpoints require `ScheduledTasks:SecretKey` config value.
+- Preferred: Pass via `X-Task-Key` header (not logged)
+- Fallback: Pass via `?key=` query parameter (for SmarterASP compatibility - may appear in server logs)
+
+**Database Changes**: Added `Reminder24HrSent` and `Reminder1HrSent` to ScheduledClass entity.
+
+**SmarterASP Configuration Required**:
+1. Add `ScheduledTasks:SecretKey` to appsettings.Production.json
+2. Configure scheduled task in SmarterASP control panel:
+   - URL: `https://lakecountryspanish.com/api/tasks/send-class-reminders?key={your-secret}`
+   - Frequency: 30 minutes
+   - Timeout: 60 seconds
+
+**Remaining Work**:
+- Weekly progress reports (ISSUE-002 item 7) - needs more complex data gathering
+- Deploy and configure SmarterASP scheduled tasks
 
 ---
 
@@ -134,18 +157,29 @@
 ## HIGH PRIORITY (P1) - Fix This Sprint
 
 ### ISSUE-006: Race Condition in Class Scheduling
-**Status**: OPEN
+**Status**: RESOLVED
 **Severity**: HIGH - Data Integrity
-**Component**: ClassSchedulingService.cs
+**Component**: ClassSchedulingService.cs, ScheduleService.cs
+**Resolved Date**: 2026-01-19
 
-**Description**: `ScheduleWithSubscriptionAsync` doesn't use database transactions. Two concurrent requests could book the same time slot.
+**Description**: Multiple booking methods didn't use database transactions. Two concurrent requests could book the same time slot.
 
 **Risk**: Double-booking of classes.
 
-**Fix**: Wrap in transaction with serializable isolation or implement optimistic concurrency with row versioning.
+**Resolution**: Added SERIALIZABLE transaction isolation to all booking methods:
+- `ClassSchedulingService.AddClassToCheckoutAsync` - wrapped in transaction with DbUpdateException handling
+- `ClassSchedulingService.ScheduleWithSubscriptionAsync` - wrapped in transaction with DbUpdateException handling
+- `ScheduleService.BookClassAsync` - wrapped in transaction with DbUpdateException handling
+- `ScheduleService.BookRecurringClassesAsync` - wrapped in transaction with DbUpdateException handling
 
-**Assigned**: Unassigned
-**Due**: This Sprint
+All methods now:
+1. Begin transaction with `System.Data.IsolationLevel.Serializable`
+2. Check availability within transaction
+3. Insert class record
+4. Commit transaction
+5. Catch `DbUpdateException` for concurrent conflict, rollback and return null/error
+
+Added `ILogger<T>` to both services for logging concurrent booking attempts.
 
 ---
 
@@ -419,17 +453,42 @@ public IActionResult BookClass(...) { }
 **Resolved Date**: 2026-01-18
 **Resolution**: Fixed as part of ISSUE-001 - all user inputs encoded.
 
+### ISSUE-006: Race Condition in Class Scheduling
+**Status**: RESOLVED
+**Resolved Date**: 2026-01-19
+**Resolution**: Added SERIALIZABLE transaction isolation to all booking methods in ClassSchedulingService.cs and ScheduleService.cs. Added ILogger for concurrent conflict logging.
+
+### ISSUE-002: Email Notifications (Partial)
+**Status**: PARTIALLY RESOLVED
+**Resolved Date**: 2026-01-19
+**Resolution**: Wired up 7 of 8 email notification methods:
+- Badge earned, point milestones, assignment assigned, payment confirmation, payment failed, subscription renewal, class reminders
+- Remaining 1 (weekly progress reports) deferred to next sprint - requires complex data gathering
+
+### ISSUE-004: Background Job Scheduler (Partial)
+**Status**: PARTIALLY RESOLVED
+**Resolved Date**: 2026-01-19
+**Resolution**: Created ScheduledTasksController.cs with HTTP endpoints for:
+- Class reminders (24hr and 1hr) via `/api/tasks/send-class-reminders`
+- Stale checkout cleanup via `/api/tasks/cleanup-stale-checkouts`
+- Ticket expiry monitoring via `/api/tasks/check-expired-tickets`
+
+Configured for use with SmarterASP's URL-based task scheduler (30-minute interval).
+Added database migration for `Reminder24HrSent` and `Reminder1HrSent` fields.
+
 ---
 
 ## Issue Tracking Summary
 
-| Priority | Open | Resolved | Total |
-|----------|------|----------|-------|
-| Critical (P0) | 4 | 1 | 5 |
-| High (P1) | 1 | 6 | 7 |
-| Medium (P2) | 5 | 0 | 5 |
-| Low (P3) | 3 | 0 | 3 |
-| **Total** | **13** | **11** | **24** |
+| Priority | Open | Partial | Resolved | Total |
+|----------|------|---------|----------|-------|
+| Critical (P0) | 2 | 2 | 1 | 5 |
+| High (P1) | 0 | 0 | 7 | 7 |
+| Medium (P2) | 5 | 0 | 0 | 5 |
+| Low (P3) | 3 | 0 | 0 | 3 |
+| **Total** | **10** | **2** | **8** | **20** |
+
+**Note**: ISSUE-002 and ISSUE-004 are "Partial" - core functionality implemented, minor items deferred.
 
 ---
 
@@ -438,6 +497,152 @@ public IActionResult BookClass(...) { }
 1. ~~**Immediate**: Fix ISSUE-001 and ISSUE-012 (XSS vulnerabilities)~~ DONE
 2. ~~**Immediate**: Fix ISSUE-007 (DateTime.Now to UTC)~~ DONE
 3. ~~**This Sprint**: Fix ISSUE-008, 009, 010, 011 (High priority)~~ DONE
-4. **This Week**: Address remaining P0 issues (ISSUE-002, 003, 004, 005)
-5. **This Sprint**: Address remaining P1 issues (ISSUE-006 race condition)
-6. **Next Sprint**: P2 issues and test coverage improvements
+4. ~~**This Sprint**: Fix ISSUE-006 (race condition)~~ DONE
+5. ~~**This Sprint**: Fix ISSUE-004 (scheduled tasks endpoint)~~ DONE
+6. **This Week**: Address remaining P0 issues (ISSUE-003, 005 - test coverage)
+7. **Next Sprint**: P2 issues and test coverage improvements
+
+---
+
+## Deployment Action Items (Owner Required)
+
+The following actions must be completed manually after deploying the code changes:
+
+### 1. Add Scheduled Tasks Secret Key to Production Config
+
+**File**: `appsettings.Production.json`
+
+Add the following section (generate a secure random key):
+```json
+"ScheduledTasks": {
+  "SecretKey": "GENERATE-A-SECURE-RANDOM-KEY-HERE"
+}
+```
+
+**To generate a secure key**, use one of these methods:
+- PowerShell: `[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])`
+- Online: Use a password generator with 32+ characters
+- Example format: `xK9m2pQ7nL4vR8wY1tB6cF3hJ5gA0sD9`
+
+### 2. Run Database Migration
+
+After deployment, run the migration to add reminder tracking fields:
+
+```bash
+dotnet ef database update --context ApplicationDbContext
+```
+
+Or via SQL Server Management Studio, apply migration: `AddClassReminderTracking`
+
+### 3. Configure SmarterASP Scheduled Tasks
+
+Go to SmarterASP Control Panel → Advance → Schedule Tasks
+
+**Task 1: Class Reminders** (Required)
+| Setting | Value |
+|---------|-------|
+| URL | `https://lakecountryspanish.com/api/tasks/send-class-reminders?key=YOUR-SECRET-KEY` |
+| Protocol | `https://` |
+| Frequency | 30 minutes |
+| Timeout | 60 seconds |
+| Task Type | Schedule Task |
+
+**Task 2: Cleanup Stale Checkouts** (Recommended)
+| Setting | Value |
+|---------|-------|
+| URL | `https://lakecountryspanish.com/api/tasks/cleanup-stale-checkouts?key=YOUR-SECRET-KEY` |
+| Protocol | `https://` |
+| Frequency | 30 minutes |
+| Timeout | 30 seconds |
+| Task Type | Schedule Task |
+
+**Task 3: Expired Tickets Report** (Optional - for monitoring)
+| Setting | Value |
+|---------|-------|
+| URL | `https://lakecountryspanish.com/api/tasks/check-expired-tickets?key=YOUR-SECRET-KEY` |
+| Protocol | `https://` |
+| Frequency | 1440 minutes (daily) |
+| Timeout | 30 seconds |
+| Task Type | Schedule Task |
+
+**Security Note**: The query parameter approach is used because SmarterASP's scheduler only supports URL-based calls (no custom headers). If you switch to a scheduler that supports headers (Azure Functions, cron + curl, etc.), use the `X-Task-Key` header instead:
+```bash
+curl -H "X-Task-Key: YOUR-SECRET-KEY" https://lakecountryspanish.com/api/tasks/send-class-reminders
+```
+The header approach is preferred because it doesn't appear in server access logs.
+
+### 4. Verify Health Endpoint
+
+After deployment, verify the scheduled tasks system is working:
+
+```
+GET https://lakecountryspanish.com/api/tasks/health
+```
+
+Expected response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2026-01-19T...",
+  "endpoints": ["send-class-reminders", "cleanup-stale-checkouts", "check-expired-tickets"]
+}
+```
+
+### 5. Test a Scheduled Task Manually
+
+Test the class reminders endpoint with your secret key:
+```
+GET https://lakecountryspanish.com/api/tasks/send-class-reminders?key=YOUR-SECRET-KEY
+```
+
+Expected response (when no classes need reminders):
+```json
+{
+  "success": true,
+  "remindersSent": 0,
+  "errors": 0,
+  "timestamp": "2026-01-19T..."
+}
+```
+
+---
+
+## Files Changed This Session (2026-01-19)
+
+### New Files
+- `Controllers/ScheduledTasksController.cs` - HTTP endpoints for scheduled tasks
+- `Data/Migrations/[timestamp]_AddClassReminderTracking.cs` - Database migration
+
+### Modified Files
+- `Models/Entities/ScheduledClass.cs` - Added `Reminder24HrSent`, `Reminder1HrSent` fields
+- `Services/ClassSchedulingService.cs` - Added transaction isolation for race condition fix
+- `Services/ScheduleService.cs` - Added transaction isolation for race condition fix
+- `Services/GamificationService.cs` - Wired up badge/milestone email notifications, added IEmailService
+- `Services/AssignmentService.cs` - Wired up assignment email notifications, added IEmailService
+- `Services/StripePaymentService.cs` - Wired up payment confirmation emails, added IEmailService
+- `Services/StripeSubscriptionService.cs` - Wired up subscription renewal emails
+
+---
+
+## Session Summary (2026-01-19)
+
+### Issues Resolved This Session
+| Issue | Description | Status |
+|-------|-------------|--------|
+| ISSUE-006 | Race condition in class scheduling | **RESOLVED** |
+| ISSUE-002 | Email notifications not wired up | **PARTIAL** (7/8 done) |
+| ISSUE-004 | Background job scheduler | **PARTIAL** (endpoints created) |
+
+### Key Accomplishments
+1. **Race Condition Fix**: Added SERIALIZABLE transaction isolation to 4 booking methods
+2. **Email Notifications**: Wired up 7 notification types (badges, milestones, assignments, payments, subscriptions, class reminders)
+3. **Scheduled Tasks**: Created HTTP endpoint-based scheduled task system compatible with SmarterASP
+4. **Database**: Added reminder tracking fields with migration
+
+### Remaining Critical Items
+- ISSUE-003: Controller test coverage (deferred to next sprint)
+- ISSUE-005: Service test coverage (deferred to next sprint)
+- Weekly progress report emails (complex data gathering needed)
+
+### Owner Action Required
+See **Deployment Action Items** section above for manual configuration steps needed after deploying code changes.

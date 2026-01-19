@@ -360,6 +360,25 @@ public class StripeSubscriptionService : ISubscriptionService
 
         // Generate classes for new period (for recurring schedules)
         await GenerateClassesForSubscriptionAsync(subscription.Id);
+
+        // Send subscription renewal email notification
+        try
+        {
+            var student = await _context.Users.FindAsync(subscription.StudentId);
+            if (student != null && subscription.Tier != null)
+            {
+                await _emailService.SendSubscriptionRenewalAsync(
+                    student.Email!,
+                    student.FirstName ?? student.Email!,
+                    subscription.Tier.Name,
+                    payment.Amount,
+                    subscription.CurrentPeriodEnd ?? DateTime.UtcNow.AddMonths(1));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send subscription renewal email for Subscription {SubscriptionId}", subscription.Id);
+        }
     }
 
     /// <summary>

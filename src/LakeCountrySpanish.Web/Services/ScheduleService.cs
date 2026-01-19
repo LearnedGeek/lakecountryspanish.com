@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Models.ViewModels;
@@ -9,11 +10,13 @@ public class ScheduleService : IScheduleService
 {
     private readonly ApplicationDbContext _context;
     private readonly ITicketService _ticketService;
+    private readonly ILogger<ScheduleService> _logger;
 
-    public ScheduleService(ApplicationDbContext context, ITicketService ticketService)
+    public ScheduleService(ApplicationDbContext context, ITicketService ticketService, ILogger<ScheduleService> logger)
     {
         _context = context;
         _ticketService = ticketService;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<TimeSlot>> GetAvailableTimeSlotsAsync()
@@ -74,23 +77,42 @@ public class ScheduleService : IScheduleService
 
     public async Task<ScheduledClass?> BookClassAsync(string studentId, int timeSlotId, DateTime classDateTime)
     {
-        // Verify the time slot is available
-        if (!await IsTimeSlotAvailableAsync(timeSlotId, classDateTime))
-            return null;
+        // Use a transaction with SERIALIZABLE isolation to prevent race conditions
+        // This ensures that between checking availability and inserting, no other
+        // transaction can insert a conflicting class
+        await using var transaction = await _context.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.Serializable);
 
-        var scheduledClass = new ScheduledClass
+        try
         {
-            StudentId = studentId,
-            TimeSlotId = timeSlotId,
-            ClassDateTime = classDateTime,
-            Status = ClassStatus.Scheduled,
-            PaymentStatus = PaymentStatus.Unpaid
-        };
+            // Verify the time slot is available (within transaction)
+            if (!await IsTimeSlotAvailableAsync(timeSlotId, classDateTime))
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
 
-        _context.ScheduledClasses.Add(scheduledClass);
-        await _context.SaveChangesAsync();
+            var scheduledClass = new ScheduledClass
+            {
+                StudentId = studentId,
+                TimeSlotId = timeSlotId,
+                ClassDateTime = classDateTime,
+                Status = ClassStatus.Scheduled,
+                PaymentStatus = PaymentStatus.Unpaid
+            };
 
-        return scheduledClass;
+            _context.ScheduledClasses.Add(scheduledClass);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return scheduledClass;
+        }
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogWarning(ex, "Concurrent booking attempt for TimeSlot {TimeSlotId} on {ClassDateTime}", timeSlotId, classDateTime);
+            return null;
+        }
     }
 
     public async Task<IEnumerable<ScheduledClass>> GetStudentClassesAsync(string studentId)
@@ -279,21 +301,7 @@ public class ScheduleService : IScheduleService
             return result;
         }
 
-        // Get student's available credits
-        var packages = await _context.StudentPackages
-            .Where(sp => sp.StudentId == studentId && sp.ClassesRemaining > 0)
-            .OrderBy(sp => sp.ExpirationDate)
-            .ThenBy(sp => sp.PurchaseDate)
-            .ToListAsync();
-
-        var totalCredits = packages.Sum(p => p.ClassesRemaining);
-        if (totalCredits < weekCount)
-        {
-            result.ConflictReasons.Add($"Not enough credits. Have {totalCredits}, need {weekCount}");
-            return result;
-        }
-
-        // Calculate all target dates
+        // Calculate all target dates first (no DB needed)
         var targetDates = new List<DateTime>();
         var currentDate = startDate.Date;
 
@@ -309,74 +317,104 @@ public class ScheduleService : IScheduleService
             currentDate = currentDate.AddDays(7);
         }
 
-        // Get blocked dates and existing bookings
-        var blockedDates = await _context.BlockedDates.ToListAsync();
-        var existingBookings = await _context.ScheduledClasses
-            .Where(sc => sc.TimeSlotId == timeSlotId &&
-                         sc.Status != ClassStatus.Cancelled &&
-                         targetDates.Select(d => d.Date).Contains(sc.ClassDateTime.Date))
-            .Select(sc => sc.ClassDateTime.Date)
-            .ToListAsync();
+        // Use a transaction with SERIALIZABLE isolation to prevent race conditions
+        await using var transaction = await _context.Database.BeginTransactionAsync(
+            System.Data.IsolationLevel.Serializable);
 
-        // Try to book each date
-        foreach (var targetDateTime in targetDates)
+        try
         {
-            // Check 1-hour cutoff
-            if (!CanBookClass(targetDateTime))
+            // Get student's available credits (within transaction)
+            var packages = await _context.StudentPackages
+                .Where(sp => sp.StudentId == studentId && sp.ClassesRemaining > 0)
+                .OrderBy(sp => sp.ExpirationDate)
+                .ThenBy(sp => sp.PurchaseDate)
+                .ToListAsync();
+
+            var totalCredits = packages.Sum(p => p.ClassesRemaining);
+            if (totalCredits < weekCount)
             {
-                result.ConflictDates.Add(targetDateTime);
-                result.ConflictReasons.Add($"{targetDateTime:MMM d}: Too close to start time");
-                continue;
+                await transaction.RollbackAsync();
+                result.ConflictReasons.Add($"Not enough credits. Have {totalCredits}, need {weekCount}");
+                return result;
             }
 
-            // Check blocked dates
-            if (blockedDates.Any(bd => targetDateTime.Date >= bd.StartDate && targetDateTime.Date <= bd.EndDate))
+            // Get blocked dates and existing bookings (within transaction)
+            var blockedDates = await _context.BlockedDates.ToListAsync();
+            var existingBookings = await _context.ScheduledClasses
+                .Where(sc => sc.TimeSlotId == timeSlotId &&
+                             sc.Status != ClassStatus.Cancelled &&
+                             targetDates.Select(d => d.Date).Contains(sc.ClassDateTime.Date))
+                .Select(sc => sc.ClassDateTime.Date)
+                .ToListAsync();
+
+            // Try to book each date
+            foreach (var targetDateTime in targetDates)
             {
-                result.ConflictDates.Add(targetDateTime);
-                result.ConflictReasons.Add($"{targetDateTime:MMM d}: Blocked date");
-                continue;
+                // Check 1-hour cutoff
+                if (!CanBookClass(targetDateTime))
+                {
+                    result.ConflictDates.Add(targetDateTime);
+                    result.ConflictReasons.Add($"{targetDateTime:MMM d}: Too close to start time");
+                    continue;
+                }
+
+                // Check blocked dates
+                if (blockedDates.Any(bd => targetDateTime.Date >= bd.StartDate && targetDateTime.Date <= bd.EndDate))
+                {
+                    result.ConflictDates.Add(targetDateTime);
+                    result.ConflictReasons.Add($"{targetDateTime:MMM d}: Blocked date");
+                    continue;
+                }
+
+                // Check existing bookings
+                if (existingBookings.Contains(targetDateTime.Date))
+                {
+                    result.ConflictDates.Add(targetDateTime);
+                    result.ConflictReasons.Add($"{targetDateTime:MMM d}: Already booked");
+                    continue;
+                }
+
+                // Find package to use
+                var packageToUse = packages.FirstOrDefault(p => p.ClassesRemaining > 0);
+                if (packageToUse == null)
+                {
+                    result.ConflictDates.Add(targetDateTime);
+                    result.ConflictReasons.Add($"{targetDateTime:MMM d}: No credits available");
+                    continue;
+                }
+
+                // Book the class
+                var scheduledClass = new ScheduledClass
+                {
+                    StudentId = studentId,
+                    TimeSlotId = timeSlotId,
+                    ClassDateTime = targetDateTime,
+                    Status = ClassStatus.Scheduled,
+                    PaymentStatus = PaymentStatus.PartOfPackage,
+                    StudentPackageId = packageToUse.Id
+                };
+
+                _context.ScheduledClasses.Add(scheduledClass);
+                packageToUse.ClassesRemaining--;
+                result.BookedClasses.Add(scheduledClass);
+                result.CreditsUsed++;
             }
 
-            // Check existing bookings
-            if (existingBookings.Contains(targetDateTime.Date))
-            {
-                result.ConflictDates.Add(targetDateTime);
-                result.ConflictReasons.Add($"{targetDateTime:MMM d}: Already booked");
-                continue;
-            }
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
-            // Find package to use
-            var packageToUse = packages.FirstOrDefault(p => p.ClassesRemaining > 0);
-            if (packageToUse == null)
-            {
-                result.ConflictDates.Add(targetDateTime);
-                result.ConflictReasons.Add($"{targetDateTime:MMM d}: No credits available");
-                continue;
-            }
+            result.Success = result.BookedClasses.Count > 0;
+            result.CreditsRemaining = packages.Sum(p => p.ClassesRemaining);
 
-            // Book the class
-            var scheduledClass = new ScheduledClass
-            {
-                StudentId = studentId,
-                TimeSlotId = timeSlotId,
-                ClassDateTime = targetDateTime,
-                Status = ClassStatus.Scheduled,
-                PaymentStatus = PaymentStatus.PartOfPackage,
-                StudentPackageId = packageToUse.Id
-            };
-
-            _context.ScheduledClasses.Add(scheduledClass);
-            packageToUse.ClassesRemaining--;
-            result.BookedClasses.Add(scheduledClass);
-            result.CreditsUsed++;
+            return result;
         }
-
-        await _context.SaveChangesAsync();
-
-        result.Success = result.BookedClasses.Count > 0;
-        result.CreditsRemaining = packages.Sum(p => p.ClassesRemaining);
-
-        return result;
+        catch (DbUpdateException ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogWarning(ex, "Concurrent recurring booking attempt for TimeSlot {TimeSlotId} starting {StartDate}", timeSlotId, startDate);
+            result.ConflictReasons.Add("Booking conflict occurred. Please try again.");
+            return result;
+        }
     }
 
     public bool CanBookClass(DateTime classDateTime)

@@ -10,15 +10,18 @@ public class StripePaymentService : IPaymentService
 {
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
     private readonly ILogger<StripePaymentService> _logger;
 
     public StripePaymentService(
         ApplicationDbContext context,
         IConfiguration configuration,
+        IEmailService emailService,
         ILogger<StripePaymentService> logger)
     {
         _context = context;
         _configuration = configuration;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -253,6 +256,27 @@ public class StripePaymentService : IPaymentService
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Successfully processed payment {PaymentId} for amount {Amount}",
                     payment.Id, payment.Amount);
+
+                // Send payment confirmation email
+                try
+                {
+                    var student = payment.Student ?? await _context.Users.FindAsync(payment.StudentId);
+                    if (student != null)
+                    {
+                        var description = payment.Description ?? "Spanish Lessons";
+                        await _emailService.SendPaymentConfirmationAsync(
+                            student.Email!,
+                            student.FirstName ?? student.Email!,
+                            payment.Amount,
+                            description,
+                            payment.CompletedAt ?? DateTime.UtcNow);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to send payment confirmation email for Payment {PaymentId}", payment.Id);
+                }
+
                 return WebhookProcessingResult.Succeeded(payment);
             }
 

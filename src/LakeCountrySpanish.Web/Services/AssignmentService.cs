@@ -10,17 +10,20 @@ public class AssignmentService : IAssignmentService
     private readonly ApplicationDbContext _context;
     private readonly IClaudeApiService _claudeApiService;
     private readonly IGamificationService _gamificationService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<AssignmentService> _logger;
 
     public AssignmentService(
         ApplicationDbContext context,
         IClaudeApiService claudeApiService,
         IGamificationService gamificationService,
+        IEmailService emailService,
         ILogger<AssignmentService> logger)
     {
         _context = context;
         _claudeApiService = claudeApiService;
         _gamificationService = gamificationService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -370,6 +373,25 @@ public class AssignmentService : IAssignmentService
 
         _context.StudentAssignments.Add(studentAssignment);
         await _context.SaveChangesAsync();
+
+        // Send assignment notification email
+        try
+        {
+            var student = await _context.Users.FindAsync(studentId);
+            var assignment = await _context.Assignments.FindAsync(assignmentId);
+            if (student != null && assignment != null)
+            {
+                await _emailService.SendAssignmentAssignedAsync(
+                    student.Email!,
+                    student.FirstName ?? student.Email!,
+                    assignment.Title,
+                    dueDate);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send assignment notification email for StudentAssignment {Id}", studentAssignment.Id);
+        }
 
         return studentAssignment;
     }

@@ -11,16 +11,19 @@ public class GamificationService : IGamificationService
 {
     private readonly ApplicationDbContext _context;
     private readonly ITokenService _tokenService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<GamificationService> _logger;
     private const int PointsPerToken = 100;
 
     public GamificationService(
         ApplicationDbContext context,
         ITokenService tokenService,
+        IEmailService emailService,
         ILogger<GamificationService> logger)
     {
         _context = context;
         _tokenService = tokenService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -416,6 +419,10 @@ public class GamificationService : IGamificationService
         if (badge == null || !badge.IsActive)
             return null;
 
+        var student = await _context.Users.FindAsync(studentId);
+        if (student == null)
+            return null;
+
         var studentBadge = new StudentBadge
         {
             StudentId = studentId,
@@ -440,6 +447,21 @@ public class GamificationService : IGamificationService
                 badge.BonusPoints,
                 PointSource.BadgeEarned,
                 details: $"Bonus for earning '{badge.Name}' badge");
+        }
+
+        // Send email notification for badge earned
+        try
+        {
+            await _emailService.SendBadgeEarnedAsync(
+                student.Email!,
+                student.FirstName ?? student.Email!,
+                badge.Name,
+                badge.Description ?? "Keep up the great work!",
+                badge.BonusPoints);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send badge earned email to {StudentId}", studentId);
         }
 
         return studentBadge;
@@ -471,6 +493,22 @@ public class GamificationService : IGamificationService
             _logger.LogInformation(
                 "Converted points to {Tokens} token(s) for student {StudentId}",
                 newTokensNeeded, studentId);
+
+            // Send milestone email notification
+            var milestone = tokensToAward * PointsPerToken;
+            try
+            {
+                await _emailService.SendPointMilestoneAsync(
+                    student.Email!,
+                    student.FirstName ?? student.Email!,
+                    student.TotalPoints,
+                    milestone,
+                    newTokensNeeded);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send point milestone email to {StudentId}", studentId);
+            }
         }
 
         return newTokensNeeded;
