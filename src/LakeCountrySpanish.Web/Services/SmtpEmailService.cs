@@ -17,12 +17,12 @@ public class SmtpEmailService : IEmailService
 
     public async Task SendEmailAsync(string toEmail, string toName, string subject, string htmlBody)
     {
-        var smtpHost = _configuration["Email:SmtpHost"];
-        var smtpPortStr = _configuration["Email:SmtpPort"];
-        var smtpUser = _configuration["Email:SmtpUser"];
-        var smtpPass = _configuration["Email:SmtpPassword"];
-        var fromEmail = _configuration["Email:FromEmail"];
-        var fromName = _configuration["Email:FromName"] ?? "Lake Country Spanish";
+        var smtpHost = _configuration["EmailSettings:SmtpHost"];
+        var smtpPortStr = _configuration["EmailSettings:SmtpPort"];
+        var smtpUser = _configuration["EmailSettings:SmtpUsername"];
+        var smtpPass = _configuration["EmailSettings:SmtpPassword"];
+        var fromEmail = _configuration["EmailSettings:FromEmail"];
+        var fromName = _configuration["EmailSettings:FromName"] ?? "Lake Country Spanish";
 
         // Check if email is configured
         if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(fromEmail))
