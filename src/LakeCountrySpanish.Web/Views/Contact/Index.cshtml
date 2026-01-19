@@ -104,6 +104,16 @@
                                 <input type="text" asp-for="Website" id="website" tabindex="-1" autocomplete="off" />
                             </div>
 
+                            <!-- reCAPTCHA token -->
+                            <input type="hidden" asp-for="RecaptchaToken" id="recaptchaToken" />
+
+                            <!-- reCAPTCHA disclosure notice (required by Google) -->
+                            <p class="text-xs text-gray-500">
+                                This site is protected by reCAPTCHA and the Google
+                                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="underline hover:text-gray-700">Privacy Policy</a> and
+                                <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="underline hover:text-gray-700">Terms of Service</a> apply.
+                            </p>
+
                             <div>
                                 @await Component.InvokeAsync("Button", new {
                                     text = "Send Message",
@@ -119,3 +129,20 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://www.google.com/recaptcha/api.js?render=@ViewBag.RecaptchaSiteKey"></script>
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var form = this;
+
+            grecaptcha.ready(function() {
+                grecaptcha.execute('@ViewBag.RecaptchaSiteKey', {action: 'contact'}).then(function(token) {
+                    document.getElementById('recaptchaToken').value = token;
+                    form.submit();
+                });
+            });
+        });
+    </script>
+}

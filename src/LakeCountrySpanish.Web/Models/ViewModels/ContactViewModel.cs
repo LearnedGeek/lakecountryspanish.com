@@ -27,6 +27,11 @@ public class ContactViewModel
     /// Honeypot field - should always be empty. Bots will fill this in.
     /// </summary>
     public string? Website { get; set; }
+
+    /// <summary>
+    /// reCAPTCHA v3 token for bot detection
+    /// </summary>
+    public string? RecaptchaToken { get; set; }
 }
 
 public class AdminInquiriesViewModel
