@@ -2,7 +2,6 @@
 @{
     ViewData["Title"] = "Contact";
     ViewData["MetaDescription"] = "Contact Karen to schedule your first Spanish lesson or ask questions about private tutoring. Quick responses, flexible scheduling, and personalized learning plans.";
-    var siteKey = ViewBag.RecaptchaSiteKey as string;
 }
 
 <div class="bg-white">
@@ -99,8 +98,6 @@
                                 <span asp-validation-for="Message" class="text-red-500 text-sm"></span>
                             </div>
 
-                            <input type="hidden" asp-for="RecaptchaToken" id="recaptchaToken" />
-
                             <!-- Honeypot field - hidden from users, bots will fill it -->
                             <div class="absolute -left-[9999px]" aria-hidden="true">
                                 <label for="website">Website</label>
@@ -115,15 +112,6 @@
                                     cssClass = "w-full justify-center py-3"
                                 })
                             </div>
-
-                            @if (!string.IsNullOrEmpty(siteKey) && siteKey != "your_recaptcha_site_key_here")
-                            {
-                                <p class="text-xs text-gray-500 text-center">
-                                    This site is protected by reCAPTCHA and the Google
-                                    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="underline hover:text-gray-700">Privacy Policy</a> and
-                                    <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="underline hover:text-gray-700">Terms of Service</a> apply.
-                                </p>
-                            }
                         </div>
                     </form>
                 </div>
@@ -131,36 +119,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    @if (!string.IsNullOrEmpty(siteKey) && siteKey != "your_recaptcha_site_key_here")
-    {
-        <script src="https://www.google.com/recaptcha/api.js?render=@siteKey"></script>
-        <script>
-            document.getElementById('contactForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                var form = this;
-
-                // Check if grecaptcha is available
-                if (typeof grecaptcha === 'undefined') {
-                    console.error('reCAPTCHA not loaded, submitting without token');
-                    form.submit();
-                    return;
-                }
-
-                grecaptcha.ready(function() {
-                    grecaptcha.execute('@siteKey', {action: 'contact'})
-                        .then(function(token) {
-                            document.getElementById('recaptchaToken').value = token;
-                            form.submit();
-                        })
-                        .catch(function(error) {
-                            console.error('reCAPTCHA error:', error);
-                            // Submit anyway - server will handle missing token
-                            form.submit();
-                        });
-                });
-            });
-        </script>
-    }
-}
