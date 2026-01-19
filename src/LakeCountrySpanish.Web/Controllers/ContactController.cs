@@ -4,6 +4,7 @@ using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Models.ViewModels;
 using LakeCountrySpanish.Web.Services;
 using System.Text.Json;
+using System.Text.Encodings.Web;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
@@ -13,17 +14,20 @@ public class ContactController : Controller
     private readonly IConfiguration _configuration;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IEmailService _emailService;
+    private readonly ILogger<ContactController> _logger;
 
     public ContactController(
         ApplicationDbContext context,
         IConfiguration configuration,
         IHttpClientFactory httpClientFactory,
-        IEmailService emailService)
+        IEmailService emailService,
+        ILogger<ContactController> logger)
     {
         _context = context;
         _configuration = configuration;
         _httpClientFactory = httpClientFactory;
         _emailService = emailService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -76,8 +80,15 @@ public class ContactController : Controller
         await _context.SaveChangesAsync();
 
         // Send notification email to Karen
+        // HTML encode all user input to prevent XSS attacks
+        var encoder = HtmlEncoder.Default;
+        var safeName = encoder.Encode(model.Name);
+        var safeEmail = encoder.Encode(model.Email);
+        var safePhone = !string.IsNullOrEmpty(model.Phone) ? encoder.Encode(model.Phone) : "";
+        var safeMessage = encoder.Encode(model.Message).Replace("\n", "<br/>");
+
         var adminEmail = _configuration["ContactForm:NotificationEmail"] ?? "karen@lakecountryspanish.com";
-        var phoneInfo = !string.IsNullOrEmpty(model.Phone) ? $"<p><strong>Phone:</strong> {model.Phone}</p>" : "";
+        var phoneInfo = !string.IsNullOrEmpty(model.Phone) ? $"<p><strong>Phone:</strong> {safePhone}</p>" : "";
         var emailBody = $@"
 <!DOCTYPE html>
 <html>
@@ -101,14 +112,14 @@ public class ContactController : Controller
             <p>You have received a new inquiry from the contact form on your website.</p>
 
             <div class='info-box'>
-                <p><strong>Name:</strong> {model.Name}</p>
-                <p><strong>Email:</strong> <a href='mailto:{model.Email}'>{model.Email}</a></p>
+                <p><strong>Name:</strong> {safeName}</p>
+                <p><strong>Email:</strong> <a href='mailto:{safeEmail}'>{safeEmail}</a></p>
                 {phoneInfo}
             </div>
 
             <div class='message-box'>
                 <p><strong>Message:</strong></p>
-                <p>{model.Message.Replace("\n", "<br/>")}</p>
+                <p>{safeMessage}</p>
             </div>
 
             <p>You can view and manage all inquiries in your <a href='https://lakecountryspanish.com/Admin/Inquiries'>admin dashboard</a>.</p>
@@ -120,7 +131,7 @@ public class ContactController : Controller
 </body>
 </html>";
 
-        await _emailService.SendEmailAsync(adminEmail, "Karen", "New Contact Form Inquiry from " + model.Name, emailBody);
+        await _emailService.SendEmailAsync(adminEmail, "Karen", "New Contact Form Inquiry from " + safeName, emailBody);
 
         TempData["SuccessMessage"] = "Thank you for your message! Karen will get back to you soon.";
         return RedirectToAction(nameof(ThankYou));
@@ -160,9 +171,10 @@ public class ContactController : Controller
 
             return result ?? new RecaptchaResponse { Success = false, Score = 0 };
         }
-        catch
+        catch (Exception ex)
         {
-            // If verification fails, allow through to not block legitimate users
+            // Log the error but allow through to not block legitimate users
+            _logger.LogWarning(ex, "reCAPTCHA verification failed - allowing request through");
             return new RecaptchaResponse { Success = true, Score = 1.0m };
         }
     }

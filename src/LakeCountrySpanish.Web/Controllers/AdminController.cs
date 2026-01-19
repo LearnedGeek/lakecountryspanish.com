@@ -157,7 +157,7 @@ public class AdminController : Controller
                 CustomHourlyRate = student.CustomHourlyRate,
                 IsActive = student.IsActive,
                 UpcomingClassCount = await _context.ScheduledClasses
-                    .CountAsync(sc => sc.StudentId == student.Id && sc.ClassDateTime >= DateTime.Now && sc.Status == ClassStatus.Scheduled),
+                    .CountAsync(sc => sc.StudentId == student.Id && sc.ClassDateTime >= DateTime.UtcNow && sc.Status == ClassStatus.Scheduled),
                 Balance = await _paymentService.GetStudentBalanceAsync(student.Id)
             });
         }
@@ -177,7 +177,7 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         // Get all classes for this student
         var allClasses = await _context.ScheduledClasses
@@ -1477,8 +1477,8 @@ public class AdminController : Controller
             .ToListAsync();
 
         // Get engagement data
-        var now = DateTime.Now;
-        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var now = DateTime.UtcNow;
+        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var totalClassesCompleted = await _context.ScheduledClasses
             .CountAsync(c => c.StudentId == id && c.Status == ClassStatus.Completed);
         var classesThisMonth = await _context.ScheduledClasses

@@ -56,7 +56,7 @@ public class StudentController : Controller
         }
 
         var classes = await _scheduleService.GetStudentClassesAsync(user.Id);
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         var availablePackageClasses = await _context.StudentPackages
             .Where(sp => sp.StudentId == user.Id && sp.ClassesRemaining > 0)
@@ -218,7 +218,7 @@ public class StudentController : Controller
         // Get upcoming classes (filter student classes for future dates)
         var allStudentClasses = await _scheduleService.GetStudentClassesAsync(user.Id);
         var upcomingClasses = allStudentClasses
-            .Where(c => c.ClassDateTime >= DateTime.Now
+            .Where(c => c.ClassDateTime >= DateTime.UtcNow
                      && c.Status != ClassStatus.Cancelled
                      && !c.IsPendingCheckout) // Exclude pending checkout - those show in cart
             .OrderBy(c => c.ClassDateTime)
@@ -275,6 +275,19 @@ public class StudentController : Controller
         if (user == null)
         {
             return Json(new { success = false, error = "Unauthorized" });
+        }
+
+        // Validate timeSlotId exists
+        var timeSlot = await _context.TimeSlots.FindAsync(timeSlotId);
+        if (timeSlot == null)
+        {
+            return Json(new { success = false, error = "Invalid time slot." });
+        }
+
+        // Validate classDateTime is in the future (at least 1 hour from now)
+        if (classDateTime <= DateTime.UtcNow.AddHours(1))
+        {
+            return Json(new { success = false, error = "Cannot book classes less than 1 hour in advance." });
         }
 
         // Check if user has active subscription
@@ -488,6 +501,13 @@ public class StudentController : Controller
             return NotFound();
         }
 
+        // Validate ticketsToApply is non-negative
+        if (ticketsToApply < 0)
+        {
+            TempData["ErrorMessage"] = "Invalid number of tickets.";
+            return RedirectToAction(nameof(MyClasses));
+        }
+
         var successUrl = Url.Action("CheckoutSuccess", "Student", null, Request.Scheme)!;
         var cancelUrl = Url.Action("MyClasses", "Student", null, Request.Scheme)!;
 
@@ -554,6 +574,13 @@ public class StudentController : Controller
     [HttpGet]
     public async Task<IActionResult> GetAvailableDates(int timeSlotId)
     {
+        // Validate timeSlotId exists
+        var timeSlot = await _context.TimeSlots.FindAsync(timeSlotId);
+        if (timeSlot == null)
+        {
+            return Json(new List<object>());
+        }
+
         var startDate = DateTime.Today;
         var endDate = DateTime.Today.AddDays(60);
 

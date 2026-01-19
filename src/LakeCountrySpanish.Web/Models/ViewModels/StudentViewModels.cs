@@ -58,15 +58,15 @@ public class StudentDashboardViewModel
         if (NewBadges.Any()) return "celebrating";
         if (CurrentStreak >= 7) return "excited";
         if (ActivityToday) return "happy";
-        if (CurrentStreak == 0 && LastActivityDate.HasValue && (DateTime.Now - LastActivityDate.Value).TotalDays > 3) return "missing-you";
-        if (UpcomingClasses.Any() && NextClass != null && (NextClass.ClassDateTime - DateTime.Now).TotalHours < 2) return "ready";
+        if (CurrentStreak == 0 && LastActivityDate.HasValue && (DateTime.UtcNow - LastActivityDate.Value).TotalDays > 3) return "missing-you";
+        if (UpcomingClasses.Any() && NextClass != null && (NextClass.ClassDateTime - DateTime.UtcNow).TotalHours < 2) return "ready";
         return "friendly";
     }
 
     // Personalized greeting
     public string GetGreeting()
     {
-        var hour = DateTime.Now.Hour;
+        var hour = DateTime.UtcNow.Hour;
         var greeting = hour switch
         {
             < 12 => "Buenos dias",
@@ -80,7 +80,7 @@ public class StudentDashboardViewModel
             return $"{greeting}, {StudentName}! You're on fire with a {CurrentStreak}-day streak!";
         if (CurrentStreak > 0 && ActivityToday)
             return $"{greeting}, {StudentName}! Keep that {CurrentStreak}-day streak going!";
-        if (NextClass != null && (NextClass.ClassDateTime - DateTime.Now).TotalHours < 24)
+        if (NextClass != null && (NextClass.ClassDateTime - DateTime.UtcNow).TotalHours < 24)
             return $"{greeting}, {StudentName}! Your next class is coming up soon!";
         if (InProgressAssignments.Any())
             return $"{greeting}, {StudentName}! Ready to continue learning?";
@@ -96,7 +96,7 @@ public class InProgressAssignmentViewModel
     public string? CefrLevel { get; set; }
     public int TotalPoints { get; set; }
     public DateTime? DueDate { get; set; }
-    public bool IsOverdue => DueDate.HasValue && DueDate.Value < DateTime.Now;
+    public bool IsOverdue => DueDate.HasValue && DueDate.Value < DateTime.UtcNow;
 }
 
 public class CreateStudentViewModel

@@ -13,13 +13,16 @@ public class AssignmentController : Controller
 {
     private readonly IAssignmentService _assignmentService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ILogger<AssignmentController> _logger;
 
     public AssignmentController(
         IAssignmentService assignmentService,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        ILogger<AssignmentController> logger)
     {
         _assignmentService = assignmentService;
         _userManager = userManager;
+        _logger = logger;
     }
 
     /// <summary>
@@ -142,7 +145,8 @@ public class AssignmentController : Controller
         }
         catch (Exception ex)
         {
-            TempData["ErrorMessage"] = $"Error submitting assignment: {ex.Message}";
+            _logger.LogError(ex, "Error submitting assignment for user {UserId}", user?.Id);
+            TempData["ErrorMessage"] = "An error occurred while submitting your assignment. Please try again.";
             return RedirectToAction(nameof(Index));
         }
     }

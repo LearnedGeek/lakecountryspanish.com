@@ -69,7 +69,7 @@ public class ScheduleService : IScheduleService
             }
         }
 
-        return availableDates.Where(d => d > DateTime.Now);
+        return availableDates.Where(d => d > DateTime.UtcNow);
     }
 
     public async Task<ScheduledClass?> BookClassAsync(string studentId, int timeSlotId, DateTime classDateTime)
@@ -235,7 +235,7 @@ public class ScheduleService : IScheduleService
                 var bookedClass = bookedClasses.FirstOrDefault(bc =>
                     bc.TimeSlotId == slot.Id && bc.ClassDateTime.Date == date);
 
-                var isPastCutoff = classDateTime <= DateTime.Now.AddHours(1);
+                var isPastCutoff = classDateTime <= DateTime.UtcNow.AddHours(1);
 
                 daySchedule.TimeSlots.Add(new TimeSlotAvailability
                 {
@@ -381,7 +381,7 @@ public class ScheduleService : IScheduleService
 
     public bool CanBookClass(DateTime classDateTime)
     {
-        return classDateTime > DateTime.Now.AddHours(1);
+        return classDateTime > DateTime.UtcNow.AddHours(1);
     }
 
     public async Task<(bool canCancel, bool willForfeitCredit)> GetCancellationStatusAsync(int classId)
@@ -391,7 +391,7 @@ public class ScheduleService : IScheduleService
             return (false, false);
 
         var canCancel = scheduledClass.Status == ClassStatus.Scheduled;
-        var hoursUntilClass = (scheduledClass.ClassDateTime - DateTime.Now).TotalHours;
+        var hoursUntilClass = (scheduledClass.ClassDateTime - DateTime.UtcNow).TotalHours;
         var willForfeit = hoursUntilClass < 24;
 
         return (canCancel, willForfeit);

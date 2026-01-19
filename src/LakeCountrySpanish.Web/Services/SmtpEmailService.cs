@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using LakeCountrySpanish.Web.Models.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 
 namespace LakeCountrySpanish.Web.Services;
 
@@ -8,11 +9,16 @@ public class SmtpEmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<SmtpEmailService> _logger;
+    private readonly IWebHostEnvironment _environment;
 
-    public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger)
+    public SmtpEmailService(
+        IConfiguration configuration,
+        ILogger<SmtpEmailService> logger,
+        IWebHostEnvironment environment)
     {
         _configuration = configuration;
         _logger = logger;
+        _environment = environment;
     }
 
     public async Task SendEmailAsync(string toEmail, string toName, string subject, string htmlBody)
@@ -27,7 +33,16 @@ public class SmtpEmailService : IEmailService
         // Check if email is configured
         if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(fromEmail))
         {
-            _logger.LogWarning("Email not configured. Would have sent email to {ToEmail}: {Subject}", toEmail, subject);
+            if (_environment.IsProduction())
+            {
+                // In production, this is an error condition that needs attention
+                _logger.LogError("CRITICAL: Email not configured in production! Would have sent email to {ToEmail}: {Subject}", toEmail, subject);
+            }
+            else
+            {
+                // In development, this is expected and just a warning
+                _logger.LogWarning("Email not configured (dev environment). Would have sent email to {ToEmail}: {Subject}", toEmail, subject);
+            }
             return;
         }
 
