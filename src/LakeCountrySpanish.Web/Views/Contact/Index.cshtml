@@ -101,6 +101,12 @@
 
                             <input type="hidden" asp-for="RecaptchaToken" id="recaptchaToken" />
 
+                            <!-- Honeypot field - hidden from users, bots will fill it -->
+                            <div class="absolute -left-[9999px]" aria-hidden="true">
+                                <label for="website">Website</label>
+                                <input type="text" asp-for="Website" id="website" tabindex="-1" autocomplete="off" />
+                            </div>
+
                             <div>
                                 @await Component.InvokeAsync("Button", new {
                                     text = "Send Message",

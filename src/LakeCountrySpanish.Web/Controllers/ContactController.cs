@@ -41,6 +41,14 @@ public class ContactController : Controller
             return View(model);
         }
 
+        // Honeypot check - if filled, it's a bot
+        if (!string.IsNullOrEmpty(model.Website))
+        {
+            // Silently reject - don't tell bots they were caught
+            TempData["SuccessMessage"] = "Thank you for your message! Karen will get back to you soon.";
+            return RedirectToAction(nameof(ThankYou));
+        }
+
         // Verify reCAPTCHA
         var recaptchaSecretKey = _configuration["ReCaptcha:SecretKey"];
         if (!string.IsNullOrEmpty(recaptchaSecretKey) && recaptchaSecretKey != "your_recaptcha_secret_key_here")

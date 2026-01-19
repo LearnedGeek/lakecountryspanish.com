@@ -24,6 +24,11 @@ public class ContactViewModel
     public string Message { get; set; } = string.Empty;
 
     public string? RecaptchaToken { get; set; }
+
+    /// <summary>
+    /// Honeypot field - should always be empty. Bots will fill this in.
+    /// </summary>
+    public string? Website { get; set; }
 }
 
 public class AdminInquiriesViewModel
