@@ -97,7 +97,8 @@ public class ContactController : Controller
             var jsonResponse = await response.Content.ReadAsStringAsync();
             var result = JsonSerializer.Deserialize<RecaptchaResponse>(jsonResponse);
 
-            return result?.Success == true && result.Score >= 0.5;
+            // Lower threshold (0.3) to reduce false positives on mobile devices
+            return result?.Success == true && result.Score >= 0.3;
         }
         catch
         {
