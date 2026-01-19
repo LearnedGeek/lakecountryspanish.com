@@ -105,6 +105,7 @@
                                 @await Component.InvokeAsync("Button", new {
                                     text = "Send Message",
                                     type = "primary",
+                                    submit = true,
                                     cssClass = "w-full justify-center py-3"
                                 })
                             </div>
@@ -132,11 +133,26 @@
         <script>
             document.getElementById('contactForm').addEventListener('submit', function(e) {
                 e.preventDefault();
+                var form = this;
+
+                // Check if grecaptcha is available
+                if (typeof grecaptcha === 'undefined') {
+                    console.error('reCAPTCHA not loaded, submitting without token');
+                    form.submit();
+                    return;
+                }
+
                 grecaptcha.ready(function() {
-                    grecaptcha.execute('@siteKey', {action: 'contact'}).then(function(token) {
-                        document.getElementById('recaptchaToken').value = token;
-                        document.getElementById('contactForm').submit();
-                    });
+                    grecaptcha.execute('@siteKey', {action: 'contact'})
+                        .then(function(token) {
+                            document.getElementById('recaptchaToken').value = token;
+                            form.submit();
+                        })
+                        .catch(function(error) {
+                            console.error('reCAPTCHA error:', error);
+                            // Submit anyway - server will handle missing token
+                            form.submit();
+                        });
                 });
             });
         </script>
