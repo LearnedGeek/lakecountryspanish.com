@@ -7,6 +7,11 @@ using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure logging to suppress noisy CookieTempDataProvider warnings
+// These occur when a stale TempData cookie (encrypted with old keys) can't be decrypted
+// This is expected behavior after app restarts in development - the cookie is simply ignored
+builder.Logging.AddFilter("Microsoft.AspNetCore.Mvc.ViewFeatures.CookieTempDataProvider", LogLevel.Error);
+
 // Configure Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
