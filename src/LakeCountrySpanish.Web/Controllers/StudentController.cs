@@ -22,6 +22,7 @@ public class StudentController : Controller
     private readonly ITokenService _tokenService;
     private readonly ITicketService _ticketService;
     private readonly ISubscriptionService _subscriptionService;
+    private readonly IEmailService _emailService;
 
     public StudentController(
         ApplicationDbContext context,
@@ -33,7 +34,8 @@ public class StudentController : Controller
         IPlacementTestService placementTestService,
         ITokenService tokenService,
         ITicketService ticketService,
-        ISubscriptionService subscriptionService)
+        ISubscriptionService subscriptionService,
+        IEmailService emailService)
     {
         _context = context;
         _userManager = userManager;
@@ -45,6 +47,7 @@ public class StudentController : Controller
         _tokenService = tokenService;
         _ticketService = ticketService;
         _subscriptionService = subscriptionService;
+        _emailService = emailService;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -637,6 +640,18 @@ public class StudentController : Controller
             return NotFound();
         }
 
+        // Get class details before cancellation for admin notification
+        var scheduledClass = await _context.ScheduledClasses
+            .FirstOrDefaultAsync(sc => sc.Id == id && sc.StudentId == user.Id);
+
+        if (scheduledClass == null)
+        {
+            TempData["ErrorMessage"] = "Unable to cancel this class.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        var classDateTime = scheduledClass.ClassDateTime;
+
         // Check if forfeit applies
         var (canCancel, willForfeitCredit) = await _scheduleService.GetCancellationStatusAsync(id);
 
@@ -656,6 +671,14 @@ public class StudentController : Controller
 
         if (result)
         {
+            // Send admin notification about the cancellation
+            var reason = willForfeitCredit ? "Late cancellation (within 24 hours)" : "Cancelled by student";
+            await _emailService.SendAdminClassCancelledAsync(
+                user.FullName ?? user.Email!,
+                user.Email!,
+                classDateTime,
+                reason);
+
             if (willForfeitCredit)
             {
                 TempData["WarningMessage"] = "Class cancelled. Since this was within 24 hours, your ticket has been forfeited.";

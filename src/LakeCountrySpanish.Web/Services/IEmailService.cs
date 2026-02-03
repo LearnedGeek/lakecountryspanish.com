@@ -5,6 +5,7 @@ namespace LakeCountrySpanish.Web.Services;
 public interface IEmailService
 {
     Task SendEmailAsync(string toEmail, string toName, string subject, string htmlBody);
+    Task SendClassScheduledAsync(string studentEmail, string studentName, DateTime classDateTime, string? classroomUrl);
     Task SendClassRescheduledAsync(string studentEmail, string studentName, DateTime oldDateTime, DateTime newDateTime, string? reason);
     Task SendClassCancelledAsync(string studentEmail, string studentName, DateTime classDateTime, string? reason);
 
@@ -19,4 +20,11 @@ public interface IEmailService
 
     // Payment failure notification
     Task SendPaymentFailedAsync(string email, string name, string tierName, decimal amount, string? failureReason);
+
+    // Admin notifications
+    Task SendAdminClassScheduledAsync(string studentName, string studentEmail, DateTime classDateTime);
+    Task SendAdminClassCancelledAsync(string studentName, string studentEmail, DateTime classDateTime, string? reason);
+    Task SendAdminClassReminderAsync(string studentName, string studentEmail, DateTime classDateTime, int hoursUntil);
+    Task SendAdminPaymentReceivedAsync(string studentName, string studentEmail, decimal amount, string description, DateTime paymentDate);
+    Task SendAdminContactInquiryAsync(string name, string email, string? phone, string message);
 }

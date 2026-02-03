@@ -116,11 +116,21 @@ public class ScheduledTasksController : ControllerBase
 
                 try
                 {
+                    var studentName = scheduledClass.Student.FirstName ?? scheduledClass.Student.Email;
+
+                    // Send to student
                     await _emailService.SendClassReminderAsync(
                         scheduledClass.Student.Email,
-                        scheduledClass.Student.FirstName ?? scheduledClass.Student.Email,
+                        studentName,
                         scheduledClass.ClassDateTime,
                         scheduledClass.Student.ClassroomUrl,
+                        24);
+
+                    // Send to admin
+                    await _emailService.SendAdminClassReminderAsync(
+                        scheduledClass.Student.FullName ?? studentName,
+                        scheduledClass.Student.Email,
+                        scheduledClass.ClassDateTime,
                         24);
 
                     scheduledClass.Reminder24HrSent = true;
@@ -150,11 +160,21 @@ public class ScheduledTasksController : ControllerBase
 
                 try
                 {
+                    var studentName = scheduledClass.Student.FirstName ?? scheduledClass.Student.Email;
+
+                    // Send to student
                     await _emailService.SendClassReminderAsync(
                         scheduledClass.Student.Email,
-                        scheduledClass.Student.FirstName ?? scheduledClass.Student.Email,
+                        studentName,
                         scheduledClass.ClassDateTime,
                         scheduledClass.Student.ClassroomUrl,
+                        1);
+
+                    // Send to admin
+                    await _emailService.SendAdminClassReminderAsync(
+                        scheduledClass.Student.FullName ?? studentName,
+                        scheduledClass.Student.Email,
+                        scheduledClass.ClassDateTime,
                         1);
 
                     scheduledClass.Reminder1HrSent = true;

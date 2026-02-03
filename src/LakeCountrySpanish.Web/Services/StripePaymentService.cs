@@ -255,6 +255,7 @@ public class StripePaymentService : IPaymentService
 
                 // Handle cart checkout: confirm any pending checkout classes for this student
                 var pendingClasses = await _context.ScheduledClasses
+                    .Include(sc => sc.TimeSlot)
                     .Where(sc => sc.StudentId == payment.StudentId && sc.IsPendingCheckout)
                     .ToListAsync();
 
@@ -274,24 +275,71 @@ public class StripePaymentService : IPaymentService
                 _logger.LogInformation("Successfully processed payment {PaymentId} for amount {Amount}",
                     payment.Id, payment.Amount);
 
-                // Send payment confirmation email
+                // Send payment confirmation email to student and admin
                 try
                 {
                     var student = payment.Student ?? await _context.Users.FindAsync(payment.StudentId);
                     if (student != null)
                     {
                         var description = payment.Description ?? "Spanish Lessons";
+                        var studentName = student.FirstName ?? student.Email!;
+                        var paymentDate = payment.CompletedAt ?? DateTime.UtcNow;
+
+                        // Send to student
                         await _emailService.SendPaymentConfirmationAsync(
                             student.Email!,
-                            student.FirstName ?? student.Email!,
+                            studentName,
                             payment.Amount,
                             description,
-                            payment.CompletedAt ?? DateTime.UtcNow);
+                            paymentDate);
+
+                        // Send to admin
+                        await _emailService.SendAdminPaymentReceivedAsync(
+                            student.FullName ?? studentName,
+                            student.Email!,
+                            payment.Amount,
+                            description,
+                            paymentDate);
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogWarning(ex, "Failed to send payment confirmation email for Payment {PaymentId}", payment.Id);
+                }
+
+                // Send class scheduled notification emails for confirmed classes (to student and admin)
+                if (pendingClasses.Any())
+                {
+                    var student = payment.Student ?? await _context.Users.FindAsync(payment.StudentId);
+                    if (student != null)
+                    {
+                        var studentName = student.FirstName ?? student.FullName ?? student.Email!;
+                        foreach (var cls in pendingClasses)
+                        {
+                            try
+                            {
+                                // Send to student
+                                await _emailService.SendClassScheduledAsync(
+                                    student.Email!,
+                                    studentName,
+                                    cls.ClassDateTime,
+                                    cls.ClassroomUrlOverride ?? student.ClassroomUrl);
+
+                                // Send to admin
+                                await _emailService.SendAdminClassScheduledAsync(
+                                    student.FullName ?? studentName,
+                                    student.Email!,
+                                    cls.ClassDateTime);
+
+                                _logger.LogInformation("Sent class scheduled emails for class {ClassId} to {Email} and admin",
+                                    cls.Id, student.Email);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogWarning(ex, "Failed to send class scheduled email for class {ClassId}", cls.Id);
+                            }
+                        }
+                    }
                 }
 
                 return WebhookProcessingResult.Succeeded(payment);
