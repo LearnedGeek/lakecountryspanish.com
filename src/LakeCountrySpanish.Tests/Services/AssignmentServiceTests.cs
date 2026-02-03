@@ -506,6 +506,7 @@ public class AssignmentServiceGradingTests
     private readonly ApplicationDbContext _context;
     private readonly Mock<IClaudeApiService> _claudeApiServiceMock;
     private readonly Mock<IGamificationService> _gamificationServiceMock;
+    private readonly Mock<IEmailService> _emailServiceMock;
     private readonly Mock<ILogger<AssignmentService>> _loggerMock;
     private readonly AssignmentService _assignmentService;
 
@@ -514,12 +515,14 @@ public class AssignmentServiceGradingTests
         _context = TestDbContextFactory.Create();
         _claudeApiServiceMock = new Mock<IClaudeApiService>();
         _gamificationServiceMock = new Mock<IGamificationService>();
+        _emailServiceMock = new Mock<IEmailService>();
         _loggerMock = new Mock<ILogger<AssignmentService>>();
 
         _assignmentService = new AssignmentService(
             _context,
             _claudeApiServiceMock.Object,
             _gamificationServiceMock.Object,
+            _emailServiceMock.Object,
             _loggerMock.Object);
     }
 

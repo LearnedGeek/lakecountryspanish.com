@@ -25,6 +25,7 @@ public class StripeE2ETests : IDisposable
 {
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly Mock<IEmailService> _emailServiceMock;
     private readonly Mock<ILogger<StripePaymentService>> _loggerMock;
     private readonly StripePaymentService _service;
     private readonly ApplicationUser _testStudent;
@@ -61,6 +62,7 @@ public class StripeE2ETests : IDisposable
         }
 
         _context = TestDbContextFactory.Create();
+        _emailServiceMock = new Mock<IEmailService>();
         _loggerMock = new Mock<ILogger<StripePaymentService>>();
 
         var configBuilder = new ConfigurationBuilder();
@@ -73,7 +75,7 @@ public class StripeE2ETests : IDisposable
         });
         _configuration = configBuilder.Build();
 
-        _service = new StripePaymentService(_context, _configuration, _loggerMock.Object);
+        _service = new StripePaymentService(_context, _configuration, _emailServiceMock.Object, _loggerMock.Object);
 
         // Setup test data
         _testStudent = new ApplicationUser

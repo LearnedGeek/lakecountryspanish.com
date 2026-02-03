@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
@@ -10,13 +11,15 @@ public class ScheduleServiceTests
 {
     private readonly ApplicationDbContext _context;
     private readonly Mock<ITicketService> _mockTicketService;
+    private readonly Mock<ILogger<ScheduleService>> _loggerMock;
     private readonly ScheduleService _scheduleService;
 
     public ScheduleServiceTests()
     {
         _context = TestDbContextFactory.Create();
         _mockTicketService = new Mock<ITicketService>();
-        _scheduleService = new ScheduleService(_context, _mockTicketService.Object);
+        _loggerMock = new Mock<ILogger<ScheduleService>>();
+        _scheduleService = new ScheduleService(_context, _mockTicketService.Object, _loggerMock.Object);
     }
 
     [Fact]

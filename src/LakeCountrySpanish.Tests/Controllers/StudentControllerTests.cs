@@ -26,6 +26,7 @@ public class StudentControllerTests : IDisposable
     private readonly Mock<ITokenService> _tokenServiceMock;
     private readonly Mock<ITicketService> _ticketServiceMock;
     private readonly Mock<ISubscriptionService> _subscriptionServiceMock;
+    private readonly Mock<IEmailService> _emailServiceMock;
     private readonly StudentController _controller;
     private readonly ApplicationUser _testStudent;
 
@@ -46,6 +47,7 @@ public class StudentControllerTests : IDisposable
         _tokenServiceMock = new Mock<ITokenService>();
         _ticketServiceMock = new Mock<ITicketService>();
         _subscriptionServiceMock = new Mock<ISubscriptionService>();
+        _emailServiceMock = new Mock<IEmailService>();
 
         _controller = new StudentController(
             _context,
@@ -57,7 +59,8 @@ public class StudentControllerTests : IDisposable
             _placementTestServiceMock.Object,
             _tokenServiceMock.Object,
             _ticketServiceMock.Object,
-            _subscriptionServiceMock.Object);
+            _subscriptionServiceMock.Object,
+            _emailServiceMock.Object);
 
         // Setup test student
         _testStudent = new ApplicationUser
@@ -232,6 +235,219 @@ public class StudentControllerTests : IDisposable
         // Assert - Verify schedule service was never called
         _scheduleServiceMock.Verify(
             s => s.BookRecurringClassesAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<int>()),
+            Times.Never);
+    }
+
+    #endregion
+
+    #region CancelClass Tests
+
+    [Fact]
+    public async Task CancelClass_ReturnsNotFound_WhenUserNotAuthenticated()
+    {
+        // Arrange
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        // Act
+        var result = await _controller.CancelClass(1, false);
+
+        // Assert
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task CancelClass_RedirectsWithError_WhenClassNotFound()
+    {
+        // Arrange
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        // Act
+        var result = await _controller.CancelClass(999, false);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Dashboard", redirectResult.ActionName);
+        Assert.Contains("ErrorMessage", _controller.TempData.Keys);
+    }
+
+    [Fact]
+    public async Task CancelClass_RedirectsWithError_WhenClassBelongsToDifferentStudent()
+    {
+        // Arrange
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var otherStudent = new ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(),
+            UserName = "other@test.com",
+            Email = "other@test.com"
+        };
+        _context.Users.Add(otherStudent);
+
+        var timeSlot = new TimeSlot
+        {
+            DayOfWeek = DayOfWeek.Monday,
+            StartTime = new TimeSpan(10, 0, 0),
+            EndTime = new TimeSpan(11, 0, 0),
+            IsActive = true
+        };
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = otherStudent.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.Today.AddDays(3),
+            Status = ClassStatus.Scheduled
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _controller.CancelClass(scheduledClass.Id, false);
+
+        // Assert
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Dashboard", redirectResult.ActionName);
+        Assert.Contains("ErrorMessage", _controller.TempData.Keys);
+    }
+
+    [Fact]
+    public async Task CancelClass_SendsAdminNotification_WhenSuccessful()
+    {
+        // Arrange
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var timeSlot = new TimeSlot
+        {
+            DayOfWeek = DayOfWeek.Monday,
+            StartTime = new TimeSpan(10, 0, 0),
+            EndTime = new TimeSpan(11, 0, 0),
+            IsActive = true
+        };
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = _testStudent.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.Today.AddDays(3),
+            Status = ClassStatus.Scheduled
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        _scheduleServiceMock.Setup(s => s.GetCancellationStatusAsync(scheduledClass.Id))
+            .ReturnsAsync((true, false));
+        _scheduleServiceMock.Setup(s => s.CancelClassWithForfeitAsync(scheduledClass.Id, _testStudent.Id, false, false))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.CancelClass(scheduledClass.Id, false);
+
+        // Assert
+        _emailServiceMock.Verify(
+            e => e.SendAdminClassCancelledAsync(
+                It.IsAny<string>(),
+                _testStudent.Email!,
+                scheduledClass.ClassDateTime,
+                "Cancelled by student"),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelClass_SendsLateCancellationReason_WhenWithin24Hours()
+    {
+        // Arrange
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var timeSlot = new TimeSlot
+        {
+            DayOfWeek = DayOfWeek.Monday,
+            StartTime = new TimeSpan(10, 0, 0),
+            EndTime = new TimeSpan(11, 0, 0),
+            IsActive = true
+        };
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = _testStudent.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(12), // Within 24 hours
+            Status = ClassStatus.Scheduled
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        _scheduleServiceMock.Setup(s => s.GetCancellationStatusAsync(scheduledClass.Id))
+            .ReturnsAsync((true, true)); // Will forfeit credit
+        _scheduleServiceMock.Setup(s => s.CancelClassWithForfeitAsync(scheduledClass.Id, _testStudent.Id, false, true))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.CancelClass(scheduledClass.Id, true);
+
+        // Assert
+        _emailServiceMock.Verify(
+            e => e.SendAdminClassCancelledAsync(
+                It.IsAny<string>(),
+                _testStudent.Email!,
+                scheduledClass.ClassDateTime,
+                "Late cancellation (within 24 hours)"),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelClass_DoesNotSendAdminNotification_WhenCancellationFails()
+    {
+        // Arrange
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var timeSlot = new TimeSlot
+        {
+            DayOfWeek = DayOfWeek.Monday,
+            StartTime = new TimeSpan(10, 0, 0),
+            EndTime = new TimeSpan(11, 0, 0),
+            IsActive = true
+        };
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = _testStudent.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.Today.AddDays(3),
+            Status = ClassStatus.Scheduled
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        _scheduleServiceMock.Setup(s => s.GetCancellationStatusAsync(scheduledClass.Id))
+            .ReturnsAsync((true, false));
+        _scheduleServiceMock.Setup(s => s.CancelClassWithForfeitAsync(scheduledClass.Id, _testStudent.Id, false, false))
+            .ReturnsAsync(false); // Cancellation fails
+
+        // Act
+        var result = await _controller.CancelClass(scheduledClass.Id, false);
+
+        // Assert
+        _emailServiceMock.Verify(
+            e => e.SendAdminClassCancelledAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<string>()),
             Times.Never);
     }
 
