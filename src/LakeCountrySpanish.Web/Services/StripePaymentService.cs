@@ -253,6 +253,23 @@ public class StripePaymentService : IPaymentService
                     }
                 }
 
+                // Handle cart checkout: confirm any pending checkout classes for this student
+                var pendingClasses = await _context.ScheduledClasses
+                    .Where(sc => sc.StudentId == payment.StudentId && sc.IsPendingCheckout)
+                    .ToListAsync();
+
+                if (pendingClasses.Any())
+                {
+                    foreach (var cls in pendingClasses)
+                    {
+                        cls.IsPendingCheckout = false;
+                        cls.PaymentId = payment.Id;
+                        cls.PaymentStatus = PaymentStatus.Paid;
+                    }
+                    _logger.LogInformation("Confirmed {Count} pending checkout classes for payment {PaymentId}",
+                        pendingClasses.Count, payment.Id);
+                }
+
                 await _context.SaveChangesAsync();
                 _logger.LogInformation("Successfully processed payment {PaymentId} for amount {Amount}",
                     payment.Id, payment.Amount);
