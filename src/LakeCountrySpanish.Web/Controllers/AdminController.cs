@@ -2372,4 +2372,57 @@ public class AdminController : Controller
             AllAssignments = flaggedAssignments
         });
     }
+
+    // Repair orphaned pending checkout classes
+    // This fixes classes that were paid for but the webhook didn't confirm them
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RepairPendingCheckouts()
+    {
+        // Find all pending checkout classes
+        var pendingClasses = await _context.ScheduledClasses
+            .Include(sc => sc.Student)
+            .Where(sc => sc.IsPendingCheckout)
+            .ToListAsync();
+
+        if (!pendingClasses.Any())
+        {
+            TempData["InfoMessage"] = "No pending checkout classes found.";
+            return RedirectToAction(nameof(Dashboard));
+        }
+
+        var repairedCount = 0;
+        var deletedCount = 0;
+
+        foreach (var cls in pendingClasses)
+        {
+            // Check if there's a completed payment for this student
+            var payment = await _context.Payments
+                .Where(p => p.StudentId == cls.StudentId && p.Status == PaymentStatusType.Completed)
+                .OrderByDescending(p => p.CompletedAt)
+                .FirstOrDefaultAsync();
+
+            if (payment != null)
+            {
+                // There's a completed payment - confirm this class
+                cls.IsPendingCheckout = false;
+                cls.PaymentId = payment.Id;
+                cls.PaymentStatus = PaymentStatus.Paid;
+                repairedCount++;
+            }
+            else
+            {
+                // No payment found - this is an abandoned cart item, delete it
+                _context.ScheduledClasses.Remove(cls);
+                deletedCount++;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+
+        var message = $"Repair complete. Confirmed {repairedCount} class(es), removed {deletedCount} abandoned cart item(s).";
+        TempData["SuccessMessage"] = message;
+
+        return RedirectToAction(nameof(Dashboard));
+    }
 }
