@@ -2425,4 +2425,85 @@ public class AdminController : Controller
 
         return RedirectToAction(nameof(Dashboard));
     }
+
+    // Find payments that don't have associated scheduled classes (orphaned payments)
+    [HttpGet]
+    public async Task<IActionResult> OrphanedPayments()
+    {
+        // Find completed payments that have no scheduled classes linked
+        var paymentsWithoutClasses = await _context.Payments
+            .Include(p => p.Student)
+            .Where(p => p.Status == PaymentStatusType.Completed)
+            .Where(p => !_context.ScheduledClasses.Any(sc => sc.PaymentId == p.Id))
+            .OrderByDescending(p => p.CompletedAt)
+            .ToListAsync();
+
+        // Get active time slots for the scheduling form
+        ViewBag.TimeSlots = await _context.TimeSlots
+            .Where(ts => ts.IsActive)
+            .OrderBy(ts => ts.DayOfWeek)
+            .ThenBy(ts => ts.StartTime)
+            .Select(ts => new {
+                Id = ts.Id,
+                Display = ts.IsRecurring && ts.DayOfWeek.HasValue
+                    ? $"{ts.DayOfWeek.Value} {ts.StartTime:hh\\:mm} - {ts.EndTime:hh\\:mm}"
+                    : $"{ts.SpecificDate:MMM d} {ts.StartTime:hh\\:mm} - {ts.EndTime:hh\\:mm}"
+            })
+            .ToListAsync();
+
+        return View(paymentsWithoutClasses);
+    }
+
+    // Manually create a scheduled class for a student with an orphaned payment
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateClassForPayment(int paymentId, int timeSlotId, DateTime classDateTime)
+    {
+        var payment = await _context.Payments
+            .Include(p => p.Student)
+            .FirstOrDefaultAsync(p => p.Id == paymentId);
+
+        if (payment == null)
+        {
+            TempData["ErrorMessage"] = "Payment not found.";
+            return RedirectToAction(nameof(OrphanedPayments));
+        }
+
+        var timeSlot = await _context.TimeSlots.FindAsync(timeSlotId);
+        if (timeSlot == null)
+        {
+            TempData["ErrorMessage"] = "Time slot not found.";
+            return RedirectToAction(nameof(OrphanedPayments));
+        }
+
+        // Check if this slot is available
+        var isBooked = await _context.ScheduledClasses
+            .AnyAsync(sc => sc.TimeSlotId == timeSlotId &&
+                           sc.ClassDateTime.Date == classDateTime.Date &&
+                           sc.Status != ClassStatus.Cancelled);
+
+        if (isBooked)
+        {
+            TempData["ErrorMessage"] = "This time slot is already booked for that date.";
+            return RedirectToAction(nameof(OrphanedPayments));
+        }
+
+        // Create the scheduled class
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = payment.StudentId,
+            TimeSlotId = timeSlotId,
+            ClassDateTime = classDateTime,
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.Paid,
+            PaymentId = payment.Id,
+            IsPendingCheckout = false
+        };
+
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = $"Class scheduled for {payment.Student?.FullName ?? "student"} on {classDateTime:MMM d} at {classDateTime:h:mm tt}.";
+        return RedirectToAction(nameof(Schedule));
+    }
 }

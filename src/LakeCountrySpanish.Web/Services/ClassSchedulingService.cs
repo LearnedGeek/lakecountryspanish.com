@@ -117,6 +117,29 @@ public class ClassSchedulingService : IClassSchedulingService
             return false;
         }
 
+        // SAFETY CHECK: Before deleting, verify there's no completed payment for this student
+        // that was made after this class was added to cart. If there is, the user already paid!
+        var recentPayment = await _context.Payments
+            .Where(p => p.StudentId == studentId &&
+                       p.Status == PaymentStatusType.Completed &&
+                       p.CompletedAt >= scheduledClass.CreatedAt)
+            .OrderByDescending(p => p.CompletedAt)
+            .FirstOrDefaultAsync();
+
+        if (recentPayment != null)
+        {
+            // User has paid! Don't delete - instead, confirm this class
+            _logger.LogWarning("Attempted to remove class {ClassId} from cart, but student has completed payment {PaymentId}. Confirming class instead.",
+                classId, recentPayment.Id);
+
+            scheduledClass.IsPendingCheckout = false;
+            scheduledClass.PaymentId = recentPayment.Id;
+            scheduledClass.PaymentStatus = PaymentStatus.Paid;
+            await _context.SaveChangesAsync();
+
+            return true; // Return true so UI thinks removal worked, but we actually confirmed the class
+        }
+
         _context.ScheduledClasses.Remove(scheduledClass);
         await _context.SaveChangesAsync();
 
@@ -141,6 +164,32 @@ public class ClassSchedulingService : IClassSchedulingService
         if (!pendingClasses.Any())
         {
             return 0;
+        }
+
+        // SAFETY CHECK: Check for recent completed payment before deleting any pending classes
+        var oldestPendingClass = pendingClasses.Min(c => c.CreatedAt);
+        var recentPayment = await _context.Payments
+            .Where(p => p.StudentId == studentId &&
+                       p.Status == PaymentStatusType.Completed &&
+                       p.CompletedAt >= oldestPendingClass)
+            .OrderByDescending(p => p.CompletedAt)
+            .FirstOrDefaultAsync();
+
+        if (recentPayment != null)
+        {
+            // User has paid! Don't delete - instead, confirm all pending classes
+            _logger.LogWarning("Attempted to clear cart, but student has completed payment {PaymentId}. Confirming {Count} class(es) instead.",
+                recentPayment.Id, pendingClasses.Count);
+
+            foreach (var cls in pendingClasses)
+            {
+                cls.IsPendingCheckout = false;
+                cls.PaymentId = recentPayment.Id;
+                cls.PaymentStatus = PaymentStatus.Paid;
+            }
+            await _context.SaveChangesAsync();
+
+            return pendingClasses.Count; // Return count so UI thinks clearing worked
         }
 
         _context.ScheduledClasses.RemoveRange(pendingClasses);
