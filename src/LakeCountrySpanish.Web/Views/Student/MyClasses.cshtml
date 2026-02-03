@@ -190,7 +190,7 @@
                                         </td>
                                         @foreach (var day in Model.WeeklyCalendar.Days)
                                         {
-                                            var slot = day.TimeSlots.FirstOrDefault(s => s.StartTime == timeSlot.StartTime);
+                                            var slot = day.TimeSlots.FirstOrDefault(s => s.StartTime == timeSlot.StartTime && s.SlotExistsForDay);
                                             <td class="py-2 px-1">
                                                 @if (day.IsBlocked)
                                                 {
