@@ -372,7 +372,7 @@ public class StudentController : Controller
             success = true,
             confirmed = false,
             classId = pendingClass.Id,
-            classDateTime = pendingClass.ClassDateTime.ToString("ddd, MMM d 'at' h:mm tt"),
+            classDateTime = pendingClass.ClassDateTime.ToString("o"), // ISO 8601 format for JavaScript parsing
             summary = new
             {
                 classCount = summary.ClassCount,
