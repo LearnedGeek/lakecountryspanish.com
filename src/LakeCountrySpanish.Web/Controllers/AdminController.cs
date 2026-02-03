@@ -2488,12 +2488,15 @@ public class AdminController : Controller
             return RedirectToAction(nameof(OrphanedPayments));
         }
 
+        // Combine the date with the time slot's start time
+        var actualClassDateTime = classDateTime.Date.Add(timeSlot.StartTime);
+
         // Create the scheduled class
         var scheduledClass = new ScheduledClass
         {
             StudentId = payment.StudentId,
             TimeSlotId = timeSlotId,
-            ClassDateTime = classDateTime,
+            ClassDateTime = actualClassDateTime,
             Status = ClassStatus.Scheduled,
             PaymentStatus = PaymentStatus.Paid,
             PaymentId = payment.Id,
@@ -2503,7 +2506,7 @@ public class AdminController : Controller
         _context.ScheduledClasses.Add(scheduledClass);
         await _context.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"Class scheduled for {payment.Student?.FullName ?? "student"} on {classDateTime:MMM d} at {classDateTime:h:mm tt}.";
+        TempData["SuccessMessage"] = $"Class scheduled for {payment.Student?.FullName ?? "student"} on {actualClassDateTime:MMM d} at {actualClassDateTime:h:mm tt}.";
         return RedirectToAction(nameof(Schedule));
     }
 }
