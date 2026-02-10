@@ -257,7 +257,7 @@ public class ScheduleService : IScheduleService
                 var bookedClass = bookedClasses.FirstOrDefault(bc =>
                     bc.TimeSlotId == slot.Id && bc.ClassDateTime.Date == date);
 
-                var isPastCutoff = classDateTime <= DateTime.UtcNow.AddHours(1);
+                var isPastCutoff = classDateTime <= DateTime.UtcNow.AddHours(24);
 
                 daySchedule.TimeSlots.Add(new TimeSlotAvailability
                 {
@@ -350,11 +350,11 @@ public class ScheduleService : IScheduleService
             // Try to book each date
             foreach (var targetDateTime in targetDates)
             {
-                // Check 1-hour cutoff
+                // Check 24-hour cutoff
                 if (!CanBookClass(targetDateTime))
                 {
                     result.ConflictDates.Add(targetDateTime);
-                    result.ConflictReasons.Add($"{targetDateTime:MMM d}: Too close to start time");
+                    result.ConflictReasons.Add($"{targetDateTime:MMM d}: Must book at least 24 hours in advance");
                     continue;
                 }
 
@@ -419,7 +419,7 @@ public class ScheduleService : IScheduleService
 
     public bool CanBookClass(DateTime classDateTime)
     {
-        return classDateTime > DateTime.UtcNow.AddHours(1);
+        return classDateTime > DateTime.UtcNow.AddHours(24);
     }
 
     public async Task<(bool canCancel, bool willForfeitCredit)> GetCancellationStatusAsync(int classId)

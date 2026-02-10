@@ -123,7 +123,7 @@ public class TimeSlotAvailability
     public TimeSpan StartTime { get; set; }
     public TimeSpan EndTime { get; set; }
     public bool IsAvailable { get; set; }
-    public bool IsPastBookingCutoff { get; set; }  // Within 1 hour of now
+    public bool IsPastBookingCutoff { get; set; }  // Within 24 hours of now
     public bool SlotExistsForDay { get; set; }      // Does this slot operate on this day?
     public string? BookedByStudentName { get; set; } // For admin view (null for student view)
 }

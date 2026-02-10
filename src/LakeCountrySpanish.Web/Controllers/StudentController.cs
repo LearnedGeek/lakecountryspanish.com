@@ -287,10 +287,10 @@ public class StudentController : Controller
             return Json(new { success = false, error = "Invalid time slot." });
         }
 
-        // Validate classDateTime is in the future (at least 1 hour from now)
-        if (classDateTime <= DateTime.UtcNow.AddHours(1))
+        // Validate classDateTime is in the future (at least 24 hours from now)
+        if (classDateTime <= DateTime.UtcNow.AddHours(24))
         {
-            return Json(new { success = false, error = "Cannot book classes less than 1 hour in advance." });
+            return Json(new { success = false, error = "Classes must be booked at least 24 hours in advance." });
         }
 
         // Check if user has active subscription
