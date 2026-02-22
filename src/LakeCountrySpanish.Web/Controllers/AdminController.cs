@@ -24,6 +24,7 @@ public class AdminController : Controller
     private readonly IAssignmentService _assignmentService;
     private readonly IConfiguration _configuration;
     private readonly IAnalyticsService _analyticsService;
+    private readonly ILogger<AdminController> _logger;
 
     public AdminController(
         ApplicationDbContext context,
@@ -37,7 +38,8 @@ public class AdminController : Controller
         IGamificationService gamificationService,
         IAssignmentService assignmentService,
         IConfiguration configuration,
-        IAnalyticsService analyticsService)
+        IAnalyticsService analyticsService,
+        ILogger<AdminController> logger)
     {
         _context = context;
         _userManager = userManager;
@@ -51,6 +53,7 @@ public class AdminController : Controller
         _assignmentService = assignmentService;
         _configuration = configuration;
         _analyticsService = analyticsService;
+        _logger = logger;
     }
 
     public async Task<IActionResult> Dashboard()
@@ -2505,6 +2508,24 @@ public class AdminController : Controller
 
         _context.ScheduledClasses.Add(scheduledClass);
         await _context.SaveChangesAsync();
+
+        // Send class scheduled notification email to student
+        if (payment.Student != null && !string.IsNullOrEmpty(payment.Student.Email))
+        {
+            try
+            {
+                await _emailService.SendClassScheduledAsync(
+                    payment.Student.Email,
+                    payment.Student.FirstName ?? payment.Student.FullName ?? payment.Student.Email,
+                    actualClassDateTime,
+                    payment.Student.ClassroomUrl);
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail the action if email fails
+                _logger.LogWarning(ex, "Failed to send class scheduled email to {Email}", payment.Student.Email);
+            }
+        }
 
         TempData["SuccessMessage"] = $"Class scheduled for {payment.Student?.FullName ?? "student"} on {actualClassDateTime:MMM d} at {actualClassDateTime:h:mm tt}.";
         return RedirectToAction(nameof(Schedule));
