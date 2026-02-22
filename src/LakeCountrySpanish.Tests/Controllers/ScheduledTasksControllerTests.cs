@@ -445,5 +445,115 @@ public class ScheduledTasksControllerTests : IDisposable
         Assert.IsType<OkObjectResult>(result);
     }
 
+    [Fact]
+    public async Task CleanupStaleCheckouts_CallsServiceWithCorrectTimeout()
+    {
+        _classSchedulingServiceMock.Setup(s => s.CleanupStalePendingClassesAsync(It.IsAny<int>()))
+            .ReturnsAsync(3);
+
+        var result = await _controller.CleanupStaleCheckouts("test-secret-key");
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        _classSchedulingServiceMock.Verify(
+            s => s.CleanupStalePendingClassesAsync(30),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CleanupStaleCheckouts_ReturnsCleanedUpCount()
+    {
+        _classSchedulingServiceMock.Setup(s => s.CleanupStalePendingClassesAsync(It.IsAny<int>()))
+            .ReturnsAsync(5);
+
+        var result = await _controller.CleanupStaleCheckouts("test-secret-key") as OkObjectResult;
+
+        Assert.NotNull(result);
+        var classesRemovedProp = result.Value?.GetType().GetProperty("classesRemoved");
+        Assert.Equal(5, classesRemovedProp?.GetValue(result.Value));
+    }
+
+    #endregion
+
+    #region CheckExpiredTickets Tests
+
+    [Fact]
+    public async Task CheckExpiredTickets_ReturnsUnauthorized_WhenNoKeyProvided()
+    {
+        var result = await _controller.CheckExpiredTickets(null);
+
+        Assert.IsType<UnauthorizedObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task CheckExpiredTickets_ReturnsUnauthorized_WhenInvalidKey()
+    {
+        var result = await _controller.CheckExpiredTickets("wrong-key");
+
+        Assert.IsType<UnauthorizedObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task CheckExpiredTickets_ReturnsOk_WithValidKey()
+    {
+        var result = await _controller.CheckExpiredTickets("test-secret-key");
+
+        Assert.IsType<OkObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task CheckExpiredTickets_CountsExpiredAndActiveTickets()
+    {
+        // Add expired ticket
+        _context.Tickets.Add(new Ticket
+        {
+            StudentId = _testStudent.Id,
+            Source = TicketSource.Purchased,
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(-1), // Expired
+            AcquiredAt = DateTime.UtcNow.AddDays(-30)
+        });
+
+        // Add active ticket
+        _context.Tickets.Add(new Ticket
+        {
+            StudentId = _testStudent.Id,
+            Source = TicketSource.Purchased,
+            IsUsed = false,
+            ExpiresAt = DateTime.UtcNow.AddDays(30), // Active
+            AcquiredAt = DateTime.UtcNow.AddDays(-5)
+        });
+
+        // Add used ticket (should not be counted in either)
+        _context.Tickets.Add(new Ticket
+        {
+            StudentId = _testStudent.Id,
+            Source = TicketSource.Purchased,
+            IsUsed = true,
+            ExpiresAt = DateTime.UtcNow.AddDays(30),
+            AcquiredAt = DateTime.UtcNow.AddDays(-10)
+        });
+        await _context.SaveChangesAsync();
+
+        var result = await _controller.CheckExpiredTickets("test-secret-key") as OkObjectResult;
+
+        Assert.NotNull(result);
+        var expiredProp = result.Value?.GetType().GetProperty("expiredTickets");
+        var activeProp = result.Value?.GetType().GetProperty("activeTickets");
+        Assert.Equal(1, expiredProp?.GetValue(result.Value));
+        Assert.Equal(1, activeProp?.GetValue(result.Value));
+    }
+
+    [Fact]
+    public async Task CheckExpiredTickets_ReturnsZeros_WhenNoTickets()
+    {
+        var result = await _controller.CheckExpiredTickets("test-secret-key") as OkObjectResult;
+
+        Assert.NotNull(result);
+        var expiredProp = result.Value?.GetType().GetProperty("expiredTickets");
+        var activeProp = result.Value?.GetType().GetProperty("activeTickets");
+        Assert.Equal(0, expiredProp?.GetValue(result.Value));
+        Assert.Equal(0, activeProp?.GetValue(result.Value));
+    }
+
     #endregion
 }
