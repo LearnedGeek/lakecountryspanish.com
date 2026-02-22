@@ -16,7 +16,7 @@ public static class SeedData
         await context.Database.MigrateAsync();
 
         // Create roles
-        string[] roles = { "Admin", "Student" };
+        string[] roles = { AppRoles.Admin, AppRoles.Student };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
@@ -45,7 +45,7 @@ public static class SeedData
             var result = await userManager.CreateAsync(adminUser, "Admin123!");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(adminUser, "Admin");
+                await userManager.AddToRoleAsync(adminUser, AppRoles.Admin);
             }
         }
 
@@ -795,7 +795,7 @@ public static class SeedData
                 var result = await userManager.CreateAsync(user, "Student123!");
                 if (result.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(user, "Student");
+                    await userManager.AddToRoleAsync(user, AppRoles.Student);
                 }
             }
         }

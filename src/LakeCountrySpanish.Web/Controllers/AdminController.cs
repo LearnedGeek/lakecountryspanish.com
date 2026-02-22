@@ -9,7 +9,7 @@ using LakeCountrySpanish.Web.Services;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = AppRoles.Admin)]
 public class AdminController : Controller
 {
     private readonly ApplicationDbContext _context;
@@ -63,7 +63,7 @@ public class AdminController : Controller
         var endOfWeek = today.AddDays(7);
         var threeDaysOut = today.AddDays(3);
 
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
 
         // Get next 3 days of classes
         var upcomingClasses = await _context.ScheduledClasses
@@ -140,7 +140,7 @@ public class AdminController : Controller
     // Student Management
     public async Task<IActionResult> Students(string? search)
     {
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
         var studentList = new List<StudentListItemViewModel>();
 
         foreach (var student in students)
@@ -271,7 +271,7 @@ public class AdminController : Controller
 
         if (result.Succeeded)
         {
-            await _userManager.AddToRoleAsync(user, "Student");
+            await _userManager.AddToRoleAsync(user, AppRoles.Student);
             TempData["SuccessMessage"] = $"Student {model.FirstName} {model.LastName} has been created successfully.";
             return RedirectToAction(nameof(Students));
         }
@@ -516,7 +516,7 @@ public class AdminController : Controller
             HasBlockedDateConflict = conflictedIds.Contains(c.Id)
         }).ToList();
 
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
 
         return View(new AdminScheduleViewModel
         {
@@ -596,7 +596,7 @@ public class AdminController : Controller
     public async Task<IActionResult> Payments(DateTime? startDate, DateTime? endDate, string? studentId)
     {
         var payments = await _paymentService.GetAllPaymentsAsync(startDate, endDate, studentId);
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
 
         var completedPayments = payments.Where(p => p.Status == PaymentStatusType.Completed);
 
@@ -668,7 +668,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> UploadDocument()
     {
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
         ViewBag.Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName);
         return View(new UploadDocumentViewModel());
     }
@@ -679,7 +679,7 @@ public class AdminController : Controller
     {
         if (!ModelState.IsValid)
         {
-            var students = await _userManager.GetUsersInRoleAsync("Student");
+            var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
             ViewBag.Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName);
             return View(model);
         }
@@ -734,7 +734,7 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
         var assignedStudentIds = await _context.StudentDocuments
             .Where(sd => sd.DocumentId == id)
             .Select(sd => sd.StudentId)
@@ -1270,7 +1270,7 @@ public class AdminController : Controller
     [HttpGet]
     public async Task<IActionResult> GrantTokenPermission(string? studentId)
     {
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
         ViewBag.Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName);
 
         return View(new GrantPermissionViewModel
@@ -1290,7 +1290,7 @@ public class AdminController : Controller
     {
         if (!ModelState.IsValid)
         {
-            var students = await _userManager.GetUsersInRoleAsync("Student");
+            var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
             ViewBag.Students = students.Where(s => s.IsActive).OrderBy(s => s.FullName);
             return View(model);
         }
@@ -2209,7 +2209,7 @@ public class AdminController : Controller
         var assignment = await _assignmentService.GetAssignmentByIdAsync(id);
         if (assignment == null) return NotFound();
 
-        var students = await _userManager.GetUsersInRoleAsync("Student");
+        var students = await _userManager.GetUsersInRoleAsync(AppRoles.Student);
         var existingAssignments = await _context.StudentAssignments
             .Where(sa => sa.AssignmentId == id)
             .Select(sa => sa.StudentId)

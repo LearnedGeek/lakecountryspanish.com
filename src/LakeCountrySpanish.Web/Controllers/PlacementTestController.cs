@@ -7,7 +7,7 @@ using LakeCountrySpanish.Web.Services;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
-[Authorize(Roles = "Student")]
+[Authorize(Roles = AppRoles.Student)]
 public class PlacementTestController : Controller
 {
     private readonly IPlacementTestService _placementTestService;

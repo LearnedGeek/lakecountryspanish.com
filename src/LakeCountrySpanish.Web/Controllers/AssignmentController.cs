@@ -8,7 +8,7 @@ using System.Text.Json;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
-[Authorize(Roles = "Student")]
+[Authorize(Roles = AppRoles.Student)]
 public class AssignmentController : Controller
 {
     private readonly IAssignmentService _assignmentService;

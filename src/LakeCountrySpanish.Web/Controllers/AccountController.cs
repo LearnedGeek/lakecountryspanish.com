@@ -60,7 +60,7 @@ public class AccountController : Controller
             }
 
             // Redirect based on role
-            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            if (await _userManager.IsInRoleAsync(user, AppRoles.Admin))
             {
                 return RedirectToAction("Dashboard", "Admin");
             }
@@ -137,7 +137,7 @@ public class AccountController : Controller
             TempData["SuccessMessage"] = "Your password has been changed successfully.";
 
             // Redirect based on role
-            if (await _userManager.IsInRoleAsync(user, "Admin"))
+            if (await _userManager.IsInRoleAsync(user, AppRoles.Admin))
             {
                 return RedirectToAction("Dashboard", "Admin");
             }

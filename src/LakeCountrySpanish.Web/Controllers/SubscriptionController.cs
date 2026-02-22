@@ -9,7 +9,7 @@ using LakeCountrySpanish.Web.Services;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
-[Authorize(Roles = "Student")]
+[Authorize(Roles = AppRoles.Student)]
 public class SubscriptionController : Controller
 {
     private readonly ApplicationDbContext _context;
