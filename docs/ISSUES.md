@@ -4,9 +4,8 @@
 **Last Updated**: 2026-02-22
 **Critical Issues**: 0 open, 2 partial, 3 resolved (P0)
 **High Priority**: 0 open, 7 resolved (P1)
-**Medium Priority**: 3 open, 2 resolved (P2)
+**Medium Priority**: 5 open, 1 resolved (P2)
 **Low Priority**: 3 open (P3)
-**New Issues**: 1 (P2 - secret exposure risk)
 
 ---
 
@@ -503,12 +502,11 @@ Added database migration for `Reminder24HrSent` and `Reminder1HrSent` fields.
 |----------|------|---------|----------|-------|
 | Critical (P0) | 0 | 2 | 3 | 5 |
 | High (P1) | 0 | 0 | 7 | 7 |
-| Medium (P2) | 4 | 0 | 2 | 6 |
+| Medium (P2) | 5 | 0 | 1 | 6 |
 | Low (P3) | 3 | 0 | 0 | 3 |
-| **Total** | **7** | **2** | **12** | **21** |
+| **Total** | **8** | **2** | **11** | **21** |
 
 **Note**: ISSUE-002 and ISSUE-004 are "Partial" - core functionality implemented, minor items deferred.
-**Note**: ISSUE-021 added 2026-02-22 for Stripe test key exposure risk.
 
 ---
 
@@ -521,7 +519,7 @@ Added database migration for `Reminder24HrSent` and `Reminder1HrSent` fields.
 5. ~~**This Sprint**: Fix ISSUE-004 (scheduled tasks endpoint)~~ DONE
 6. ~~**This Week**: Address remaining P0 issues (ISSUE-003, 005 - test coverage)~~ DONE
 7. **This Sprint**: Address ISSUE-021 (Stripe test keys in appsettings.Development.json)
-8. **Next Sprint**: P2 issues (ISSUE-013 hard-coded strings, ISSUE-015 action-level auth, ISSUE-016 Playwright E2E)
+8. **Next Sprint**: P2 issues (ISSUE-013 hard-coded strings, ISSUE-014 reCAPTCHA monitoring, ISSUE-015 action-level auth, ISSUE-016 Playwright E2E)
 9. **Backlog**: P3 issues (ISSUE-018 ticket concurrency, ISSUE-019 email templates, ISSUE-020 stress tests)
 
 ---
@@ -701,4 +699,4 @@ See **Deployment Action Items** section above for manual configuration steps nee
 - **Tests**: 499/499 passing
 - **CI**: Green
 - **Open P0 Issues**: 0 (2 partial - ISSUE-002, ISSUE-004)
-- **Open P2 Issues**: 4 (ISSUE-013, ISSUE-014, ISSUE-015, ISSUE-021)
+- **Open P2 Issues**: 5 (ISSUE-013, ISSUE-014, ISSUE-015, ISSUE-016, ISSUE-021)
