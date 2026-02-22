@@ -108,7 +108,7 @@ public class StripeE2ETests : IDisposable
     {
         if (string.IsNullOrEmpty(_stripeSecretKey))
         {
-            Assert.Fail("No Stripe key found. Set STRIPE_TEST_SECRET_KEY env var or configure Stripe:SecretKey in appsettings.Development.json.");
+            Assert.Fail("No Stripe key found. Set STRIPE_TEST_SECRET_KEY env var or use dotnet user-secrets.");
         }
     }
 
