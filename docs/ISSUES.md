@@ -3,8 +3,8 @@
 **Status**: LIVE PRODUCTION SITE
 **Last Updated**: 2026-02-22
 **Critical Issues**: 0 open, 2 partial, 3 resolved (P0)
-**High Priority**: 2 open, 7 resolved (P1)
-**Medium Priority**: 6 open, 1 resolved (P2)
+**High Priority**: 0 open, 9 resolved (P1)
+**Medium Priority**: 3 open, 1 partial, 4 resolved (P2)
 **Low Priority**: 3 open (P3)
 
 ---
@@ -280,19 +280,23 @@ public IActionResult BookClass(...) { }
 ## MEDIUM PRIORITY (P2) - Fix Next Sprint
 
 ### ISSUE-013: Hard-coded Strings Throughout Code
-**Status**: OPEN
+**Status**: PARTIAL
 **Severity**: MEDIUM - Maintainability
 **Component**: Multiple
+**Partial Fix Date**: 2026-02-22
 
 **Description**: Hard-coded values scattered throughout:
 - "Karen" in email templates
 - "Lake Country Spanish" in multiple places
 - Email template styles duplicated
 - URLs hard-coded
+- ~~"Admin"/"Student" role strings in 10+ locations~~
 
-**Fix**: Extract to configuration or constants file, consider email template engine.
+**Partial Resolution**: Extracted role magic strings into `AppRoles` constants class (`AppRoles.Admin`, `AppRoles.Student`), replacing hardcoded role strings across 8 files.
 
-**Assigned**: Unassigned
+**Remaining**: "Karen", "Lake Country Spanish", email template styles, hardcoded URLs still need attention.
+
+**Assigned**: Backlog
 **Due**: Next Sprint
 
 ---
@@ -314,16 +318,14 @@ public IActionResult BookClass(...) { }
 ---
 
 ### ISSUE-015: Missing Authorization on Individual Admin Actions
-**Status**: OPEN
+**Status**: RESOLVED
 **Severity**: MEDIUM - Security
 **Component**: AdminController.cs
+**Resolved Date**: 2026-02-22
 
 **Description**: Controller has `[Authorize(Roles = "Admin")]` but individual actions don't. If middleware bypassed, no action-level protection.
 
-**Fix**: Add `[Authorize(Roles = "Admin")]` to sensitive individual actions as defense in depth.
-
-**Assigned**: Unassigned
-**Due**: Next Sprint
+**Resolution**: Added `[Authorize(Roles = AppRoles.Admin)]` as defense-in-depth to 12 critical actions: CreateStudent, EditStudent, DeleteTimeSlot, DeleteDocument, DeleteBlockedDate, GrantTokenPermission, DisableTokenPermission, GrantTokens, GrantTickets, AdjustPoints, RepairPendingCheckouts, and CreateClassForPayment.
 
 ---
 
@@ -358,62 +360,40 @@ public IActionResult BookClass(...) { }
 ---
 
 ### ISSUE-021: appsettings.Development.json Contains Stripe Test Keys
-**Status**: OPEN
+**Status**: RESOLVED
 **Severity**: MEDIUM - Security
 **Component**: appsettings.Development.json
+**Resolved Date**: 2026-02-22
 
-**Description**: `appsettings.Development.json` contains real Stripe test API keys (pk_test_, sk_test_, whsec_ prefixes). While these are test-mode keys (not production), the file is tracked by git. If committed with current changes, keys would be exposed in the repository.
+**Description**: `appsettings.Development.json` contained real Stripe test API keys committed to source control.
 
-**Risk**: Stripe test keys in source control. While test keys have limited blast radius, they could be used to create test charges or access Stripe test dashboard data.
-
-**Current State**: File has local modifications (uncommitted). The `.gitignore` does NOT exclude this file (only `appsettings.Production.json` and `appsettings.Local.json` are excluded).
-
-**Recommended Fix** (choose one):
-1. **User Secrets** (preferred): Migrate Stripe keys to `dotnet user-secrets` for local development
-2. **gitignore**: Add `appsettings.Development.json` to `.gitignore` and use `git rm --cached` to untrack
-3. **Environment variables**: Use environment variables for sensitive config in all environments
-
-**Assigned**: Owner
-**Due**: This Sprint
+**Resolution**: Migrated Stripe keys to `dotnet user-secrets` (UserSecretsId: 26045aa1-5a1a-4efc-977f-0f5a86628e25). Replaced real keys in appsettings.Development.json with placeholder values. CI uses `--filter "Category!=StripeIntegration"` to skip Stripe E2E tests that require keys. Updated StripeE2ETests skip message to reference user-secrets.
 
 ---
 
 ### ISSUE-022: N+1 Query in TokenService.ExpireTokensAsync
-**Status**: OPEN
+**Status**: RESOLVED
 **Severity**: HIGH - Performance (Code Smell: N+1 Query)
-**Component**: TokenService.cs (lines 625-644)
+**Component**: TokenService.cs
+**Resolved Date**: 2026-02-22
 
-**Description**: `ExpireTokensAsync()` calls `await GetTotalTokenBalanceAsync(token.StudentId)` inside a `foreach` loop. Each iteration executes a separate database query (`_context.Tokens.Where(...).SumAsync(...)`). For N expired token batches, this issues N+1 queries.
+**Description**: `ExpireTokensAsync()` called `GetTotalTokenBalanceAsync(token.StudentId)` inside a `foreach` loop, issuing N+1 queries.
 
-**Risk**: Performance degradation as token volume grows. Currently low traffic, but the pattern could cause issues during batch expiry operations.
-
-**Fix**: Pre-calculate all student balances in a single query before the loop:
-```csharp
-var studentIds = expiredTokens.Select(t => t.StudentId).Distinct().ToList();
-var balances = await _context.Tokens
-    .Where(t => studentIds.Contains(t.StudentId) && t.QuantityRemaining > 0 && ...)
-    .GroupBy(t => t.StudentId)
-    .Select(g => new { StudentId = g.Key, Balance = g.Sum(t => t.QuantityRemaining) })
-    .ToDictionaryAsync(x => x.StudentId, x => x.Balance);
-```
+**Resolution**: Pre-fetches all student balances in a single grouped query before the loop, then tracks balances in-memory as tokens are processed to keep subsequent calculations accurate for the same student.
 
 **Detected By**: Code smell audit against CODE_SMELLS.md Section 7 (N+1 Queries)
 
 ---
 
 ### ISSUE-023: Silent Exception Swallowing in PlacementTestService
-**Status**: OPEN
+**Status**: RESOLVED
 **Severity**: HIGH - Reliability (Code Smell: Silent Exception Swallowing)
 **Component**: PlacementTestService.cs
+**Resolved Date**: 2026-02-22
 
-**Description**: Three private JSON parsing methods have bare `catch { return empty; }` blocks with zero logging:
-- `GetPreviousTopics()` (line 256-268)
-- `ParseQuestionsJson()` (line 503-512)
-- `ParseLevelProgress()` (line 515-526)
+**Description**: Three private JSON parsing methods had bare `catch { return empty; }` blocks with zero logging.
 
-**Risk**: If placement test session data becomes corrupted, these methods silently return empty collections. The test continues with no topics/questions/progress — producing incorrect results with no diagnostic trail.
-
-**Fix**: Add `ILogger` to PlacementTestService and log warnings in each catch block.
+**Resolution**: Changed bare `catch` to `catch (JsonException ex)` with `_logger.LogWarning(ex, ...)` in all three methods: GetPreviousTopics, ParseQuestionsJson, and ParseLevelProgress. The service already had ILogger injected.
 
 **Detected By**: Code smell audit against CODE_SMELLS.md Section 8 (Silent Exception Swallowing)
 
@@ -575,10 +555,10 @@ Added database migration for `Reminder24HrSent` and `Reminder1HrSent` fields.
 4. ~~**This Sprint**: Fix ISSUE-006 (race condition)~~ DONE
 5. ~~**This Sprint**: Fix ISSUE-004 (scheduled tasks endpoint)~~ DONE
 6. ~~**This Week**: Address remaining P0 issues (ISSUE-003, 005 - test coverage)~~ DONE
-7. **This Sprint**: Address ISSUE-021 (Stripe test keys in appsettings.Development.json)
-8. **This Sprint**: Fix ISSUE-022 (N+1 query in TokenService) and ISSUE-023 (silent exceptions in PlacementTestService)
-9. **This Sprint**: ISSUE-013 partial (extract role constants), ISSUE-015 (action-level auth)
-10. **Next Sprint**: Remaining P2 issues (ISSUE-014 reCAPTCHA monitoring, ISSUE-016 Playwright E2E, ISSUE-024 AdminController refactor)
+7. ~~**This Sprint**: Address ISSUE-021 (Stripe test keys in appsettings.Development.json)~~ DONE
+8. ~~**This Sprint**: Fix ISSUE-022 (N+1 query in TokenService) and ISSUE-023 (silent exceptions in PlacementTestService)~~ DONE
+9. ~~**This Sprint**: ISSUE-013 partial (extract role constants), ISSUE-015 (action-level auth)~~ DONE
+10. **Next Sprint**: Remaining P2 issues (ISSUE-013 remaining strings, ISSUE-014 reCAPTCHA monitoring, ISSUE-016 Playwright E2E, ISSUE-024 AdminController refactor)
 11. **Backlog**: P3 issues (ISSUE-018 ticket concurrency, ISSUE-019 email templates, ISSUE-020 stress tests)
 
 ---
@@ -753,9 +733,12 @@ See **Deployment Action Items** section above for manual configuration steps nee
 4. **Security Hardening**: Added `*.pfx` and `*.PublishSettings` to .gitignore
 5. **Codebase Audit**: Verified build (0 errors, 0 warnings), all tests passing, CI green
 
-### Current State
+### Current State (Updated 2026-02-22)
 - **Build**: Clean (0 errors, 0 warnings)
 - **Tests**: 499/499 passing
 - **CI**: Green
 - **Open P0 Issues**: 0 (2 partial - ISSUE-002, ISSUE-004)
-- **Open P2 Issues**: 5 (ISSUE-013, ISSUE-014, ISSUE-015, ISSUE-016, ISSUE-021)
+- **Open P1 Issues**: 0 (ISSUE-022, ISSUE-023 resolved)
+- **Open P2 Issues**: 3 (ISSUE-014, ISSUE-016, ISSUE-024) + 1 partial (ISSUE-013)
+- **Open P3 Issues**: 3 (ISSUE-018, ISSUE-019, ISSUE-020)
+- **Total**: 24 issues — 15 resolved, 3 partial, 6 open
