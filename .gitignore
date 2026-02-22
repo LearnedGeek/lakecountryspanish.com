@@ -124,6 +124,10 @@ wwwroot/uploads/
 appsettings.Production.json
 appsettings.Local.json
 
+# Certificates and deployment credentials
+*.pfx
+*.PublishSettings
+
 # Local tool manifest is ok to commit
 # .config/
 
