@@ -1,0 +1,35 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore src/LakeCountrySpanish.Web/LakeCountrySpanish.Web.csproj
+          dotnet restore src/LakeCountrySpanish.Tests/LakeCountrySpanish.Tests.csproj
+
+      - name: Build
+        run: dotnet build src/LakeCountrySpanish.Tests/LakeCountrySpanish.Tests.csproj --configuration Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test src/LakeCountrySpanish.Tests/ --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" --filter "Category!=StripeIntegration"
+
+      # Playwright tests excluded from CI — they require a running app instance
+      # and browser binaries. Run locally or in a dedicated E2E pipeline.
