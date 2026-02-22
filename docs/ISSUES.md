@@ -3,8 +3,8 @@
 **Status**: LIVE PRODUCTION SITE
 **Last Updated**: 2026-02-22
 **Critical Issues**: 0 open, 2 partial, 3 resolved (P0)
-**High Priority**: 0 open, 7 resolved (P1)
-**Medium Priority**: 5 open, 1 resolved (P2)
+**High Priority**: 2 open, 7 resolved (P1)
+**Medium Priority**: 6 open, 1 resolved (P2)
 **Low Priority**: 3 open (P3)
 
 ---
@@ -378,6 +378,63 @@ public IActionResult BookClass(...) { }
 
 ---
 
+### ISSUE-022: N+1 Query in TokenService.ExpireTokensAsync
+**Status**: OPEN
+**Severity**: HIGH - Performance (Code Smell: N+1 Query)
+**Component**: TokenService.cs (lines 625-644)
+
+**Description**: `ExpireTokensAsync()` calls `await GetTotalTokenBalanceAsync(token.StudentId)` inside a `foreach` loop. Each iteration executes a separate database query (`_context.Tokens.Where(...).SumAsync(...)`). For N expired token batches, this issues N+1 queries.
+
+**Risk**: Performance degradation as token volume grows. Currently low traffic, but the pattern could cause issues during batch expiry operations.
+
+**Fix**: Pre-calculate all student balances in a single query before the loop:
+```csharp
+var studentIds = expiredTokens.Select(t => t.StudentId).Distinct().ToList();
+var balances = await _context.Tokens
+    .Where(t => studentIds.Contains(t.StudentId) && t.QuantityRemaining > 0 && ...)
+    .GroupBy(t => t.StudentId)
+    .Select(g => new { StudentId = g.Key, Balance = g.Sum(t => t.QuantityRemaining) })
+    .ToDictionaryAsync(x => x.StudentId, x => x.Balance);
+```
+
+**Detected By**: Code smell audit against CODE_SMELLS.md Section 7 (N+1 Queries)
+
+---
+
+### ISSUE-023: Silent Exception Swallowing in PlacementTestService
+**Status**: OPEN
+**Severity**: HIGH - Reliability (Code Smell: Silent Exception Swallowing)
+**Component**: PlacementTestService.cs
+
+**Description**: Three private JSON parsing methods have bare `catch { return empty; }` blocks with zero logging:
+- `GetPreviousTopics()` (line 256-268)
+- `ParseQuestionsJson()` (line 503-512)
+- `ParseLevelProgress()` (line 515-526)
+
+**Risk**: If placement test session data becomes corrupted, these methods silently return empty collections. The test continues with no topics/questions/progress — producing incorrect results with no diagnostic trail.
+
+**Fix**: Add `ILogger` to PlacementTestService and log warnings in each catch block.
+
+**Detected By**: Code smell audit against CODE_SMELLS.md Section 8 (Silent Exception Swallowing)
+
+---
+
+### ISSUE-024: God Class — AdminController (2,533 lines, 13 dependencies)
+**Status**: OPEN
+**Severity**: MEDIUM - Maintainability (Code Smell: God Class)
+**Component**: AdminController.cs
+
+**Description**: AdminController has 54+ action methods, 2,533 lines, and 13 constructor dependencies. It manages students, scheduling, payments, gamification, assignments, analytics, tokens, tickets, testimonials, packages, blocked dates, and orphaned payment repair. This violates Single Responsibility Principle.
+
+**Risk**: Merge conflicts, difficult testing (13 mocks per test), high cognitive load for maintenance.
+
+**Fix**: Long-term: extract into focused controllers (AdminStudentController, AdminScheduleController, AdminGamificationController, etc.). Short-term: no action needed — the controller works and has test coverage.
+
+**Detected By**: Code smell audit against CODE_SMELLS.md Section 2 (God Class)
+**Assigned**: Backlog (refactor when the file causes real friction)
+
+---
+
 ## LOW PRIORITY (P3) - Backlog
 
 ### ISSUE-018: Consider Transaction Isolation for Ticket Redemption
@@ -501,10 +558,10 @@ Added database migration for `Reminder24HrSent` and `Reminder1HrSent` fields.
 | Priority | Open | Partial | Resolved | Total |
 |----------|------|---------|----------|-------|
 | Critical (P0) | 0 | 2 | 3 | 5 |
-| High (P1) | 0 | 0 | 7 | 7 |
-| Medium (P2) | 5 | 0 | 1 | 6 |
+| High (P1) | 2 | 0 | 7 | 9 |
+| Medium (P2) | 6 | 0 | 1 | 7 |
 | Low (P3) | 3 | 0 | 0 | 3 |
-| **Total** | **8** | **2** | **11** | **21** |
+| **Total** | **11** | **2** | **11** | **24** |
 
 **Note**: ISSUE-002 and ISSUE-004 are "Partial" - core functionality implemented, minor items deferred.
 
@@ -519,8 +576,10 @@ Added database migration for `Reminder24HrSent` and `Reminder1HrSent` fields.
 5. ~~**This Sprint**: Fix ISSUE-004 (scheduled tasks endpoint)~~ DONE
 6. ~~**This Week**: Address remaining P0 issues (ISSUE-003, 005 - test coverage)~~ DONE
 7. **This Sprint**: Address ISSUE-021 (Stripe test keys in appsettings.Development.json)
-8. **Next Sprint**: P2 issues (ISSUE-013 hard-coded strings, ISSUE-014 reCAPTCHA monitoring, ISSUE-015 action-level auth, ISSUE-016 Playwright E2E)
-9. **Backlog**: P3 issues (ISSUE-018 ticket concurrency, ISSUE-019 email templates, ISSUE-020 stress tests)
+8. **This Sprint**: Fix ISSUE-022 (N+1 query in TokenService) and ISSUE-023 (silent exceptions in PlacementTestService)
+9. **This Sprint**: ISSUE-013 partial (extract role constants), ISSUE-015 (action-level auth)
+10. **Next Sprint**: Remaining P2 issues (ISSUE-014 reCAPTCHA monitoring, ISSUE-016 Playwright E2E, ISSUE-024 AdminController refactor)
+11. **Backlog**: P3 issues (ISSUE-018 ticket concurrency, ISSUE-019 email templates, ISSUE-020 stress tests)
 
 ---
 

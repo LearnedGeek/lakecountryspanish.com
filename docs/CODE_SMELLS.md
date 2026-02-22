@@ -23,8 +23,10 @@ This playbook documents the code smells that matter most for our stack — ASP.N
 13. [Speculative Generality](#13-speculative-generality)
 14. [Feature Envy](#14-feature-envy)
 15. [Middleman](#15-middleman)
-16. [Severity Reference](#16-severity-reference)
-17. [Quick Reference for AI Assistants](#17-quick-reference-for-ai-assistants)
+16. [Async Void / Fire-and-Forget](#16-async-void--fire-and-forget)
+17. [Temporal Coupling](#17-temporal-coupling)
+18. [Severity Reference](#18-severity-reference)
+19. [Quick Reference for AI Assistants](#19-quick-reference-for-ai-assistants)
 
 ---
 
@@ -642,7 +644,7 @@ Code written for hypothetical future requirements that don't exist yet. Abstract
 
 ### Detection
 
-- Interface with exactly one implementation and no plans for a second
+- Interface with exactly one implementation and no plans for a second (**Exception:** interfaces used for dependency injection and testability are justified even with one implementation — the `IFooService + FooService` pattern enables mocking in unit tests)
 - Generic type parameters that are always the same concrete type
 - Config options with only one valid value
 - "Strategy" or "Factory" patterns with a single strategy/product
@@ -735,7 +737,121 @@ If the service **will** have business logic (validation, authorization checks, e
 
 ---
 
-## 16. Severity Reference
+## 16. Async Void / Fire-and-Forget
+
+**Severity: CRITICAL** | **Impact: Silent failures, unobservable exceptions**
+
+`async void` methods and fire-and-forget patterns (`_ = SomeAsync()`) swallow exceptions silently. The caller has no way to know the operation failed, and unobserved task exceptions can crash the process in some configurations.
+
+### Detection
+
+- Methods declared as `async void` (except event handlers)
+- `_ = SomeMethodAsync()` without any error handling wrapper
+- `Task.Run(() => SomeMethodAsync())` without `await`
+- `SomeMethodAsync()` called without `await` and without assigning to a variable
+
+### Real Example
+
+```csharp
+// BAD: Exception in SendEmailAsync vanishes — caller never knows
+public void OnClassBooked(int classId)
+{
+    _ = _emailService.SendClassConfirmationAsync(classId);
+}
+
+// BAD: async void — exception kills the process in some hosts
+public async void ProcessWebhook(string payload)
+{
+    await _service.HandleAsync(payload); // Unhandled exception = crash
+}
+```
+
+### Fix Pattern
+
+Always `await` async operations. If you genuinely need fire-and-forget, wrap it with error handling:
+
+```csharp
+// GOOD: Await the operation
+public async Task OnClassBookedAsync(int classId)
+{
+    await _emailService.SendClassConfirmationAsync(classId);
+}
+
+// ACCEPTABLE: Fire-and-forget with explicit error handling
+public void OnClassBooked(int classId)
+{
+    _ = Task.Run(async () =>
+    {
+        try { await _emailService.SendClassConfirmationAsync(classId); }
+        catch (Exception ex) { _logger.LogWarning(ex, "Failed to send class confirmation"); }
+    });
+}
+```
+
+### Rule of Thumb
+
+If a method returns `Task`, `await` it. If you don't `await` it, you're choosing to ignore its result — including its exceptions.
+
+---
+
+## 17. Temporal Coupling
+
+**Severity: MEDIUM** | **Impact: Fragile initialization, subtle runtime failures**
+
+Methods that must be called in a specific order, but nothing in the API enforces that order. A caller who skips `Initialize()` or calls `Process()` before `Configure()` gets a runtime exception instead of a compile-time error.
+
+### Detection
+
+- `Initialize()`, `Setup()`, or `Configure()` methods that must be called before other methods
+- `NullReferenceException` or `InvalidOperationException` at runtime because a field wasn't set
+- Boolean flags like `_isInitialized` checked at the start of methods
+- Comments like "must call X before Y"
+
+### Real Example
+
+```csharp
+// BAD: Caller must know to call Initialize before Process
+public class SyncEngine
+{
+    private HttpClient _client = null!;
+
+    public void Initialize(string baseUrl)
+    {
+        _client = new HttpClient { BaseAddress = new Uri(baseUrl) };
+    }
+
+    public async Task ProcessAsync()
+    {
+        // NullReferenceException if Initialize wasn't called
+        var response = await _client.GetAsync("/api/sync");
+    }
+}
+```
+
+### Fix Pattern
+
+Use constructor injection or builder patterns to enforce the required order:
+
+```csharp
+// GOOD: Dependencies provided at construction — impossible to skip
+public class SyncEngine
+{
+    private readonly HttpClient _client;
+
+    public SyncEngine(HttpClient client) => _client = client;
+
+    public async Task ProcessAsync()
+    {
+        var response = await _client.GetAsync("/api/sync");
+    }
+}
+```
+
+---
+
+## 18. Severity Reference
+
+> **Note:** Sections 16-17 were added based on cross-project analysis in February 2026.
 
 | Severity | Meaning | Action |
 |----------|---------|--------|
@@ -762,10 +878,12 @@ If the service **will** have business logic (validation, authorization checks, e
 | 13 | Speculative Generality | LOW | Unnecessary complexity |
 | 14 | Feature Envy | MEDIUM | Misplaced logic |
 | 15 | Middleman | LOW | Pointless indirection |
+| 16 | Async Void / Fire-and-Forget | CRITICAL | Silent failures, crashes |
+| 17 | Temporal Coupling | MEDIUM | Fragile initialization |
 
 ---
 
-## 17. Quick Reference for AI Assistants
+## 19. Quick Reference for AI Assistants
 
 **Read this section before writing or reviewing any code for this project.**
 
@@ -797,13 +915,15 @@ If the service **will** have business logic (validation, authorization checks, e
 | Constructor with 6+ params | God Class | Extract collaborator |
 | Razor file > 400 lines | God Component | Extract child components |
 | Same constant in 2+ files | Duplicate Constants | Move to Shared constants class |
+| `async void` method | Async Void | Change to `async Task` |
+| `_ = SomeAsync()` without try/catch | Fire-and-Forget | Await it or wrap with error handling |
 
 ---
 
 ## References
 
 - [TESTING-STRATEGY.md](TESTING-STRATEGY.md) — Testing patterns and anti-patterns
-- [HARDENING.md](../HARDENING.md) — Production hardening playbook
+- [HARDENING.md](HARDENING.md) — Production hardening playbook
 - [ARCHITECTURE_PATTERNS.md](ARCHITECTURE_PATTERNS.md) — Architecture invariants and conventions
 - [Legitimate Security - Code Smells](https://www.legitsecurity.com/aspm-knowledge-base/code-smells) — General code smell taxonomy
 
