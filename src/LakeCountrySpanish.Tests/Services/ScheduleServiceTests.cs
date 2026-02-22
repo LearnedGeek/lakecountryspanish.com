@@ -460,6 +460,152 @@ public class ScheduleServiceTests
 
     #endregion
 
+    #region CanBookClass Tests
+
+    [Fact]
+    public void CanBookClass_ReturnsFalse_WhenWithin24Hours()
+    {
+        var classDateTime = DateTime.Now.AddHours(12);
+
+        var result = _scheduleService.CanBookClass(classDateTime);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void CanBookClass_ReturnsTrue_WhenBeyond24Hours()
+    {
+        var classDateTime = DateTime.Now.AddHours(48);
+
+        var result = _scheduleService.CanBookClass(classDateTime);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void CanBookClass_ReturnsFalse_WhenInPast()
+    {
+        var classDateTime = DateTime.Now.AddHours(-1);
+
+        var result = _scheduleService.CanBookClass(classDateTime);
+
+        Assert.False(result);
+    }
+
+    #endregion
+
+    #region GetCancellationStatusAsync Tests
+
+    [Fact]
+    public async Task GetCancellationStatus_CanCancel_WhenOutside24Hours()
+    {
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(48),
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.PaidWithTicket
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        var (canCancel, willForfeit) = await _scheduleService.GetCancellationStatusAsync(scheduledClass.Id);
+
+        Assert.True(canCancel);
+        Assert.False(willForfeit);
+    }
+
+    [Fact]
+    public async Task GetCancellationStatus_WillForfeit_WhenWithin24Hours()
+    {
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var scheduledClass = new ScheduledClass
+        {
+            StudentId = student.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = DateTime.UtcNow.AddHours(12),
+            Status = ClassStatus.Scheduled,
+            PaymentStatus = PaymentStatus.PaidWithTicket
+        };
+        _context.ScheduledClasses.Add(scheduledClass);
+        await _context.SaveChangesAsync();
+
+        var (canCancel, willForfeit) = await _scheduleService.GetCancellationStatusAsync(scheduledClass.Id);
+
+        Assert.True(canCancel);
+        Assert.True(willForfeit);
+    }
+
+    #endregion
+
+    #region BookRecurringClassesAsync Tests
+
+    [Fact]
+    public async Task BookRecurringClasses_CreatesMultipleClasses()
+    {
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+
+        var package = new Package { Name = "Test", Description = "Test", ClassCount = 10, Price = 100m };
+        _context.Packages.Add(package);
+        await _context.SaveChangesAsync();
+
+        _context.StudentPackages.Add(new StudentPackage
+        {
+            StudentId = student.Id,
+            PackageId = package.Id,
+            ClassesRemaining = 10,
+            PurchaseDate = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
+
+        // Start 2 weeks out to avoid 24-hour booking cutoff
+        var startDate = GetNextDayOfWeek(DayOfWeek.Monday).AddDays(7);
+
+        var result = await _scheduleService.BookRecurringClassesAsync(student.Id, timeSlot.Id, startDate, 3);
+
+        Assert.True(result.Success);
+        Assert.Equal(3, result.BookedClasses.Count);
+    }
+
+    [Fact]
+    public async Task BookRecurringClasses_FailsWithInsufficientCredits()
+    {
+        var student = CreateTestStudent();
+        _context.Users.Add(student);
+
+        var timeSlot = CreateTestTimeSlot();
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var startDate = GetNextDayOfWeek(DayOfWeek.Monday);
+
+        // No StudentPackage = no credits
+        var result = await _scheduleService.BookRecurringClassesAsync(student.Id, timeSlot.Id, startDate, 3);
+
+        Assert.False(result.Success);
+        Assert.NotEmpty(result.ConflictReasons);
+    }
+
+    #endregion
+
     #region BookClassAsync Tests
 
     [Fact]
