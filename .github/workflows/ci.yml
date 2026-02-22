@@ -28,8 +28,8 @@ jobs:
       - name: Build
         run: dotnet build src/LakeCountrySpanish.Tests/LakeCountrySpanish.Tests.csproj --configuration Release --no-restore
 
-      - name: Run unit tests
-        run: dotnet test src/LakeCountrySpanish.Tests/ --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" --filter "Category!=StripeIntegration"
+      - name: Run unit tests with coverage
+        run: dotnet test src/LakeCountrySpanish.Tests/ --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx" --filter "Category!=StripeIntegration" --collect:"XPlat Code Coverage" --settings src/LakeCountrySpanish.Tests/coverage.runsettings
 
       # Playwright tests excluded from CI — they require a running app instance
       # and browser binaries. Run locally or in a dedicated E2E pipeline.
