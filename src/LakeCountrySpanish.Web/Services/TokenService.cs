@@ -620,12 +620,22 @@ public class TokenService : ITokenService
         if (!expiredTokens.Any())
             return 0;
 
+        // Pre-fetch balances for all affected students in a single query (avoids N+1)
+        var studentIds = expiredTokens.Select(t => t.StudentId).Distinct().ToList();
+        var balances = await _context.Tokens
+            .Where(t => studentIds.Contains(t.StudentId) &&
+                        t.QuantityRemaining > 0 &&
+                        (t.ExpiresAt == null || t.ExpiresAt > now))
+            .GroupBy(t => t.StudentId)
+            .Select(g => new { StudentId = g.Key, Balance = g.Sum(t => t.QuantityRemaining) })
+            .ToDictionaryAsync(x => x.StudentId, x => x.Balance);
+
         var expiredCount = 0;
 
         foreach (var token in expiredTokens)
         {
             var expiredQty = token.QuantityRemaining;
-            var currentBalance = await GetTotalTokenBalanceAsync(token.StudentId);
+            var currentBalance = balances.GetValueOrDefault(token.StudentId, 0);
 
             var txn = new TokenTransaction
             {
@@ -640,6 +650,8 @@ public class TokenService : ITokenService
             _context.TokenTransactions.Add(txn);
 
             token.QuantityRemaining = 0;
+            // Update in-memory balance to keep subsequent tokens for the same student accurate
+            balances[token.StudentId] = currentBalance - expiredQty;
             expiredCount += expiredQty;
         }
 
