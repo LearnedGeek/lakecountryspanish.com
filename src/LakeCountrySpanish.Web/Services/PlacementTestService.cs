@@ -262,8 +262,9 @@ public class PlacementTestService : IPlacementTestService
                 .Distinct()
                 .ToList()!;
         }
-        catch
+        catch (JsonException ex)
         {
+            _logger.LogWarning(ex, "Failed to parse QuestionsJson for previous topics in session");
             return new List<string>();
         }
     }
@@ -506,8 +507,9 @@ public class PlacementTestService : IPlacementTestService
         {
             return JsonSerializer.Deserialize<List<QuestionRecord>>(json) ?? new List<QuestionRecord>();
         }
-        catch
+        catch (JsonException ex)
         {
+            _logger.LogWarning(ex, "Failed to deserialize QuestionsJson: {Json}", json);
             return new List<QuestionRecord>();
         }
     }
@@ -519,8 +521,9 @@ public class PlacementTestService : IPlacementTestService
             return JsonSerializer.Deserialize<Dictionary<string, LevelPerformance>>(json)
                 ?? new Dictionary<string, LevelPerformance>();
         }
-        catch
+        catch (JsonException ex)
         {
+            _logger.LogWarning(ex, "Failed to deserialize LevelProgressJson: {Json}", json);
             return new Dictionary<string, LevelPerformance>();
         }
     }
