@@ -83,10 +83,19 @@ public class StudentControllerTests : IDisposable
         var claims = new List<Claim> { new(ClaimTypes.NameIdentifier, _testStudent.Id) };
         var identity = new ClaimsIdentity(claims, "Test");
         var claimsPrincipal = new ClaimsPrincipal(identity);
+        var controllerHttpContext = new DefaultHttpContext { User = claimsPrincipal };
+        controllerHttpContext.Request.Scheme = "https";
+        controllerHttpContext.Request.Host = new HostString("localhost");
         _controller.ControllerContext = new ControllerContext
         {
-            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+            HttpContext = controllerHttpContext
         };
+
+        // Setup URL helper for actions that use Url.Action()
+        var urlHelperMock = new Mock<IUrlHelper>();
+        urlHelperMock.Setup(u => u.Action(It.IsAny<Microsoft.AspNetCore.Mvc.Routing.UrlActionContext>()))
+            .Returns("https://localhost/test");
+        _controller.Url = urlHelperMock.Object;
     }
 
     public void Dispose()
@@ -449,6 +458,377 @@ public class StudentControllerTests : IDisposable
                 It.IsAny<DateTime>(),
                 It.IsAny<string>()),
             Times.Never);
+    }
+
+    #endregion
+
+    #region AddToCart Tests
+
+    [Fact]
+    public async Task AddToCart_ReturnsUnauthorized_WhenUserNull()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _controller.AddToCart(1, DateTime.UtcNow.AddDays(3));
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var data = GetAnonymousProperty(jsonResult.Value!, "success");
+        Assert.Equal(false, data);
+    }
+
+    [Fact]
+    public async Task AddToCart_RejectsInvalidTimeSlot()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var result = await _controller.AddToCart(999, DateTime.UtcNow.AddDays(3));
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var error = GetAnonymousProperty(jsonResult.Value!, "error");
+        Assert.Contains("Invalid", error?.ToString());
+    }
+
+    [Fact]
+    public async Task AddToCart_RejectsClassWithin24Hours()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var timeSlot = new TimeSlot
+        {
+            DayOfWeek = DayOfWeek.Monday,
+            StartTime = new TimeSpan(10, 0, 0),
+            EndTime = new TimeSpan(11, 0, 0),
+            IsActive = true
+        };
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        // Class within 24 hours
+        var result = await _controller.AddToCart(timeSlot.Id, DateTime.UtcNow.AddHours(12));
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var error = GetAnonymousProperty(jsonResult.Value!, "error");
+        Assert.Contains("24 hours", error?.ToString());
+    }
+
+    [Fact]
+    public async Task AddToCart_AddsToCart_ForNonSubscriber()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _subscriptionServiceMock.Setup(s => s.GetActiveSubscriptionAsync(_testStudent.Id))
+            .ReturnsAsync((Subscription?)null);
+
+        var timeSlot = new TimeSlot
+        {
+            DayOfWeek = DayOfWeek.Wednesday,
+            StartTime = new TimeSpan(14, 0, 0),
+            EndTime = new TimeSpan(15, 0, 0),
+            IsActive = true
+        };
+        _context.TimeSlots.Add(timeSlot);
+        await _context.SaveChangesAsync();
+
+        var classDateTime = DateTime.UtcNow.AddDays(3);
+        var pendingClass = new ScheduledClass
+        {
+            Id = 100,
+            StudentId = _testStudent.Id,
+            TimeSlotId = timeSlot.Id,
+            ClassDateTime = classDateTime,
+            IsPendingCheckout = true
+        };
+        _classSchedulingServiceMock.Setup(c => c.AddClassToCheckoutAsync(
+                _testStudent.Id, timeSlot.Id, classDateTime))
+            .ReturnsAsync(pendingClass);
+        _classSchedulingServiceMock.Setup(c => c.GetCheckoutSummaryAsync(_testStudent.Id, 0))
+            .ReturnsAsync(new LakeCountrySpanish.Web.Models.ViewModels.SchedulingCheckoutSummary
+            {
+                ClassCount = 1,
+                PerClassPrice = 30m,
+                Subtotal = 30m,
+                TotalDue = 30m
+            });
+
+        var result = await _controller.AddToCart(timeSlot.Id, classDateTime);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var success = GetAnonymousProperty(jsonResult.Value!, "success");
+        Assert.Equal(true, success);
+        var confirmed = GetAnonymousProperty(jsonResult.Value!, "confirmed");
+        Assert.Equal(false, confirmed);
+    }
+
+    #endregion
+
+    #region RemoveFromCart Tests
+
+    [Fact]
+    public async Task RemoveFromCart_ReturnsUnauthorized_WhenUserNull()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _controller.RemoveFromCart(1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var data = GetAnonymousProperty(jsonResult.Value!, "success");
+        Assert.Equal(false, data);
+    }
+
+    [Fact]
+    public async Task RemoveFromCart_ReturnsError_WhenRemoveFails()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.RemoveFromCheckoutAsync(1, _testStudent.Id))
+            .ReturnsAsync(false);
+
+        var result = await _controller.RemoveFromCart(1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var error = GetAnonymousProperty(jsonResult.Value!, "error");
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public async Task RemoveFromCart_ReturnsSuccess_WhenRemoved()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.RemoveFromCheckoutAsync(1, _testStudent.Id))
+            .ReturnsAsync(true);
+        _classSchedulingServiceMock.Setup(c => c.GetCheckoutSummaryAsync(_testStudent.Id, 0))
+            .ReturnsAsync(new LakeCountrySpanish.Web.Models.ViewModels.SchedulingCheckoutSummary
+            {
+                ClassCount = 0,
+                PerClassPrice = 30m,
+                Subtotal = 0m,
+                TotalDue = 0m
+            });
+
+        var result = await _controller.RemoveFromCart(1);
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var success = GetAnonymousProperty(jsonResult.Value!, "success");
+        Assert.Equal(true, success);
+    }
+
+    #endregion
+
+    #region ClearCart Tests
+
+    [Fact]
+    public async Task ClearCart_ReturnsUnauthorized_WhenUserNull()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _controller.ClearCart();
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var success = GetAnonymousProperty(jsonResult.Value!, "success");
+        Assert.Equal(false, success);
+    }
+
+    [Fact]
+    public async Task ClearCart_ReturnsSuccess_WithClearedCount()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.ClearPendingCheckoutAsync(_testStudent.Id))
+            .ReturnsAsync(3);
+
+        var result = await _controller.ClearCart();
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var success = GetAnonymousProperty(jsonResult.Value!, "success");
+        Assert.Equal(true, success);
+    }
+
+    #endregion
+
+    #region GetCheckoutSummary Tests
+
+    [Fact]
+    public async Task GetCheckoutSummary_ReturnsUnauthorized_WhenUserNull()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _controller.GetCheckoutSummary();
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var error = GetAnonymousProperty(jsonResult.Value!, "error");
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public async Task GetCheckoutSummary_ReturnsSummary_WhenValid()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.GetCheckoutSummaryAsync(_testStudent.Id, 0))
+            .ReturnsAsync(new LakeCountrySpanish.Web.Models.ViewModels.SchedulingCheckoutSummary
+            {
+                ClassCount = 2,
+                PerClassPrice = 30m,
+                Subtotal = 60m,
+                TotalDue = 60m
+            });
+        _ticketServiceMock.Setup(t => t.GetAvailableTicketCountAsync(_testStudent.Id))
+            .ReturnsAsync(1);
+
+        var result = await _controller.GetCheckoutSummary();
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var classCount = GetAnonymousProperty(jsonResult.Value!, "classCount");
+        Assert.Equal(2, classCount);
+    }
+
+    #endregion
+
+    #region GetPendingCart Tests
+
+    [Fact]
+    public async Task GetPendingCart_ReturnsUnauthorized_WhenUserNull()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _controller.GetPendingCart();
+
+        var jsonResult = Assert.IsType<JsonResult>(result);
+        var error = GetAnonymousProperty(jsonResult.Value!, "error");
+        Assert.NotNull(error);
+    }
+
+    [Fact]
+    public async Task GetPendingCart_ReturnsEmptyArray_WhenNoPendingClasses()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.GetPendingCheckoutAsync(_testStudent.Id))
+            .ReturnsAsync(new List<ScheduledClass>());
+
+        var result = await _controller.GetPendingCart();
+
+        Assert.IsType<JsonResult>(result);
+    }
+
+    #endregion
+
+    #region Checkout POST Tests
+
+    [Fact]
+    public async Task Checkout_ReturnsNotFound_WhenUserNull()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _controller.Checkout(0);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task Checkout_RedirectsWithError_WhenNegativeTickets()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var result = await _controller.Checkout(-1);
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("MyClasses", redirectResult.ActionName);
+        Assert.Contains("ErrorMessage", _controller.TempData.Keys);
+    }
+
+    [Fact]
+    public async Task Checkout_RedirectsWithError_WhenCheckoutSessionFails()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.CreateCheckoutSessionAsync(
+                _testStudent.Id, 0, It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync((string?)null);
+
+        var result = await _controller.Checkout(0);
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("MyClasses", redirectResult.ActionName);
+        Assert.Contains("ErrorMessage", _controller.TempData.Keys);
+    }
+
+    [Fact]
+    public async Task Checkout_RedirectsToMyClasses_WhenFreeCheckout()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.CreateCheckoutSessionAsync(
+                _testStudent.Id, 2, It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync("https://localhost/Student/MyClasses?free=true");
+
+        var result = await _controller.Checkout(2);
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("MyClasses", redirectResult.ActionName);
+        Assert.Contains("SuccessMessage", _controller.TempData.Keys);
+    }
+
+    [Fact]
+    public async Task Checkout_RedirectsToStripe_WhenPaidCheckout()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+        _classSchedulingServiceMock.Setup(c => c.CreateCheckoutSessionAsync(
+                _testStudent.Id, 0, It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync("https://checkout.stripe.com/sess_123");
+
+        var result = await _controller.Checkout(0);
+
+        var redirectResult = Assert.IsType<RedirectResult>(result);
+        Assert.Contains("stripe.com", redirectResult.Url);
+    }
+
+    #endregion
+
+    #region CheckoutSuccess Tests
+
+    [Fact]
+    public async Task CheckoutSuccess_ReturnsNotFound_WhenUserNull()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync((ApplicationUser?)null);
+
+        var result = await _controller.CheckoutSuccess(null);
+
+        Assert.IsType<NotFoundResult>(result);
+    }
+
+    [Fact]
+    public async Task CheckoutSuccess_RedirectsToMyClasses_WithSuccessMessage()
+    {
+        _userManagerMock.Setup(u => u.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
+            .ReturnsAsync(_testStudent);
+
+        var result = await _controller.CheckoutSuccess(Guid.NewGuid());
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("MyClasses", redirectResult.ActionName);
+        Assert.Contains("SuccessMessage", _controller.TempData.Keys);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private static object? GetAnonymousProperty(object obj, string propertyName)
+    {
+        return obj.GetType().GetProperty(propertyName)?.GetValue(obj);
     }
 
     #endregion
