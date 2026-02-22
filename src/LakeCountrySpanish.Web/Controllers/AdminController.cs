@@ -249,6 +249,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> CreateStudent(CreateStudentViewModel model)
     {
         if (!ModelState.IsValid)
@@ -307,6 +308,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> EditStudent(EditStudentViewModel model)
     {
         if (!ModelState.IsValid)
@@ -427,6 +429,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteTimeSlot(int id)
     {
         var timeSlot = await _context.TimeSlots.FindAsync(id);
@@ -783,6 +786,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteDocument(int id)
     {
         var document = await _context.Documents.FindAsync(id);
@@ -936,6 +940,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteBlockedDate(int id)
     {
         var blockedDate = await _context.BlockedDates.FindAsync(id);
@@ -1286,6 +1291,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> GrantTokenPermission(GrantPermissionViewModel model)
     {
         if (!ModelState.IsValid)
@@ -1322,6 +1328,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DisableTokenPermission(int id)
     {
         var result = await _tokenService.DisablePermissionAsync(id);
@@ -1355,6 +1362,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> GrantTokens(GrantTokensViewModel model)
     {
         if (!ModelState.IsValid)
@@ -1569,6 +1577,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> GrantTickets(GrantTicketsViewModel model)
     {
         if (!ModelState.IsValid)
@@ -1840,6 +1849,7 @@ public class AdminController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> AdjustPoints(AdjustPointsViewModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Reason))
@@ -2380,6 +2390,7 @@ public class AdminController : Controller
     // This fixes classes that were paid for but the webhook didn't confirm them
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> RepairPendingCheckouts()
     {
         // Find all pending checkout classes
@@ -2460,6 +2471,7 @@ public class AdminController : Controller
     // Manually create a scheduled class for a student with an orphaned payment
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> CreateClassForPayment(int paymentId, int timeSlotId, DateTime classDateTime)
     {
         var payment = await _context.Payments
