@@ -23,10 +23,9 @@ This playbook documents the code smells that matter most for our stack — ASP.N
 13. [Speculative Generality](#13-speculative-generality)
 14. [Feature Envy](#14-feature-envy)
 15. [Middleman](#15-middleman)
-16. [Async Void / Fire-and-Forget](#16-async-void--fire-and-forget)
-17. [Temporal Coupling](#17-temporal-coupling)
-18. [Severity Reference](#18-severity-reference)
-19. [Quick Reference for AI Assistants](#19-quick-reference-for-ai-assistants)
+16. [Framework Assumption Mismatch](#16-framework-assumption-mismatch)
+17. [Severity Reference](#17-severity-reference)
+18. [Quick Reference for AI Assistants](#18-quick-reference-for-ai-assistants)
 
 ---
 
@@ -239,9 +238,34 @@ Support.razor (80 lines — layout and orchestration only)
   └── DiagnosticsPanel.razor (90 lines)
 ```
 
+### MAUI Variant: God ViewModel
+
+The same smell appears in .NET MAUI as oversized ViewModels. A ViewModel that handles navigation, data loading, form validation, and business logic in one file becomes untestable and fragile.
+
+**Detection:**
+- ViewModel exceeds 300 lines
+- ViewModel injects 5+ services
+- ViewModel handles multiple unrelated user actions (e.g., logging sets, managing timers, navigating, syncing)
+
+**Fix Pattern:**
+
+Extract sub-ViewModels for distinct UI sections:
+
+```csharp
+// BEFORE: ActiveSessionViewModel (450 lines)
+// Handles exercise selection, set logging, rest timer, session completion,
+// progressive overload defaults, notes, navigation... everything
+
+// AFTER: Composed from focused ViewModels
+ActiveSessionViewModel          // Orchestrates, owns session state
+  ├── SetInputViewModel         // Weight, reps, RPE, RIR input + validation
+  ├── RestTimerViewModel        // Countdown, skip, auto-start logic
+  └── ExercisePickerViewModel   // Search, filter, selection
+```
+
 ### Rule of Thumb
 
-A component should have **one reason to re-render**. If clicking a filter button re-renders an unrelated chart, the component is doing too much.
+A component should have **one reason to re-render**. If clicking a filter button re-renders an unrelated chart, the component is doing too much. For MAUI ViewModels, if you can't describe the ViewModel's job without using "and," extract a sub-ViewModel.
 
 ---
 
@@ -444,9 +468,35 @@ catch (Exception ex)
 }
 ```
 
+### Variant: Middleware That Hides Exceptions from Tests
+
+Exception-handling middleware can create a subtler version of this smell: the middleware catches unhandled exceptions, returns a generic 500 response, and the actual exception is invisible to integration tests.
+
+```csharp
+// GlobalExceptionMiddleware returns a generic error
+catch (Exception ex)
+{
+    _logger.LogError(ex, "Unhandled exception. SupportId={SupportId}", supportId);
+    context.Response.StatusCode = 500;
+    await context.Response.WriteAsync(JsonSerializer.Serialize(new
+    {
+        success = false,
+        error = "An unexpected error occurred.",
+        supportId
+    }));
+}
+
+// Integration test sees: 500 + "An unexpected error occurred."
+// But the REAL error was: DbUpdateConcurrencyException — EF generated
+// UPDATE instead of INSERT because of a sentinel check issue.
+// Without checking server logs, you'd never know the root cause.
+```
+
+**Fix:** In test environments, configure middleware to include exception details in the response, or inspect `ITestOutputHelper`/server logs alongside the HTTP response.
+
 ### Rule of Thumb
 
-**If a catch block has zero lines of logging, it's a bug.** Every exception is diagnostic information you'll wish you had when debugging production.
+**If a catch block has zero lines of logging, it's a bug.** Every exception is diagnostic information you'll wish you had when debugging production. And if your integration tests can only see a generic error message, you're debugging blind.
 
 ---
 
@@ -579,6 +629,23 @@ if (!line.StartsWith("data: ")) continue;
 var data = line["data: ".Length..];
 ```
 
+**Entity type strings repeated across sync layer:**
+```csharp
+// SyncEndpoints.cs
+case "WorkoutSession": ...
+case "BodyMeasurement": ...
+
+// SyncService.cs
+EntityType = "WorkoutSession",
+ChangeType = "Create"
+
+// SyncPushCommandHandler.cs
+EntityType = "WorkoutSession",
+ChangeType = "Update"
+```
+
+These strings should be an enum or constants class in the Shared project — a typo in any one of these causes silent sync failures.
+
 ### Fix Pattern
 
 Single source of truth in the Shared project:
@@ -644,7 +711,7 @@ Code written for hypothetical future requirements that don't exist yet. Abstract
 
 ### Detection
 
-- Interface with exactly one implementation and no plans for a second (**Exception:** interfaces used for dependency injection and testability are justified even with one implementation — the `IFooService + FooService` pattern enables mocking in unit tests)
+- Interface with exactly one implementation and no plans for a second
 - Generic type parameters that are always the same concrete type
 - Config options with only one valid value
 - "Strategy" or "Factory" patterns with a single strategy/product
@@ -666,6 +733,12 @@ public class NotificationStrategyFactory
 // AFTER: Just use the class directly until you need a second implementation
 public class EmailNotifier { ... }
 ```
+
+### Important Distinction: Convention vs. Speculation
+
+If the project convention is **interface-per-service** (e.g., `IRepository<T>` + `Repository<T>`, `INavigationService` + `NavigationService`), follow it — even when there's only one implementation today. These interfaces serve testability (mocking) and Clean Architecture layer boundaries, not speculative second implementations.
+
+This smell applies to **gratuitous abstractions beyond that convention**: factory patterns for one product, strategy patterns for one strategy, or generic type parameters that are always the same concrete type. The test is: "Does this abstraction serve a current need (testability, DI, layer isolation), or am I guessing at a future requirement?"
 
 ---
 
@@ -737,121 +810,79 @@ If the service **will** have business logic (validation, authorization checks, e
 
 ---
 
-## 16. Async Void / Fire-and-Forget
+## 16. Framework Assumption Mismatch
 
-**Severity: CRITICAL** | **Impact: Silent failures, unobservable exceptions**
+**Severity: HIGH** | **Impact: Silent data corruption, wrong SQL, hours of debugging**
 
-`async void` methods and fire-and-forget patterns (`_ = SomeAsync()`) swallow exceptions silently. The caller has no way to know the operation failed, and unobserved task exceptions can crash the process in some configurations.
+Code that works against the framework's conventions or assumptions instead of with them. The code compiles, may even pass simple tests, but produces wrong behavior at runtime because the framework's internal heuristics don't match how the code is structured.
 
 ### Detection
 
-- Methods declared as `async void` (except event handlers)
-- `_ = SomeMethodAsync()` without any error handling wrapper
-- `Task.Run(() => SomeMethodAsync())` without `await`
-- `SomeMethodAsync()` called without `await` and without assigning to a variable
+- Framework generates wrong SQL (UPDATE instead of INSERT, or vice versa)
+- Runtime exceptions from the ORM that don't correspond to your logic
+- Behavior changes when you add/remove `.AsNoTracking()`, change key types, or reorder operations
+- "It works if I do X first" — a sign that ordering matters to the framework in ways your code doesn't account for
 
-### Real Example
+### Real Example: EF Core Sentinel Check + Client-Generated Guids
+
+EF Core uses a "sentinel check" to determine if an entity is new (needs INSERT) or existing (needs UPDATE). For Guid keys, the sentinel is `Guid.Empty` — if the key is empty, the entity is new; if non-empty, it's existing.
 
 ```csharp
-// BAD: Exception in SendEmailAsync vanishes — caller never knows
-public void OnClassBooked(int classId)
+// BaseEntity generates a Guid at construction — ALWAYS non-empty
+public abstract class BaseEntity
 {
-    _ = _emailService.SendClassConfirmationAsync(classId);
-}
-
-// BAD: async void — exception kills the process in some hosts
-public async void ProcessWebhook(string payload)
-{
-    await _service.HandleAsync(payload); // Unhandled exception = crash
+    public Guid Id { get; set; } = Guid.NewGuid();
 }
 ```
+
+When entities are added through navigation properties (not `DbSet.AddAsync`), EF discovers them via `DetectChanges` and applies the sentinel check. Since `Id` is never `Guid.Empty`, EF treats every new entity as existing:
+
+```csharp
+// Handler adds a new ExerciseSet through a navigation property
+sessionExercise.Sets.Add(new ExerciseSet { /* ... */ });
+await _sessions.SaveChangesAsync();
+
+// EF sees: ExerciseSet.Id = 7a3f... (non-empty) → must be existing → UPDATE
+// Database: no row with that Id → "Expected to affect 1 row(s), but actually affected 0 row(s)"
+// Result: DbUpdateConcurrencyException
+```
+
+### Why This Is Insidious
+
+The code looks correct. The entity is genuinely new. The exception message ("concurrency exception") is misleading — there's no actual concurrency conflict. And the "fix" that AI assistants gravitate toward (adding explicit `AddAsync` calls, removing tracking, or adding dedicated repository methods per entity type) treats the symptom, not the cause.
 
 ### Fix Pattern
 
-Always `await` async operations. If you genuinely need fire-and-forget, wrap it with error handling:
+Explicitly tell EF the entity is new when the sentinel check can't determine it:
 
 ```csharp
-// GOOD: Await the operation
-public async Task OnClassBookedAsync(int classId)
-{
-    await _emailService.SendClassConfirmationAsync(classId);
-}
+// Repository exposes a generic "mark as new" method
+public void MarkAsNew(BaseEntity entity)
+    => _context.Entry(entity).State = EntityState.Added;
 
-// ACCEPTABLE: Fire-and-forget with explicit error handling
-public void OnClassBooked(int classId)
-{
-    _ = Task.Run(async () =>
-    {
-        try { await _emailService.SendClassConfirmationAsync(classId); }
-        catch (Exception ex) { _logger.LogWarning(ex, "Failed to send class confirmation"); }
-    });
-}
+// Handler uses it after adding through navigation property
+sessionExercise.Sets.Add(set);
+_sessions.MarkAsNew(set);
 ```
+
+**Long-term fix:** Let EF generate Guids server-side (remove `= Guid.NewGuid()` from `BaseEntity` and configure `ValueGeneratedOnAdd`). This is a larger migration but eliminates the mismatch entirely.
+
+### Other Common Mismatches
+
+| Framework | Assumption | Common Mismatch |
+|-----------|-----------|-----------------|
+| EF Core | Tracked entities get change detection | Using `AsNoTracking()` on queries that feed write handlers |
+| EF Core | Empty FK = new relationship | Client-generated Guids are never empty |
+| MAUI | `Shell.Current` available from ViewModels | Background threads or unit tests have no Shell |
+| ASP.NET Core | Middleware sees all exceptions | Global exception middleware hides root causes from tests |
 
 ### Rule of Thumb
 
-If a method returns `Task`, `await` it. If you don't `await` it, you're choosing to ignore its result — including its exceptions.
+When the framework produces unexpected behavior, **check if your code violates the framework's assumptions** before adding workarounds. Read the framework's source or docs on key generation, change tracking, or lifecycle hooks. A 5-minute investigation beats a 5-hour debugging session caused by a workaround that masks the real issue.
 
 ---
 
-## 17. Temporal Coupling
-
-**Severity: MEDIUM** | **Impact: Fragile initialization, subtle runtime failures**
-
-Methods that must be called in a specific order, but nothing in the API enforces that order. A caller who skips `Initialize()` or calls `Process()` before `Configure()` gets a runtime exception instead of a compile-time error.
-
-### Detection
-
-- `Initialize()`, `Setup()`, or `Configure()` methods that must be called before other methods
-- `NullReferenceException` or `InvalidOperationException` at runtime because a field wasn't set
-- Boolean flags like `_isInitialized` checked at the start of methods
-- Comments like "must call X before Y"
-
-### Real Example
-
-```csharp
-// BAD: Caller must know to call Initialize before Process
-public class SyncEngine
-{
-    private HttpClient _client = null!;
-
-    public void Initialize(string baseUrl)
-    {
-        _client = new HttpClient { BaseAddress = new Uri(baseUrl) };
-    }
-
-    public async Task ProcessAsync()
-    {
-        // NullReferenceException if Initialize wasn't called
-        var response = await _client.GetAsync("/api/sync");
-    }
-}
-```
-
-### Fix Pattern
-
-Use constructor injection or builder patterns to enforce the required order:
-
-```csharp
-// GOOD: Dependencies provided at construction — impossible to skip
-public class SyncEngine
-{
-    private readonly HttpClient _client;
-
-    public SyncEngine(HttpClient client) => _client = client;
-
-    public async Task ProcessAsync()
-    {
-        var response = await _client.GetAsync("/api/sync");
-    }
-}
-```
-
----
-
-## 18. Severity Reference
-
-> **Note:** Sections 16-17 were added based on cross-project analysis in February 2026.
+## 17. Severity Reference
 
 | Severity | Meaning | Action |
 |----------|---------|--------|
@@ -878,12 +909,11 @@ public class SyncEngine
 | 13 | Speculative Generality | LOW | Unnecessary complexity |
 | 14 | Feature Envy | MEDIUM | Misplaced logic |
 | 15 | Middleman | LOW | Pointless indirection |
-| 16 | Async Void / Fire-and-Forget | CRITICAL | Silent failures, crashes |
-| 17 | Temporal Coupling | MEDIUM | Fragile initialization |
+| 16 | Framework Assumption Mismatch | HIGH | Wrong SQL, silent corruption |
 
 ---
 
-## 19. Quick Reference for AI Assistants
+## 18. Quick Reference for AI Assistants
 
 **Read this section before writing or reviewing any code for this project.**
 
@@ -905,6 +935,7 @@ public class SyncEngine
 8. **Count your dependencies.** If a class needs 6+ constructor parameters, refactor before committing.
 9. **Count your lines.** If a method exceeds 40 lines, extract helper methods.
 10. **Search for your string literals.** If a string appears in more than one file, extract to a constant.
+11. **Check framework assumptions.** If you're adding entities through navigation properties with client-generated Guids, use `MarkAsNew`. If a query feeds a write handler, don't use `AsNoTracking`. When the framework misbehaves, investigate its conventions before adding workarounds.
 
 ### Red Flags That Demand Immediate Action
 
@@ -915,15 +946,15 @@ public class SyncEngine
 | Constructor with 6+ params | God Class | Extract collaborator |
 | Razor file > 400 lines | God Component | Extract child components |
 | Same constant in 2+ files | Duplicate Constants | Move to Shared constants class |
-| `async void` method | Async Void | Change to `async Task` |
-| `_ = SomeAsync()` without try/catch | Fire-and-Forget | Await it or wrap with error handling |
+| EF generates UPDATE for new entity | Framework Mismatch | Check sentinel values, use `MarkAsNew` |
+| `AsNoTracking` on write-path query | Framework Mismatch | Remove it — tracked entities need change detection |
 
 ---
 
 ## References
 
 - [TESTING-STRATEGY.md](TESTING-STRATEGY.md) — Testing patterns and anti-patterns
-- [HARDENING.md](HARDENING.md) — Production hardening playbook
+- [HARDENING.md](../HARDENING.md) — Production hardening playbook
 - [ARCHITECTURE_PATTERNS.md](ARCHITECTURE_PATTERNS.md) — Architecture invariants and conventions
 - [Legitimate Security - Code Smells](https://www.legitsecurity.com/aspm-knowledge-base/code-smells) — General code smell taxonomy
 
