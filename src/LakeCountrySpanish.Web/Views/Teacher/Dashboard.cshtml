@@ -1,0 +1,52 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.TeacherDashboardViewModel
+@{
+    ViewData["Title"] = "Teacher Dashboard";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+
+        <!-- Welcome banner -->
+        <div class="bg-gradient-to-r from-primary-700 to-secondary-600 rounded-lg shadow p-6 mb-6 text-white">
+            <h1 class="text-3xl font-bold mb-2">¡Hola, @Model.TeacherName!</h1>
+            <p class="text-primary-100">Welcome to your Lake Country Spanish instructor dashboard.</p>
+        </div>
+
+        <!-- Profile card -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Your profile</h2>
+            <dl class="grid grid-cols-1 gap-y-3 sm:grid-cols-2">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Name</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.TeacherName</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Email</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.Email</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500">Member since</dt>
+                    <dd class="mt-1 text-sm text-gray-900">@Model.JoinedDate.ToString("MMMM d, yyyy")</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Coming soon -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">What's next</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                Your full instructor dashboard is being built. Over the summer, you'll see the following here:
+            </p>
+            <ul class="space-y-2 text-sm text-gray-700 list-disc list-inside">
+                <li>Your assigned classes and students for the current period</li>
+                <li>The Lake Country Spanish curriculum library to browse and pick lessons from</li>
+                <li>Tools to assemble and print binders for your in-person classes</li>
+                <li>Your monthly statements and payout history</li>
+            </ul>
+            <p class="text-sm text-gray-500 mt-4">
+                For now, please reach out to Karen directly with any questions about your assignments or schedule.
+            </p>
+        </div>
+
+    </div>
+</div>

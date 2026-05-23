@@ -64,6 +64,10 @@ public class AccountController : Controller
             {
                 return RedirectToAction("Dashboard", "Admin");
             }
+            if (await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+            {
+                return RedirectToAction("Dashboard", "Teacher");
+            }
             return RedirectToAction("Dashboard", "Student");
         }
 
@@ -140,6 +144,10 @@ public class AccountController : Controller
             if (await _userManager.IsInRoleAsync(user, AppRoles.Admin))
             {
                 return RedirectToAction("Dashboard", "Admin");
+            }
+            if (await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+            {
+                return RedirectToAction("Dashboard", "Teacher");
             }
             return RedirectToAction("Dashboard", "Student");
         }

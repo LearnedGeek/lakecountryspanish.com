@@ -360,6 +360,164 @@ public class AdminController : Controller
         return View(model);
     }
 
+    // Teacher Management
+    public async Task<IActionResult> Teachers(string? search)
+    {
+        var teachers = await _userManager.GetUsersInRoleAsync(AppRoles.Teacher);
+        var teacherList = new List<TeacherListItemViewModel>();
+
+        foreach (var teacher in teachers)
+        {
+            if (!string.IsNullOrEmpty(search) &&
+                !teacher.Email!.Contains(search, StringComparison.OrdinalIgnoreCase) &&
+                !teacher.FullName.Contains(search, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            teacherList.Add(new TeacherListItemViewModel
+            {
+                Id = teacher.Id,
+                Email = teacher.Email!,
+                FullName = teacher.FullName,
+                IsActive = teacher.IsActive,
+                JoinedDate = teacher.CreatedAt
+            });
+        }
+
+        return View(new TeacherListViewModel
+        {
+            Teachers = teacherList.OrderBy(t => t.FullName),
+            SearchTerm = search
+        });
+    }
+
+    [HttpGet]
+    public IActionResult CreateTeacher()
+    {
+        return View(new CreateTeacherViewModel());
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> CreateTeacher(CreateTeacherViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            EmailConfirmed = true,
+            IsActive = true,
+            MustChangePassword = true  // Teachers must change the admin-set password on first login
+        };
+
+        var result = await _userManager.CreateAsync(user, model.Password);
+
+        if (result.Succeeded)
+        {
+            await _userManager.AddToRoleAsync(user, AppRoles.Teacher);
+            TempData["SuccessMessage"] = $"Teacher {model.FirstName} {model.LastName} has been created successfully.";
+            return RedirectToAction(nameof(Teachers));
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditTeacher(string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        // Make sure this user is actually a Teacher
+        if (!await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+        {
+            return NotFound();
+        }
+
+        return View(new EditTeacherViewModel
+        {
+            Id = user.Id,
+            Email = user.Email ?? string.Empty,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            IsActive = user.IsActive
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> EditTeacher(EditTeacherViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var user = await _userManager.FindByIdAsync(model.Id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+        {
+            return NotFound();
+        }
+
+        user.Email = model.Email;
+        user.UserName = model.Email;
+        user.FirstName = model.FirstName;
+        user.LastName = model.LastName;
+        user.IsActive = model.IsActive;
+
+        var result = await _userManager.UpdateAsync(user);
+
+        if (!string.IsNullOrEmpty(model.NewPassword))
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var passwordResult = await _userManager.ResetPasswordAsync(user, token, model.NewPassword);
+            if (!passwordResult.Succeeded)
+            {
+                foreach (var error in passwordResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+                return View(model);
+            }
+        }
+
+        if (result.Succeeded)
+        {
+            TempData["SuccessMessage"] = "Teacher updated successfully.";
+            return RedirectToAction(nameof(Teachers));
+        }
+
+        foreach (var error in result.Errors)
+        {
+            ModelState.AddModelError(string.Empty, error.Description);
+        }
+
+        return View(model);
+    }
+
     // Time Slot Management
     public async Task<IActionResult> TimeSlots()
     {

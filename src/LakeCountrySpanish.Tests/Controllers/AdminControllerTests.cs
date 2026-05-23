@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using LakeCountrySpanish.Web;
 using LakeCountrySpanish.Web.Controllers;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
@@ -224,6 +225,82 @@ public class AdminControllerTests : IDisposable
         var result = await _controller.CreateStudent(model);
 
         var viewResult = Assert.IsType<ViewResult>(result);
+        Assert.False(_controller.ModelState.IsValid);
+    }
+
+    [Fact]
+    public void CreateTeacher_Get_ReturnsView()
+    {
+        var result = _controller.CreateTeacher();
+
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task CreateTeacher_Post_ReturnsView_WhenModelInvalid()
+    {
+        _controller.ModelState.AddModelError("Email", "Required");
+
+        var model = new CreateTeacherViewModel();
+        var result = await _controller.CreateTeacher(model);
+
+        Assert.IsType<ViewResult>(result);
+    }
+
+    [Fact]
+    public async Task CreateTeacher_Post_RedirectsToTeachers_WhenSuccessful()
+    {
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Success);
+        _userManagerMock.Setup(u => u.AddToRoleAsync(It.IsAny<ApplicationUser>(), AppRoles.Teacher))
+            .ReturnsAsync(IdentityResult.Success);
+
+        ApplicationUser? createdUser = null;
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .Callback<ApplicationUser, string>((u, _) => createdUser = u)
+            .ReturnsAsync(IdentityResult.Success);
+
+        var model = new CreateTeacherViewModel
+        {
+            Email = "cece@test.com",
+            FirstName = "Cece",
+            LastName = "TestTeacher",
+            Password = "TeacherPass123!",
+            ConfirmPassword = "TeacherPass123!"
+        };
+
+        var result = await _controller.CreateTeacher(model);
+
+        var redirectResult = Assert.IsType<RedirectToActionResult>(result);
+        Assert.Equal("Teachers", redirectResult.ActionName);
+        Assert.Contains("SuccessMessage", _controller.TempData.Keys);
+
+        // Confirm MustChangePassword is set on creation so the teacher is forced to change
+        // the admin-set initial password on first login.
+        Assert.NotNull(createdUser);
+        Assert.True(createdUser!.MustChangePassword);
+        Assert.True(createdUser.IsActive);
+        Assert.True(createdUser.EmailConfirmed);
+    }
+
+    [Fact]
+    public async Task CreateTeacher_Post_ReturnsView_WhenCreateFails()
+    {
+        _userManagerMock.Setup(u => u.CreateAsync(It.IsAny<ApplicationUser>(), It.IsAny<string>()))
+            .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Email already in use" }));
+
+        var model = new CreateTeacherViewModel
+        {
+            Email = "existing@test.com",
+            FirstName = "Test",
+            LastName = "Teacher",
+            Password = "TeacherPass123!",
+            ConfirmPassword = "TeacherPass123!"
+        };
+
+        var result = await _controller.CreateTeacher(model);
+
+        Assert.IsType<ViewResult>(result);
         Assert.False(_controller.ModelState.IsValid);
     }
 
