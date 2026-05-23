@@ -62,6 +62,7 @@ builder.Services.AddScoped<IClaudeApiService, ClaudeApiService>();
 builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<IPlacementTestService, PlacementTestService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
+builder.Services.AddSingleton<IDocumentRenderingService, DocumentRenderingService>();
 builder.Services.AddScoped<INotificationScheduler, NotificationScheduler>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddHttpClient();

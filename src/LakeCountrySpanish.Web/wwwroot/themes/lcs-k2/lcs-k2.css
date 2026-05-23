@@ -1,0 +1,252 @@
+/* =========================================================================
+   LCS K4-2 theme — kid-friendly typography, bright palette, decorative
+   borders. Same CSS handles screen preview and browser print-to-PDF via
+   @media print + @page rules.
+   ========================================================================= */
+
+:root {
+    --lcs-pink: #FF6B9D;
+    --lcs-yellow: #FFD93D;
+    --lcs-blue: #4ECDC4;
+    --lcs-green: #95E06C;
+    --lcs-orange: #FF9F45;
+    --lcs-purple: #B388FF;
+    --lcs-ink: #1F2937;
+    --lcs-muted: #6B7280;
+    --lcs-paper: #FFFDF7;
+    --lcs-paper-warm: #FFF7E8;
+}
+
+.lcs-document {
+    font-family: "Quicksand", "Nunito", "Comic Sans MS", system-ui, sans-serif;
+    font-size: 16pt;
+    line-height: 1.55;
+    color: var(--lcs-ink);
+    background: var(--lcs-paper);
+    max-width: 8.5in;
+    margin: 0 auto;
+    padding: 0.5in 0.75in;
+}
+
+.lcs-document h1,
+.lcs-document h2,
+.lcs-document h3 {
+    font-weight: 700;
+    color: var(--lcs-pink);
+    line-height: 1.2;
+    margin-top: 1.2em;
+    margin-bottom: 0.4em;
+}
+
+.lcs-document h1 { font-size: 2.4em; }
+.lcs-document h2 { font-size: 1.6em; }
+.lcs-document h3 { font-size: 1.25em; color: var(--lcs-blue); }
+
+.lcs-document p { margin: 0.5em 0; }
+.lcs-document strong { color: var(--lcs-purple); }
+.lcs-document em { color: var(--lcs-orange); font-style: normal; font-weight: 600; }
+
+/* -------------------------------------------------------------------------
+   Cover block — title + frontmatter strip
+   ------------------------------------------------------------------------- */
+
+.lcs-cover {
+    text-align: center;
+    padding: 0.5in 0 0.4in;
+    border-bottom: 3px dashed var(--lcs-pink);
+    margin-bottom: 0.4in;
+}
+
+.lcs-cover h1 {
+    font-size: 3em;
+    margin: 0;
+}
+
+.lcs-cover .lcs-subtitle {
+    color: var(--lcs-muted);
+    font-size: 1em;
+    margin-top: 0.4em;
+}
+
+.lcs-cover .lcs-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4em 1em;
+    justify-content: center;
+    margin-top: 0.6em;
+    font-size: 0.85em;
+}
+
+.lcs-cover .lcs-meta span {
+    background: var(--lcs-yellow);
+    padding: 0.2em 0.7em;
+    border-radius: 999px;
+    color: var(--lcs-ink);
+    font-weight: 600;
+}
+
+/* -------------------------------------------------------------------------
+   Lesson-flow blocks — shared base + per-block accent color
+   ------------------------------------------------------------------------- */
+
+.block {
+    background: white;
+    border: 2px solid var(--lcs-blue);
+    border-radius: 14px;
+    padding: 1em 1.2em;
+    margin: 1.1em 0;
+    position: relative;
+}
+
+.block::before {
+    content: attr(data-block-label);
+    position: absolute;
+    top: -0.7em;
+    left: 1em;
+    background: var(--lcs-blue);
+    color: white;
+    font-weight: 700;
+    font-size: 0.75em;
+    padding: 0.15em 0.7em;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.block[data-time]::after {
+    content: "⏱ " attr(data-time);
+    position: absolute;
+    top: -0.7em;
+    right: 1em;
+    background: var(--lcs-paper-warm);
+    color: var(--lcs-muted);
+    font-size: 0.75em;
+    padding: 0.15em 0.7em;
+    border-radius: 999px;
+    border: 1px dashed var(--lcs-muted);
+}
+
+/* Per-block color + label */
+.block-lesson-overview { border-color: var(--lcs-pink); background: #FFF0F6; }
+.block-lesson-overview::before { content: "Overview"; background: var(--lcs-pink); }
+
+.block-warmup { border-color: var(--lcs-orange); }
+.block-warmup::before { content: "Warm-up"; background: var(--lcs-orange); }
+
+.block-teach { border-color: var(--lcs-blue); }
+.block-teach::before { content: "Teach"; background: var(--lcs-blue); }
+
+.block-practice { border-color: var(--lcs-green); }
+.block-practice::before { content: "Practice"; background: var(--lcs-green); }
+
+.block-game { border-color: var(--lcs-purple); background: #F4EDFF; }
+.block-game::before { content: "Game"; background: var(--lcs-purple); }
+
+.block-worksheet { border-color: var(--lcs-yellow); background: #FFFBE8; }
+.block-worksheet::before { content: "Worksheet"; background: var(--lcs-yellow); color: var(--lcs-ink); }
+
+.block-assess { border-color: var(--lcs-pink); }
+.block-assess::before { content: "Check"; background: var(--lcs-pink); }
+
+.block-cultural-note { border-color: var(--lcs-orange); background: #FFF4E6; }
+.block-cultural-note::before { content: "Cultura"; background: var(--lcs-orange); }
+
+.block-extend { border-color: var(--lcs-green); background: #F0FBE8; }
+.block-extend::before { content: "Extend"; background: var(--lcs-green); }
+
+.block-teacher-note { border-color: var(--lcs-muted); background: #F3F4F6; }
+.block-teacher-note::before { content: "Teacher note"; background: var(--lcs-muted); }
+
+.block-materials-checklist { border-color: var(--lcs-blue); background: #ECFEFD; }
+.block-materials-checklist::before { content: "Materials"; background: var(--lcs-blue); }
+
+/* -------------------------------------------------------------------------
+   Vocab table
+   ------------------------------------------------------------------------- */
+
+.block-vocab { border-color: var(--lcs-purple); padding-top: 1.4em; }
+.block-vocab::before { content: "Vocabulario"; background: var(--lcs-purple); }
+
+.block-vocab table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0.4em 0 0;
+    font-size: 1em;
+}
+
+.block-vocab th,
+.block-vocab td {
+    padding: 0.55em 0.8em;
+    text-align: left;
+    border-bottom: 2px dotted var(--lcs-purple);
+}
+
+.block-vocab th {
+    background: var(--lcs-purple);
+    color: white;
+    font-weight: 700;
+    border-bottom: none;
+}
+
+.block-vocab th:first-child { border-top-left-radius: 8px; }
+.block-vocab th:last-child  { border-top-right-radius: 8px; }
+
+.block-vocab td:first-child {
+    font-weight: 700;
+    color: var(--lcs-purple);
+}
+
+.block-vocab tr:last-child td { border-bottom: none; }
+
+/* -------------------------------------------------------------------------
+   Materials checklist — make it look like real checkboxes
+   ------------------------------------------------------------------------- */
+
+.block-materials-checklist ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.block-materials-checklist li {
+    margin: 0.35em 0;
+    padding-left: 1.6em;
+    position: relative;
+}
+
+.block-materials-checklist li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.25em;
+    width: 1.1em;
+    height: 1.1em;
+    border: 2px solid var(--lcs-blue);
+    border-radius: 4px;
+    background: white;
+}
+
+/* GitHub-style task list checkboxes that Markdig may emit */
+.block-materials-checklist input[type="checkbox"] { display: none; }
+
+/* -------------------------------------------------------------------------
+   Print rules — drop the screen chrome, snap to Letter, keep block borders
+   ------------------------------------------------------------------------- */
+
+@page {
+    size: Letter;
+    margin: 0.6in;
+}
+
+@media print {
+    body { background: white; }
+    .lcs-document {
+        padding: 0;
+        max-width: none;
+    }
+    .block,
+    .block-vocab table {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+}

@@ -21,6 +21,8 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Stripe.net" Version="50.1.0" />
+    <PackageReference Include="Markdig" Version="0.38.0" />
+    <PackageReference Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
 
   <!-- SQL data-migration scripts: copy alongside the assembly so MigrationHelper
