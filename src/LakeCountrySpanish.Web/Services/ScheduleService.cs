@@ -498,7 +498,7 @@ public class ScheduleService : IScheduleService
 
     public async Task<bool> HasScheduleConflictsAsync()
     {
-        var today = DateTime.Today;
+        var today = DateTime.UtcNow.Date;
         var futureDate = today.AddDays(60);
 
         // Get all upcoming scheduled classes
@@ -521,8 +521,8 @@ public class ScheduleService : IScheduleService
 
     public async Task<IEnumerable<ScheduledClass>> GetClassesWithBlockedDateConflictsAsync(DateTime? startDate = null, DateTime? endDate = null)
     {
-        startDate ??= DateTime.Today;
-        endDate ??= DateTime.Today.AddDays(60);
+        startDate ??= DateTime.UtcNow.Date;
+        endDate ??= DateTime.UtcNow.Date.AddDays(60);
 
         var blockedDates = await _context.BlockedDates
             .Where(bd => bd.EndDate >= startDate && bd.StartDate <= endDate)
@@ -559,7 +559,7 @@ public class ScheduleService : IScheduleService
         return await _context.ScheduledClasses
             .Where(sc => sc.TimeSlotId == timeSlotId &&
                          sc.Status == ClassStatus.Scheduled &&
-                         sc.ClassDateTime >= DateTime.Today)
+                         sc.ClassDateTime >= DateTime.UtcNow)
             .CountAsync();
     }
 
@@ -568,7 +568,7 @@ public class ScheduleService : IScheduleService
         return !await _context.ScheduledClasses
             .AnyAsync(sc => sc.TimeSlotId == timeSlotId &&
                            sc.Status == ClassStatus.Scheduled &&
-                           sc.ClassDateTime >= DateTime.Today);
+                           sc.ClassDateTime >= DateTime.UtcNow);
     }
 
     public async Task<IEnumerable<ScheduledClass>> GetAffectedClassesForTimeSlotDeactivationAsync(int timeSlotId)
@@ -577,7 +577,7 @@ public class ScheduleService : IScheduleService
             .Include(sc => sc.Student)
             .Where(sc => sc.TimeSlotId == timeSlotId &&
                          sc.Status == ClassStatus.Scheduled &&
-                         sc.ClassDateTime >= DateTime.Today)
+                         sc.ClassDateTime >= DateTime.UtcNow)
             .OrderBy(sc => sc.ClassDateTime)
             .ToListAsync();
     }

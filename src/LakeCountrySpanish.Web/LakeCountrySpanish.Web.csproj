@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- Use out-of-process hosting for SmarterASP.NET IIS compatibility -->
@@ -10,13 +10,27 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.*" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.*" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.*">
+    <!-- EF Core pinned to 10.0.0 to match Allevo's known-good setup; floating
+         minor patches caused dotnet-ef MissingMethodException due to internal
+         AbstractionsStrings API drift between 10.0.0 and 10.0.8. -->
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Stripe.net" Version="50.1.0" />
+  </ItemGroup>
+
+  <!-- SQL data-migration scripts: copy alongside the assembly so MigrationHelper
+       can load them at runtime via Migrations/Scripts/{Name}.{sql|rollback.sql}.
+       Mirrors the Allevo pattern. -->
+  <ItemGroup>
+    <Content Include="Migrations\Scripts\*.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Migrations\Scripts\%(Filename)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
 </Project>

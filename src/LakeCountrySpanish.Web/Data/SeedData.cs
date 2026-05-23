@@ -833,15 +833,15 @@ public static class SeedData
             {
                 new BlockedDate
                 {
-                    StartDate = DateTime.Today.AddDays(14),
-                    EndDate = DateTime.Today.AddDays(14),
+                    StartDate = DateTime.UtcNow.Date.AddDays(14),
+                    EndDate = DateTime.UtcNow.Date.AddDays(14),
                     Reason = "Teacher Conference",
                     CreatedAt = DateTime.UtcNow
                 },
                 new BlockedDate
                 {
-                    StartDate = DateTime.Today.AddDays(30),
-                    EndDate = DateTime.Today.AddDays(32),
+                    StartDate = DateTime.UtcNow.Date.AddDays(30),
+                    EndDate = DateTime.UtcNow.Date.AddDays(32),
                     Reason = "Holiday Break",
                     CreatedAt = DateTime.UtcNow
                 }
@@ -915,8 +915,8 @@ public static class SeedData
 
             var scheduledClasses = new List<ScheduledClass>();
 
-            // Find next occurrence of each day
-            var today = DateTime.Today;
+            // Find next occurrence of each day (UTC-based for Postgres timestamptz)
+            var today = DateTime.UtcNow.Date;
             var nextMonday = today.AddDays((int)DayOfWeek.Monday - (int)today.DayOfWeek + (today.DayOfWeek >= DayOfWeek.Monday ? 7 : 0));
             var nextTuesday = today.AddDays((int)DayOfWeek.Tuesday - (int)today.DayOfWeek + (today.DayOfWeek >= DayOfWeek.Tuesday ? 7 : 0));
             var nextWednesday = today.AddDays((int)DayOfWeek.Wednesday - (int)today.DayOfWeek + (today.DayOfWeek >= DayOfWeek.Wednesday ? 7 : 0));

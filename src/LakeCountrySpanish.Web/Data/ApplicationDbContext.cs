@@ -57,6 +57,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // Notification entities
     public DbSet<NotificationLog> NotificationLogs => Set<NotificationLog>();
 
+    // Curriculum entities (Phase 3)
+    public DbSet<WisconsinStandard> WisconsinStandards => Set<WisconsinStandard>();
+    public DbSet<Period> Periods => Set<Period>();
+    public DbSet<LearningPath> LearningPaths => Set<LearningPath>();
+    public DbSet<Unit> Units => Set<Unit>();
+    public DbSet<Day> Days => Set<Day>();
+    public DbSet<ArtifactLibrary> ArtifactLibrary => Set<ArtifactLibrary>();
+    public DbSet<TeacherClassAssignment> TeacherClassAssignments => Set<TeacherClassAssignment>();
+    public DbSet<CurriculumVersion> CurriculumVersions => Set<CurriculumVersion>();
+    public DbSet<BinderComposition> BinderCompositions => Set<BinderComposition>();
+    public DbSet<BinderGeneration> BinderGenerations => Set<BinderGeneration>();
+
+    // Media library entities (Phase 3)
+    public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+    public DbSet<MediaUsage> MediaUsages => Set<MediaUsage>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -142,11 +158,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Filtered to only include non-null values (allowing multiple null values)
             entity.HasIndex(e => e.StripePaymentIntentId)
                 .IsUnique()
-                .HasFilter("[StripePaymentIntentId] IS NOT NULL");
+                .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
 
             // Unique index on StripeSessionId for efficient lookup
             entity.HasIndex(e => e.StripeSessionId)
-                .HasFilter("[StripeSessionId] IS NOT NULL");
+                .HasFilter("\"StripeSessionId\" IS NOT NULL");
         });
 
         // Document configuration
@@ -273,7 +289,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Filtered to only include non-null values (allowing multiple null values for legacy records)
             entity.HasIndex(e => e.StripeSubscriptionId)
                 .IsUnique()
-                .HasFilter("[StripeSubscriptionId] IS NOT NULL");
+                .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
         });
 
         // RecurringSchedule configuration
@@ -630,6 +646,197 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => new { e.RecipientId, e.Type, e.SentAt });
             // Index for finding notifications by related entity (to prevent duplicates)
             entity.HasIndex(e => new { e.Type, e.RelatedEntityId, e.RecipientId });
+        });
+
+        // === Curriculum entities (Phase 3) ===
+
+        // WisconsinStandard configuration
+        builder.Entity<WisconsinStandard>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Code is the natural key from the WI document; must be unique
+            entity.HasIndex(e => e.Code).IsUnique();
+
+            // Common filters: by category, by proficiency band, by K4-2 applicability
+            entity.HasIndex(e => new { e.Category, e.ProficiencyBand, e.ProficiencySubLevel });
+            entity.HasIndex(e => e.ApplicableToK4_2);
+        });
+
+        // Period configuration
+        builder.Entity<Period>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => new { e.StartDate, e.EndDate });
+        });
+
+        // LearningPath configuration
+        builder.Entity<LearningPath>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.GradeBand, e.Audience, e.IsActive });
+        });
+
+        // Unit configuration — includes self-referencing many-to-many for prior units
+        builder.Entity<Unit>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.LearningPath)
+                .WithMany(p => p.Units)
+                .HasForeignKey(e => e.LearningPathId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.LearningPathId, e.DisplayOrder });
+            entity.HasIndex(e => e.Theme);
+
+            // Self-referencing many-to-many: PriorUnits / DependentUnits.
+            // EF Core 10 requires the join table to have an explicit primary
+            // key configured for self-referencing many-to-many — the implicit
+            // shorthand that worked in EF 8 (.UsingEntity("UnitDependencies"))
+            // no longer auto-derives a composite key.
+            entity.HasMany(u => u.PriorUnits)
+                .WithMany(u => u.DependentUnits)
+                .UsingEntity<Dictionary<string, object>>(
+                    "UnitDependencies",
+                    j => j.HasOne<Unit>().WithMany().HasForeignKey("DependentUnitId").OnDelete(DeleteBehavior.NoAction),
+                    j => j.HasOne<Unit>().WithMany().HasForeignKey("PriorUnitId").OnDelete(DeleteBehavior.NoAction),
+                    j => j.HasKey("PriorUnitId", "DependentUnitId"));
+        });
+
+        // Day configuration
+        builder.Entity<Day>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Unit)
+                .WithMany(u => u.Days)
+                .HasForeignKey(e => e.UnitId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.UnitId, e.DayNumberInUnit });
+            entity.HasIndex(e => new { e.GradeBand, e.Theme });
+            entity.HasIndex(e => e.IsActive);
+
+            // Many-to-many auto-join tables for tag-style relationships
+            entity.HasMany(d => d.WisconsinStandards).WithMany();
+            entity.HasMany(d => d.RecommendedArtifacts).WithMany(a => a.RecommendingDays);
+            entity.HasMany(d => d.PracticeAssignments).WithMany();
+        });
+
+        // ArtifactLibrary configuration
+        builder.Entity<ArtifactLibrary>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Slug is URL-safe identifier used for cross-references in lesson Markdown;
+            // must be unique across the library.
+            entity.HasIndex(e => e.Slug).IsUnique();
+            entity.HasIndex(e => new { e.Type, e.Subtype });
+            entity.HasIndex(e => e.IsActive);
+
+            // Many-to-many auto-join table for WI standard tags
+            entity.HasMany(a => a.WisconsinStandards).WithMany();
+        });
+
+        // TeacherClassAssignment configuration
+        builder.Entity<TeacherClassAssignment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Teacher)
+                .WithMany()
+                .HasForeignKey(e => e.TeacherId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Period)
+                .WithMany(p => p.TeacherClassAssignments)
+                .HasForeignKey(e => e.PeriodId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.LearningPath)
+                .WithMany()
+                .HasForeignKey(e => e.LearningPathId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Common filter: find a teacher's active assignments
+            entity.HasIndex(e => new { e.TeacherId, e.IsActive });
+            entity.HasIndex(e => new { e.PeriodId, e.IsActive });
+        });
+
+        // CurriculumVersion configuration
+        builder.Entity<CurriculumVersion>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // Look up versions by entity reference + chronologically
+            entity.HasIndex(e => new { e.EntityType, e.EntityId, e.VersionNumber }).IsUnique();
+            entity.HasIndex(e => new { e.EntityType, e.EntityId, e.EffectiveDate });
+        });
+
+        // BinderComposition configuration
+        builder.Entity<BinderComposition>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.TeacherClassAssignment)
+                .WithMany(t => t.BinderCompositions)
+                .HasForeignKey(e => e.TeacherClassAssignmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Many-to-many auto-join tables for selected content
+            entity.HasMany(b => b.Days).WithMany();
+            entity.HasMany(b => b.ExtraArtifacts).WithMany();
+
+            entity.HasIndex(e => new { e.TeacherClassAssignmentId, e.IsTemplate });
+        });
+
+        // BinderGeneration configuration
+        builder.Entity<BinderGeneration>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.TeacherClassAssignment)
+                .WithMany(t => t.BinderGenerations)
+                .HasForeignKey(e => e.TeacherClassAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.BinderComposition)
+                .WithMany()
+                .HasForeignKey(e => e.BinderCompositionId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasIndex(e => new { e.TeacherClassAssignmentId, e.GeneratedAt });
+        });
+
+        // === Media library entities (Phase 3) ===
+
+        // MediaAsset configuration
+        builder.Entity<MediaAsset>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            // FileHash supports duplicate detection on upload/import
+            entity.HasIndex(e => e.FileHash);
+            entity.HasIndex(e => new { e.Source, e.Category });
+            entity.HasIndex(e => e.UploadedById);
+            entity.HasIndex(e => e.SourceId);
+        });
+
+        // MediaUsage configuration — polymorphic over consuming entity type
+        builder.Entity<MediaUsage>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.MediaAsset)
+                .WithMany(m => m.Usages)
+                .HasForeignKey(e => e.MediaAssetId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Find all usages of a media asset, or all media used by an entity
+            entity.HasIndex(e => new { e.EntityType, e.EntityId });
+            entity.HasIndex(e => e.MediaAssetId);
         });
     }
 }

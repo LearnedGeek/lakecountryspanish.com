@@ -103,7 +103,7 @@ public class StudentController : Controller
         var recentBadges = gamificationProgress.RecentBadges.Take(5);
 
         // Get activity stats
-        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var startOfWeek = now.AddDays(-(int)now.DayOfWeek);
         var classesThisMonth = await _context.ScheduledClasses
             .CountAsync(c => c.StudentId == user.Id && c.Status == ClassStatus.Completed && c.ClassDateTime >= startOfMonth);
@@ -213,7 +213,7 @@ public class StudentController : Controller
         var availableTickets = await _ticketService.GetAvailableTicketCountAsync(user.Id);
 
         // Default to current week (Sunday start)
-        var today = DateTime.Today;
+        var today = DateTime.UtcNow.Date;
         var defaultWeekStart = weekStart ?? today.AddDays(-(int)today.DayOfWeek);
 
         var weeklyCalendar = await _scheduleService.GetWeeklyCalendarAsync(defaultWeekStart, user.Id);
@@ -244,8 +244,8 @@ public class StudentController : Controller
         // Get reserved classes for Preply-style Lessons view (next 2 months)
         var reservedClasses = await _scheduleService.GetReservedClassesAsync(
             user.Id,
-            DateTime.Today,
-            DateTime.Today.AddMonths(2));
+            DateTime.UtcNow.Date,
+            DateTime.UtcNow.Date.AddMonths(2));
 
         var viewModel = new MyClassesViewModel
         {
@@ -584,8 +584,8 @@ public class StudentController : Controller
             return Json(new List<object>());
         }
 
-        var startDate = DateTime.Today;
-        var endDate = DateTime.Today.AddDays(60);
+        var startDate = DateTime.UtcNow.Date;
+        var endDate = DateTime.UtcNow.Date.AddDays(60);
 
         var availableDates = await _scheduleService.GetAvailableDatesAsync(timeSlotId, startDate, endDate);
 

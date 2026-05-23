@@ -58,8 +58,8 @@ public class AdminController : Controller
 
     public async Task<IActionResult> Dashboard()
     {
-        var today = DateTime.Today;
-        var startOfMonth = new DateTime(today.Year, today.Month, 1);
+        var today = DateTime.UtcNow.Date;
+        var startOfMonth = new DateTime(today.Year, today.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var endOfWeek = today.AddDays(7);
         var threeDaysOut = today.AddDays(3);
 
@@ -656,8 +656,8 @@ public class AdminController : Controller
     // Schedule Management
     public async Task<IActionResult> Schedule(DateTime? startDate, DateTime? endDate, string? studentId)
     {
-        startDate ??= DateTime.Today;
-        endDate ??= DateTime.Today.AddDays(30);
+        startDate ??= DateTime.UtcNow.Date;
+        endDate ??= DateTime.UtcNow.Date.AddDays(30);
 
         var classes = await _context.ScheduledClasses
             .Include(sc => sc.Student)
@@ -1036,8 +1036,8 @@ public class AdminController : Controller
         return View(new BlockedDatesViewModel
         {
             BlockedDates = blockedDates,
-            UpcomingBlockedDates = blockedDates.Where(bd => bd.EndDate >= DateTime.Today),
-            PastBlockedDates = blockedDates.Where(bd => bd.EndDate < DateTime.Today)
+            UpcomingBlockedDates = blockedDates.Where(bd => bd.EndDate >= DateTime.UtcNow.Date),
+            PastBlockedDates = blockedDates.Where(bd => bd.EndDate < DateTime.UtcNow.Date)
         });
     }
 
@@ -1046,8 +1046,8 @@ public class AdminController : Controller
     {
         return View(new CreateBlockedDateViewModel
         {
-            StartDate = DateTime.Today,
-            EndDate = DateTime.Today
+            StartDate = DateTime.UtcNow.Date,
+            EndDate = DateTime.UtcNow.Date
         });
     }
 
@@ -1253,8 +1253,8 @@ public class AdminController : Controller
             return Json(new List<object>());
         }
 
-        var startDate = DateTime.Today;
-        var endDate = DateTime.Today.AddDays(60);
+        var startDate = DateTime.UtcNow.Date;
+        var endDate = DateTime.UtcNow.Date.AddDays(60);
         var blockedDates = await _context.BlockedDates
             .Where(bd => bd.EndDate >= startDate)
             .ToListAsync();

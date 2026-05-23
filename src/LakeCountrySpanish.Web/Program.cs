@@ -7,6 +7,13 @@ using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load appsettings.Local.json (gitignored) AFTER appsettings.{Environment}.json so
+// that local secrets override committed placeholders without ever being tracked.
+// This is the LCS convention — preferred over user-secrets because it doesn't
+// require per-machine setup and is uniform with the appsettings.Production.json
+// pattern used in deployment.
+builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+
 // Configure logging to suppress noisy CookieTempDataProvider warnings
 // These occur when a stale TempData cookie (encrypted with old keys) can't be decrypted
 // This is expected behavior after app restarts in development - the cookie is simply ignored
@@ -15,9 +22,9 @@ builder.Logging.AddFilter("Microsoft.AspNetCore.Mvc.ViewFeatures.CookieTempDataP
 // Configure Stripe
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
-// Add DbContext
+// Add DbContext (PostgreSQL via Npgsql)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
