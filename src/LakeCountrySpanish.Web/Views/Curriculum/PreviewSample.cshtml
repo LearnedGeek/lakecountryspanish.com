@@ -25,6 +25,15 @@
                 @if (fm.DurationMin.HasValue)             { <span>@fm.DurationMin min</span> }
                 @if (!string.IsNullOrEmpty(fm.Theme))     { <span>@fm.Theme</span> }
             </div>
+            @if (fm.Artifacts.Count > 0 && !string.IsNullOrEmpty(fm.Slug))
+            {
+                <div style="margin-top: 1em;">
+                    <a href="@Url.Action("PreviewBinder", new { slug = fm.Slug })"
+                       style="display:inline-block; background: var(--lcs-purple); color:white; padding: 0.5em 1.2em; border-radius:999px; text-decoration:none; font-weight:600;">
+                        📓 Open as printable teacher binder
+                    </a>
+                </div>
+            }
         </header>
 
         @Html.Raw(Model.BodyHtml)

@@ -230,6 +230,199 @@
 .block-materials-checklist input[type="checkbox"] { display: none; }
 
 /* -------------------------------------------------------------------------
+   Bingo card — 3x3 grid styled as a real bingo board
+   ------------------------------------------------------------------------- */
+
+.block-bingo-card { border-color: var(--lcs-purple); padding-top: 1.4em; }
+.block-bingo-card::before { content: "Bingo"; background: var(--lcs-purple); }
+
+.block-bingo-card table {
+    width: 100%;
+    max-width: 6in;
+    margin: 0.6em auto;
+    border-collapse: separate;
+    border-spacing: 0.3em;
+    background: transparent;
+}
+
+.block-bingo-card th,
+.block-bingo-card td {
+    aspect-ratio: 1 / 1;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 1.1em;
+    font-weight: 700;
+    padding: 0.4em;
+    border: 3px solid var(--lcs-purple);
+    border-radius: 12px;
+    background: white;
+}
+
+/* Bingo's first row gets parsed as <thead> by Markdig, but it's still part of
+   the 3x3 playing grid — keep it visible and styled identically to body cells. */
+.block-bingo-card thead th { font-weight: 700; }
+
+
+/* -------------------------------------------------------------------------
+   Trace — traceable Spanish word in dashed/dotted styling
+   ------------------------------------------------------------------------- */
+
+.block-trace {
+    border-color: transparent;
+    background: transparent;
+    padding: 0.3em 0;
+    margin: 0;
+}
+.block-trace::before { display: none; }
+
+.block-trace p {
+    font-family: "Comic Sans MS", "Quicksand", sans-serif;
+    font-size: 2.4em;
+    font-weight: 700;
+    color: rgba(31, 41, 55, 0.25);
+    letter-spacing: 0.05em;
+    text-align: center;
+    margin: 0.2em 0;
+    border-bottom: 3px dashed var(--lcs-muted);
+    padding-bottom: 0.1em;
+}
+
+/* -------------------------------------------------------------------------
+   Color target — coloring picture with label
+   ------------------------------------------------------------------------- */
+
+.block-color-target {
+    border-color: var(--lcs-yellow);
+    background: #FFFBE8;
+    text-align: center;
+    padding-top: 1.4em;
+}
+.block-color-target::before { content: "Colorea"; background: var(--lcs-yellow); color: var(--lcs-ink); }
+
+.block-color-target p {
+    font-size: 4em;
+    margin: 0.1em 0;
+}
+
+/* -------------------------------------------------------------------------
+   Worksheet grid + trace-card — reusable across any "N small repeated
+   activities" worksheet (Los Colores, Animales, Números, body parts, etc.).
+   The block author composes a worksheet by listing trace-cards inside a
+   worksheet-grid; the named accent palette gives visual variety without
+   forcing every author to pick hex codes.
+   ------------------------------------------------------------------------- */
+
+.block-worksheet-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6em;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 1em 0;
+}
+.block-worksheet-grid::before { display: none; }
+
+.block-trace-card {
+    border: 2px dashed var(--lcs-muted);
+    border-radius: 14px;
+    padding: 0.5em 0.6em;
+    margin: 0;
+    background: white;
+    text-align: center;
+    min-width: 0;             /* allows the card to shrink inside grid track */
+}
+.block-trace-card::before { display: none; }
+
+.block-trace-card p {
+    margin: 0.15em 0;
+    line-height: 1.1;
+}
+
+/* Traceable word: first paragraph of the card. Faded grey w/ dashed baseline
+   gives the "trace-over-me" feel. font-size kept modest so anaranjado fits. */
+.block-trace-card p:first-child {
+    font-family: "Comic Sans MS", "Quicksand", sans-serif;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: rgba(31, 41, 55, 0.28);
+    letter-spacing: 0.06em;
+    border-bottom: 2px dashed var(--lcs-muted);
+    padding-bottom: 0.05em;
+    margin-bottom: 0.25em;
+    overflow-wrap: anywhere;   /* hard wrap before clipping the page */
+}
+
+/* Picture / emoji target: any paragraph after the first */
+.block-trace-card p:not(:first-child) {
+    font-size: 2.2em;
+}
+
+/* Named accent palette — pick from the LCS brand colors with a string key.
+   Hex one-offs are still possible via inline style="border-color: #..." but
+   the named set keeps worksheets visually consistent across lessons. */
+.block-trace-card[data-accent="red"]    { border-color: #E63946; }
+.block-trace-card[data-accent="blue"]   { border-color: #4361EE; }
+.block-trace-card[data-accent="yellow"] { border-color: #F4D35E; }
+.block-trace-card[data-accent="green"]  { border-color: #2A9D8F; }
+.block-trace-card[data-accent="orange"] { border-color: #F77F00; }
+.block-trace-card[data-accent="purple"] { border-color: #8338EC; }
+.block-trace-card[data-accent="pink"]   { border-color: var(--lcs-pink); }
+
+/* -------------------------------------------------------------------------
+   Binder cover + page break separators
+   ------------------------------------------------------------------------- */
+
+.lcs-binder-cover {
+    text-align: center;
+    padding: 1.5in 1in;
+    page-break-after: always;
+}
+
+.lcs-binder-cover h1 {
+    font-size: 3.6em;
+    color: var(--lcs-pink);
+    margin-bottom: 0.3em;
+}
+
+.lcs-binder-cover .lcs-tagline {
+    font-size: 1.2em;
+    color: var(--lcs-muted);
+    margin-bottom: 1em;
+}
+
+.lcs-binder-cover .lcs-mascot {
+    font-size: 5em;
+    margin: 0.6em 0;
+}
+
+.lcs-binder-cover .lcs-watermark {
+    margin-top: 2em;
+    font-size: 0.85em;
+    color: var(--lcs-muted);
+    border-top: 1px dashed var(--lcs-muted);
+    padding-top: 0.5em;
+}
+
+.lcs-binder-section {
+    page-break-before: always;
+}
+.lcs-binder-section:first-of-type {
+    page-break-before: auto;
+}
+
+.lcs-binder-section-header {
+    text-align: center;
+    color: var(--lcs-muted);
+    font-size: 0.85em;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4in;
+    border-bottom: 1px dashed var(--lcs-muted);
+    padding-bottom: 0.3em;
+}
+
+/* -------------------------------------------------------------------------
    Print rules — drop the screen chrome, snap to Letter, keep block borders
    ------------------------------------------------------------------------- */
 

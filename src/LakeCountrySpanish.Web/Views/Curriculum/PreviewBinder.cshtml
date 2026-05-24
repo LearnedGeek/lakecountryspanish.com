@@ -1,0 +1,83 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.CurriculumBinderViewModel
+@{
+    Layout = null;
+    var lesson = Model.Lesson.Frontmatter;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@(lesson.Title ?? "Curriculum binder") — Teacher Binder</title>
+    <link rel="stylesheet" href="~/themes/@(Model.ThemeName)/@(Model.ThemeName).css" />
+</head>
+<body>
+    <main class="lcs-document">
+
+        <header class="lcs-binder-cover">
+            <div class="lcs-mascot">🦙</div>
+            <h1>@lesson.Title</h1>
+            <div class="lcs-tagline">Teacher Binder · @(lesson.Unit ?? lesson.Theme)</div>
+            <div class="lcs-meta">
+                @if (!string.IsNullOrEmpty(lesson.GradeBand)) { <span>@lesson.GradeBand</span> }
+                @if (!string.IsNullOrEmpty(lesson.Level))     { <span>@lesson.Level</span> }
+                @if (lesson.DurationMin.HasValue)             { <span>@lesson.DurationMin min</span> }
+            </div>
+            <div class="lcs-watermark">
+                Property of Lake Country Spanish · Licensed to @Model.TeacherName ·
+                Generated @Model.GeneratedAt.ToString("MMM d, yyyy")
+            </div>
+        </header>
+
+        <section class="lcs-binder-section">
+            <div class="lcs-binder-section-header">Lesson Plan</div>
+            <h2>@lesson.Title</h2>
+            @if (!string.IsNullOrEmpty(lesson.Unit))
+            {
+                <div class="lcs-subtitle">@lesson.Unit</div>
+            }
+            @Html.Raw(Model.Lesson.BodyHtml)
+
+            @if (lesson.WiStandards.Count > 0)
+            {
+                <section class="block block-teacher-note">
+                    <strong>WI standards covered:</strong>
+                    <ul>
+                        @foreach (var code in lesson.WiStandards) { <li>@code</li> }
+                    </ul>
+                </section>
+            }
+        </section>
+
+        @foreach (var artifact in Model.Artifacts)
+        {
+            var fm = artifact.Frontmatter;
+            var artifactType = fm.Extras.TryGetValue("artifact_type", out var t) ? t?.ToString() : "Artifact";
+            <section class="lcs-binder-section">
+                <div class="lcs-binder-section-header">@(artifactType ?? "Artifact") · for student handout</div>
+                <h2>@fm.Title</h2>
+                @if (!string.IsNullOrEmpty(fm.Theme) || !string.IsNullOrEmpty(fm.Unit))
+                {
+                    <div class="lcs-subtitle">@(fm.Theme ?? fm.Unit)</div>
+                }
+                @Html.Raw(artifact.BodyHtml)
+            </section>
+        }
+
+        <section class="lcs-binder-section">
+            <div class="lcs-binder-section-header">Attribution</div>
+            <p>
+                Images and source materials in this binder are used under the terms of their
+                respective licenses. Pixabay images are used under the
+                <a href="https://pixabay.com/service/license-summary/">Pixabay License</a>.
+                Wisconsin DPI World Languages standards are referenced under fair-use
+                educational guidelines.
+            </p>
+            <p style="margin-top: 1em; color: var(--lcs-muted); font-size: 0.85em;">
+                © Lake Country Spanish, LLC. Authorized for classroom use by the licensed teacher only.
+            </p>
+        </section>
+
+    </main>
+</body>
+</html>

@@ -23,18 +23,52 @@ public class CurriculumController : Controller
     /// </summary>
     public IActionResult PreviewSample()
     {
-        var samplePath = Path.GetFullPath(Path.Combine(
-            _environment.ContentRootPath, "..", "..",
-            "docs", "curriculum-system", "samples", "los-colores.md"));
+        var markdown = ReadSampleOrNull("los-colores.md");
+        if (markdown is null) return NotFound("Sample doc los-colores.md not found.");
 
-        if (!System.IO.File.Exists(samplePath))
+        return View(_renderer.Render(markdown));
+    }
+
+    /// <summary>
+    /// Assembles a full teacher binder by rendering the lesson plan plus every
+    /// artifact named in its frontmatter <c>artifacts:</c> array. Output is a
+    /// single printable HTML document with a cover, section separators, and
+    /// CSS page-break rules so teachers can browser-print the whole binder.
+    ///
+    /// Per Karen's requirement: the binder is not just the lesson plan — it
+    /// must include every referenced printable (bingo cards, worksheets,
+    /// coloring pages, song lyrics) in print-ready form, default selected.
+    /// </summary>
+    public IActionResult PreviewBinder(string slug = "los-colores")
+    {
+        var lessonMd = ReadSampleOrNull($"{slug}.md");
+        if (lessonMd is null) return NotFound($"Lesson {slug}.md not found.");
+
+        var lesson = _renderer.Render(lessonMd);
+
+        var artifacts = new List<RenderedDocument>();
+        foreach (var reference in lesson.Frontmatter.Artifacts)
         {
-            return NotFound($"Sample doc not found at {samplePath}");
+            if (string.IsNullOrWhiteSpace(reference.Slug)) continue;
+            var artifactMd = ReadSampleOrNull($"{reference.Slug}.md");
+            if (artifactMd is null) continue;
+            artifacts.Add(_renderer.Render(artifactMd));
         }
 
-        var markdown = System.IO.File.ReadAllText(samplePath);
-        var rendered = _renderer.Render(markdown);
+        return View(new Models.ViewModels.CurriculumBinderViewModel
+        {
+            Lesson = lesson,
+            Artifacts = artifacts,
+            TeacherName = User.Identity?.Name ?? "Teacher",
+            GeneratedAt = DateTime.UtcNow
+        });
+    }
 
-        return View(rendered);
+    private string? ReadSampleOrNull(string fileName)
+    {
+        var path = Path.GetFullPath(Path.Combine(
+            _environment.ContentRootPath, "..", "..",
+            "docs", "curriculum-system", "samples", fileName));
+        return System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : null;
     }
 }
