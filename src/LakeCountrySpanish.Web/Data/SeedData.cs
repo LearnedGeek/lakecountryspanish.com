@@ -768,6 +768,41 @@ public static class SeedData
 
     private static async Task SeedDevelopmentDataAsync(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
     {
+        // Seed a default LearningPath + Unit so the Days authoring UI has a
+        // parent to attach new Days to. Karen will manage real LearningPaths
+        // and Units through their own admin UI once those slices ship.
+        if (!await context.LearningPaths.AnyAsync())
+        {
+            var path = new LearningPath
+            {
+                Title = "K4-2 Spanish Foundations",
+                Description = "Foundational Spanish for early learners. Targets Wisconsin Novice-Low proficiency by end of 2nd grade.",
+                GradeBand = GradeBand.K4,
+                TargetProficiencyBand = ProficiencyBand.Novice,
+                TargetProficiencySubLevel = ProficiencySubLevel.Low,
+                Audience = PathAudience.Classroom,
+                IsActive = true
+            };
+            context.LearningPaths.Add(path);
+            await context.SaveChangesAsync();
+
+            context.Units.Add(new Unit
+            {
+                LearningPathId = path.Id,
+                UnitNumber = 1,
+                DisplayOrder = 1,
+                Title = "Mundo de Colores",
+                Description = "Six basic colors in Spanish — recognition, recall, and a cultural tie-in to the Peruvian flag.",
+                Theme = "Colors",
+                TargetProficiencySubLevel = ProficiencySubLevel.Low,
+                CoreVocabulary = "rojo, azul, amarillo, verde, anaranjado, morado",
+                CulturalConnection = "Peruvian flag colors (rojo y blanco)",
+                MinimumDurationDays = 4,
+                IsActive = true
+            });
+            await context.SaveChangesAsync();
+        }
+
         // Seed test students if none exist
         if (!await userManager.Users.AnyAsync(u => u.Email != "admin@lakecountryspanish.com"))
         {

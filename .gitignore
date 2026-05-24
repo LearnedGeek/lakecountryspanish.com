@@ -137,4 +137,7 @@ appsettings.Local.json
 
 # Claude temp files
 tmpclaude-*
+
+# Developer scratch folder (saved review HTMLs, throwaway test files)
+tmp/
 2026-01-11-*.txt

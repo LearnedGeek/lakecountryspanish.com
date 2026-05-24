@@ -1,0 +1,79 @@
+@using LakeCountrySpanish.Web.Models.ViewModels
+@using LakeCountrySpanish.Web.Services.Curriculum.Blocks
+@model BlockItemViewModel
+@{
+    var b = Model.Block;
+    var editUrl = Url.Action("EditBlock", "Curriculum", new { dayId = Model.DayId, blockId = b.Id });
+    var deleteUrl = Url.Action("DeleteBlock", "Curriculum", new { dayId = Model.DayId, blockId = b.Id });
+    var blockDom = $"block-{b.Id}";
+
+    string Truncate(string? s, int max) =>
+        string.IsNullOrEmpty(s) ? "" : (s.Length <= max ? s : s[..max] + "…");
+}
+
+@if (Model.IsEditing)
+{
+    // Edit mode: dispatch to the type-specific form partial
+    switch (b)
+    {
+        case ParagraphBlock:
+            @await Html.PartialAsync("Blocks/_BlockEdit_Paragraph", Model)
+            break;
+        case VocabBlock:
+            @await Html.PartialAsync("Blocks/_BlockEdit_Vocab", Model)
+            break;
+        case RawMarkdownBlock:
+            @await Html.PartialAsync("Blocks/_BlockEdit_Raw", Model)
+            break;
+        default:
+            <div id="@blockDom" class="bg-red-50 border border-red-200 rounded p-2 text-sm">Unknown block type.</div>
+            break;
+    }
+}
+else
+{
+    <div id="@blockDom" class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:border-indigo-300 transition">
+        <div class="flex items-center justify-between mb-1">
+            <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">@b.Label</div>
+            <div class="flex gap-1">
+                <button type="button"
+                        hx-get="@editUrl"
+                        hx-target="#@blockDom"
+                        hx-swap="outerHTML"
+                        class="text-xs text-indigo-600 hover:text-indigo-800 px-2 py-0.5">Edit</button>
+                <button type="button"
+                        hx-delete="@deleteUrl"
+                        hx-target="#@blockDom"
+                        hx-swap="outerHTML"
+                        hx-confirm="Delete this block?"
+                        class="text-xs text-red-600 hover:text-red-800 px-2 py-0.5">Delete</button>
+            </div>
+        </div>
+
+        <div class="text-sm text-gray-700">
+            @switch (b)
+            {
+                case ParagraphBlock p:
+                    if (!string.IsNullOrEmpty(p.Time))
+                    {
+                        <span class="text-xs text-gray-400 mr-2">⏱ @p.Time</span>
+                    }
+                    <span>@Truncate(p.Text, 180)</span>
+                    break;
+                case VocabBlock v:
+                    if (v.Rows.Count == 0)
+                    {
+                        <em class="text-gray-400">No rows yet.</em>
+                    }
+                    else
+                    {
+                        <span>@string.Join(" · ", v.Rows.Take(6).Select(r => r.Spanish))@(v.Rows.Count > 6 ? "…" : "")</span>
+                    }
+                    break;
+                case RawMarkdownBlock r:
+                    <pre class="text-xs font-mono text-gray-600 whitespace-pre-wrap line-clamp-3">@Truncate(r.Markdown, 220)</pre>
+                    break;
+            }
+        </div>
+    </div>
+}

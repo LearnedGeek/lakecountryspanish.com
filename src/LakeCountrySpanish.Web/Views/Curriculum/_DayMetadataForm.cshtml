@@ -1,0 +1,71 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.CurriculumDayFormViewModel
+@{
+    var formAction = Model.IsEdit ? Url.Action("EditDay", "Curriculum", new { id = Model.Id }) : Url.Action("CreateDay", "Curriculum");
+}
+<form method="post" action="@formAction">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="ModelOnly" class="mb-3 text-sm text-red-600"></div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+            <label asp-for="Title" class="block text-sm font-medium text-gray-700">Title</label>
+            <input asp-for="Title" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+            <span asp-validation-for="Title" class="text-xs text-red-600"></span>
+        </div>
+        <div>
+            <label asp-for="UnitId" class="block text-sm font-medium text-gray-700">Unit</label>
+            <select asp-for="UnitId" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm">
+                @foreach (var u in Model.AvailableUnits)
+                {
+                    if (u.Id == Model.UnitId) { <option value="@u.Id" selected>@u.Title</option> }
+                    else                       { <option value="@u.Id">@u.Title</option> }
+                }
+            </select>
+        </div>
+        <div>
+            <label asp-for="DayNumberInUnit" class="block text-sm font-medium text-gray-700">Day # in unit</label>
+            <input asp-for="DayNumberInUnit" type="number" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+        </div>
+        <div>
+            <label asp-for="EstimatedDurationMinutes" class="block text-sm font-medium text-gray-700">Duration (min)</label>
+            <input asp-for="EstimatedDurationMinutes" type="number" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+        </div>
+        <div>
+            <label asp-for="GradeBand" class="block text-sm font-medium text-gray-700">Grade band</label>
+            <select asp-for="GradeBand"
+                    asp-items="Html.GetEnumSelectList<LakeCountrySpanish.Web.Models.Entities.GradeBand>()"
+                    class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"></select>
+        </div>
+        <div>
+            <label asp-for="SkillFocus" class="block text-sm font-medium text-gray-700">Skill focus</label>
+            <select asp-for="SkillFocus"
+                    asp-items="Html.GetEnumSelectList<LakeCountrySpanish.Web.Models.Entities.SkillFocus>()"
+                    class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"></select>
+        </div>
+        <div class="sm:col-span-2">
+            <label asp-for="Theme" class="block text-sm font-medium text-gray-700">Theme</label>
+            <input asp-for="Theme" placeholder="e.g. Colors, Family, Animals" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+        </div>
+        <div class="sm:col-span-2">
+            <label asp-for="Description" class="block text-sm font-medium text-gray-700">Short description</label>
+            <input asp-for="Description" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+        </div>
+    </div>
+
+    <label class="flex items-center gap-2 text-sm text-gray-700 mt-3">
+        <input asp-for="IsActive" type="checkbox" />
+        Active (listed in admin and available for binder selection)
+    </label>
+
+    <div class="flex items-center gap-2 pt-3 mt-3 border-t border-gray-100">
+        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+            @(Model.IsEdit ? "Save metadata" : "Create Day")
+        </button>
+        @if (!Model.IsEdit)
+        {
+            <a href="@Url.Action("Days", "Curriculum")" class="text-sm text-gray-600 ml-2 hover:text-gray-800">Cancel</a>
+        }
+    </div>
+</form>

@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Services;
+using LakeCountrySpanish.Web.Services.Curriculum;
+using LakeCountrySpanish.Web.Services.Curriculum.Blocks;
+using LakeCountrySpanish.Web.Services.Curriculum.Drafter;
 using LakeCountrySpanish.Web.Services.Media;
 using Stripe;
 
@@ -72,6 +75,21 @@ builder.Services.AddSingleton<IImageProcessingService, ImageProcessingService>()
 builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddHttpClient<PixabayImageSourceAdapter>();
 builder.Services.AddScoped<IImageSourceAdapter, PixabayImageSourceAdapter>();
+
+// Curriculum authoring services.
+builder.Services.AddScoped<ICurriculumDayService, CurriculumDayService>();
+builder.Services.AddSingleton<IBlockCompiler, BlockCompiler>();
+
+// AI-assisted curriculum drafter — wraps Anthropic with the LCS component
+// vocabulary baked into the system prompt. See
+// docs/curriculum-system/ai-assisted-authoring.md.
+builder.Services.AddScoped<DraftingPromptBuilder>();
+builder.Services.AddHttpClient<ICurriculumDrafter, CurriculumDrafter>(client =>
+{
+    // Anthropic drafter calls can take 10-15s; default 100s timeout is fine
+    // but make it explicit so we know what we're committing to.
+    client.Timeout = TimeSpan.FromSeconds(45);
+});
 
 builder.Services.AddScoped<INotificationScheduler, NotificationScheduler>();
 builder.Services.AddHostedService<NotificationBackgroundService>();

@@ -188,6 +188,20 @@
     <script src="~/js/forms.js" asp-append-version="true"></script>
     <script src="~/js/ratings.js" asp-append-version="true"></script>
 
+    <!-- HTMX for server-rendered partial swaps (curriculum block editor, etc.) -->
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script>
+        // Forward the ASP.NET antiforgery token on every HTMX request so endpoints
+        // protected by [ValidateAntiForgeryToken] accept the call. The token is
+        // emitted by @@Html.AntiForgeryToken() wherever it appears on the page.
+        document.body.addEventListener('htmx:configRequest', function (evt) {
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if (token) {
+                evt.detail.headers['RequestVerificationToken'] = token.value;
+            }
+        });
+    </script>
+
     <!-- Gamification Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://unpkg.com/@@lottiefiles/lottie-player@@2.0.8/dist/lottie-player.js"></script>

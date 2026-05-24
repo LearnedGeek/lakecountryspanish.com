@@ -1,0 +1,62 @@
+@using LakeCountrySpanish.Web.Models.ViewModels
+@using LakeCountrySpanish.Web.Services.Curriculum.Blocks
+@model BlockItemViewModel
+@{
+    var v = (VocabBlock)Model.Block;
+    var saveUrl = Url.Action("SaveBlock", "Curriculum", new { dayId = Model.DayId, blockId = v.Id });
+    var cancelUrl = Url.Action("ViewBlock", "Curriculum", new { dayId = Model.DayId, blockId = v.Id });
+    var blockDom = $"block-{v.Id}";
+    // Ensure at least one row is always visible so the editor isn't empty.
+    var rows = v.Rows.Count > 0 ? v.Rows : new List<VocabRow> { new(), new(), new() };
+}
+<div id="@blockDom" class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+    <div class="text-xs font-semibold uppercase tracking-wide text-purple-700 mb-2">Editing — Vocabulary table</div>
+
+    <form hx-post="@saveUrl" hx-target="#@blockDom" hx-swap="outerHTML" class="space-y-2">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-xs text-purple-700">
+                    <th class="px-1 pb-1">Español</th>
+                    <th class="px-1 pb-1">English</th>
+                    <th class="px-1 pb-1">Pronunciation</th>
+                    <th class="px-1 pb-1">Cue</th>
+                </tr>
+            </thead>
+            <tbody id="vocab-rows-@v.Id">
+                @for (var i = 0; i < rows.Count; i++)
+                {
+                    <tr>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@i].Spanish"       value="@rows[i].Spanish"       class="block w-full rounded border-gray-300 text-sm" /></td>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@i].English"       value="@rows[i].English"       class="block w-full rounded border-gray-300 text-sm" /></td>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@i].Pronunciation" value="@rows[i].Pronunciation" class="block w-full rounded border-gray-300 text-sm" /></td>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@i].Cue"           value="@rows[i].Cue"           class="block w-full rounded border-gray-300 text-sm" /></td>
+                    </tr>
+                }
+                @{
+                    // Three empty appendable rows the author can fill if she needs more — keeps it simple.
+                    var startIndex = rows.Count;
+                }
+                @for (var i = 0; i < 3; i++)
+                {
+                    var idx = startIndex + i;
+                    <tr>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@idx].Spanish"       class="block w-full rounded border-gray-300 text-sm" placeholder="(blank to skip)" /></td>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@idx].English"       class="block w-full rounded border-gray-300 text-sm" /></td>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@idx].Pronunciation" class="block w-full rounded border-gray-300 text-sm" /></td>
+                        <td class="px-1 py-0.5"><input type="text" name="rows[@idx].Cue"           class="block w-full rounded border-gray-300 text-sm" /></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="flex items-center gap-2">
+            <button type="submit" class="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700">Save</button>
+            <button type="button"
+                    hx-get="@cancelUrl"
+                    hx-target="#@blockDom"
+                    hx-swap="outerHTML"
+                    class="px-3 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
+            <span class="text-xs text-gray-500">Empty rows are dropped on save.</span>
+        </div>
+    </form>
+</div>

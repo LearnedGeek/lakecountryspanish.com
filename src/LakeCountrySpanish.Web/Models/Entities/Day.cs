@@ -39,12 +39,27 @@ public class Day
     public string Theme { get; set; } = string.Empty;
 
     /// <summary>
-    /// Markdown body — the teacher-facing lesson plan rendered by the binder
-    /// generator. Uses LCS custom container blocks (:::vocab, :::warmup,
-    /// :::teach, :::practice, :::game, :::worksheet, :::cultural-note,
-    /// :::teacher-note, etc.).
+    /// Compiled Markdown body — the teacher-facing lesson plan rendered by
+    /// the binder generator. Uses LCS custom container blocks (:::vocab,
+    /// :::warmup, :::teach, :::practice, :::game, :::worksheet,
+    /// :::cultural-note, :::teacher-note, etc.).
+    ///
+    /// For Days authored through the block editor this field is a *cache* —
+    /// the source of truth is <see cref="BodyBlocksJson"/>, and the server
+    /// recompiles this column on every save via <c>IBlockCompiler</c>. The
+    /// downstream rendering pipeline reads this column unchanged.
     /// </summary>
     public string TeacherPlanMarkdown { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Structured block list as JSON — the authoritative representation for
+    /// content authored in the visual block editor. Each block has a
+    /// discriminated <c>type</c> (paragraph, vocab, warmup, bingo-card, etc.)
+    /// and type-specific fields. When this column is non-empty, it owns the
+    /// content and <see cref="TeacherPlanMarkdown"/> is a compiled cache.
+    /// Empty for legacy Days authored before the block editor shipped.
+    /// </summary>
+    public string BodyBlocksJson { get; set; } = string.Empty;
 
     public int EstimatedDurationMinutes { get; set; } = 25;
 
