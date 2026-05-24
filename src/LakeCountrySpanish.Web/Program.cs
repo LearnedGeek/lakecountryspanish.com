@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Services;
+using LakeCountrySpanish.Web.Services.Media;
 using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,6 +64,15 @@ builder.Services.AddScoped<IAssignmentService, AssignmentService>();
 builder.Services.AddScoped<IPlacementTestService, PlacementTestService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton<IDocumentRenderingService, DocumentRenderingService>();
+
+// Media library: image processing primitives + storage orchestration + source adapters.
+// PixabaySettings binds the gitignored appsettings.Local.json "Pixabay" section.
+builder.Services.Configure<PixabaySettings>(builder.Configuration.GetSection(PixabaySettings.SectionName));
+builder.Services.AddSingleton<IImageProcessingService, ImageProcessingService>();
+builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddHttpClient<PixabayImageSourceAdapter>();
+builder.Services.AddScoped<IImageSourceAdapter, PixabayImageSourceAdapter>();
+
 builder.Services.AddScoped<INotificationScheduler, NotificationScheduler>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
 builder.Services.AddHttpClient();

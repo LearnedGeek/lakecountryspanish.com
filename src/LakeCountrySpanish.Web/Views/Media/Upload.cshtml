@@ -1,0 +1,53 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.MediaUploadViewModel
+@{
+    ViewData["Title"] = "Upload Image";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Upload Image</h1>
+            <a href="@Url.Action("Index")" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to library</a>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <form asp-action="Upload" method="post" enctype="multipart/form-data" class="space-y-4">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-red-600 text-sm"></div>
+
+                <div>
+                    <label asp-for="File" class="block text-sm font-medium text-gray-700">Image file</label>
+                    <input asp-for="File" type="file" accept="image/*" class="mt-1 block w-full text-sm" />
+                    <span asp-validation-for="File" class="text-red-600 text-sm"></span>
+                </div>
+
+                <div>
+                    <label asp-for="Title" class="block text-sm font-medium text-gray-700">Title</label>
+                    <input asp-for="Title" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+                </div>
+
+                <div>
+                    <label asp-for="AltText" class="block text-sm font-medium text-gray-700">Alt text (accessibility)</label>
+                    <input asp-for="AltText" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+                    <p class="text-xs text-gray-500 mt-1">Describe what's in the image for screen readers and visually impaired students.</p>
+                </div>
+
+                <div>
+                    <label asp-for="Tags" class="block text-sm font-medium text-gray-700">Tags</label>
+                    <input asp-for="Tags" placeholder="e.g. llama, mascot, peru, flag" class="mt-1 block w-full rounded border-gray-300 shadow-sm" />
+                </div>
+
+                <div>
+                    <label asp-for="Category" class="block text-sm font-medium text-gray-700">Category</label>
+                    <select asp-for="Category"
+                            asp-items="Html.GetEnumSelectList<LakeCountrySpanish.Web.Models.Entities.MediaCategory>()"
+                            class="mt-1 block w-full rounded border-gray-300 shadow-sm"></select>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

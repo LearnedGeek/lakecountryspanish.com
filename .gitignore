@@ -117,8 +117,9 @@ Desktop.ini
 TestResult.xml
 nunit-*.xml
 
-# Uploaded files
+# Uploaded files (runtime user content — both repo-root and any nested wwwroot)
 wwwroot/uploads/
+**/wwwroot/uploads/
 
 # Local/Production settings (contain secrets)
 appsettings.Production.json
