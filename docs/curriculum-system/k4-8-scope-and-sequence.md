@@ -1,10 +1,13 @@
-# Lake Country Spanish — K4 to Grade 8 Scope and Sequence (Draft)
+---
+brand: lcs
+title: "K4 to Grade 8 Scope and Sequence"
+date: "Draft — May 27, 2026"
+closing_quote: "The strawman gives the AI drafter a target to aim for. Without it, every lesson is generated alone. With it, every lesson knows what came before and what comes after."
+---
 
-**Status:** Draft for Karen and Cece to react to
-**Author:** Mark, with Claude
-**For:** The brainstorm session tomorrow
-
-This document is a **starting point**, not a finished plan. The goal is to give you something to react to instead of starting from a blank page. Read it, mark it up, change what does not match your teaching experience. We will revise it after your meeting.
+:::callout
+**This document is a starting point, not a finished plan.** The goal is to give Karen and Cece something to react to instead of starting from a blank page. Read it, mark it up, change what does not match your teaching experience. We will revise it together after your meeting.
+:::
 
 ---
 
