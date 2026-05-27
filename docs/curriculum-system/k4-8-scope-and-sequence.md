@@ -2,7 +2,7 @@
 brand: lcs
 title: "K4 to Grade 8 Scope and Sequence"
 date: "Draft — May 27, 2026"
-closing_quote: "The strawman gives the AI drafter a target to aim for. Without it, every lesson is generated alone. With it, every lesson knows what came before and what comes after."
+closing_quote: "Three hundred classes from K4 to Grade 8 — and at the end, students who actually speak Spanish."
 ---
 
 :::callout
