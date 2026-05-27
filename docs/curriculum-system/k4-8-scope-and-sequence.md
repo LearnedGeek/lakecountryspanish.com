@@ -9,6 +9,31 @@ closing_quote: "The strawman gives the AI drafter a target to aim for. Without i
 **This document is a starting point, not a finished plan.** The goal is to give Karen and Cece something to react to instead of starting from a blank page. Read it, mark it up, change what does not match your teaching experience. We will revise it together after your meeting.
 :::
 
+## Words used in this document
+
+A few terms are used throughout. Most come from how language curriculum is usually organized in U.S. schools:
+
+| Term | What it means |
+|---|---|
+| **LearningPath** | One full year of Spanish for one grade (for example, "K4 Spanish"). A child in the program for 10 years passes through 10 LearningPaths: K4, K5, Grade 1, Grade 2 ... Grade 8. |
+| **Unit** | A thematic block of multiple classes that all share one big topic. Example: a 6-class Unit on Colors, or a 5-class Unit on Family. A Unit is **not** one class — it is many classes working on the same theme. |
+| **Class** (or **Day**, in the platform) | One individual class session. In LCS this is 45 minutes long. |
+| **Lesson plan** | The teacher-facing instructions for one Class. The platform calls this a *Day* and stores it as one record. |
+| **ACTFL** | American Council on the Teaching of Foreign Languages. The standards body that publishes the proficiency scale (Novice, Intermediate, Advanced, Superior, Distinguished). |
+| **WI DPI** | Wisconsin Department of Public Instruction. Publishes the Wisconsin standards for World Languages (2019), which LCS is built to align with. |
+| **FLES** | Foreign Language in the Elementary School. The general name for elementary-school world language programs in the U.S. Most published research uses this term. |
+| **Novice-Low / Mid / High** | Sub-levels within the ACTFL Novice band. Each sub-level describes what the student can do (see Section 3). |
+
+### The math, in one place
+
+- **30 weeks** in the school year
+- **1 class per week** in the Standard track (45 min each)
+- = **30 classes per year per grade**
+- Grouped into **5 Units of 6 classes each**
+- 5 Units × 6 classes = 30 classes = full year
+
+Karen and Cece can decide later if they want 6 Units of 5 classes, or 4 Units of 7-8 classes. The 5×6 structure is just an easy starting shape.
+
 ---
 
 ## 1. The "fluent by high school" claim — how to talk about it honestly
@@ -111,15 +136,39 @@ These targets connect to the **Wisconsin DPI World Languages Standards** (June 2
 
 ## 4. Unit themes by grade — the actual content
 
-This is a **first-draft** list of 5 units per grade. Each unit takes about 6 weeks (5 weeks of new content + 1 week of review and assessment). Across 30 weeks of the school year, that gives 5 units × 6 weeks = 30 weeks.
+This is a **first-draft** list of 5 Units per grade. Each Unit takes about 6 weeks of classes (5 classes of new content + 1 class for review and assessment). At 1 class per week, that gives 5 Units × 6 classes = 30 classes per year.
 
-Each unit has:
-- A **theme** (the topic students explore)
+Each Unit has:
+
+- A **theme** (the topic students explore across the 6 classes)
 - **Core vocabulary** (a few sample words to show the level — the full list is larger)
 - A **cultural connection** (a Spanish-speaking country or tradition)
-- **WI standard codes** (which standards this unit teaches against)
+- **WI standard codes** (which standards this Unit teaches against)
 
-For brevity, I show 5 units per grade with one cultural country per grade. Karen and Cece will adjust both.
+For brevity, I show 5 Units per grade with one cultural country per grade. Karen and Cece will adjust both.
+
+### Example: what one Unit looks like when broken into classes
+
+Here is what a single Unit might look like at the class level. This is the Unit 2 from K4 ("Los colores") from our hand-drafted sample lesson — so you can see how the Unit-level theme turns into individual classes:
+
+| Class # | Class theme | What students do |
+|---|---|---|
+| 1 | Three colors: rojo, azul, amarillo | Hold up colored cards, say each color, repeat in groups |
+| 2 | Three more colors: verde, anaranjado, morado | Same pattern, plus point to colored objects in the room |
+| 3 | All six colors: vocab table + Bingo de Colores game | Vocabulary table with pronunciation cues, 3×3 Bingo card |
+| 4 | Traza y Colorea worksheet day | Trace each color word, color the matching picture |
+| 5 | Cultural day: the Peruvian flag | Story about *rojo y blanco*, Lola the llama, simple craft |
+| 6 | Review + simple assessment | Teacher holds up cards silently, students self-rate thumbs-up |
+
+Each individual class plan (the lesson plan a teacher reads while teaching) lives in the LCS platform as one **Day**. The platform's AI drafter can generate these class plans automatically once you agree on the Unit themes — Karen does not need to plan each class from a blank page.
+
+**This means Karen and Cece can brainstorm at the Unit level tomorrow.** They do not need to plan all 30 classes per grade. They need to decide:
+
+1. What the 5 Units of each grade are (the themes)
+2. What order to teach them in
+3. What cultural country anchors each grade
+
+Once those decisions are made, the platform helps with the rest.
 
 ---
 
