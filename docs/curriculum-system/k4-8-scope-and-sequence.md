@@ -534,6 +534,566 @@ When Karen and Cece read this, they should ask three questions:
 2. **Does the K4 theme sequence make sense?** Greetings → Colors → Numbers → Family → Animals. Or would they reorder?
 3. **Is each individual class small enough to teach in 45 minutes?** Karen has the best instincts here.
 
-If the answer is "yes, more or less" on all three, the same shape applies to all 10 grades. Karen and Cece pick the Unit themes for K5 through Grade 8 (the body of this document is one suggestion), and the AI drafter handles the class-by-class content within each Unit once the platform has the Units loaded.
+If the answer is "yes, more or less" on all three, the same shape applies to all 10 grades. The stubs for K5 through Grade 8 below give the same Unit-and-class structure for each remaining grade — but as **placeholders, not finished plans**. They are concrete enough to react to ("yes, that order makes sense" or "no, move that") without locking anything in.
 
 If the answer is "no, this shape is wrong" on any of the three, we redesign the shape first before applying it across the full K4-Grade 8 program.
+
+---
+
+# Appendix B — Stubs for K5 through Grade 8
+
+These are **placeholders**. The class descriptions are one-liners that show the shape of each Unit, not detailed lesson plans. Karen and Cece can react to the order, swap classes between Units, or replace Unit themes entirely. Once the structure settles, the AI drafter produces the full lesson plans the way it did for K4 Unit 2 (Colors).
+
+---
+
+## K5 — Building blocks (Cultural focus: Mexico)
+**Year-end target:** Novice-Low — recognize ~100 words, simple memorized phrases, sing along to short songs
+
+### Unit 1: Review and extend greetings
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Review *hola, adiós* + add *buenos días* | Time-of-day greetings practice |
+| 2 | *Buenas tardes, buenas noches* | Add evening greetings, role-play |
+| 3 | *¿Cómo estás?* + *bien / mal / así así* | Express how you feel |
+| 4 | *Mucho gusto* + meeting people | Practice introductions in pairs |
+| 5 | Cultural day: Mexican greetings (*abrazo*) | Compare hugging vs handshaking customs |
+| 6 | **Review + assessment** | Greeting circle, self-check |
+
+### Unit 2: El cuerpo
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Cabeza, ojos, boca, nariz* | Head and face vocabulary, "Simon says" |
+| 2 | *Brazos, manos, dedos* | Arms and hands, action song |
+| 3 | *Piernas, pies* | Legs and feet, walking song |
+| 4 | Full body review song | Mexican children's song *cabeza-hombros-rodillas* |
+| 5 | Cultural day: Mexican folk songs | Listen and move to the music |
+| 6 | **Review + assessment** | Label a body diagram, thumbs-up self-check |
+
+### Unit 3: Mi casa
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Casa, sala, cocina* | Main rooms |
+| 2 | *Cuarto, baño* | Bedroom and bathroom |
+| 3 | Furniture vocabulary | *Mesa, silla, cama* |
+| 4 | *Mi casa tiene...* | Describe your own home |
+| 5 | Cultural day: Houses in Mexican villages and cities | Picture tour of varied homes |
+| 6 | **Review + assessment** | Draw and label your house, self-check |
+
+### Unit 4: La comida básica
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Drinks: *agua, leche, jugo* | Practice ordering drinks |
+| 2 | Fruit: *manzana, plátano, naranja* | Match fruits to colors |
+| 3 | Bread and grains: *pan, tortilla, arroz* | Try a tortilla (if classroom-safe) |
+| 4 | *Me gusta / no me gusta* + foods | Express food preferences |
+| 5 | Cultural day: Tortillas and salsa | Pictures of Mexican family meals |
+| 6 | **Review + assessment** | Food preference game, self-check |
+
+### Unit 5: El clima
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Sol, lluvia, nieve* | Weather flashcards |
+| 2 | *Frío, calor, viento* | Temperature and wind |
+| 3 | *¿Qué tiempo hace hoy?* | Daily weather report ritual |
+| 4 | Clothing + weather | What to wear in each weather |
+| 5 | Cultural day: Climate zones of Mexico | Desert, mountains, coast, jungle |
+| 6 | **Review + assessment** | Weather chart for the week, self-check |
+
+---
+
+## Grade 1 — More words, simple sentences (Cultural focus: Spain)
+**Year-end target:** Novice-Low → Mid — single-word answers, short memorized phrases, 200+ words
+
+### Unit 1: La escuela
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Libro, lápiz, papel* | Classroom basics |
+| 2 | *Mesa, silla, pizarra* | Furniture in the classroom |
+| 3 | *Maestra, estudiante* | People at school |
+| 4 | Classroom commands: *abre, cierra, escucha* | Follow simple directions in Spanish |
+| 5 | Cultural day: A school day in Spain | Compare lunch times, recess, uniforms |
+| 6 | **Review + assessment** | Classroom scavenger hunt, self-check |
+
+### Unit 2: Los números 1-20 + edad
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Review 1-10, add 11-15 | Counting songs |
+| 2 | Numbers 16-20 | Hand-clap counting |
+| 3 | *¿Cuántos años tienes?* + *tengo X años* | Practice in pairs |
+| 4 | Number + noun combinations | *Cinco libros, tres lápices* |
+| 5 | Cultural day: Birthday traditions in Spain | *El cumpleaños feliz*, candle traditions |
+| 6 | **Review + assessment** | Birthday card making, self-check |
+
+### Unit 3: Me gusta / no me gusta
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Me gusta + noun* | Likes for foods, animals, colors |
+| 2 | *No me gusta + noun* | Dislikes |
+| 3 | *¿Te gusta...?* + sí / no | Asking each other |
+| 4 | *Me gusta mucho / no me gusta nada* | Adding intensity |
+| 5 | Cultural day: Spanish food (*paella, tortilla española*) | Try a small taste if possible |
+| 6 | **Review + assessment** | Like/dislike chart, self-check |
+
+### Unit 4: La ropa
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Camisa, pantalones, zapatos* | Basic clothing |
+| 2 | *Vestido, falda, sombrero* | Add dress, skirt, hat |
+| 3 | Colors + clothing | *Una camisa roja, los pantalones azules* (gender agreement intro) |
+| 4 | What I'm wearing today | Each student describes their own clothing |
+| 5 | Cultural day: Traditional Spanish dress (flamenco) | Photos of flamenco outfits |
+| 6 | **Review + assessment** | Dress a paper doll, self-check |
+
+### Unit 5: Los días de la semana
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Lunes, martes, miércoles* | First three weekdays |
+| 2 | *Jueves, viernes* | Rest of the school week |
+| 3 | *Sábado, domingo* + *fin de semana* | Weekend |
+| 4 | *Hoy es..., mañana es...* | Today and tomorrow |
+| 5 | Cultural day: The Spanish weekly rhythm (siesta) | When do Spanish families eat lunch? |
+| 6 | **Review + assessment** | Calendar coloring, self-check |
+
+---
+
+## Grade 2 — Connecting ideas (Cultural focus: Argentina)
+**Year-end target:** Novice-Mid — combine memorized chunks into simple statements, ask basic questions
+
+### Unit 1: Los números 1-100 + la hora
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Numbers 21-50 | Counting by tens, fives |
+| 2 | Numbers 51-100 | Bigger numbers, real-world counting |
+| 3 | *¿Qué hora es?* + o'clock | Telling time on the hour |
+| 4 | Half-hour and quarter-hour | *Y media, y cuarto* |
+| 5 | Cultural day: Buenos Aires daily life | When do Argentinians eat dinner? (Late!) |
+| 6 | **Review + assessment** | Clock-making craft, self-check |
+
+### Unit 2: Los meses + el cumpleaños
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Enero, febrero, marzo, abril* | First four months |
+| 2 | *Mayo, junio, julio, agosto* | Middle months |
+| 3 | *Septiembre, octubre, noviembre, diciembre* | Final months |
+| 4 | *Mi cumpleaños es el... de...* | Each student says their birthday |
+| 5 | Cultural day: Argentine birthday traditions (*mate*, *asado*) | Family gathering culture |
+| 6 | **Review + assessment** | Class birthday calendar, self-check |
+
+### Unit 3: Los deportes
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Fútbol, básquetbol, vóleibol* | Common sports |
+| 2 | *Correr, saltar, nadar* | Sport actions |
+| 3 | *Me gusta jugar...* + sport | Express what sports you like |
+| 4 | *Equipo, ganar, perder* | Team and game outcomes |
+| 5 | Cultural day: Argentine soccer culture | Messi, La Boca, World Cup |
+| 6 | **Review + assessment** | Sports preference survey, self-check |
+
+### Unit 4: Mis pasatiempos
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Cantar, bailar, leer* | Common hobbies |
+| 2 | *Dibujar, pintar, escribir* | Creative hobbies |
+| 3 | *Me gusta + infinitivo* | Combine hobby + likes |
+| 4 | *¿Qué te gusta hacer?* | Asking partners |
+| 5 | Cultural day: Tango and Argentine music | Listen to a tango, observe rhythm |
+| 6 | **Review + assessment** | Hobby chart, self-check |
+
+### Unit 5: Las celebraciones
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Feliz cumpleaños, fiesta, regalo* | Party vocabulary |
+| 2 | *Piñata, dulces, globos* | Party items |
+| 3 | *Cantar, bailar, comer* + celebration | Verbs at a party |
+| 4 | Holiday vocabulary preview | *Navidad, Año Nuevo* |
+| 5 | Cultural day: Argentine holidays and celebrations | Día de la Independencia, family gatherings |
+| 6 | **Review + assessment** | Plan a class party in Spanish, self-check |
+
+---
+
+## Grade 3 — Present tense and short stories (Cultural focus: Costa Rica)
+**Year-end target:** Novice-Mid → High — simple complete sentences in present tense, describe familiar people and objects
+
+### Unit 1: Verbos -ar en presente
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Hablar* — full conjugation | I/you/he/she/we/they speak |
+| 2 | *Cantar, bailar* | Practice with -ar verbs |
+| 3 | *Estudiar, caminar* | Add school + movement verbs |
+| 4 | *Yo hablo español* + sentence building | Make complete sentences |
+| 5 | Cultural day: School life in Costa Rica | School day length, uniforms, rural vs urban |
+| 6 | **Review + assessment** | Verb conjugation chart, self-check |
+
+### Unit 2: Mi rutina diaria
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Me levanto, desayuno* | Morning routine |
+| 2 | *Voy a la escuela, estudio* | School routine |
+| 3 | *Almuerzo, juego con amigos* | Afternoon routine |
+| 4 | *Hago la tarea, ceno, duermo* | Evening routine |
+| 5 | Cultural day: A Costa Rican school day | Pura vida pace, lunch with family |
+| 6 | **Review + assessment** | Draw a daily schedule, self-check |
+
+### Unit 3: La comunidad
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Tienda, supermercado* | Shopping places |
+| 2 | *Parque, biblioteca, iglesia* | Community places |
+| 3 | *Hospital, escuela, banco* | Service places |
+| 4 | *Voy a + place* | Saying where you're going |
+| 5 | Cultural day: *Pura vida* — Costa Rican values | The Costa Rican greeting that's also a worldview |
+| 6 | **Review + assessment** | Community map in Spanish, self-check |
+
+### Unit 4: Adjetivos
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Grande, pequeño* | Size adjectives |
+| 2 | *Alto, bajo* | Height adjectives |
+| 3 | *Simpático, antipático, divertido* | Personality |
+| 4 | Adjective agreement: gender + number | *Una casa pequeña, los gatos grandes* |
+| 5 | Cultural day: Describing the Costa Rican rainforest | *El bosque grande, los pájaros coloridos* |
+| 6 | **Review + assessment** | Describe a classmate (kindly!), self-check |
+
+### Unit 5: Cuentos cortos
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Read a short story together (familiar tale) | Listen and read along |
+| 2 | Vocabulary from the story | Pull out 5 key words |
+| 3 | Retell the story in pairs | Use the vocab to retell |
+| 4 | Act out the story | Role-play with simple props |
+| 5 | Cultural day: A folk tale from Costa Rica | *La leyenda del quetzal* or similar |
+| 6 | **Review + assessment** | Story sequencing activity, self-check |
+
+---
+
+## Grade 4 — Past tense and connected paragraphs (Cultural focus: Colombia)
+**Year-end target:** Novice-High — connect 2-3 sentences on familiar topics, talk about likes, family, school, weekend
+
+### Unit 1: Verbos -er, -ir
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Comer, beber* | -er verb intro |
+| 2 | *Leer, comprender* | More -er verbs |
+| 3 | *Vivir, escribir* | -ir verb intro |
+| 4 | Full conjugation practice | All three verb endings |
+| 5 | Cultural day: Daily life in Bogotá and Cartagena | Highland vs coastal city contrast |
+| 6 | **Review + assessment** | Verb conjugation chart, self-check |
+
+### Unit 2: La comida y los restaurantes
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Restaurant vocabulary: *menú, mesero, cuenta* | Set the scene |
+| 2 | *Quiero..., me trae...* | Polite ordering phrases |
+| 3 | Colombian foods: *arepa, bandeja paisa, ajiaco* | Read about traditional dishes |
+| 4 | Role-play: order a meal | Pair work — customer and waiter |
+| 5 | Cultural day: Colombian food regions | Coast vs Andes vs Amazon foods |
+| 6 | **Review + assessment** | Design a Colombian restaurant menu, self-check |
+
+### Unit 3: El pretérito (past tense — regular verbs)
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Ayer, la semana pasada* + intro | Time markers for past |
+| 2 | -ar verbs in preterite: *hablé, cantaste, jugó* | Conjugation practice |
+| 3 | -er/-ir verbs in preterite: *comí, bebiste, escribió* | Conjugation practice |
+| 4 | "What did you do yesterday?" + answers | Pair conversation |
+| 5 | Cultural day: A weekend in Cartagena | Listen to a story told in past tense |
+| 6 | **Review + assessment** | Write 3 sentences about your weekend, self-check |
+
+### Unit 4: La geografía
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *País, capital, ciudad* | Country vocabulary |
+| 2 | *Montaña, río, océano, lago* | Geography features |
+| 3 | Map of Spanish-speaking countries | Locate and name on a world map |
+| 4 | Compare: *Colombia es grande, Costa Rica es pequeña* | Use adjectives + geography |
+| 5 | Cultural day: Geography of Colombia | Coffee region, Amazon, Caribbean, Andes |
+| 6 | **Review + assessment** | Label a map of Latin America, self-check |
+
+### Unit 5: Comparaciones
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Más grande que, más pequeño que* | Bigger than, smaller than |
+| 2 | *Menos que* | Less than |
+| 3 | *Tan ... como* | As ... as |
+| 4 | Compare countries, foods, climates | Apply comparisons to real items |
+| 5 | Cultural day: Compare Lake Country and Cartagena | Connect students' world to Colombia |
+| 6 | **Review + assessment** | Comparison chart, self-check |
+
+---
+
+## Grade 5 — Future and review (Cultural focus: Chile)
+**Year-end target:** Novice-High — sustain short exchanges, narrate simple past events, read short paragraphs
+
+### Unit 1: Ir a + infinitivo (near future)
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Ir* conjugation review | Voy, vas, va, vamos, van |
+| 2 | *Voy a + infinitivo* | "I'm going to + verb" |
+| 3 | Future plans in pairs | What are you going to do this weekend? |
+| 4 | Class plan: *Vamos a + activity* | Group planning |
+| 5 | Cultural day: Travel plans through Chile | From the Atacama desert to Patagonia |
+| 6 | **Review + assessment** | Write a paragraph about next weekend, self-check |
+
+### Unit 2: Las tiendas y el dinero
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Cuesta, dinero, pesos* | Shopping vocabulary |
+| 2 | *Barato, caro* + numbers | Price comparisons |
+| 3 | *Comprar, vender* | Buy and sell verbs |
+| 4 | Role-play: at the market | Customer and vendor |
+| 5 | Cultural day: Markets in Santiago and Valparaíso | Street markets, *ferias* |
+| 6 | **Review + assessment** | Plan a shopping trip with budget, self-check |
+
+### Unit 3: La naturaleza
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Árbol, planta, flor* | Plants |
+| 2 | *Océano, mar, lago, río* | Water features |
+| 3 | *Montaña, desierto, bosque* | Land features |
+| 4 | Describe a landscape | Sentence-building with adjectives |
+| 5 | Cultural day: Chilean geography (Atacama, Patagonia) | Read about world's driest desert + glaciers |
+| 6 | **Review + assessment** | Paint a Chilean landscape with Spanish labels, self-check |
+
+### Unit 4: Las materias escolares
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Matemáticas, ciencias* | Core subjects |
+| 2 | *Historia, arte, música* | Humanities and arts |
+| 3 | *Educación física, computación* | PE and tech |
+| 4 | *¿Cuál es tu materia favorita?* | Share favorite subjects |
+| 5 | Cultural day: Chilean school system | School year reversed (Mar-Dec), uniforms |
+| 6 | **Review + assessment** | Make a Chilean class schedule, self-check |
+
+### Unit 5: Revisión y proyecto
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Pick a Chilean topic | Each student chooses one topic that interests them |
+| 2 | Research vocabulary | Build a custom vocabulary list with the teacher |
+| 3 | Draft a short presentation | Write 5-7 sentences using year's grammar |
+| 4 | Practice presenting | In pairs first, then small groups |
+| 5 | Class presentations | Each student presents in Spanish |
+| 6 | **Year-end assessment** | Self-reflection + thumbs-up self-check on year's targets |
+
+---
+
+## Grade 6 — Conversations and culture (Cultural focus: Dominican Republic & Caribbean Spanish)
+**Year-end target:** Novice-High → Intermediate-Low (emerging) — simple conversations on familiar topics, ask follow-up questions
+
+### Unit 1: Conversaciones diarias
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Greeting + follow-up | *¿Cómo estás? ¿Qué tal el día?* |
+| 2 | Asking and answering basic questions | *¿Dónde? ¿Cuándo? ¿Por qué?* |
+| 3 | Transition words: *entonces, después, pero* | Add flow to speech |
+| 4 | Caribbean accent and pace | Listen to Dominican speakers — speed, dropped consonants |
+| 5 | Cultural day: Communication style in the Caribbean | Volume, gestures, family dinner conversation |
+| 6 | **Review + assessment** | 5-turn conversation with a partner, self-check |
+
+### Unit 2: La música y los artes
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Música, canción, instrumento* | Music vocabulary |
+| 2 | *Cantante, artista, bailarín* | Music professions |
+| 3 | Verbs: *cantar, bailar, tocar* | Music actions |
+| 4 | Listen to a merengue song | Identify words, dance simple steps |
+| 5 | Cultural day: Merengue, bachata, taíno history | Music as cultural identity |
+| 6 | **Review + assessment** | Pick a favorite song and describe it, self-check |
+
+### Unit 3: Profesiones e intereses
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Common professions: *doctor, profesor, ingeniero* | Job vocabulary |
+| 2 | *Quiero ser...* + profession | What do you want to be? |
+| 3 | *Me interesa* + topic | What interests you? |
+| 4 | Interview a partner | Pair conversation about future |
+| 5 | Cultural day: Career paths in the Dominican Republic | Diaspora, opportunities, family decisions |
+| 6 | **Review + assessment** | Career poster in Spanish, self-check |
+
+### Unit 4: El imperfecto
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Imperfect intro: *cuando era niño/a* | Talking about how things used to be |
+| 2 | -ar imperfect: *jugaba, cantaba* | Conjugation |
+| 3 | -er/-ir imperfect: *comía, vivía* | Conjugation |
+| 4 | *Siempre, todos los días* + imperfect | Habitual past |
+| 5 | Cultural day: Childhood memories in the DR | Generational stories |
+| 6 | **Review + assessment** | Write about your own childhood, self-check |
+
+### Unit 5: Identidad y comunidad
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Soy de, vivo en* | Where I'm from, where I live |
+| 2 | *Mi familia es de...* | Family origins |
+| 3 | *Mi comunidad* | My community here |
+| 4 | Compare two communities | LCS Wisconsin and a Caribbean community |
+| 5 | Cultural day: Caribbean diaspora in the U.S. | NY, Miami, Boston Dominican communities |
+| 6 | **Review + assessment** | Identity poster in Spanish, self-check |
+
+---
+
+## Grade 7 — Storytelling (Cultural focus: Guatemala & Central America)
+**Year-end target:** Intermediate-Low (emerging) — narrate past events, describe people and places in detail, express opinions
+
+### Unit 1: El pasado completo (preterite narration)
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Review preterite + irregular verbs: *fui, vine* | Common irregulars |
+| 2 | More irregulars: *vi, hice, dije* | High-frequency irregulars |
+| 3 | Story elements: beginning, middle, end | Structure a simple story |
+| 4 | Write a short past-tense story | 8-10 sentences |
+| 5 | Cultural day: Maya civilization stories | Popol Vuh excerpts (kid-friendly) |
+| 6 | **Review + assessment** | Share your story in small groups, self-check |
+
+### Unit 2: Viajes y experiencias
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Travel vocabulary: *avión, hotel, maleta* | Trip basics |
+| 2 | *Viajé a, visité, conocí* | Past tense for travel |
+| 3 | *Aprendí, vi, comí* + travel | What you did on a trip |
+| 4 | Describe a real or imagined trip | Pair share |
+| 5 | Cultural day: Travel narratives in Central America | Antigua, Lake Atitlán, Tikal |
+| 6 | **Review + assessment** | Write a travel diary entry, self-check |
+
+### Unit 3: Los medios y la tecnología
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Computadora, aplicación, en línea* | Tech basics |
+| 2 | *Redes sociales, mensaje, video* | Social media |
+| 3 | Verbs: *usar, mandar, ver* | Tech actions |
+| 4 | Talk about how you use technology | Pair conversation |
+| 5 | Cultural day: Digital life in Guatemala | Mobile phones, WhatsApp, family connections |
+| 6 | **Review + assessment** | Tech habits survey in Spanish, self-check |
+
+### Unit 4: Opiniones
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Creo que, pienso que, me parece* | Express opinions |
+| 2 | *Estoy de acuerdo, no estoy de acuerdo* | Agree and disagree |
+| 3 | Give reasons: *porque, ya que* | Support your opinion |
+| 4 | Age-appropriate debate topics | School lunches, screen time, etc. |
+| 5 | Cultural day: Youth voices in Central America | What teens care about |
+| 6 | **Review + assessment** | Opinion paragraph in Spanish, self-check |
+
+### Unit 5: El presente perfecto
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Present perfect intro: *he, has, ha + participle* | Recent past |
+| 2 | Common participles: *visto, comido, ido* | Build the vocabulary |
+| 3 | *He visto, he hecho, he aprendido* | Talk about recent experiences |
+| 4 | Contrast: preterite vs present perfect | When to use which |
+| 5 | Cultural day: Maya present-day life in Guatemala | Recent changes in indigenous communities |
+| 6 | **Review + assessment** | Share recent experiences, self-check |
+
+---
+
+## Grade 8 — Putting it together (Cultural focus: Spanish in the United States)
+**Year-end target:** Intermediate-Low → Mid — connect ideas across multiple sentences, narrate in multiple tenses, handle real conversations
+
+### Unit 1: Narrar en multi tiempo
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Mix past + present | "Yesterday I went... and today I am..." |
+| 2 | Mix past + future | "Last week I... and next week I will..." |
+| 3 | Mix all three tenses | Complex narration practice |
+| 4 | Tell a personal story | Use multiple tenses naturally |
+| 5 | Cultural day: Stories of Latino communities in the US | Family migration stories |
+| 6 | **Review + assessment** | Write a multi-tense narrative paragraph, self-check |
+
+### Unit 2: El subjuntivo básico
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Subjunctive intro: *quiero que tú...* | Wishes about others |
+| 2 | *Espero que, ojalá que* | Hopes |
+| 3 | Common -ar subjunctive forms | *hable, hables, hable* |
+| 4 | Common -er/-ir subjunctive forms | *coma, viva* |
+| 5 | Cultural day: Hopes and dreams in Latino US communities | Listen to interviews (kid-friendly) |
+| 6 | **Review + assessment** | Express hopes for the future in Spanish, self-check |
+
+### Unit 3: Identidad personal y cultural
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | *Origen, herencia, raíces* | Personal identity vocabulary |
+| 2 | *Tradiciones, valores, costumbres* | Cultural traditions |
+| 3 | Bilingual identity | Code-switching, *Spanglish* |
+| 4 | Interview a classmate's identity story | Pair interview, share themes |
+| 5 | Cultural day: Latino identity in Wisconsin | Local communities, family stories |
+| 6 | **Review + assessment** | Identity essay in Spanish (1 paragraph), self-check |
+
+### Unit 4: Literatura para jóvenes
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Read a short poem | Find rhythm, identify vocabulary |
+| 2 | Read song lyrics | Match Spanish songs to themes |
+| 3 | Read a short story excerpt | Comprehension activities |
+| 4 | Write a short poem in Spanish | Simple structure, year's vocabulary |
+| 5 | Cultural day: Spanish-language children's literature | *Pedro y el lobo*, *Don Quijote* simplified |
+| 6 | **Review + assessment** | Share student-written poems, self-check |
+
+### Unit 5: Proyecto final (capstone)
+
+| # | Theme | What students do |
+|---|---|---|
+| 1 | Choose a personal connection to the Spanish-speaking world | Topic selection |
+| 2 | Research and draft | Build vocabulary and outline |
+| 3 | Write the project | 1-2 page Spanish piece + visuals |
+| 4 | Practice presenting | Pair feedback |
+| 5 | Class presentations | Each student presents to class |
+| 6 | **Capstone assessment + celebration** | Recognize Grade 8 completion of LCS program — Intermediate-Low achievement |
+
+---
+
+## How to react to these stubs
+
+For each grade, Karen and Cece can:
+
+1. **Approve the Unit themes as listed.** Move on to the next grade.
+2. **Reorder the Units within a grade.** Maybe Family should come before Numbers in K4, etc.
+3. **Replace a Unit theme entirely.** Maybe Grade 4 should focus on Health and Body instead of Geography.
+4. **Reorder which cultural country anchors which grade.** The current sequence (Peru → Mexico → Spain → Argentina → Costa Rica → Colombia → Chile → DR → Guatemala → US) is one option among many.
+5. **Adjust individual class themes within a Unit.** The 6-class breakdown of each Unit is the easiest level to refine without restructuring the whole document.
+
+Once you both agree on the structure (with whatever revisions), Mark and I will load the LearningPaths and Units into the platform. After that, Karen can draft the individual class plans using the AI drafter — one Unit's worth of classes at a time, reviewing and approving as she goes.
