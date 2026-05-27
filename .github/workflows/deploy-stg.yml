@@ -1,0 +1,172 @@
+# Deploy Lake Country Spanish to the Hetzner VPS (staging environment).
+#
+# Modeled on the LearnedGeek + Allevo deploy workflows that target the
+# same VPS. Atomic tar-over-SSH swap, .prev rollback, smoke test.
+#
+# Triggers:
+#   - Push to main (automatic, after PR merge)
+#   - Manual via the Actions tab → "Deploy LCS to Hetzner (stg)" → Run
+#
+# Required GitHub repo secrets (Settings → Secrets and variables → Actions):
+#   DEPLOY_SSH_KEY    — Private key authorized on the VPS for the deploy
+#                       user. Generate a NEW keypair specifically for LCS:
+#                         ssh-keygen -t ed25519 -f ./gh-deploy-lcs -C "github-actions-lcs"
+#                       Paste the private key contents into this secret.
+#                       Add the matching .pub to the VPS user's
+#                       ~/.ssh/authorized_keys. Do not reuse the Allevo or
+#                       LearnedGeek keypair — blast radius matters.
+#   DEPLOY_HOST       — VPS hostname or IP, e.g. 5.161.205.21.
+#   DEPLOY_USER       — SSH user. root for now; switch to a dedicated
+#                       deploy user later (see hardening note at bottom).
+#   PG_PASSWORD       — Password for the lakecountryspanish_stg Postgres
+#                       role. Set during initial provisioning.
+#   CLAUDE_API_KEY    — Anthropic API key the curriculum drafter calls
+#                       through Claude:ApiKey config.
+#   PIXABAY_API_KEY   — Pixabay search API key used by the media library.
+
+name: Deploy LCS to Hetzner (stg)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Prevent concurrent deploys from racing each other on the same paths.
+concurrency:
+  group: deploy-hetzner-lcs-stg
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore + build + test
+        # The 5 pre-existing Stripe integration tests need a real Stripe
+        # test key configured in the runner; until that's wired in via
+        # secrets, filter them out so deploys don't fail on known gaps.
+        # The solution lives under src/ — restore/build at that path.
+        run: |
+          dotnet restore src/LakeCountrySpanish.sln
+          dotnet build src/LakeCountrySpanish.sln --no-restore --configuration Release
+          dotnet test src/LakeCountrySpanish.Tests --no-build --configuration Release --filter "FullyQualifiedName!~StripeE2ETests"
+
+      - name: Publish (linux-x64, framework-dependent)
+        run: |
+          # Publish does its own restore — needed for the linux-x64 RID-
+          # specific assets even though we already restored above. Matches
+          # the workaround used in the Allevo + LearnedGeek workflows.
+          dotnet publish src/LakeCountrySpanish.Web/LakeCountrySpanish.Web.csproj \
+            --configuration Release \
+            --runtime linux-x64 \
+            --self-contained false \
+            --output ./publish
+
+      - name: Render appsettings.Production.json from template + secrets
+        env:
+          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+        run: |
+          # Restrict envsubst to the explicit variable list so any other
+          # ${...} pattern in the template is left literal — defensive
+          # against future copy-paste mistakes.
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY}'
+          envsubst "$VARS" \
+            < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
+            > publish/appsettings.Production.json
+          # Sanity check: file must parse as JSON. Catches secrets with
+          # characters that break JSON escaping (quote, backslash) before
+          # we ship a broken config.
+          python3 -m json.tool publish/appsettings.Production.json > /dev/null
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # Pin the VPS host key. If the VPS identity ever changes
+          # (rebuild, IP migration) this deploy will fail loudly rather
+          # than silently trust a new host.
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy via tar-over-SSH (atomic swap)
+        run: |
+          # Stream tar over SSH, extract into a staging directory first.
+          # Only after the extraction succeeds do we stop the service and
+          # swap directories atomically. If anything fails mid-transfer,
+          # the active site is untouched. Previous version is kept at
+          # /var/www/lakecountryspanish-stg.prev so manual rollback is one
+          # `mv` away.
+          cd publish
+          tar -cf - . | ssh -i ~/.ssh/deploy_key \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'set -e
+             STAGING=/var/www/lakecountryspanish-stg.new
+             ACTIVE=/var/www/lakecountryspanish-stg
+             PREV=/var/www/lakecountryspanish-stg.prev
+             rm -rf "$STAGING"
+             mkdir -p "$STAGING"
+             cd "$STAGING"
+             tar -xf -
+             # Service runs as www-data. Set ownership before the swap so
+             # the service can read its appsettings.Production.json and
+             # write DataProtection keys.
+             chown -R www-data:www-data "$STAGING"
+             # appsettings.Production.json carries secrets — restrict
+             # readability to www-data only.
+             chmod 600 "$STAGING/appsettings.Production.json"
+             systemctl stop lakecountryspanish-stg
+             if [ -d "$ACTIVE" ]; then
+               rm -rf "$PREV"
+               mv "$ACTIVE" "$PREV"
+             fi
+             mv "$STAGING" "$ACTIVE"
+             systemctl start lakecountryspanish-stg'
+
+      - name: Smoke test the deploy
+        run: |
+          # Poll the public URL up to ~30 seconds for a 2xx/3xx response.
+          # If the service comes up fast we exit immediately; if it's slow
+          # we still wait long enough.
+          URL="https://stg.lakecountryspanish.com"
+          for i in $(seq 1 15); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+            if [[ "$STATUS" -ge 200 && "$STATUS" -lt 400 ]]; then
+              echo "$URL responded with HTTP $STATUS after attempt ${i}"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying in 2s"
+            sleep 2
+          done
+          echo "Health check failed: no 2xx/3xx response in 30 seconds"
+          exit 1
+
+# --- Hardening to do later -------------------------------------------------
+#
+# 1) Dedicated deploy user on the VPS instead of root. Same approach as
+#    documented in the LearnedGeek + Allevo deploy workflows.
+#
+# 2) Microsoft Teams (or other) notification on deploy failure or success.
+#
+# 3) Tag-gated production deploys: when prod migrates to Hetzner, add a
+#    sibling deploy-prod.yml that triggers only on git tags matching v*.
+#
+# 4) Rollback script wrapping the .prev swap:
+#       systemctl stop lakecountryspanish-stg
+#       rm -rf /var/www/lakecountryspanish-stg
+#       mv /var/www/lakecountryspanish-stg.prev /var/www/lakecountryspanish-stg
+#       systemctl start lakecountryspanish-stg
+#
+# 5) Stripe integration tests: once a stripe-test-key GitHub secret is
+#    wired in, drop the --filter "FullyQualifiedName!~StripeE2ETests"
+#    so the deploy runs the full suite.

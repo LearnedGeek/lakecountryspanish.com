@@ -1,0 +1,21 @@
+{
+  "_comment": "Production / staging secrets. Rendered from this template at deploy time by .github/workflows/deploy-stg.yml — envsubst replaces ${VAR} placeholders with values from GitHub repo secrets. This template is committed; the rendered file lives only on the deploy runner and on the target server (chmod 600, owned by www-data).",
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=lakecountryspanish_stg;Username=lakecountryspanish_stg;Password=${PG_PASSWORD}"
+  },
+  "AppSettings": {
+    "DefaultClassPrice": 25.00,
+    "SiteName": "Lake Country Spanish (stg)",
+    "AdminEmail": "",
+    "AdminName": "Karen"
+  },
+  "Claude": {
+    "ApiKey": "${CLAUDE_API_KEY}",
+    "Model": "claude-3-5-sonnet-20241022",
+    "DrafterModel": "claude-sonnet-4-5",
+    "DrafterMaxTokens": 8192
+  },
+  "Pixabay": {
+    "ApiKey": "${PIXABAY_API_KEY}"
+  }
+}
