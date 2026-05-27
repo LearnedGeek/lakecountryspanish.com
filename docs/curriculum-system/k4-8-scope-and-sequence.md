@@ -168,7 +168,21 @@ Each individual class plan (the lesson plan a teacher reads while teaching) live
 2. What order to teach them in
 3. What cultural country anchors each grade
 
-Once those decisions are made, the platform helps with the rest.
+To make the conversation concrete, see **Appendix A** at the end of this document. It shows K4 fully fleshed out — all 5 Units broken into all 30 individual classes for the year. The goal is to give a worked example you can react to ("yes, the shape of K4 looks right" or "no, change X"). Once the K4 shape is approved, the other grades follow the same pattern with their own themes.
+
+### What is automated today vs what we will add
+
+Honest picture of where the LCS platform stands right now:
+
+| Step | Status |
+|---|---|
+| 1. Set up a LearningPath (one whole grade) | **Manual today.** Mark inserts one row into the database per grade. We will add a self-service flow in a follow-up. |
+| 2. Create the 5 Units of a grade | **Manual today.** Same — Mark inserts the rows. A Unit drafter (give it a brief, AI generates 5 Units) is the next platform feature we will build. |
+| 3. Draft each individual class within a Unit | **Automated.** Karen types a short description of what she wants in a class; the platform's AI drafter produces the full lesson plan with vocabulary tables, warm-up, teach, practice, assessment, cultural note. |
+| 4. Review and approve each class plan | **Available today.** Karen reads the rendered class on screen, makes manual edits if needed, marks it active. |
+| 5. Teachers assemble approved classes into a printable binder | **Available today.** |
+
+In short: for tomorrow's meeting, you brainstorm Units. After the meeting, Mark and I load the agreed Units into the platform manually. Then Karen drafts classes within each Unit using the AI drafter. Future updates will let Karen create and edit Units herself.
 
 ---
 
@@ -407,3 +421,119 @@ The strawman gives the AI drafter a target to aim for. Without it, every lesson 
 This is a draft. Karen and Cece together have more teaching experience than anyone else who will read it. Trust your instincts on what is age-appropriate, what is realistic for one class per week, and what cultural connections will resonate with families in Lake Country.
 
 The goal of tomorrow's meeting is **not** to finalize everything. The goal is to react to this draft and decide what is roughly right and what needs to change. Mark and I will revise and load the agreed version into the platform.
+
+---
+
+# Appendix A — K4 fully fleshed out
+
+This appendix shows what one entire year of LCS looks like at the class level. Use it to decide whether the shape works for K4. If it does, the other grades (K5 through Grade 8) follow the same pattern with their own themes.
+
+**K4 — Welcome to Spanish** (Cultural focus: Peru)
+**Standard track:** 30 classes per year, 1 class per week, 45 minutes each
+**Year-end target:** Novice-Low (emerging) — recognize and repeat ~50 high-frequency words
+
+---
+
+## K4 Unit 1 — Hello, my name is...
+
+**Theme:** Greetings and introducing yourself
+**Cultural connection:** How Peruvian families greet each other; Lola the llama introduces herself
+**Core vocabulary:** *hola, adiós, me llamo, sí, no, ¿cómo te llamas?*
+**WI standards:** WL.IT.1.a.n1, WL.IP.2.a.n1
+
+| Class # | Theme | What students do |
+|---|---|---|
+| 1 | *Hola y adiós* | Hand puppet says *hola* to each student; students repeat. Wave and say *adiós* at end of class. |
+| 2 | *Me llamo...* | Each student practices saying *me llamo [name]*. Pass a stuffed Lola; whoever holds her introduces themselves. |
+| 3 | *¿Cómo te llamas?* | Pair work: students ask each other *¿cómo te llamas?* and answer. Lots of repetition. |
+| 4 | *Sí y no* + *¿Cómo estás?* | Yes/no game with thumbs up/down. Add *¿cómo estás?* with three answers: *bien, mal, así así*. |
+| 5 | *Mucho gusto, buenos días, buenas noches* | Greet at different times of day. Bow + handshake practice. |
+| 6 | **Review + assessment** | Greeting circle — each student greets the teacher and one classmate. Thumbs-up self-check. |
+
+---
+
+## K4 Unit 2 — Los colores
+
+**Theme:** The six basic colors
+**Cultural connection:** The red and white of the Peruvian flag; Andean textile colors
+**Core vocabulary:** *rojo, azul, amarillo, verde, anaranjado, morado*
+**WI standards:** WL.IT.1.a.n1, WL.IP.2.a.n1, WL.PS.3.c.n1, WL.IC.4.a.n+
+
+| Class # | Theme | What students do |
+|---|---|---|
+| 1 | Three colors: *rojo, azul, amarillo* | Hold up colored cards. Students repeat each color 3 times. Point to colored objects in the room. |
+| 2 | Three more colors: *verde, anaranjado, morado* | Same pattern. Mix all six colors at the end. |
+| 3 | Vocab table + *Toca el color* game | Review all six with pronunciation cues and emoji cards. Play "touch the color" — teacher calls a color, students touch something that color. |
+| 4 | *Bingo de Colores* | 3×3 Bingo card with colored circles. Teacher calls colors in Spanish; students mark squares. |
+| 5 | Cultural day: the Peruvian flag | Show the *rojo y blanco* of the flag. Lola the llama from the Andes. Simple coloring of the flag. |
+| 6 | **Review + assessment** | *Traza y Colorea* worksheet (trace each color word, color the matching picture). Thumbs-up self-check. |
+
+This is the Unit that was hand-drafted earlier and rendered through the platform's binder generator. **It is the proof of what the AI drafter can produce.** The remaining classes in this appendix are stubs; the platform will turn each stub into a full class plan like the one for Unit 2 here.
+
+---
+
+## K4 Unit 3 — Los números 1 a 10
+
+**Theme:** Counting from 1 to 10
+**Cultural connection:** Counting song from the Andes; Andean number traditions
+**Core vocabulary:** *uno, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez*
+**WI standards:** WL.IT.1.a.n1, WL.PS.3.c.n1
+
+| Class # | Theme | What students do |
+|---|---|---|
+| 1 | Numbers 1-5 with fingers | Hold up fingers, say each number; counting song with hand motions. |
+| 2 | Numbers 6-10 with fingers | Add 6-10; counting song continues. |
+| 3 | Counting classroom objects | *Hay cinco libros, hay tres lápices.* Count things together. |
+| 4 | Numbers + colors mash-up | *Cinco gatos rojos, dos peces azules.* Combines Units 2 and 3 vocabulary. |
+| 5 | Cultural day: an Andean counting song | Listen, clap, sing along. Connect to *quechua* counting if Karen wants. |
+| 6 | **Review + assessment** | Number bingo (1-10 grid). Thumbs-up self-check on counting to 10. |
+
+---
+
+## K4 Unit 4 — Mi familia
+
+**Theme:** Family members
+**Cultural connection:** Family in Peruvian culture; *abuelitos* and extended family
+**Core vocabulary:** *mamá, papá, hermano, hermana, abuelo, abuela, mi familia*
+**WI standards:** WL.IT.1.a.n1, WL.IP.2.a.n1, WL.IC.4.a.n+
+
+| Class # | Theme | What students do |
+|---|---|---|
+| 1 | *Mamá y papá* | Photos of generic moms and dads (book pages). Students say *mamá, papá.* |
+| 2 | *Hermano y hermana* | Add siblings. Students point to siblings (real or imagined). |
+| 3 | *Abuelo y abuela* | Add grandparents. Cultural note: *abuelitos* are often very close to children in Peruvian families. |
+| 4 | *Tengo + family* | Simple phrase: *Tengo un hermano. Tengo una abuela.* Practice with stuffed-animal "family." |
+| 5 | Show-and-share day | Each student brings (or draws) a picture of one family member; says *Esta es mi mamá* (or similar). |
+| 6 | **Review + assessment** | Family tree coloring page. Label simple family words. Thumbs-up self-check. |
+
+---
+
+## K4 Unit 5 — Los animales
+
+**Theme:** Animals, including the animals of the Andes
+**Cultural connection:** Llama, alpaca, condor — the iconic Andean animals
+**Core vocabulary:** *perro, gato, llama, pájaro, pez, vaca, caballo*
+**WI standards:** WL.IT.1.a.n1, WL.IT.1.b.n1, WL.IC.4.a.n+
+
+| Class # | Theme | What students do |
+|---|---|---|
+| 1 | Pets: *perro, gato* | Students say what pet they have (or wish for). |
+| 2 | Farm: *vaca, caballo, cerdo* | Add farm animals. Match-the-sound game (animal sounds in Spanish). |
+| 3 | Sky and water: *pájaro, pez* | Add birds and fish. Hand motions for flying and swimming. |
+| 4 | Animal sounds in Spanish | *El perro dice guau, el gato dice miau, el pájaro dice pío pío.* Sound differences from English. |
+| 5 | Andean animal day | *Llama, alpaca, vicuña, cóndor.* Pictures from Peru. Lola the llama features prominently. |
+| 6 | **Review + assessment** | Animal matching worksheet. Thumbs-up self-check. **End-of-year celebration** — students greet Lola, name a color, count to 5, name an animal, name a family member. Full year's vocabulary on display. |
+
+---
+
+## How to use this appendix
+
+When Karen and Cece read this, they should ask three questions:
+
+1. **Does the shape of a Unit feel right?** 5 classes of new content + 1 class for review/assessment. Or do they want a different rhythm?
+2. **Does the K4 theme sequence make sense?** Greetings → Colors → Numbers → Family → Animals. Or would they reorder?
+3. **Is each individual class small enough to teach in 45 minutes?** Karen has the best instincts here.
+
+If the answer is "yes, more or less" on all three, the same shape applies to all 10 grades. Karen and Cece pick the Unit themes for K5 through Grade 8 (the body of this document is one suggestion), and the AI drafter handles the class-by-class content within each Unit once the platform has the Units loaded.
+
+If the answer is "no, this shape is wrong" on any of the three, we redesign the shape first before applying it across the full K4-Grade 8 program.
