@@ -46,6 +46,12 @@
     <link rel="icon" type="image/png" href="~/img/lake-country-spanish-logo.png" />
     <link rel="apple-touch-icon" href="~/img/lake-country-spanish-logo.png" />
 
+    <!-- Editorial type pairing: Fraunces (display) + Nunito (body). Pulls the
+         page away from the generic system-sans bootstrap feel. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Nunito:wght@400;600;700;800&display=swap" />
+
     <!-- LocalBusiness Schema Markup -->
     <script type="application/ld+json">
     {
@@ -116,48 +122,138 @@
             theme: {
                 extend: {
                     colors: {
-                        // Navy blue from logo - professional, trustworthy
+                        // Deep violet — LCS brand anchor (Karen's preferred Futura
+                        // palette direction). The 800 sits at #3B1E5C, the deep
+                        // violet from the Futura poster banners. Used for primary
+                        // CTAs, nav/footer, active states, key headlines. Replaced
+                        // the prior pink palette — pink is no longer a brand pillar.
                         primary: {
-                            50: '#f0f4f8',
-                            100: '#d9e2ec',
-                            200: '#bcccdc',
-                            300: '#9fb3c8',
-                            400: '#829ab1',
-                            500: '#627d98',
-                            600: '#486581',
-                            700: '#334e68',
-                            800: '#243b53',
-                            900: '#1e3a5f',
+                            50: '#F4ECFA',
+                            100: '#E7D9F2',
+                            200: '#CFBCE7',
+                            300: '#AE91D8',
+                            400: '#8B65C7',
+                            500: '#7045B0',
+                            600: '#5E3895',
+                            700: '#4C2A7A',
+                            800: '#3B1E5C',
+                            900: '#25103D',
                         },
-                        // Coral/terracotta from logo - warm, inviting, fun
+                        // Living coral — secondary, warmth between pink and orange.
+                        // Used on accent badges, secondary CTAs, decorative pops.
                         secondary: {
-                            50: '#fef6f4',
-                            100: '#fde8e4',
-                            200: '#fbd0c7',
-                            300: '#f7a999',
-                            400: '#f0806b',
-                            500: '#e85a42',
-                            600: '#c84b31',
-                            700: '#a73d28',
-                            800: '#883220',
-                            900: '#6f291a',
+                            50: '#FFF1EF',
+                            100: '#FFDFD8',
+                            200: '#FFBBAB',
+                            300: '#FF9A85',
+                            400: '#FF8674',
+                            500: '#FF6F61',
+                            600: '#E85543',
+                            700: '#C03E2E',
+                            800: '#93291F',
+                            900: '#661B14',
                         },
-                        // Accent gold for highlights and celebrations
+                        // Sunshine yellow — the third color in Karen's coral/pink/yellow
+                        // palette. Used for badges ("Save 17%"), highlights, "fun"
+                        // emphasis text in the hero, and the occasional callout.
                         accent: {
-                            50: '#fffbeb',
-                            100: '#fef3c7',
-                            200: '#fde68a',
-                            300: '#fcd34d',
-                            400: '#fbbf24',
-                            500: '#f59e0b',
-                            600: '#d97706',
-                            700: '#b45309',
-                            800: '#92400e',
-                            900: '#78350f',
-                        }
+                            50: '#FFFBEB',
+                            100: '#FFF3C2',
+                            200: '#FFE685',
+                            300: '#FFDD55',
+                            400: '#FFD63D',
+                            500: '#FFCC1A',
+                            600: '#E8B300',
+                            700: '#BA8E00',
+                            800: '#876700',
+                            900: '#5C4500',
+                        },
+                        // Override Tailwind's default gray-50 to a warm cream so the
+                        // ~74 files that use `bg-gray-50` as page background pick up
+                        // the warmer tone automatically. gray-100 through gray-900
+                        // stay at Tailwind defaults (Tailwind merges within the
+                        // extended object).
+                        gray: {
+                            50: '#FFFDF7',
+                        },
+                        // Deep navy — pulls double-duty as Lola's outline color
+                        // (brand-bible #1E3A8A) and the structural cool anchor that
+                        // grounds the warm pink/coral/yellow palette. Used for
+                        // body-text-dark, structural lines, dashed paths.
+                        ink: {
+                            50: '#EEF1F8',
+                            100: '#D6DDED',
+                            200: '#A8B5D6',
+                            300: '#7287BB',
+                            400: '#4760A0',
+                            500: '#2A4485',
+                            600: '#1E3A8A',
+                            700: '#172E6E',
+                            800: '#102453',
+                            900: '#0A1A3D',
+                        },
+                        // Turquoise/teal — the cool counterbalance from the Futura
+                        // poster (speech-bubble fills) and the painting llama's
+                        // mountain layers. Pulled slightly toward Futura's
+                        // bluer-teal (#206080-#208080 range) rather than the
+                        // tropical aqua of default Tailwind teal.
+                        teal: {
+                            50: '#EBF6F7',
+                            100: '#C7E7EB',
+                            200: '#92CFD6',
+                            300: '#5DB6BF',
+                            400: '#369AA4',
+                            500: '#1E8189',
+                            600: '#1A6F7E',
+                            700: '#155967',
+                            800: '#0F4350',
+                            900: '#0A2E37',
+                        },
+                        // Deep violet — Karen's preferred Futura anchor. The Futura
+                        // poster uses #200040-ish deep purple as the dominant dark,
+                        // NOT pure navy. Plum sits in that family but lifted toward
+                        // #3B2E78 so it stays readable for text and won't read as
+                        // "school bus" primary. Used for structural elements:
+                        // dashed paths, headlines on cream, nav highlights, footer.
+                        plum: {
+                            50: '#F1EEF8',
+                            100: '#DDD5EE',
+                            200: '#B9A8DA',
+                            300: '#937CC4',
+                            400: '#6E54AE',
+                            500: '#523696',
+                            600: '#3F2782',
+                            700: '#311E68',
+                            800: '#24164D',
+                            900: '#170D33',
+                        },
+                        // Warm gold — Futura's "Tradiciones" brushstroke yellow
+                        // (#E0C040 cleaned). Deeper and warmer than our neon
+                        // accent-500 (#FFCC1A). Use where neon yellow reads cheap
+                        // (badges, ribbons, brushstroke backgrounds). Accent stays
+                        // for bright highlights; gold stays for editorial warmth.
+                        gold: {
+                            50: '#FCF8E7',
+                            100: '#F9EFC2',
+                            200: '#F2DD85',
+                            300: '#EBCC52',
+                            400: '#E0B832',
+                            500: '#C99C1F',
+                            600: '#A57D17',
+                            700: '#7F5F12',
+                            800: '#59420C',
+                            900: '#332606',
+                        },
                     },
                     fontFamily: {
-                        'display': ['Georgia', 'serif'],
+                        // Body sans: warm humanist sans used for paragraphs, buttons,
+                        // labels — replaces the system-default ui-sans that reads
+                        // "bootstrap template."
+                        sans: ['Nunito', 'system-ui', 'sans-serif'],
+                        // Display serif: Fraunces is a variable-axis serif with a
+                        // friendly editorial cadence (no stuffy old-newspaper feel).
+                        // Used on h1/h2 via the `font-display` utility.
+                        display: ['Fraunces', 'Georgia', 'serif'],
                     }
                 }
             }

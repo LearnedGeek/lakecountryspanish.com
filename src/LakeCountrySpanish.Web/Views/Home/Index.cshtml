@@ -4,53 +4,61 @@
     ViewData["MetaDescription"] = "Spanish lessons in Lake Country Wisconsin with Karen, a native Peruvian teacher. Serving Oconomowoc, Waukesha, Delafield, Hartland, Pewaukee & surrounding areas. Personalized online lessons with flexible scheduling.";
 }
 
-<!-- Hero Section -->
-<div class="relative bg-gradient-to-br from-primary-800 via-primary-900 to-primary-800 overflow-hidden">
-    <!-- Decorative background elements -->
-    <div class="absolute inset-0 overflow-hidden">
+<!-- Hero Section. Uses overflow-x-clip (not overflow-hidden) so the floating
+     polaroid on the right can bleed down past the section boundary into Meet
+     Karen below, breaking the rectangle-stacked-on-rectangle reading.
+     Background gradient: cream -> light teal -> light yellow. Earlier this was
+     cream -> light-pink (via-primary-50), but with primary swapped to violet
+     that mid-stop became lavender and washed the hero mauve. Teal-50 in the
+     middle brightens it without losing the warm-corner feel. -->
+<div class="relative bg-gradient-to-br from-gray-50 via-teal-50 to-accent-50 overflow-x-clip">
+    <!-- Decorative background elements (kept clipped to the hero) -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div class="absolute -top-40 -right-40 w-80 h-80 bg-secondary-500/10 rounded-full blur-3xl"></div>
         <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-secondary-500/10 rounded-full blur-3xl"></div>
     </div>
 
     <div class="relative mx-auto max-w-7xl">
-        <div class="relative z-10 pb-12 sm:pb-16 md:pb-20 lg:pb-24 pt-10 lg:pt-16">
+        <div class="relative z-10 pb-12 sm:pb-16 md:pb-20 lg:pb-12 pt-10 lg:pt-16">
             <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
-                    <div class="sm:text-center md:mx-auto lg:col-span-7 lg:text-left">
-                        <!-- Playful greeting badge -->
-                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-6 border border-white/20">
-                            <span class="text-2xl">👋</span>
-                            <span class="text-white font-medium">Hola! Ready to learn Spanish?</span>
-                        </div>
+                <div class="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
+                    <div class="sm:text-center md:mx-auto lg:col-span-8 lg:text-left">
+                        <!-- Brand-promise eyebrow — the positioning line. Karen
+                             proposed "Real culture, native speakers" — swapped
+                             the second half to avoid the lineage framing and
+                             tie to the conversation-driven teaching philosophy. -->
+                        <p class="text-xs sm:text-sm font-bold tracking-[0.2em] uppercase text-primary-700 mb-3">
+                            Real culture. Real conversation.
+                        </p>
 
-                        <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
+                        <h1 class="font-display text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl leading-[1.05]">
                             <span class="block">Spanish Lessons</span>
-                            <span class="block text-secondary-400">That Feel Like Fun!</span>
+                            <span class="block text-primary-600 italic">that feel like fun.</span>
                         </h1>
-                        <p class="mt-4 text-lg text-primary-100 sm:mx-auto sm:max-w-xl md:text-xl lg:mx-0">
+                        <p class="mt-4 text-lg text-gray-700 sm:mx-auto sm:max-w-xl md:text-xl lg:mx-0">
                             Join Karen, a native Peruvian teacher, for personalized online lessons filled with
                             conversation, culture, and plenty of laughs. Learning Spanish has never been this enjoyable!
                         </p>
-                        <p class="mt-2 text-sm text-primary-200 sm:mx-auto sm:max-w-xl lg:mx-0">
+                        <p class="mt-2 text-sm text-gray-500 sm:mx-auto sm:max-w-xl lg:mx-0">
                             Serving Lake Country Wisconsin: Oconomowoc, Waukesha, Delafield, Hartland, Pewaukee, Brookfield & beyond
                         </p>
 
                         <!-- Key benefits inline -->
                         <div class="mt-6 flex flex-wrap gap-4 sm:justify-center lg:justify-start">
-                            <div class="flex items-center gap-2 text-primary-100">
-                                <svg class="h-5 w-5 text-secondary-400" fill="currentColor" viewBox="0 0 24 24">
+                            <div class="flex items-center gap-2 text-gray-700">
+                                <svg class="h-5 w-5 text-secondary-500" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                                 </svg>
                                 <span class="text-sm">Native Speaker</span>
                             </div>
-                            <div class="flex items-center gap-2 text-primary-100">
-                                <svg class="h-5 w-5 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <div class="flex items-center gap-2 text-gray-700">
+                                <svg class="h-5 w-5 text-secondary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <span class="text-sm">Flexible Schedule</span>
                             </div>
-                            <div class="flex items-center gap-2 text-primary-100">
-                                <svg class="h-5 w-5 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <div class="flex items-center gap-2 text-gray-700">
+                                <svg class="h-5 w-5 text-secondary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
                                 </svg>
                                 <span class="text-sm">Earn Rewards</span>
@@ -58,66 +66,46 @@
                         </div>
 
                         <div class="mt-8 sm:flex sm:justify-center lg:justify-start gap-4">
-                            <a asp-controller="Contact" asp-action="Index" class="flex w-full sm:w-auto items-center justify-center rounded-xl bg-secondary-500 px-8 py-4 text-base font-semibold text-white hover:bg-secondary-600 shadow-lg shadow-secondary-500/30 hover:shadow-secondary-500/40 transition-all hover:-translate-y-0.5">
+                            <a asp-controller="Contact" asp-action="Index" class="flex w-full sm:w-auto items-center justify-center rounded-xl bg-primary-500 px-8 py-4 text-base font-semibold text-white hover:bg-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5">
                                 Start Your Journey
                                 <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
                             </a>
-                            <a href="#pricing" class="mt-4 sm:mt-0 flex w-full sm:w-auto items-center justify-center rounded-xl border-2 border-white/30 px-8 py-4 text-base font-semibold text-white hover:bg-white/10 transition">
+                            <a href="#pricing" class="mt-4 sm:mt-0 flex w-full sm:w-auto items-center justify-center rounded-xl border-2 border-gray-300 px-8 py-4 text-base font-semibold text-gray-700 hover:bg-gray-100 transition">
                                 View Pricing
                             </a>
                         </div>
                     </div>
 
-                    <!-- Hero card with animated llama mascot -->
-                    <div class="mt-12 lg:col-span-5 lg:mt-0">
-                        <div class="relative">
-                            <!-- Main card -->
-                            <div class="bg-white rounded-2xl shadow-2xl p-8 relative z-10">
-                                <!-- Llama mascot -->
-                                <div class="text-center mb-6">
-                                    <img src="~/img/lake-country-spanish-logo.jpg" alt="Lake Country Spanish Llama" class="h-48 w-48 mx-auto rounded-full object-cover shadow-lg" />
-                                </div>
-
-                                <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Why Students Love Learning with Karen</h3>
-                                <p class="text-gray-500 text-center text-sm mb-6">More than just lessons - it's an adventure!</p>
-
-                                <ul class="space-y-4">
-                                    <li class="flex items-start gap-3">
-                                        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-secondary-100 flex items-center justify-center">
-                                            <span class="text-lg">🇵🇪</span>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium text-gray-900">Native Peruvian Teacher</span>
-                                            <p class="text-sm text-gray-500">Clear pronunciation & authentic culture</p>
-                                        </div>
-                                    </li>
-                                    <li class="flex items-start gap-3">
-                                        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                                            <span class="text-lg">🎯</span>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium text-gray-900">Personalized for You</span>
-                                            <p class="text-sm text-gray-500">Lessons match your goals & pace</p>
-                                        </div>
-                                    </li>
-                                    <li class="flex items-start gap-3">
-                                        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-accent-100 flex items-center justify-center">
-                                            <span class="text-lg">🎉</span>
-                                        </div>
-                                        <div>
-                                            <span class="font-medium text-gray-900">Fun & Engaging</span>
-                                            <p class="text-sm text-gray-500">Earn badges, points & free classes!</p>
-                                        </div>
-                                    </li>
-                                </ul>
+                    <!-- Logo polaroid + Lola, smaller and offset. The polaroid is
+                         tilted, the "Specials" badge sits on top, and Lola peeks
+                         from behind the lower-right corner. On lg+ the wrapper
+                         translates down so the polaroid pokes into the section
+                         below — visually breaking the section/section grid. -->
+                    <div class="mt-12 lg:col-span-4 lg:mt-0 lg:translate-y-20 relative z-30">
+                        <div class="relative mx-auto max-w-xs lg:rotate-3 transform-gpu">
+                            <!-- Polaroid frame -->
+                            <div class="bg-white rounded-2xl shadow-2xl p-5 pb-7 relative">
+                                <img src="~/img/lake-country-spanish-logo.jpg"
+                                     alt="Lake Country Spanish"
+                                     class="w-full aspect-square object-cover rounded-lg shadow-inner" />
+                                <p class="mt-3 text-center font-display text-lg text-gray-800 italic">
+                                    Lake Country Spanish
+                                </p>
                             </div>
 
-                            <!-- Decorative floating elements -->
-                            <div class="absolute -top-4 -right-4 bg-secondary-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg transform rotate-3 z-20">
-                                New Student Specials!
+                            <!-- "New Student Specials" pill — gold (Futura "Tradiciones"
+                                 brushstroke color) so the warm-yellow anchor lands here too. -->
+                            <div class="absolute -top-3 -left-6 bg-gold-400 text-plum-900 px-4 py-2 rounded-full text-xs font-bold shadow-lg -rotate-6 z-20">
+                                ✨ New Student Specials
                             </div>
+
+                            <!-- Lola peeking from behind the polaroid bottom-right -->
+                            <img src="~/img/mascot/llama-mascot-waving.png"
+                                 alt=""
+                                 aria-hidden="true"
+                                 class="hidden md:block absolute -right-12 -bottom-10 h-40 w-auto -rotate-12 drop-shadow-xl" />
                         </div>
                     </div>
                 </div>
@@ -126,105 +114,112 @@
     </div>
 </div>
 
-<!-- Meet Karen Section -->
-<div class="bg-white py-16">
+<!-- Meet Karen Section — magazine-style asymmetric layout. Big photo of Karen
+     teaching anchors the left, the quote card overlaps the photo bottom-right
+     on lg+, and the headline + stats stack on the right. -->
+<div class="bg-white pt-20 pb-20 lg:pt-36 lg:pb-24 overflow-hidden">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="lg:grid lg:grid-cols-2 lg:gap-16 items-center">
-            <!-- Karen's Story -->
-            <div>
-                <div class="inline-flex items-center gap-2 px-3 py-1 bg-secondary-100 text-secondary-700 rounded-full text-sm font-medium mb-4">
+        <div class="lg:grid lg:grid-cols-12 lg:gap-x-14 lg:gap-y-0 items-start">
+
+            <!-- Photo + overlapping quote (left, ~58%) -->
+            <div class="lg:col-span-7 relative">
+                <!-- Painterly framed photo with subtle rotation so it reads as a
+                     polaroid rather than a stock-corp banner. -->
+                <div class="relative overflow-hidden rounded-3xl shadow-2xl ring-8 ring-white -rotate-1 transform-gpu">
+                    <img src="~/img/karen-teaching.jpg"
+                         alt="A Spanish teacher working through a workbook with a young student"
+                         class="w-full h-auto object-cover"
+                         loading="lazy" />
+                </div>
+
+                <!-- Decorative coral arc behind the photo, peeking on the left -->
+                <div aria-hidden="true" class="hidden lg:block absolute -left-10 top-10 -z-10 h-64 w-64 rounded-full bg-secondary-100/60 blur-2xl"></div>
+
+                <!-- Quote card pulled over the bottom-right of the photo on lg+ -->
+                <div class="hidden lg:block absolute -bottom-12 -right-8 max-w-sm rotate-2">
+                    <div class="bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl p-6 text-white shadow-2xl ring-4 ring-white">
+                        <svg class="h-8 w-8 text-white/40 mb-3" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+                        </svg>
+                        <p class="text-base font-medium leading-relaxed">
+                            My goal isn't just to teach you Spanish — it's to help you fall in love with the language and feel confident using it in real life.
+                        </p>
+                        <p class="mt-3 font-semibold">— Karen</p>
+                    </div>
+                </div>
+
+                <!-- Lola peeking from behind the photo, lower-left, lg+ only -->
+                <img src="~/img/mascot/llama-mascot-hola-bubble.png"
+                     alt=""
+                     aria-hidden="true"
+                     class="hidden lg:block absolute -left-6 -bottom-10 h-32 w-auto -rotate-6 drop-shadow-xl" />
+            </div>
+
+            <!-- Headline + body + stat chips (right, ~42%) -->
+            <div class="mt-14 lg:mt-2 lg:col-span-5">
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-plum-100 text-plum-700 rounded-full text-sm font-semibold mb-5">
                     <span>🇵🇪</span>
                     <span>Meet Your Teacher</span>
                 </div>
-                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                    Hola, I'm Karen!
+                <h2 class="font-display text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl leading-[1.05]">
+                    Hola, <span class="italic text-primary-600">I'm Karen.</span>
                 </h2>
-                <p class="mt-4 text-lg text-gray-600">
-                    I'm a native Spanish speaker from Peru, and I've been teaching Spanish to students of all ages and levels
-                    for over a decade. My passion is making language learning feel natural, fun, and achievable.
+                <p class="mt-5 text-lg text-gray-700 leading-relaxed">
+                    A native Spanish speaker from Peru, teaching students of all ages for over a decade.
+                    My passion is making language learning feel natural, fun, and achievable.
                 </p>
-                <p class="mt-4 text-gray-600">
-                    I believe that the best way to learn a language is through real conversation, cultural connection,
-                    and a lot of patience and encouragement. Whether you're a complete beginner or looking to polish
-                    your skills, I'll create a personalized learning path just for you.
+                <p class="mt-4 text-gray-600 leading-relaxed">
+                    The best way to learn a language is real conversation, cultural connection,
+                    patience, and encouragement. Whether you're brand new or polishing your
+                    skills, I'll build a personalized path for you.
                 </p>
 
-                <div class="mt-8 grid grid-cols-2 gap-6">
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-primary-100 flex items-center justify-center">
-                            <svg class="h-5 w-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900">10+ Years Teaching</h4>
-                            <p class="text-sm text-gray-500">Experience with all levels</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-secondary-100 flex items-center justify-center">
-                            <svg class="h-5 w-5 text-secondary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900">All Ages Welcome</h4>
-                            <p class="text-sm text-gray-500">Kids, teens & adults</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-accent-100 flex items-center justify-center">
-                            <svg class="h-5 w-5 text-accent-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900">Patient & Supportive</h4>
-                            <p class="text-sm text-gray-500">No judgment, just progress</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0 h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                            <svg class="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-900">Cultural Immersion</h4>
-                            <p class="text-sm text-gray-500">Language + Latin culture</p>
-                        </div>
-                    </div>
+                <!-- Stat chips — horizontal flow-wrap instead of a 2×2 grid -->
+                <div class="mt-8 flex flex-wrap gap-3">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 ring-1 ring-primary-200">
+                        📚 10+ years teaching
+                    </span>
+                    <span class="inline-flex items-center gap-2 rounded-full bg-secondary-50 px-4 py-2 text-sm font-semibold text-secondary-700 ring-1 ring-secondary-200">
+                        👧 All ages welcome
+                    </span>
+                    <span class="inline-flex items-center gap-2 rounded-full bg-accent-50 px-4 py-2 text-sm font-semibold text-accent-800 ring-1 ring-accent-200">
+                        💛 Patient & supportive
+                    </span>
+                    <span class="inline-flex items-center gap-2 rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700 ring-1 ring-teal-200">
+                        🌎 Cultural immersion
+                    </span>
                 </div>
-            </div>
 
-            <!-- Quote card -->
-            <div class="mt-12 lg:mt-0">
-                <div class="relative">
-                    <div class="bg-gradient-to-br from-primary-800 to-primary-900 rounded-2xl p-8 text-white">
-                        <svg class="h-12 w-12 text-primary-400 mb-4" fill="currentColor" viewBox="0 0 24 24">
+                <!-- Mobile-only quote card. On lg+ the quote overlaps the photo. -->
+                <div class="lg:hidden mt-10">
+                    <div class="bg-gradient-to-br from-primary-500 to-secondary-500 rounded-2xl p-6 text-white shadow-xl">
+                        <svg class="h-8 w-8 text-white/40 mb-3" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
                         </svg>
-                        <p class="text-xl font-medium leading-relaxed">
-                            My goal isn't just to teach you Spanish - it's to help you fall in love with the language
-                            and feel confident using it in real life. Every student's journey is unique, and I'm here
-                            to guide yours!
+                        <p class="text-base font-medium leading-relaxed">
+                            My goal isn't just to teach you Spanish — it's to help you fall in love with the language and feel confident using it in real life.
                         </p>
-                        <div class="mt-6 flex items-center gap-4">
-                            <img src="~/img/lake-country-spanish-logo.jpg" alt="Karen" class="h-14 w-14 rounded-full object-cover shadow-md" />
-                            <div>
-                                <p class="font-semibold">Karen</p>
-                                <p class="text-primary-300 text-sm">Founder, Lake Country Spanish</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Fun fact bubble -->
-                    <div class="absolute -bottom-6 -right-6 bg-secondary-500 text-white px-5 py-3 rounded-xl shadow-lg transform rotate-2">
-                        <p class="text-sm font-medium">Fun fact: Our llama mascot loves practicing Spanish too! 🦙</p>
+                        <p class="mt-3 font-semibold">— Karen</p>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Mini pom pom transition — echoes the nav garland in miniature, centered.
+     Used sparingly between same-toned sections where a wave divider would be
+     overkill. Hangs from a short hairline so it reads as a continuation of the
+     nav garland motif, not a bullet-list separator. -->
+<div aria-hidden="true" class="bg-white flex flex-col items-center pb-12">
+    <div class="w-px h-3 bg-gray-300"></div>
+    <div class="flex items-end gap-3">
+        <span class="block h-2 w-2 rounded-full shadow-sm" style="background-color: #7045B0;"></span>
+        <span class="block h-2.5 w-2.5 rounded-full shadow-sm" style="background-color: #FF6F61;"></span>
+        <span class="block h-2 w-2 rounded-full shadow-sm" style="background-color: #FFD63D;"></span>
+        <span class="block h-2.5 w-2.5 rounded-full shadow-sm" style="background-color: #1E8189;"></span>
+        <span class="block h-2 w-2 rounded-full shadow-sm" style="background-color: #EC4899;"></span>
+        <span class="block h-2.5 w-2.5 rounded-full shadow-sm" style="background-color: #7045B0;"></span>
     </div>
 </div>
 
@@ -233,7 +228,7 @@
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="lg:grid lg:grid-cols-3 lg:gap-8 items-center">
             <div class="lg:col-span-2">
-                <h2 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Learn a New Word Every Day!</h2>
+                <h2 class="font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Learn a New Word Every Day!</h2>
                 <p class="mt-2 text-gray-600">
                     Expand your vocabulary one word at a time. Our daily Spanish word includes pronunciation,
                     meaning, and an example sentence to help you practice.
@@ -253,7 +248,7 @@
 <div id="pricing" class="bg-gray-50 py-16 scroll-mt-16">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Flexible Pricing Options</h2>
+            <h2 class="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Flexible Pricing Options</h2>
             <p class="mt-4 text-lg text-gray-600">Start with a trial class or subscribe monthly. You choose your schedule, you control your budget!</p>
             <p class="mt-2 text-sm text-gray-500">All lessons include personalized curriculum, learning materials, and flexible scheduling.</p>
         </div>
@@ -281,13 +276,21 @@
     </div>
 </div>
 
-<!-- Rewards Section -->
-<div class="bg-gradient-to-r from-secondary-500 to-secondary-600 py-16">
+<!-- Wave divider: cream pricing -> teal rewards. Fill hex = teal-600. -->
+<div aria-hidden="true" class="bg-gray-50 leading-[0]">
+    <svg class="block w-full h-10 sm:h-16" viewBox="0 0 1440 80" preserveAspectRatio="none">
+        <path d="M0,0 C420,70 1020,70 1440,0 L1440,80 L0,80 Z" fill="#1A6F7E"/>
+    </svg>
+</div>
+
+<!-- Rewards Section. Flat solid teal (Futura cool anchor) instead of coral —
+     coral is reserved for spotlight accents now, not full section bands. -->
+<div class="bg-teal-600 py-16">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
             <div class="text-white">
-                <h2 class="text-3xl font-bold tracking-tight sm:text-4xl">Earn Rewards While You Learn</h2>
-                <p class="mt-4 text-lg text-secondary-100">
+                <h2 class="font-display text-3xl font-bold tracking-tight sm:text-4xl">Earn Rewards While You Learn</h2>
+                <p class="mt-4 text-lg text-teal-100">
                     Learning Spanish is more fun when you're earning rewards! Complete assignments, earn badges,
                     and unlock free classes as you progress.
                 </p>
@@ -300,7 +303,7 @@
                         </div>
                         <div>
                             <h4 class="font-semibold">Earn Points</h4>
-                            <p class="text-secondary-100 text-sm">Complete exercises, give feedback, and stay consistent to earn points.</p>
+                            <p class="text-teal-100 text-sm">Complete exercises, give feedback, and stay consistent to earn points.</p>
                         </div>
                     </li>
                     <li class="flex items-start">
@@ -311,7 +314,7 @@
                         </div>
                         <div>
                             <h4 class="font-semibold">Collect Badges</h4>
-                            <p class="text-secondary-100 text-sm">Unlock achievements for milestones, streaks, and mastering topics.</p>
+                            <p class="text-teal-100 text-sm">Unlock achievements for milestones, streaks, and mastering topics.</p>
                         </div>
                     </li>
                     <li class="flex items-start">
@@ -322,7 +325,7 @@
                         </div>
                         <div>
                             <h4 class="font-semibold">Redeem Rewards</h4>
-                            <p class="text-secondary-100 text-sm">Use your points for free classes, bring-a-friend passes, and more!</p>
+                            <p class="text-teal-100 text-sm">Use your points for free classes, bring-a-friend passes, and more!</p>
                         </div>
                     </li>
                 </ul>
@@ -330,11 +333,7 @@
             <div class="mt-10 lg:mt-0">
                 <div class="bg-white rounded-2xl shadow-xl p-8">
                     <div class="text-center">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-secondary-100 mb-4">
-                            <svg class="w-8 h-8 text-secondary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
+                        <img src="~/img/mascot/llama-mascot-excelente.png" alt="Lola says excelente" class="h-28 w-auto mx-auto mb-2 drop-shadow-md" />
                         <h3 class="text-xl font-bold text-gray-900">Subscribers Earn 1.5x Points!</h3>
                         <p class="mt-2 text-gray-600">Monthly subscribers earn bonus points on every activity,
                         helping you unlock free classes faster.</p>
@@ -364,10 +363,17 @@
 <!-- Testimonials Section -->
 @if (Model.Testimonials.Any())
 {
+    <!-- Wave divider: teal rewards -> white testimonials. Wrapper bg matches the
+         teal section above so there's no seam on the wave's top edge. -->
+    <div aria-hidden="true" class="bg-teal-600 leading-[0]">
+        <svg class="block w-full h-10 sm:h-16" viewBox="0 0 1440 80" preserveAspectRatio="none">
+            <path d="M0,0 C420,70 1020,70 1440,0 L1440,80 L0,80 Z" fill="#FFFFFF"/>
+        </svg>
+    </div>
     <div class="bg-white py-16">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="text-center">
-                <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">What Students Say</h2>
+                <h2 class="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">What Students Say</h2>
                 <p class="mt-4 text-lg text-gray-600">Hear from our satisfied learners</p>
             </div>
 
@@ -392,49 +398,114 @@
     </div>
 }
 
-<!-- How It Works Section -->
-<div class="bg-gray-50 py-16">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+<!-- How It Works Section — zigzag path. Each step alternates left/right of a
+     dashed vertical spine on lg+. On mobile, stacks normally. Visually reads
+     as a journey, not a row of equal feature boxes. -->
+<div class="bg-gray-50 py-20 lg:py-24 overflow-hidden">
+    <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div class="text-center">
-            <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">How It Works</h2>
-            <p class="mt-4 text-lg text-gray-600">Getting started is easy</p>
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-teal-100 text-teal-800 rounded-full text-sm font-semibold mb-4">
+                <span>🧭</span><span>How It Works</span>
+            </div>
+            <h2 class="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                From hola to <span class="italic text-plum-600">conversation</span>, in four steps.
+            </h2>
         </div>
 
-        <div class="mt-12 grid gap-8 md:grid-cols-4">
-            <div class="text-center">
-                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
-                    <span class="text-2xl font-bold">1</span>
-                </div>
-                <h3 class="mt-6 text-lg font-semibold text-gray-900">Contact Karen</h3>
-                <p class="mt-2 text-gray-600 text-sm">Fill out the contact form to introduce yourself and discuss your learning goals. Karen will create your personalized account.</p>
-            </div>
-            <div class="text-center">
-                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
-                    <span class="text-2xl font-bold">2</span>
-                </div>
-                <h3 class="mt-6 text-lg font-semibold text-gray-900">Choose Your Plan</h3>
-                <p class="mt-2 text-gray-600 text-sm">Select a monthly subscription that fits your schedule. The more classes you take, the more you save per lesson!</p>
-            </div>
-            <div class="text-center">
-                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
-                    <span class="text-2xl font-bold">3</span>
-                </div>
-                <h3 class="mt-6 text-lg font-semibold text-gray-900">Set Your Schedule</h3>
-                <p class="mt-2 text-gray-600 text-sm">Pick your preferred recurring class times. Your schedule auto-renews each month unless you make changes.</p>
-            </div>
-            <div class="text-center">
-                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600">
-                    <span class="text-2xl font-bold">4</span>
-                </div>
-                <h3 class="mt-6 text-lg font-semibold text-gray-900">Learn &amp; Earn</h3>
-                <p class="mt-2 text-gray-600 text-sm">Attend classes, complete assignments, and earn points toward free lessons and rewards!</p>
-            </div>
+        <div class="relative mt-16 lg:mt-20">
+            <!-- Dashed spine, hidden on small screens. Plum violet — Karen's
+                 Futura-anchor color — gives the warm steps a cool structural
+                 backbone without going stark-navy. -->
+            <div aria-hidden="true" class="hidden lg:block absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-px border-l-2 border-dashed border-plum-300"></div>
+
+            <ol class="space-y-12 lg:space-y-20">
+                <!-- Step 1: left -->
+                <li class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+                    <div class="text-center lg:text-right lg:pr-12">
+                        <div class="inline-flex items-center gap-3 lg:flex-row-reverse">
+                            <span class="font-display text-5xl font-black text-primary-500 leading-none">01</span>
+                            <h3 class="text-xl font-bold text-gray-900">Contact Karen</h3>
+                        </div>
+                        <p class="mt-3 text-gray-600 leading-relaxed">
+                            Fill out the contact form to introduce yourself and share what you'd like to learn.
+                            Karen sets up your personalized account.
+                        </p>
+                    </div>
+                    <div class="hidden lg:block"></div>
+                </li>
+
+                <!-- Step 2: right -->
+                <li class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+                    <div class="hidden lg:block"></div>
+                    <div class="text-center lg:text-left lg:pl-12">
+                        <div class="inline-flex items-center gap-3">
+                            <span class="font-display text-5xl font-black text-secondary-500 leading-none">02</span>
+                            <h3 class="text-xl font-bold text-gray-900">Choose Your Plan</h3>
+                        </div>
+                        <p class="mt-3 text-gray-600 leading-relaxed">
+                            Pick a monthly subscription that fits your schedule. The more classes you take,
+                            the more you save per lesson.
+                        </p>
+                    </div>
+                </li>
+
+                <!-- Step 3: left -->
+                <li class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+                    <div class="text-center lg:text-right lg:pr-12">
+                        <div class="inline-flex items-center gap-3 lg:flex-row-reverse">
+                            <span class="font-display text-5xl font-black text-accent-600 leading-none">03</span>
+                            <h3 class="text-xl font-bold text-gray-900">Set Your Schedule</h3>
+                        </div>
+                        <p class="mt-3 text-gray-600 leading-relaxed">
+                            Pick recurring class times that work for you. Your schedule auto-renews each
+                            month unless you change it.
+                        </p>
+                    </div>
+                    <div class="hidden lg:block"></div>
+                </li>
+
+                <!-- Step 4: right, with Lola celebrating -->
+                <li class="lg:grid lg:grid-cols-2 lg:gap-12 items-center">
+                    <div class="hidden lg:flex justify-end">
+                        <img src="~/img/mascot/llama-mascot-excelente.png"
+                             alt=""
+                             aria-hidden="true"
+                             class="h-44 w-auto -rotate-6 drop-shadow-xl" />
+                    </div>
+                    <div class="text-center lg:text-left lg:pl-12">
+                        <div class="inline-flex items-center gap-3">
+                            <span class="font-display text-5xl font-black text-primary-600 leading-none">04</span>
+                            <h3 class="text-xl font-bold text-gray-900">Learn &amp; Earn</h3>
+                        </div>
+                        <p class="mt-3 text-gray-600 leading-relaxed">
+                            Show up, practice, earn points and badges toward free lessons. Lola will be
+                            cheering you on the whole way.
+                        </p>
+                    </div>
+                </li>
+            </ol>
         </div>
     </div>
 </div>
 
-<!-- CTA Section -->
-<div class="relative bg-gradient-to-r from-primary-800 to-primary-900 overflow-hidden">
+<!-- Wave divider: cream how-it-works -> CTA. Fill uses the same horizontal
+     gradient as the CTA section below so the seam is invisible. -->
+<div aria-hidden="true" class="bg-gray-50 leading-[0]">
+    <svg class="block w-full h-10 sm:h-16" viewBox="0 0 1440 80" preserveAspectRatio="none">
+        <defs>
+            <linearGradient id="cta-wave-fill" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#5E3895"/>
+                <stop offset="50%" stop-color="#1E8189"/>
+                <stop offset="100%" stop-color="#FFD63D"/>
+            </linearGradient>
+        </defs>
+        <path d="M0,0 C420,70 1020,70 1440,0 L1440,80 L0,80 Z" fill="url(#cta-wave-fill)"/>
+    </svg>
+</div>
+
+<!-- CTA Section. Gradient: purple -> teal -> sunshine yellow. Coral demoted to
+     spotlight accent only, not in section gradients. -->
+<div class="relative bg-gradient-to-r from-primary-600 via-teal-500 to-accent-400 overflow-hidden">
     <!-- Decorative background -->
     <div class="absolute inset-0">
         <div class="absolute top-0 right-0 w-96 h-96 bg-secondary-500/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
@@ -444,12 +515,12 @@
         <div class="lg:flex lg:items-center lg:justify-between lg:gap-12">
             <div class="max-w-2xl">
                 <div class="flex items-center gap-3 mb-4">
-                    <img src="~/img/lake-country-spanish-logo.jpg" alt="Lake Country Spanish Llama" class="h-16 w-16 rounded-full object-cover shadow-md" />
+                    <img src="~/img/mascot/llama-mascot-hola-bubble.png" alt="Lola says hola" class="h-24 w-auto drop-shadow-md" />
                     <div class="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/20">
-                        <p class="text-white text-sm font-medium">Our llama says: "Vamos a aprender!"</p>
+                        <p class="text-white text-sm font-medium">Lola says: "¡Vamos a aprender!"</p>
                     </div>
                 </div>
-                <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                <h2 class="font-display text-3xl font-bold tracking-tight text-white sm:text-4xl">
                     <span class="block">Ready to start your Spanish journey?</span>
                 </h2>
                 <p class="mt-4 text-lg text-primary-200">

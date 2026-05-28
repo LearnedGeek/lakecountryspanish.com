@@ -3,7 +3,7 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
 
-<nav class="bg-gradient-to-r from-primary-800 to-primary-900 shadow-lg">
+<nav class="bg-gradient-to-r from-primary-600 to-teal-500 shadow-lg">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between">
             <div class="flex items-center">
@@ -64,6 +64,28 @@
                     </svg>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Peruvian-style pom pom garland softens the sharp nav-to-hero edge.
+         Each pom pom hangs on a short string at a varied length so the row
+         reads handmade, not stamped. Colors cycle the brand quartet (purple,
+         coral, yellow, teal) plus pink as a nod to Lola's brand-bible ears.
+         pointer-events-none so it never blocks nav clicks. -->
+    <div aria-hidden="true" class="relative h-12 -mb-12 z-30 pointer-events-none">
+        <div class="absolute inset-x-0 top-0 flex justify-between px-4 sm:px-8 lg:px-12">
+            @{
+                var pomColors = new[] { "#FFD63D", "#FF6F61", "#1E8189", "#EC4899", "#7045B0", "#FFD63D", "#FF6F61", "#1E8189", "#EC4899", "#7045B0", "#FFD63D", "#FF6F61", "#1E8189", "#EC4899" };
+                var pomStringLengths = new[] { 10, 16, 6, 14, 8, 12, 18, 5, 13, 9, 15, 7, 11, 14 };
+                var pomSizes = new[] { "h-3 w-3", "h-4 w-4", "h-3.5 w-3.5", "h-4 w-4", "h-3 w-3", "h-4 w-4", "h-3.5 w-3.5", "h-4 w-4", "h-3 w-3", "h-4 w-4", "h-3.5 w-3.5", "h-3 w-3", "h-4 w-4", "h-3.5 w-3.5" };
+            }
+            @for (var i = 0; i < pomColors.Length; i++)
+            {
+                <div class="flex flex-col items-center">
+                    <div class="w-px bg-white/40" style="height: @(pomStringLengths[i])px;"></div>
+                    <div class="@(pomSizes[i]) rounded-full shadow-md" style="background-color: @(pomColors[i]);"></div>
+                </div>
+            }
         </div>
     </div>
 
