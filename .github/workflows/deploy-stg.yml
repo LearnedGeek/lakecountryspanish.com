@@ -18,8 +18,9 @@
 #   DEPLOY_HOST       — VPS hostname or IP, e.g. 5.161.205.21.
 #   DEPLOY_USER       — SSH user. root for now; switch to a dedicated
 #                       deploy user later (see hardening note at bottom).
-#   PG_PASSWORD       — Password for the lakecountryspanish_stg Postgres
-#                       role. Set during initial provisioning.
+#   STG_PG_PASSWORD   — Password for the lakecountryspanish_stg Postgres
+#                       role. Set during initial provisioning. Mirrors the
+#                       PROD_PG_PASSWORD secret used by deploy-prod.yml.
 #   CLAUDE_API_KEY    — Anthropic API key the curriculum drafter calls
 #                       through Claude:ApiKey config.
 #   PIXABAY_API_KEY   — Pixabay search API key used by the media library.
@@ -73,14 +74,17 @@ jobs:
 
       - name: Render appsettings.Production.json from template + secrets
         env:
-          PG_PASSWORD: ${{ secrets.PG_PASSWORD }}
+          PG_PASSWORD: ${{ secrets.STG_PG_PASSWORD }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          PG_DATABASE: lakecountryspanish_stg
+          PG_USERNAME: lakecountryspanish_stg
+          SITE_NAME: "Lake Country Spanish (stg)"
         run: |
           # Restrict envsubst to the explicit variable list so any other
           # ${...} pattern in the template is left literal — defensive
           # against future copy-paste mistakes.
-          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY}'
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME}'
           envsubst "$VARS" \
             < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
             > publish/appsettings.Production.json

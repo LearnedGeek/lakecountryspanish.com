@@ -1,0 +1,127 @@
+# Deploy Lake Country Spanish to the Hetzner VPS (PRODUCTION environment).
+#
+# Sibling of deploy-stg.yml. Atomic tar-over-SSH swap, .prev rollback, smoke test.
+# Target: /var/www/lakecountryspanish/, systemd unit lakecountryspanish.service,
+# port 5029. Postgres database lakecountryspanish, role lakecountryspanish.
+#
+# Triggers:
+#   - workflow_dispatch ONLY (manual). After the first few successful prod
+#     deploys, add `push: branches: [main]` if you want auto-deploy on merge.
+#     For now this is gated so prod doesn't ship on every main commit.
+#
+# Required GitHub repo secrets (Settings → Secrets and variables → Actions):
+#   PROD_PG_PASSWORD  — Password for the lakecountryspanish Postgres role.
+#                       Set during Stage 1.1 of the migration runbook.
+#   DEPLOY_SSH_KEY    — Reused from stg. Same private key already authorized
+#                       on the VPS.
+#   DEPLOY_HOST       — Reused from stg. VPS hostname/IP.
+#   DEPLOY_USER       — Reused from stg. SSH user (root for now).
+#   CLAUDE_API_KEY    — Reused from stg, or a fresh prod-only key.
+#   PIXABAY_API_KEY   — Reused from stg.
+
+name: Deploy LCS to Hetzner (prod)
+
+on:
+  workflow_dispatch:
+
+# Prevent concurrent prod deploys.
+concurrency:
+  group: deploy-hetzner-lcs-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore + build + test
+        # Same filter as stg: skip Stripe E2E tests until the prod Stripe
+        # test key is wired in via secrets.
+        run: |
+          dotnet restore src/LakeCountrySpanish.sln
+          dotnet build src/LakeCountrySpanish.sln --no-restore --configuration Release
+          dotnet test src/LakeCountrySpanish.Tests --no-build --configuration Release --filter "FullyQualifiedName!~StripeE2ETests"
+
+      - name: Publish (linux-x64, framework-dependent)
+        run: |
+          dotnet publish src/LakeCountrySpanish.Web/LakeCountrySpanish.Web.csproj \
+            --configuration Release \
+            --runtime linux-x64 \
+            --self-contained false \
+            --output ./publish
+
+      - name: Render appsettings.Production.json from template + secrets
+        env:
+          PG_PASSWORD: ${{ secrets.PROD_PG_PASSWORD }}
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          PG_DATABASE: lakecountryspanish
+          PG_USERNAME: lakecountryspanish
+          SITE_NAME: "Lake Country Spanish"
+        run: |
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME}'
+          envsubst "$VARS" \
+            < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
+            > publish/appsettings.Production.json
+          python3 -m json.tool publish/appsettings.Production.json > /dev/null
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy via tar-over-SSH (atomic swap)
+        run: |
+          # Same pattern as stg, paths swapped to the non-suffixed prod
+          # directory + systemd unit. /var/www/lakecountryspanish.prev
+          # holds the previous deploy for one-mv rollback.
+          cd publish
+          tar -cf - . | ssh -i ~/.ssh/deploy_key \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            'set -e
+             STAGING=/var/www/lakecountryspanish.new
+             ACTIVE=/var/www/lakecountryspanish
+             PREV=/var/www/lakecountryspanish.prev
+             rm -rf "$STAGING"
+             mkdir -p "$STAGING"
+             cd "$STAGING"
+             tar -xf -
+             chown -R www-data:www-data "$STAGING"
+             chmod 600 "$STAGING/appsettings.Production.json"
+             systemctl stop lakecountryspanish
+             if [ -d "$ACTIVE" ]; then
+               rm -rf "$PREV"
+               mv "$ACTIVE" "$PREV"
+             fi
+             mv "$STAGING" "$ACTIVE"
+             systemctl start lakecountryspanish'
+
+      - name: Smoke test the deploy
+        run: |
+          # During Stage 1-2 of the migration, lakecountryspanish.com still
+          # points at SmarterASP. We pre-deploy under new.lakecountryspanish.com
+          # and smoke-test there. After Stage 4 (DNS cutover) this URL should
+          # be updated to https://lakecountryspanish.com.
+          URL="https://new.lakecountryspanish.com"
+          for i in $(seq 1 15); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
+            if [[ "$STATUS" -ge 200 && "$STATUS" -lt 400 ]]; then
+              echo "$URL responded with HTTP $STATUS after attempt ${i}"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP $STATUS — retrying in 2s"
+            sleep 2
+          done
+          echo "Health check failed: no 2xx/3xx response in 30 seconds"
+          exit 1
