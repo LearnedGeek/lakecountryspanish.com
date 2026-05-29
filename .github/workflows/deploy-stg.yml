@@ -77,6 +77,13 @@ jobs:
           PG_PASSWORD: ${{ secrets.STG_PG_PASSWORD }}
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
           PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STG_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STG_STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STG_STRIPE_WEBHOOK_SECRET }}
+          RECAPTCHA_SITE_KEY: ${{ secrets.RECAPTCHA_SITE_KEY }}
+          RECAPTCHA_SECRET_KEY: ${{ secrets.RECAPTCHA_SECRET_KEY }}
+          SCHEDULED_TASKS_SECRET_KEY: ${{ secrets.STG_SCHEDULED_TASKS_SECRET_KEY }}
           PG_DATABASE: lakecountryspanish_stg
           PG_USERNAME: lakecountryspanish_stg
           SITE_NAME: "Lake Country Spanish (stg)"
@@ -84,7 +91,7 @@ jobs:
           # Restrict envsubst to the explicit variable list so any other
           # ${...} pattern in the template is left literal — defensive
           # against future copy-paste mistakes.
-          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME}'
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME}'
           envsubst "$VARS" \
             < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
             > publish/appsettings.Production.json

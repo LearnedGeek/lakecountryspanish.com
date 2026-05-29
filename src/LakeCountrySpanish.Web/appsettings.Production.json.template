@@ -1,5 +1,5 @@
 {
-  "_comment": "Production / staging secrets. Rendered from this template at deploy time by either deploy-stg.yml or deploy-prod.yml — envsubst replaces ${VAR} placeholders with values from GitHub repo secrets and per-workflow env. This template is committed; the rendered file lives only on the deploy runner and on the target server (chmod 600, owned by www-data). PG_DATABASE / PG_USERNAME / SITE_NAME differ per environment; the rest come from GitHub secrets.",
+  "_comment": "Production / staging secrets. Rendered from this template at deploy time by either deploy-stg.yml or deploy-prod.yml — envsubst replaces ${VAR} placeholders with values from GitHub repo secrets and per-workflow env. This template is committed; the rendered file lives only on the deploy runner and on the target server (chmod 600, owned by www-data). PG_DATABASE / PG_USERNAME / SITE_NAME differ per environment via inline env in each workflow; the rest come from GitHub secrets. EmailSettings only overrides SmtpPassword — the other fields are inherited from the committed appsettings.json. Stripe / ReCaptcha / ScheduledTasks are fully defined here because the base config has no values for them.",
   "ConnectionStrings": {
     "DefaultConnection": "Host=localhost;Port=5432;Database=${PG_DATABASE};Username=${PG_USERNAME};Password=${PG_PASSWORD}"
   },
@@ -8,6 +8,21 @@
     "SiteName": "${SITE_NAME}",
     "AdminEmail": "",
     "AdminName": "Karen"
+  },
+  "EmailSettings": {
+    "SmtpPassword": "${SMTP_PASSWORD}"
+  },
+  "Stripe": {
+    "PublishableKey": "${STRIPE_PUBLISHABLE_KEY}",
+    "SecretKey": "${STRIPE_SECRET_KEY}",
+    "WebhookSecret": "${STRIPE_WEBHOOK_SECRET}"
+  },
+  "ReCaptcha": {
+    "SiteKey": "${RECAPTCHA_SITE_KEY}",
+    "SecretKey": "${RECAPTCHA_SECRET_KEY}"
+  },
+  "ScheduledTasks": {
+    "SecretKey": "${SCHEDULED_TASKS_SECRET_KEY}"
   },
   "Claude": {
     "ApiKey": "${CLAUDE_API_KEY}",

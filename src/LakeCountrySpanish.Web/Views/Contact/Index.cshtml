@@ -131,18 +131,29 @@
 </div>
 
 @section Scripts {
-    <script src="https://www.google.com/recaptcha/api.js?render=@ViewBag.RecaptchaSiteKey"></script>
-    <script>
-        document.getElementById('contactForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            var form = this;
-
-            grecaptcha.ready(function() {
-                grecaptcha.execute('@ViewBag.RecaptchaSiteKey', {action: 'contact'}).then(function(token) {
-                    document.getElementById('recaptchaToken').value = token;
-                    form.submit();
+    @* Only load reCAPTCHA when a real site key is configured. If the key is
+       null/empty (e.g., on a freshly-provisioned environment without the
+       secret set), skip the script entirely and let the form submit normally.
+       The controller-side VerifyRecaptchaAsync already returns success when
+       no secret is configured, so the form still works end-to-end. *@
+    @{
+        var recaptchaSiteKey = ViewBag.RecaptchaSiteKey as string;
+        var recaptchaEnabled = !string.IsNullOrWhiteSpace(recaptchaSiteKey);
+    }
+    @if (recaptchaEnabled)
+    {
+        <script src="https://www.google.com/recaptcha/api.js?render=@recaptchaSiteKey"></script>
+        <script>
+            document.getElementById('contactForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                var form = this;
+                grecaptcha.ready(function() {
+                    grecaptcha.execute('@recaptchaSiteKey', {action: 'contact'}).then(function(token) {
+                        document.getElementById('recaptchaToken').value = token;
+                        form.submit();
+                    });
                 });
             });
-        });
-    </script>
+        </script>
+    }
 }
