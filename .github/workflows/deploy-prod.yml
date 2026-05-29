@@ -116,11 +116,10 @@ jobs:
 
       - name: Smoke test the deploy
         run: |
-          # During Stage 1-2 of the migration, lakecountryspanish.com still
-          # points at SmarterASP. We pre-deploy under new.lakecountryspanish.com
-          # and smoke-test there. After Stage 4 (DNS cutover) this URL should
-          # be updated to https://lakecountryspanish.com.
-          URL="https://new.lakecountryspanish.com"
+          # Cutover completed 2026-05-29 — prod is live on Hetzner. Smoke test
+          # hits the apex directly. (During the migration's pre-cutover window
+          # this pointed at new.lakecountryspanish.com.)
+          URL="https://lakecountryspanish.com"
           for i in $(seq 1 15); do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || echo "000")
             if [[ "$STATUS" -ge 200 && "$STATUS" -lt 400 ]]; then
