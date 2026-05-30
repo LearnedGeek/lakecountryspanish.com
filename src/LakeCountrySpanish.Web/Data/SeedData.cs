@@ -102,7 +102,7 @@ public static class SeedData
                     Name = "Starter",
                     Description = "Perfect for casual learners. One class per week to build a consistent foundation.",
                     ClassesPerMonth = 4,
-                    MonthlyPrice = 100.00m,
+                    MonthlyPrice = 112.00m,
                     PointsMultiplier = 1.5m,
                     DisplayOrder = 1,
                     IsActive = true
@@ -112,7 +112,7 @@ public static class SeedData
                     Name = "Standard",
                     Description = "Our most popular plan. Twice weekly classes for steady, noticeable progress.",
                     ClassesPerMonth = 8,
-                    MonthlyPrice = 176.00m,
+                    MonthlyPrice = 200.00m,
                     PointsMultiplier = 1.5m,
                     DisplayOrder = 2,
                     IsActive = true
@@ -122,7 +122,7 @@ public static class SeedData
                     Name = "Intensive",
                     Description = "Accelerate your learning with three classes per week. Best value per class!",
                     ClassesPerMonth = 12,
-                    MonthlyPrice = 240.00m,
+                    MonthlyPrice = 276.00m,
                     PointsMultiplier = 1.5m,
                     DisplayOrder = 3,
                     IsActive = true
