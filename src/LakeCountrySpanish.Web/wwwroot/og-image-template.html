@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>OG Image Template - Lake Country Spanish</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .og-image {
+            width: 1200px;
+            height: 630px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%);
+            display: flex;
+            align-items: center;
+            padding: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative background elements */
+        .og-image::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+        }
+
+        .og-image::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -150px;
+            width: 500px;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 50%;
+        }
+
+        .logo-container {
+            flex-shrink: 0;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-container img {
+            width: 380px;
+            height: 380px;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
+        }
+
+        .content {
+            flex: 1;
+            padding-left: 60px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tagline {
+            color: #e85a42;
+            font-size: 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+        }
+
+        .title {
+            font-size: 72px;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .title-line1 {
+            color: white;
+            display: block;
+        }
+
+        .title-line2 {
+            color: #e85a42;
+            display: block;
+        }
+
+        .accent-line {
+            width: 80px;
+            height: 5px;
+            background: #e85a42;
+            margin-bottom: 30px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="og-image">
+        <div class="logo-container">
+            <img src="img/llama-logo-painted.png" alt="Lake Country Spanish Logo">
+        </div>
+        <div class="content">
+            <div class="tagline">Lake Country Spanish</div>
+            <div class="accent-line"></div>
+            <h1 class="title">
+                <span class="title-line1">Learn Spanish.</span>
+                <span class="title-line2">Explore the World.</span>
+            </h1>
+        </div>
+    </div>
+</body>
+</html>

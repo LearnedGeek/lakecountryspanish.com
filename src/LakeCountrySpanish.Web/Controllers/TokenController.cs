@@ -87,7 +87,7 @@ public class TokenController : Controller
         var canPurchase = await _tokenService.CanPurchaseTokensAsync(userId);
         if (!canPurchase)
         {
-            TempData["Error"] = "You do not have permission to purchase tokens. Please contact Karen for assistance.";
+            TempData["Error"] = "You do not have permission to purchase tokens. Please contact us for assistance.";
             return RedirectToAction(nameof(Index));
         }
 

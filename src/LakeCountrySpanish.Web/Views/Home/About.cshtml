@@ -1,151 +1,146 @@
 @{
-    ViewData["Title"] = "About Karen";
-    ViewData["MetaDescription"] = "Meet Karen, a native Peruvian Spanish teacher serving Lake Country Wisconsin. Spanish lessons for Oconomowoc, Waukesha, Delafield, Hartland, Pewaukee & surrounding communities.";
+    ViewData["Title"] = "Meet Us";
+    ViewData["MetaDescription"] = "Meet the native Peruvian Spanish teachers behind Lake Country Spanish. Personalized Spanish lessons for students throughout Lake Country Wisconsin and beyond.";
 }
 
+@*
+    This page is intentionally a STUB. The two placeholder cards below are
+    the structure for individual teacher bios; photos and personal content
+    get added later by Karen + Cece. When per-person detail pages are ready,
+    promote the "Learn more" links to their own routes.
+*@
+
 <div class="bg-white">
-    <!-- Hero Section -->
+    <!-- Hero -->
     <div class="relative bg-gradient-to-r from-primary-600 to-primary-700 py-16">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="text-center">
-                <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">About Karen</h1>
-                <p class="mt-4 text-xl text-gray-100">Your Native Peruvian Spanish Teacher</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- About Content -->
-    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div class="lg:grid lg:grid-cols-2 lg:gap-12 lg:items-center">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-900">Meet Your Teacher</h2>
-                <div class="mt-6 space-y-6 text-gray-600">
-                    <p>
-                        Hello! I'm Karen, and I'm passionate about helping students discover the beauty of the Spanish language.
-                        Born and raised in Peru, I bring authentic Latin American Spanish to each of my lessons.
-                    </p>
-                    <p>
-                        With years of teaching experience, I've developed a personalized approach that adapts to each student's
-                        learning style and goals. Whether you're a complete beginner or looking to perfect your conversational skills,
-                        I'll create a customized curriculum just for you.
-                    </p>
-                    <p>
-                        My teaching philosophy centers on practical, real-world communication. We'll work on pronunciation,
-                        grammar, vocabulary, and most importantly, building your confidence to speak Spanish in everyday situations.
-                    </p>
-                </div>
-            </div>
-            <div class="mt-10 lg:mt-0">
-                <div class="bg-gray-100 rounded-xl p-8">
-                    <h3 class="text-xl font-semibold text-gray-900 mb-6">What I Offer</h3>
-                    <ul class="space-y-4">
-                        <li class="flex items-start">
-                            <svg class="h-6 w-6 text-primary-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
-                            </svg>
-                            <div>
-                                <h4 class="font-medium text-gray-900">Beginner to Advanced Levels</h4>
-                                <p class="text-sm text-gray-600">Lessons tailored to your current level and goals</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="h-6 w-6 text-primary-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
-                            </svg>
-                            <div>
-                                <h4 class="font-medium text-gray-900">Conversational Focus</h4>
-                                <p class="text-sm text-gray-600">Build confidence through real-world dialogue practice</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="h-6 w-6 text-primary-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                            </svg>
-                            <div>
-                                <h4 class="font-medium text-gray-900">Cultural Immersion</h4>
-                                <p class="text-sm text-gray-600">Learn about Peru and Latin American culture</p>
-                            </div>
-                        </li>
-                        <li class="flex items-start">
-                            <svg class="h-6 w-6 text-primary-600 mr-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                            </svg>
-                            <div>
-                                <h4 class="font-medium text-gray-900">Flexible Scheduling</h4>
-                                <p class="text-sm text-gray-600">Book lessons that fit your busy schedule</p>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Communities Served Section -->
-    <div class="bg-primary-50 py-16">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-10">
-                <h2 class="text-3xl font-bold text-gray-900">Serving Lake Country Wisconsin</h2>
-                <p class="mt-4 text-lg text-gray-600">
-                    I proudly offer Spanish lessons to students throughout the Lake Country area and beyond.
-                    All lessons are conducted online, making it convenient no matter where you're located!
+                <p class="text-xs sm:text-sm font-bold tracking-[0.2em] uppercase text-primary-100 mb-3">
+                    Real Spanish. Real culture. Real conversation.
+                </p>
+                <h1 class="font-display text-4xl font-bold tracking-tight text-white sm:text-5xl">
+                    Meet Us
+                </h1>
+                <p class="mt-4 text-xl text-gray-100 max-w-2xl mx-auto">
+                    Two native Peruvians sharing the language, culture, and joy of their home with
+                    Lake Country Wisconsin.
                 </p>
             </div>
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Oconomowoc</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Waukesha</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Delafield</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Hartland</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Pewaukee</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Brookfield</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Menomonee Falls</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Muskego</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">New Berlin</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Wales</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Dousman</span>
-                </div>
-                <div class="bg-white rounded-lg px-4 py-3 text-center shadow-sm">
-                    <span class="text-gray-700 font-medium">Summit</span>
-                </div>
-            </div>
-            <p class="mt-6 text-center text-gray-500 text-sm">
-                Don't see your town? No problem! Online lessons are available to students anywhere.
-            </p>
         </div>
     </div>
 
-    <!-- CTA Section -->
+    <!-- Two-card teacher placeholders -->
+    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div class="grid gap-10 md:grid-cols-2 max-w-5xl mx-auto">
+
+            <!-- Karen card — placeholder until real photo + bio land -->
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+                <div class="aspect-[4/3] bg-gradient-to-br from-primary-100 via-teal-100 to-accent-100 flex items-center justify-center relative">
+                    <span class="font-display text-7xl text-primary-700 italic" aria-hidden="true">K</span>
+                    <span class="absolute bottom-3 right-3 bg-white/90 text-xs font-semibold text-gray-700 px-3 py-1 rounded-full shadow-sm">
+                        Photo coming soon
+                    </span>
+                </div>
+                <div class="p-6">
+                    <h2 class="font-display text-2xl font-bold text-gray-900">Karen</h2>
+                    <p class="text-sm font-semibold text-primary-700 mt-1 uppercase tracking-wide">Founding Teacher</p>
+                    <p class="mt-4 text-gray-600 leading-relaxed">
+                        Native Peruvian Spanish teacher with years of experience teaching learners of all ages.
+                        Full bio coming soon — including teaching philosophy, certifications, and what makes
+                        every Lake Country Spanish class an adventure.
+                    </p>
+                    <p class="mt-4 text-xs text-gray-400 italic">More about Karen — coming soon.</p>
+                </div>
+            </div>
+
+            <!-- Cece card — placeholder until real photo + bio land -->
+            <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
+                <div class="aspect-[4/3] bg-gradient-to-br from-secondary-100 via-accent-100 to-primary-100 flex items-center justify-center relative">
+                    <span class="font-display text-7xl text-secondary-700 italic" aria-hidden="true">C</span>
+                    <span class="absolute bottom-3 right-3 bg-white/90 text-xs font-semibold text-gray-700 px-3 py-1 rounded-full shadow-sm">
+                        Photo coming soon
+                    </span>
+                </div>
+                <div class="p-6">
+                    <h2 class="font-display text-2xl font-bold text-gray-900">Cece</h2>
+                    <p class="text-sm font-semibold text-secondary-700 mt-1 uppercase tracking-wide">Founding Teacher</p>
+                    <p class="mt-4 text-gray-600 leading-relaxed">
+                        Native Peruvian Spanish teacher bringing authentic language instruction and cultural
+                        experience to every class. Full bio coming soon — including teaching background,
+                        favorite age groups to teach, and her vision for Lake Country Spanish.
+                    </p>
+                    <p class="mt-4 text-xs text-gray-400 italic">More about Cece — coming soon.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- What we offer (generic, applies to both teachers) -->
     <div class="bg-gray-50 py-16">
+        <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <h2 class="text-center font-display text-3xl font-bold text-gray-900 mb-10">What We Offer</h2>
+            <div class="grid gap-6 md:grid-cols-2">
+                <div class="flex items-start gap-4 bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-full bg-primary-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-primary-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Beginner to Advanced</h3>
+                        <p class="text-sm text-gray-600 mt-1">Lessons tailored to your current level and goals.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4 bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-full bg-teal-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-teal-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Conversational Focus</h3>
+                        <p class="text-sm text-gray-600 mt-1">Build confidence through real-world dialogue.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4 bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-full bg-secondary-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-secondary-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Cultural Immersion</h3>
+                        <p class="text-sm text-gray-600 mt-1">A new Spanish-speaking country each month — food, music, history.</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-4 bg-white rounded-xl p-6 shadow-sm">
+                    <div class="flex-shrink-0 h-12 w-12 rounded-full bg-accent-100 flex items-center justify-center">
+                        <svg class="h-6 w-6 text-accent-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900">Flexible Scheduling</h3>
+                        <p class="text-sm text-gray-600 mt-1">Lessons that fit your week — online or in person.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="bg-white py-16">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-bold text-gray-900">Ready to Start Your Spanish Journey?</h2>
-            <p class="mt-4 text-lg text-gray-600">Contact me today to discuss your goals and schedule your first lesson.</p>
+            <h2 class="font-display text-3xl font-bold text-gray-900">Ready to start your Spanish journey?</h2>
+            <p class="mt-4 text-lg text-gray-600">Reach out to discuss your goals and schedule your first lesson.</p>
             <div class="mt-8">
-                @await Component.InvokeAsync("Button", new {
-                    text = "Get in Touch",
-                    href = Url.Action("Index", "Contact"),
-                    type = "primary"
-                })
+                <a asp-controller="Contact" asp-action="Index"
+                   class="inline-flex items-center gap-2 px-8 py-3 bg-secondary-500 text-white text-base font-semibold rounded-xl hover:bg-secondary-600 shadow-lg shadow-secondary-500/30 transition-all hover:-translate-y-0.5">
+                    Get in Touch
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </a>
             </div>
         </div>
     </div>

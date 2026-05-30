@@ -39,7 +39,7 @@ public class SmtpEmailService : IEmailService
     private string BuildEmailTemplate(string headerTitle, string headerColor, string bodyContent, string? preheader = null, string? emoji = null)
     {
         var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://lakecountryspanish.com";
-        var logoUrl = $"{baseUrl}/img/lake-country-spanish-logo.png";
+        var logoUrl = $"{baseUrl}/img/llama-logo-painted.png";
         var emojiSpan = !string.IsNullOrEmpty(emoji) ? $"<span style=\"font-size: 24px; margin-right: 8px;\">{emoji}</span>" : "";
         var preheaderHtml = !string.IsNullOrEmpty(preheader)
             ? $"<span style=\"display: none; max-height: 0; overflow: hidden; mso-hide: all;\">{preheader}</span>"

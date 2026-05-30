@@ -7,7 +7,7 @@
     var fullTitle = $"{pageTitle} | Lake Country Spanish";
     var metaDescription = ViewData["MetaDescription"]?.ToString()
         ?? ViewData["Description"]?.ToString()
-        ?? "Personalized online Spanish lessons with Karen, a native Peruvian teacher. Learn conversational Spanish, improve pronunciation, and discover Latin American culture. Flexible scheduling, earn rewards, and have fun learning!";
+        ?? "Personalized online Spanish lessons taught by native Peruvian instructors. Learn conversational Spanish, improve pronunciation, and discover Latin American culture. Flexible scheduling, earn rewards, and have fun learning!";
 }
 <!DOCTYPE html>
 <html lang="en" class="h-full">
@@ -22,7 +22,7 @@
     <!-- SEO Meta Tags -->
     <meta name="description" content="@metaDescription" />
     <meta name="keywords" content="Spanish lessons, learn Spanish, Spanish tutor, online Spanish classes, Peruvian Spanish teacher, conversational Spanish, Lake Country Wisconsin, private Spanish lessons" />
-    <meta name="author" content="Lake Country Spanish - Karen" />
+    <meta name="author" content="Lake Country Spanish" />
     <meta name="robots" content="index, follow" />
 
     <!-- Open Graph / Facebook -->
@@ -43,8 +43,8 @@
     <meta name="twitter:image" content="@ogImage" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="~/img/lake-country-spanish-logo.png" />
-    <link rel="apple-touch-icon" href="~/img/lake-country-spanish-logo.png" />
+    <link rel="icon" type="image/png" href="~/img/llama-logo-painted.png" />
+    <link rel="apple-touch-icon" href="~/img/llama-logo-painted.png" />
 
     <!-- Editorial type pairing: Fraunces (display) + Nunito (body). Pulls the
          page away from the generic system-sans bootstrap feel. -->
@@ -58,8 +58,8 @@
         "@@context": "https://schema.org",
         "@@type": "LocalBusiness",
         "name": "Lake Country Spanish",
-        "description": "Personalized online Spanish lessons with a native Peruvian teacher. Learn conversational Spanish, improve pronunciation, and discover Latin American culture.",
-        "image": "https://lakecountryspanish.com/img/lake-country-spanish-logo.png",
+        "description": "Personalized Spanish lessons taught by native Peruvian instructors. Conversational Spanish, clear pronunciation, and Latin American cultural immersion for all ages.",
+        "image": "https://lakecountryspanish.com/img/llama-logo-painted.png",
         "priceRange": "$20-$30",
         "address": {
             "@@type": "PostalAddress",
@@ -122,22 +122,25 @@
             theme: {
                 extend: {
                     colors: {
-                        // Deep violet — LCS brand anchor (Karen's preferred Futura
-                        // palette direction). The 800 sits at #3B1E5C, the deep
-                        // violet from the Futura poster banners. Used for primary
-                        // CTAs, nav/footer, active states, key headlines. Replaced
-                        // the prior pink palette — pink is no longer a brand pillar.
+                        // Deep navy — LCS brand anchor. Aligned to Karen + Cece's
+                        // 2026-05-30 website mock direction (navy nav, navy headlines,
+                        // coral CTAs). The 600 sits at #1E3A8A, matching Lola's
+                        // brand-bible outline color, so the cartoon mascot and the
+                        // site palette read as one identity. Replaced the prior
+                        // violet palette — violet served well as a transitional
+                        // anchor but the painted-llama-logo + lake aesthetic wants
+                        // a cooler, more grounded primary.
                         primary: {
-                            50: '#F4ECFA',
-                            100: '#E7D9F2',
-                            200: '#CFBCE7',
-                            300: '#AE91D8',
-                            400: '#8B65C7',
-                            500: '#7045B0',
-                            600: '#5E3895',
-                            700: '#4C2A7A',
-                            800: '#3B1E5C',
-                            900: '#25103D',
+                            50: '#EEF1F8',
+                            100: '#D6DDED',
+                            200: '#A8B5D6',
+                            300: '#7287BB',
+                            400: '#4760A0',
+                            500: '#2A4485',
+                            600: '#1E3A8A',
+                            700: '#172E6E',
+                            800: '#102453',
+                            900: '#0A1A3D',
                         },
                         // Living coral — secondary, warmth between pink and orange.
                         // Used on accent badges, secondary CTAs, decorative pops.
