@@ -133,6 +133,47 @@ public sealed class MediaService : IMediaService
         return asset;
     }
 
+    public async Task<MediaAsset> ImportFromAiAsync(
+        IAiImageService aiService, string prompt,
+        ImportMediaOptions options, CancellationToken ct = default)
+    {
+        var download = await aiService.GenerateAsync(prompt, ct);
+
+        var hash = _imaging.ComputeSha256(download.Bytes);
+        var existing = await _context.MediaAssets.FirstOrDefaultAsync(m => m.FileHash == hash, ct);
+        if (existing is not null) return existing;
+
+        var (width, height) = _imaging.GetDimensions(download.Bytes);
+        var (relativePath, _) = await PersistToDiskAsync("ai", hash, download.Bytes, download.MimeType, ct);
+        var thumbnails = await GenerateThumbnailsAsync(hash, download.Bytes, ct);
+
+        var asset = new MediaAsset
+        {
+            FileName = download.SuggestedFileName,
+            FilePath = relativePath,
+            Source = MediaSource.AIGenerated,
+            Category = options.Category,
+            LicenseType = $"AI-generated ({aiService.ProviderName})",
+            FileSize = download.Bytes.LongLength,
+            MimeType = download.MimeType,
+            AltText = options.AltText,
+            Title = options.Title ?? download.SuggestedFileName,
+            Tags = options.Tags,
+            Width = width,
+            Height = height,
+            FileHash = hash,
+            ThumbnailsJson = JsonSerializer.Serialize(thumbnails),
+            UploadedDate = DateTime.UtcNow,
+            UploadedById = options.ImportedById,
+            AiPrompt = prompt,
+            AiModel = aiService.ModelId
+        };
+
+        _context.MediaAssets.Add(asset);
+        await _context.SaveChangesAsync(ct);
+        return asset;
+    }
+
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         var asset = await _context.MediaAssets.Include(m => m.Usages).FirstOrDefaultAsync(m => m.Id == id, ct);

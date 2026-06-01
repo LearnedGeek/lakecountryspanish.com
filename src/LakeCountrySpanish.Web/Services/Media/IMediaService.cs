@@ -29,6 +29,14 @@ public interface IMediaService
     Task<MediaAsset> ImportFromSourceAsync(IImageSourceAdapter adapter, ImageSearchHit hit, ImportMediaOptions options, CancellationToken ct = default);
 
     /// <summary>
+    /// Generates an image via the given AI service and persists it as a
+    /// MediaAsset with Source=AIGenerated. The prompt + model are stored on
+    /// the asset for regeneration and traceability. Dedup is by file hash, so
+    /// two prompts that happen to produce identical bytes return the same row.
+    /// </summary>
+    Task<MediaAsset> ImportFromAiAsync(IAiImageService aiService, string prompt, ImportMediaOptions options, CancellationToken ct = default);
+
+    /// <summary>
     /// Hard-delete an asset and its file. Fails if the asset is currently
     /// referenced by any <see cref="MediaUsage"/> row.
     /// </summary>

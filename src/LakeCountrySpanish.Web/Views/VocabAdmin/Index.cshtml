@@ -1,0 +1,149 @@
+@using LakeCountrySpanish.Web.Controllers
+@using LakeCountrySpanish.Web.Services.Media
+@model VocabAdminIndexViewModel
+@{
+    ViewData["Title"] = "Vocab Catalog";
+
+    VocabGenerationSummary? lastRun = null;
+    if (TempData["GenerationSummary"] is string json)
+    {
+        try { lastRun = System.Text.Json.JsonSerializer.Deserialize<VocabGenerationSummary>(json); }
+        catch { /* ignore — display falls through */ }
+    }
+    var errorMessage = TempData["Error"] as string;
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Vocab Catalog</h1>
+            <p class="mt-1 text-sm text-gray-600">
+                Spanish vocabulary terms grouped by theme. Generate AI clipart for any term
+                that doesn't have an image yet — Karen's worksheet templates pull these in.
+            </p>
+        </div>
+
+        <!-- AI provider status -->
+        <div class="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Image Generator</div>
+                    <div class="mt-1 text-sm text-gray-900">
+                        @Model.AiProviderName · <span class="font-mono text-xs">@Model.AiModelId</span>
+                    </div>
+                </div>
+                @if (Model.AiAvailable)
+                {
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Ready
+                    </span>
+                }
+                else
+                {
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Not configured — add token to appsettings.Local.json
+                    </span>
+                }
+            </div>
+        </div>
+
+        @if (errorMessage is not null)
+        {
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                @errorMessage
+            </div>
+        }
+
+        @if (lastRun is not null)
+        {
+            <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <div class="text-sm font-semibold text-blue-900">
+                    Last run for theme "@lastRun.Theme"
+                </div>
+                <div class="mt-1 text-sm text-blue-800">
+                    Considered @lastRun.Considered ·
+                    Already had image: @lastRun.AlreadyHadImage ·
+                    Generated: @lastRun.Generated ·
+                    Failed: @lastRun.Failed
+                </div>
+                @if (lastRun.Failures.Count > 0)
+                {
+                    <ul class="mt-2 list-disc list-inside text-sm text-red-700">
+                        @foreach (var f in lastRun.Failures)
+                        {
+                            <li><span class="font-semibold">@f.SpanishTerm</span> — @f.ErrorMessage</li>
+                        }
+                    </ul>
+                }
+            </div>
+        }
+
+        <!-- Themes table -->
+        <div class="overflow-hidden bg-white rounded-lg shadow">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Theme</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Total Terms</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">With Images</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Missing</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @if (Model.Themes.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="5" class="px-6 py-10 text-center text-sm text-gray-500">
+                                No vocab themes yet.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var theme in Model.Themes)
+                        {
+                            <tr>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">@theme.Theme</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 text-right">@theme.TotalTerms</td>
+                                <td class="px-6 py-4 text-sm text-gray-700 text-right">@theme.WithImages</td>
+                                <td class="px-6 py-4 text-sm text-right">
+                                    @if (theme.Missing == 0)
+                                    {
+                                        <span class="text-green-700 font-medium">0</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-orange-700 font-semibold">@theme.Missing</span>
+                                    }
+                                </td>
+                                <td class="px-6 py-4 text-sm text-right">
+                                    @if (theme.Missing > 0 && Model.AiAvailable)
+                                    {
+                                        <form asp-action="GenerateImages" asp-route-theme="@theme.Theme" method="post" class="inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit"
+                                                    class="inline-flex items-center px-3 py-1.5 border border-transparent rounded-md text-sm font-medium text-white bg-secondary-500 hover:bg-secondary-600 transition"
+                                                    onclick="return confirm('Generate @theme.Missing image(s) for theme \'@theme.Theme\'? This will call the Replicate API.');">
+                                                Generate @theme.Missing
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (theme.Missing == 0)
+                                    {
+                                        <span class="text-xs text-gray-400">All set</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-xs text-gray-400">AI unavailable</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
