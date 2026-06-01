@@ -76,6 +76,10 @@ builder.Services.AddScoped<IMediaService, MediaService>();
 builder.Services.AddHttpClient<PixabayImageSourceAdapter>();
 builder.Services.AddScoped<IImageSourceAdapter, PixabayImageSourceAdapter>();
 
+// AI image generation (prompt-based — distinct from search-based adapters).
+builder.Services.Configure<ReplicateSettings>(builder.Configuration.GetSection(ReplicateSettings.SectionName));
+builder.Services.AddHttpClient<IAiImageService, ReplicateAiImageService>();
+
 // Curriculum authoring services.
 builder.Services.AddScoped<ICurriculumDayService, CurriculumDayService>();
 builder.Services.AddSingleton<IBlockCompiler, BlockCompiler>();

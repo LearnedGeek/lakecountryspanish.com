@@ -73,6 +73,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<MediaUsage> MediaUsages => Set<MediaUsage>();
 
+    // Vocab catalog (drives generated worksheets: scavenger hunts, bingo, flashcards)
+    public DbSet<VocabTerm> VocabTerms => Set<VocabTerm>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -837,6 +840,30 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Find all usages of a media asset, or all media used by an entity
             entity.HasIndex(e => new { e.EntityType, e.EntityId });
             entity.HasIndex(e => e.MediaAssetId);
+        });
+
+        // === Vocab catalog ===
+
+        builder.Entity<VocabTerm>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Spanish).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.Article).HasMaxLength(8).IsRequired();
+            entity.Property(e => e.English).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.Theme).HasMaxLength(40).IsRequired();
+
+            // FK to MediaAsset — nullable until the image is generated.
+            // SetNull on delete so removing an image doesn't cascade-delete the term.
+            entity.HasOne(e => e.MediaAsset)
+                .WithMany()
+                .HasForeignKey(e => e.MediaAssetId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // One row per (theme, spanish) — prevents seeding duplicates.
+            entity.HasIndex(e => new { e.Theme, e.Spanish }).IsUnique();
+            // Common query: "all terms in a theme, sorted alphabetically".
+            entity.HasIndex(e => e.Theme);
         });
     }
 }
