@@ -29,9 +29,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">Image Generator</div>
-                    <div class="mt-1 text-sm text-gray-900">
-                        @Model.AiProviderName · <span class="font-mono text-xs">@Model.AiModelId</span>
-                    </div>
+                    <div class="mt-1 text-sm text-gray-900">@Model.AiProviderName</div>
                 </div>
                 @if (Model.AiAvailable)
                 {
@@ -119,6 +117,14 @@
                                     }
                                 </td>
                                 <td class="px-6 py-4 text-sm text-right">
+                                    @if (theme.WithImages > 0)
+                                    {
+                                        <a href="/Worksheets/ScavengerHunt/@theme.Theme"
+                                           target="_blank"
+                                           class="inline-flex items-center px-3 py-1.5 mr-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
+                                            Preview worksheet
+                                        </a>
+                                    }
                                     @if (theme.Missing > 0 && Model.AiAvailable)
                                     {
                                         <form asp-action="GenerateImages" asp-route-theme="@theme.Theme" method="post" class="inline">
@@ -130,11 +136,11 @@
                                             </button>
                                         </form>
                                     }
-                                    else if (theme.Missing == 0)
+                                    else if (theme.Missing == 0 && theme.WithImages == 0)
                                     {
-                                        <span class="text-xs text-gray-400">All set</span>
+                                        <span class="text-xs text-gray-400">No terms yet</span>
                                     }
-                                    else
+                                    else if (!Model.AiAvailable && theme.Missing > 0)
                                     {
                                         <span class="text-xs text-gray-400">AI unavailable</span>
                                     }

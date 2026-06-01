@@ -56,7 +56,6 @@ public class VocabAdminController : Controller
         var vm = new VocabAdminIndexViewModel
         {
             AiProviderName = _ai.ProviderName,
-            AiModelId = _ai.ModelId,
             AiAvailable = _ai.IsAvailable,
             Themes = byTheme
         };
@@ -88,7 +87,6 @@ public class VocabAdminController : Controller
 public sealed class VocabAdminIndexViewModel
 {
     public string AiProviderName { get; set; } = string.Empty;
-    public string AiModelId { get; set; } = string.Empty;
     public bool AiAvailable { get; set; }
     public List<VocabThemeSummary> Themes { get; set; } = new();
 }

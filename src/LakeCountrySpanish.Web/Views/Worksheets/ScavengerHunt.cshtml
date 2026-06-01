@@ -1,0 +1,207 @@
+@model LakeCountrySpanish.Web.Controllers.ScavengerHuntViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = $"{Model.Title} — {Model.Theme}";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        /* --- print page setup --- */
+        @@page {
+            size: letter;
+            margin: 0.5in;
+        }
+        @@media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .sheet { box-shadow: none !important; margin: 0 !important; }
+        }
+
+        /* --- screen styling (preview) --- */
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: #f3f4f6;
+            color: #111827;
+        }
+
+        .toolbar {
+            max-width: 7.5in;
+            margin: 0 auto 16px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+        }
+        .toolbar button {
+            background: #f57360;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .toolbar button:hover { background: #e85a42; }
+        .toolbar a { color: #4b5563; text-decoration: none; }
+        .toolbar a:hover { text-decoration: underline; }
+
+        .sheet {
+            background: white;
+            max-width: 7.5in;
+            margin: 0 auto;
+            padding: 0.4in 0.5in;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 48px;
+            font-weight: 900;
+            margin: 0;
+            color: #111827;
+            line-height: 1;
+        }
+        .header h2 {
+            font-size: 36px;
+            font-weight: 900;
+            margin: 4px 0 0 0;
+            color: #111827;
+            line-height: 1;
+        }
+
+        /* --- two-column layout: items list on the left, tally column on the right --- */
+        .body {
+            display: grid;
+            grid-template-columns: 1fr 80px;
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .item {
+            display: grid;
+            grid-template-columns: 64px 1fr;
+            align-items: center;
+            gap: 14px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 6px 12px;
+            min-height: 64px;
+        }
+        .item:nth-child(even) {
+            background: #e5e7eb;
+        }
+        .item img {
+            width: 56px;
+            height: 56px;
+            object-fit: contain;
+            mix-blend-mode: multiply; /* drops Flux's near-white into the gray row cleanly */
+        }
+        .item .word {
+            font-size: 26px;
+            font-weight: 700;
+        }
+        .item .number {
+            font-weight: 700;
+            margin-right: 6px;
+        }
+
+        .tally {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .tally .header-cell {
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            background: #e5e7eb;
+            border-radius: 8px 8px 0 0;
+        }
+        .tally .cell {
+            flex: 1;
+            min-height: 64px;
+            border: 2px solid #111827;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .footer {
+            margin-top: 18px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toolbar no-print">
+        <div>
+            <strong>@Model.Title</strong> — theme: <code>@Model.Theme</code> · @Model.Items.Count items
+        </div>
+        <div>
+            <a href="/Admin/Vocab">← Vocab admin</a>
+            &nbsp;&nbsp;
+            <button onclick="window.print()">Print</button>
+        </div>
+    </div>
+
+    <div class="sheet">
+        <div class="header">
+            <h1>@Model.Title</h1>
+            <h2>@Model.Subtitle</h2>
+        </div>
+
+        <div class="body">
+            <div class="items">
+                @for (var i = 0; i < Model.Items.Count; i++)
+                {
+                    var item = Model.Items[i];
+                    <div class="item">
+                        <img src="@item.ImagePath" alt="@item.English" />
+                        <div class="word">
+                            <span class="number">@(i + 1).</span>@item.Article @item.Spanish
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="tally">
+                <div class="header-cell">Nos</div>
+                @for (var i = 0; i < Model.Items.Count; i++)
+                {
+                    <div class="cell"></div>
+                }
+            </div>
+        </div>
+
+        <div class="footer">
+            <span>Lake Country Spanish</span>
+            <span>lakecountryspanish.com</span>
+        </div>
+    </div>
+
+</body>
+</html>
