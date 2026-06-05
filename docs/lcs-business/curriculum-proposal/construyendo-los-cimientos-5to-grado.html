@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Lake Country Spanish — Construyendo los Cimientos · 5.º Grado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        @page {
+            size: letter;
+            margin: 0.7in;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .sheet { box-shadow: none !important; margin: 0 !important; max-width: none !important; padding: 0 !important; }
+            section.chapter { break-before: page; }
+            section.chapter.cover { break-before: avoid; }
+        }
+
+        :root {
+            --ink: #1f2937;
+            --ink-soft: #4b5563;
+            --ink-soft-2: #6b7280;
+            --navy: #1E3A8A;
+            --navy-soft: #e0e7ff;
+            --teal: #0f766e;
+            --teal-soft: #ccfbf1;
+            --accent: #f59e0b;
+            --accent-soft: #fef3c7;
+            --rose-soft: #fce7f3;
+            --rule: #d1d5db;
+        }
+
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: #f3f4f6;
+            font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+            font-size: 11.5pt;
+            line-height: 1.6;
+            color: var(--ink);
+        }
+
+        .toolbar {
+            max-width: 8.5in;
+            margin: 14px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #4b5563;
+        }
+        .toolbar button {
+            background: #1E3A8A;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .sheet {
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto 24px auto;
+            padding: 0.7in 0.85in;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+        }
+
+        /* --- masthead on each section's first page --- */
+        .masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--navy);
+            padding-bottom: 8px;
+            margin-bottom: 22px;
+        }
+        .brand {
+            font-family: 'Lora', Georgia, serif;
+            font-weight: 700;
+            font-size: 14pt;
+            color: var(--navy);
+            letter-spacing: 0.5px;
+        }
+        .crumb {
+            font-size: 10pt;
+            color: var(--ink-soft);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- COVER --- */
+        .cover {
+            text-align: center;
+            padding-top: 1.2in;
+            padding-bottom: 1.2in;
+        }
+        .cover .author {
+            font-family: 'Lora', Georgia, serif;
+            font-style: italic;
+            font-size: 14pt;
+            color: var(--ink-soft);
+            margin: 0 0 4px 0;
+        }
+        .cover .date {
+            font-size: 11pt;
+            color: var(--ink-soft-2);
+            margin: 0 0 80px 0;
+        }
+        .cover .super {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 11pt;
+            color: var(--teal);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 12px 0;
+            font-weight: 700;
+        }
+        .cover h1 {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 40pt;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 0 0 6px 0;
+            line-height: 1.05;
+        }
+        .cover .subtitle {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 22pt;
+            font-weight: 600;
+            color: var(--navy);
+            margin: 0 0 28px 0;
+        }
+        .cover .band {
+            display: inline-block;
+            padding: 6px 22px;
+            background: var(--accent-soft);
+            color: #92400e;
+            font-weight: 700;
+            font-size: 11.5pt;
+            border-radius: 999px;
+            letter-spacing: 0.4px;
+        }
+        .cover .toc {
+            margin-top: 90px;
+            text-align: left;
+            border-top: 1px solid var(--rule);
+            padding-top: 16px;
+        }
+        .cover .toc-label {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: var(--ink-soft-2);
+            font-weight: 700;
+            margin: 0 0 8px 0;
+        }
+        .cover .toc ol {
+            margin: 0;
+            padding-left: 22px;
+            font-size: 11pt;
+            color: var(--ink);
+        }
+        .cover .toc li { margin: 3px 0; }
+
+        /* --- chapter heads --- */
+        h1.chapter-head {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 26pt;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 0 0 6px 0;
+            line-height: 1.15;
+        }
+        .chapter-kicker {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 1.4px;
+            color: var(--teal);
+            font-weight: 700;
+            margin: 0 0 4px 0;
+        }
+        .chapter-intro {
+            font-size: 12pt;
+            color: var(--ink-soft);
+            font-style: italic;
+            margin: 0 0 22px 0;
+            border-left: 3px solid var(--navy-soft);
+            padding-left: 14px;
+        }
+
+        h2.section {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 16pt;
+            font-weight: 700;
+            color: var(--navy);
+            margin: 26px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--rule);
+            page-break-after: avoid;
+        }
+        h2.section .en {
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 500;
+            font-size: 11pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+            margin-left: 8px;
+            letter-spacing: 0.3px;
+        }
+        h3.subsection {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 16px 0 6px 0;
+            page-break-after: avoid;
+        }
+
+        p { margin: 6px 0 10px 0; }
+        ul, ol { margin: 6px 0 10px 0; padding-left: 22px; }
+        li { margin: 3px 0; }
+        strong { color: var(--ink); }
+
+        .lead {
+            font-size: 12.5pt;
+            color: var(--ink);
+        }
+
+        /* --- callouts --- */
+        .callout {
+            border-left: 4px solid;
+            border-radius: 0 6px 6px 0;
+            padding: 12px 18px;
+            margin: 14px 0;
+        }
+        .callout .label {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            margin: 0 0 4px 0;
+        }
+        .callout p { margin: 0; }
+
+        .callout.objective { background: var(--accent-soft); border-left-color: var(--accent); }
+        .callout.objective .label { color: #92400e; }
+
+        .callout.suggestion { background: #f0f9ff; border-left-color: #38bdf8; }
+        .callout.suggestion .label { color: #0c4a6e; }
+
+        .callout.video { background: #faf5ff; border-left-color: #a855f7; }
+        .callout.video .label { color: #6b21a8; }
+
+        .callout.reminder { background: var(--accent-soft); border-left-color: var(--accent); }
+        .callout.reminder .label { color: #92400e; }
+
+        .callout.student { background: var(--rose-soft); border-left-color: #ec4899; }
+        .callout.student .label { color: #9d174d; }
+
+        /* --- script / spoken dialogue block --- */
+        .script {
+            border-left: 3px solid var(--navy-soft);
+            padding: 4px 0 4px 16px;
+            margin: 10px 0;
+            font-size: 11.5pt;
+        }
+        .script .role {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .script p { margin: 2px 0; }
+        .script.english .role { color: var(--teal); }
+
+        /* --- objective-grid (year goals) --- */
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 18px;
+            margin: 12px 0 18px 0;
+            padding: 14px 18px;
+            background: #f9fafb;
+            border-radius: 6px;
+            border-left: 4px solid var(--teal);
+        }
+        .goals-grid .item {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            font-size: 11pt;
+        }
+        .goals-grid .check {
+            color: var(--teal);
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        /* --- prior-exposure chips --- */
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 8px 0 14px 0;
+        }
+        .chip {
+            display: inline-block;
+            padding: 3px 11px;
+            background: var(--navy-soft);
+            color: var(--navy);
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 10pt;
+        }
+
+        /* --- routine step list --- */
+        .routine {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+            margin: 8px 0 14px 0;
+        }
+        .routine li {
+            counter-increment: step;
+            position: relative;
+            padding: 10px 12px 10px 56px;
+            margin: 0 0 8px 0;
+            background: var(--teal-soft);
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .routine li::before {
+            content: counter(step);
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 26px;
+            height: 26px;
+            background: var(--teal);
+            color: white;
+            font-weight: 700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12pt;
+        }
+        .routine li .icon {
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        /* --- tables --- */
+        table.ref {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11pt;
+            margin: 8px 0 18px 0;
+        }
+        table.ref th, table.ref td {
+            text-align: left;
+            padding: 7px 12px;
+            border-bottom: 1px solid var(--rule);
+            vertical-align: top;
+        }
+        table.ref thead th {
+            background: var(--navy-soft);
+            color: var(--navy);
+            font-weight: 700;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        table.ref tbody tr:nth-child(even) { background: #f9fafb; }
+        table.ref .es { font-weight: 600; }
+
+        /* --- commands table is split for visual variety --- */
+        table.commands { width: 100%; border-collapse: collapse; margin: 10px 0 18px 0; }
+        table.commands td {
+            padding: 6px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 10.5pt;
+        }
+        table.commands td.es { font-weight: 600; color: var(--navy); width: 50%; }
+        table.commands td.en { color: var(--ink-soft); font-style: italic; }
+
+        /* --- standards table --- */
+        h2.standards-title {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--navy);
+            margin: 24px 0 6px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--rule);
+            page-break-after: avoid;
+        }
+        .standards-note {
+            font-size: 10pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+            margin: 0 0 10px 0;
+        }
+        table.standards {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9.5pt;
+            margin: 6px 0 0 0;
+        }
+        table.standards th, table.standards td {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--rule);
+            vertical-align: top;
+        }
+        table.standards th {
+            background: #f9fafb;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+            color: var(--ink-soft-2);
+        }
+        table.standards .code {
+            font-family: 'Source Code Pro', ui-monospace, Menlo, monospace;
+            font-weight: 600;
+            color: var(--navy);
+            white-space: nowrap;
+            font-size: 9pt;
+        }
+        table.standards .actfl {
+            display: inline-block;
+            margin-top: 2px;
+            font-size: 8.5pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+        }
+
+        /* --- footer --- */
+        .doc-footer {
+            margin-top: 28px;
+            padding-top: 8px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5pt;
+            color: var(--ink-soft-2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+    <div><strong>Curriculum proposal preview</strong> — Cece-authored 5th-grade orientation, LCS binder format</div>
+    <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<article class="sheet">
+
+    <!-- =================================================================== COVER ==== -->
+    <section class="chapter cover">
+        <p class="author">Cece Kemnitzer</p>
+        <p class="date">June 4, 2026</p>
+
+        <p class="super">5.º Grado · Teacher Orientation</p>
+        <h1>Construyendo los Cimientos</h1>
+        <p class="subtitle">Building the Foundations</p>
+        <p class="band">Principiante Bajo &nbsp;→&nbsp; Principiante Medio</p>
+
+        <div class="toc">
+            <p class="toc-label">Contenidos</p>
+            <ol>
+                <li>Bienvenida, profesora</li>
+                <li>Primer día de clase</li>
+                <li>Segundo día de clase</li>
+                <li>Comandos de Clase</li>
+                <li>Rutina Diaria Recomendada</li>
+                <li>Unidad 1: ¿Quién Soy Yo?</li>
+                <li>Mi Guía de Aprendizaje (handout)</li>
+                <li>Referencia — Vocabulario y Gramática</li>
+                <li>Standards Alignment — WI DPI &amp; ACTFL</li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- =================================================================== BIENVENIDA ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Bienvenida</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 1</p>
+        <h1 class="chapter-head">Bienvenida, profesora</h1>
+        <p class="chapter-intro">
+            ¡Bienvenida, profesora! Estamos a punto de comenzar una emocionante aventura en el aprendizaje del español con nuestros estudiantes de 5.º grado. Es en este nivel donde comenzamos a construir los cimientos de los principios gramaticales del idioma español.
+        </p>
+
+        <h2 class="section"><span class="es">Quiénes son nuestros estudiantes</span><span class="en">Who our students are</span></h2>
+
+        <p>Nuestros estudiantes suelen tener entre <strong>10 y 11 años de edad</strong>. A esta edad se encuentran en una etapa muy interesante porque ya no son tan pequeños, pero tampoco son adolescentes. Generalmente les gusta:</p>
+        <ul>
+            <li>Expresar sus opiniones.</li>
+            <li>Desarrollar mayor independencia.</li>
+            <li>Sentirse capaces y exitosos.</li>
+        </ul>
+        <p>También pueden comprender reglas gramaticales más complejas cuando tienen un <strong>propósito práctico y significativo</strong>.</p>
+        <p>Los estudiantes suelen aburrirse rápidamente con ejercicios repetitivos o listas de vocabulario sin contexto. Les gusta hablar sobre <strong>ellos mismos, sus amigos, sus gustos, deportes, mascotas, videojuegos y música</strong>.</p>
+
+        <h2 class="section"><span class="es">Lo que ya saben</span><span class="en">Prior exposure</span></h2>
+        <p>A esta edad, nuestros estudiantes ya han estado expuestos a vocabulario básico en español:</p>
+        <div class="chips">
+            <span class="chip">colores</span>
+            <span class="chip">alfabeto</span>
+            <span class="chip">números</span>
+            <span class="chip">animales</span>
+            <span class="chip">meses del año</span>
+            <span class="chip">clima</span>
+            <span class="chip">familia</span>
+            <span class="chip">estaciones</span>
+            <span class="chip">frutas y verduras</span>
+            <span class="chip">partes del cuerpo</span>
+            <span class="chip">útiles escolares</span>
+        </div>
+
+        <h2 class="section"><span class="es">Meta para el año escolar</span><span class="en">Year-end objectives</span></h2>
+        <p>Al finalizar este año escolar, nuestra meta es que los estudiantes puedan:</p>
+        <div class="goals-grid">
+            <div class="item"><span class="check">✓</span><span>Presentarse a sí mismos.</span></div>
+            <div class="item"><span class="check">✓</span><span>Dar información personal básica.</span></div>
+            <div class="item"><span class="check">✓</span><span>Hablar de su familia.</span></div>
+            <div class="item"><span class="check">✓</span><span>Describir personas, objetos y colores.</span></div>
+            <div class="item"><span class="check">✓</span><span>Expresar lo que les gusta y lo que no les gusta.</span></div>
+            <div class="item"><span class="check">✓</span><span>Comprender el español básico utilizado en el aula.</span></div>
+        </div>
+    </section>
+
+    <!-- =================================================================== PRIMER DÍA ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Día 1</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 2</p>
+        <h1 class="chapter-head">Primer día de clase</h1>
+        <p class="chapter-intro">
+            ¡Hoy es tu primer día de clases! ¡Qué emoción! Hoy conocerás a los estudiantes que compartirán este año contigo. Generalmente, las clases de 5.º grado duran <strong>30 minutos</strong>, aunque algunos colegios cuentan con periodos de <strong>45 minutos</strong>.
+        </p>
+
+        <h2 class="section"><span class="es">Preséntate</span><span class="en">Introduce yourself</span></h2>
+        <p>El primer día de clase, preséntate. Háblales sobre ti, cuéntales de dónde eres y comparte un poco sobre tu familia. Esta introducción puede realizarse <strong>tanto en español como en inglés</strong>.</p>
+
+        <p>Escribe en la pizarra cómo te gustaría que los estudiantes te llamen, por ejemplo:</p>
+        <ul>
+            <li>Señora Cece</li>
+            <li>Señora Kemnitzer</li>
+        </ul>
+
+        <h2 class="section"><span class="es">Conoce a tus estudiantes</span><span class="en">Get to know your students</span></h2>
+        <p>El primer día de clases es muy importante. Pregúntales a los estudiantes sus nombres y anímalos a compartir información sobre ellos mismos.</p>
+
+        <div class="callout suggestion">
+            <p class="label">Sugerencia</p>
+            <p>Si es posible, organiza la clase en <strong>círculo</strong> para fomentar la participación. Si no es posible, pueden presentarse desde sus escritorios levantando la mano.</p>
+        </div>
+
+        <p>Escribe en la pizarra:</p>
+        <div class="script">
+            <span class="role">Frase del día</span>
+            <p><strong>"Buenos días, me llamo _________."</strong></p>
+        </div>
+
+        <p>Practica la pronunciación con los estudiantes y permite que cada uno se presente.</p>
+
+        <h3 class="subsection">Tarjetas de nombre</h3>
+        <p>Recomendamos que cada estudiante cree una <strong>tarjeta con su nombre</strong> para colocarla sobre su escritorio durante las primeras semanas de clase. Esto facilitará que aprendas sus nombres más rápidamente.</p>
+
+        <h3 class="subsection">Hoja "Todo sobre mí"</h3>
+        <p>Contamos con una hoja titulada <strong>"Todo sobre mí"</strong>, la cual los estudiantes completarán el primer día de clases para compartir información sobre ellos mismos.</p>
+
+        <div class="callout video">
+            <p class="label">🎥 Video de apoyo</p>
+            <p>Consulta el video correspondiente al <strong>primer día de clase</strong> para obtener sugerencias adicionales. <em>(Link — TODO)</em></p>
+        </div>
+    </section>
+
+    <!-- =================================================================== SEGUNDO DÍA ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Día 2</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 3</p>
+        <h1 class="chapter-head">Segundo día de clase</h1>
+        <p class="chapter-intro">
+            ¡Ayer fue tu primer día de clases y conociste a tus estudiantes! Seguramente ellos también están emocionados de conocerte.
+        </p>
+
+        <h2 class="section"><span class="es">Canción de bienvenida</span><span class="en">Welcome song</span></h2>
+        <p>En Lake Country Spanish nos gusta comenzar nuestras clases con una <strong>canción de bienvenida</strong>.</p>
+
+        <div class="callout video">
+            <p class="label">🎥 Video de apoyo</p>
+            <p>Consulta el video de canciones recomendadas para iniciar y finalizar cada clase. <em>(Link — TODO)</em></p>
+        </div>
+
+        <h2 class="section"><span class="es">Repaso de la presentación</span><span class="en">Reviewing the introduction</span></h2>
+        <p>Hoy es un excelente momento para repasar o enseñar la frase:</p>
+        <div class="script">
+            <span class="role">Frase del día</span>
+            <p><strong>"Buenos días, me llamo _________."</strong></p>
+        </div>
+
+        <p>Escríbela en la pizarra y practícala varias veces con los estudiantes. A esta edad, los niños ya pueden comenzar a presentarse <strong>de forma independiente</strong>.</p>
+
+        <h3 class="subsection">Cómo modelar la actividad</h3>
+
+        <p><strong>Te sugerimos decir (puente al inglés):</strong></p>
+        <div class="script english">
+            <span class="role">Maestro/a (English bridge)</span>
+            <p>"We will start introducing ourselves. Please stand up when you introduce yourself. I will start first."</p>
+        </div>
+
+        <p><strong>Luego modela la actividad:</strong></p>
+        <div class="script">
+            <span class="role">Maestro/a</span>
+            <p>"Buenos días, me llamo Señora Cece."</p>
+        </div>
+
+        <p>Después, invita al siguiente estudiante a participar. Cuando todos hayan tenido la oportunidad de presentarse, <strong>felicítalos por su esfuerzo y participación</strong>.</p>
+    </section>
+
+    <!-- =================================================================== COMANDOS ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Referencia</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 4</p>
+        <h1 class="chapter-head">Comandos de Clase</h1>
+        <p class="chapter-intro">
+            Introduce los comandos que utilizarás con mayor frecuencia durante el año escolar. Existen muchos comandos en español, pero te recomendamos comenzar con aquellos que usarás <strong>diariamente</strong>.
+        </p>
+
+        <p>Estos son los comandos que <strong>Karen y Cece</strong> utilizan con sus estudiantes de 5.º grado:</p>
+
+        <table class="commands">
+            <tbody>
+                <tr><td class="es">Niños, buenos días.</td>           <td class="en">Children, good morning.</td></tr>
+                <tr><td class="es">Niños, escuchen.</td>              <td class="en">Children, listen.</td></tr>
+                <tr><td class="es">Niños, silencio.</td>              <td class="en">Children, quiet.</td></tr>
+                <tr><td class="es">Niños, abran su binder.</td>       <td class="en">Children, open your binder.</td></tr>
+                <tr><td class="es">Niños, cierren su binder.</td>     <td class="en">Children, close your binder.</td></tr>
+                <tr><td class="es">Niños, levántense.</td>            <td class="en">Children, stand up.</td></tr>
+                <tr><td class="es">Niños, siéntense.</td>             <td class="en">Children, sit down.</td></tr>
+                <tr><td class="es">Niños, escriban.</td>              <td class="en">Children, write.</td></tr>
+                <tr><td class="es">Niños, repitan.</td>               <td class="en">Children, repeat.</td></tr>
+                <tr><td class="es">Niños, formen una fila.</td>       <td class="en">Children, form a line.</td></tr>
+                <tr><td class="es">Niños, saquen su Chromebook.</td>  <td class="en">Children, take out your Chromebook.</td></tr>
+                <tr><td class="es">Niños, guarden su Chromebook.</td> <td class="en">Children, put away your Chromebook.</td></tr>
+            </tbody>
+        </table>
+
+        <p>Escribe cada comando en la pizarra y practícalo varias veces con los estudiantes.</p>
+
+        <div class="callout video">
+            <p class="label">🎥 Video de apoyo</p>
+            <p>Contamos con una <strong>presentación visual de estos comandos</strong> para apoyar el aprendizaje. <em>(Link — TODO)</em></p>
+        </div>
+    </section>
+
+    <!-- =================================================================== RUTINA ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Rutina</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 5</p>
+        <h1 class="chapter-head">Rutina Diaria Recomendada</h1>
+        <p class="chapter-intro">
+            Para crear consistencia y confianza en los estudiantes, recomendamos seguir una rutina similar cada día.
+        </p>
+
+        <ol class="routine">
+            <li><span class="icon">🎵</span>Canción de bienvenida</li>
+            <li><span class="icon">🗣</span>Repaso de los comandos de clase</li>
+            <li><span class="icon">📚</span>Lección del día</li>
+            <li><span class="icon">🎵</span>Canción de despedida</li>
+        </ol>
+
+        <div class="callout video">
+            <p class="label">🎥 Videos</p>
+            <p>Todo este material está disponible en nuestros videos de YouTube. <em>(Links — TODO)</em></p>
+        </div>
+    </section>
+
+    <!-- =================================================================== UNIDAD 1 ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Unidad 1</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 6</p>
+        <h1 class="chapter-head">Unidad 1: ¿Quién Soy Yo?</h1>
+        <p class="chapter-intro">
+            En esta unidad los estudiantes aprenderán el verbo <strong>SER</strong>, uno de los verbos más importantes del idioma español. Comenzamos a construir una base sólida de comunicación y gramática que servirá de apoyo para los futuros años de estudio.
+        </p>
+
+        <div class="callout objective">
+            <p class="label">Vocabulario y gramática principal</p>
+            <p>Como <strong>vocabulario principal</strong> utilizaremos los miembros de la familia y, como <strong>adjetivos</strong>, trabajaremos con palabras que no cambian de género. Esto permitirá a los estudiantes crear oraciones sencillas y significativas desde el inicio de la unidad.</p>
+        </div>
+
+        <h2 class="section"><span class="es">Introducción al Verbo SER</span><span class="en">Introducing the verb SER</span></h2>
+
+        <p>Al presentar el verbo SER, es importante mantener las explicaciones <strong>simples y significativas</strong>.</p>
+
+        <p><strong>Puedes explicar a los estudiantes:</strong></p>
+        <div class="script english">
+            <span class="role">Maestro/a (English bridge)</span>
+            <p>"In Spanish, verbs change like a costume. The verb changes to show who is talking."</p>
+        </div>
+
+        <p>Los estudiantes ya están familiarizados con el verbo <strong>to be</strong> en inglés. Utiliza esta conexión para ayudarlos a comprender el concepto.</p>
+
+        <h3 class="subsection">English vs. Spanish</h3>
+
+        <table class="ref">
+            <thead><tr><th>English (small change)</th><th>Español (cambio más claro)</th></tr></thead>
+            <tbody>
+                <tr><td>I am</td>   <td>Yo soy</td></tr>
+                <tr><td>You are</td><td>Tú eres</td></tr>
+                <tr><td>He is</td>  <td>Él es</td></tr>
+            </tbody>
+        </table>
+
+        <p>En español, el verbo cambia de manera <strong>más clara</strong> dependiendo de quién realiza la acción.</p>
+
+        <h2 class="section"><span class="es">¿Por qué enseñamos el verbo SER?</span><span class="en">Why we teach SER</span></h2>
+
+        <p>El verbo SER permite a los estudiantes hablar sobre <strong>sí mismos</strong> y las personas que forman parte de su vida.</p>
+
+        <p>Al finalizar esta unidad, los estudiantes podrán decir oraciones como:</p>
+        <ul>
+            <li>Yo soy <strong>inteligente</strong>.</li>
+            <li>Yo soy <strong>amable</strong>.</li>
+            <li>Mi mamá es <strong>paciente</strong>.</li>
+            <li>Mi hermano es <strong>fuerte</strong>.</li>
+            <li>Mi familia es <strong>especial</strong>.</li>
+        </ul>
+        <p>Estas son expresiones útiles y significativas para los estudiantes porque les permiten comunicarse sobre <strong>su propia realidad</strong>.</p>
+
+        <h2 class="section"><span class="es">Sugerencias para que tu clase sea un éxito</span><span class="en">Tips for a successful class</span></h2>
+        <ul>
+            <li><strong>No sobre-expliques la gramática.</strong> Los estudiantes aprenden mejor mediante la práctica y la repetición.</li>
+            <li><strong>Repite la conjugación del verbo SER</strong> varias veces durante la clase.</li>
+            <li><strong>Utiliza movimiento, gestos y actuación</strong> para mantener el interés y la participación.</li>
+            <li><strong>Mantén las oraciones simples y con significado.</strong></li>
+            <li><strong>Celebra los pequeños logros</strong> para ayudar a los estudiantes a desarrollar confianza en sus habilidades lingüísticas.</li>
+        </ul>
+    </section>
+
+    <!-- =================================================================== MI GUÍA ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Handout</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 7</p>
+        <h1 class="chapter-head">Mi Guía de Aprendizaje</h1>
+        <p class="chapter-intro">My Learning Guide — student-facing handout for Unit 1.</p>
+
+        <div class="callout student">
+            <p class="label">Para el estudiante</p>
+            <p>Entregue a cada estudiante su <strong>My Learning Guide / Mi Guía de Aprendizaje</strong> al inicio de la unidad. Este recurso servirá como referencia durante las actividades y ayudará a los estudiantes a comprender claramente los objetivos de aprendizaje de la lección.</p>
+        </div>
+
+        <h2 class="section">Unidad 1: ¿Quién Soy Yo?</h2>
+
+        <p><strong>Lo que aprenderé.</strong> Al finalizar esta unidad, podré:</p>
+        <div class="goals-grid">
+            <div class="item"><span class="check">✓</span><span>Presentarme en español.</span></div>
+            <div class="item"><span class="check">✓</span><span>Hablar sobre mi familia.</span></div>
+            <div class="item"><span class="check">✓</span><span>Usar el verbo SER.</span></div>
+            <div class="item"><span class="check">✓</span><span>Describir personas utilizando adjetivos.</span></div>
+            <div class="item"><span class="check">✓</span><span>Participar en actividades básicas en español.</span></div>
+        </div>
+    </section>
+
+    <!-- =================================================================== REFERENCIA ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Referencia</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 8</p>
+        <h1 class="chapter-head">Referencia — Vocabulario y Gramática</h1>
+        <p class="chapter-intro">Tarjetas de referencia para el binder. Imprimir y archivar al inicio de la unidad.</p>
+
+        <h2 class="section">Verbo SER (To Be)</h2>
+
+        <div class="callout reminder">
+            <p class="label">💡 Recuerda</p>
+            <p>El verbo <strong>SER</strong> significa <strong>TO BE</strong>.</p>
+        </div>
+
+        <table class="ref">
+            <thead><tr><th>Español</th><th>English</th></tr></thead>
+            <tbody>
+                <tr><td class="es">Yo soy</td>          <td>I am</td></tr>
+                <tr><td class="es">Tú eres</td>         <td>You are</td></tr>
+                <tr><td class="es">Él es</td>           <td>He is</td></tr>
+                <tr><td class="es">Ella es</td>         <td>She is</td></tr>
+                <tr><td class="es">Nosotros somos</td>  <td>We are</td></tr>
+                <tr><td class="es">Ellos son</td>       <td>They are</td></tr>
+                <tr><td class="es">Ellas son</td>       <td>They are (girls)</td></tr>
+                <tr><td class="es">Usted es</td>        <td>You are (formal)</td></tr>
+            </tbody>
+        </table>
+
+        <h2 class="section">La Familia</h2>
+        <table class="ref">
+            <thead><tr><th>Español</th><th>English</th></tr></thead>
+            <tbody>
+                <tr><td class="es">Mi mamá</td>    <td>My mom</td></tr>
+                <tr><td class="es">Mi papá</td>    <td>My dad</td></tr>
+                <tr><td class="es">Mi abuelo</td>  <td>My grandfather</td></tr>
+                <tr><td class="es">Mi abuela</td>  <td>My grandmother</td></tr>
+                <tr><td class="es">Mi hermano</td> <td>My brother</td></tr>
+                <tr><td class="es">Mi hermana</td> <td>My sister</td></tr>
+                <tr><td class="es">Bebé</td>       <td>Baby</td></tr>
+                <tr><td class="es">Mi tío</td>     <td>My uncle</td></tr>
+                <tr><td class="es">Mi tía</td>     <td>My aunt</td></tr>
+                <tr><td class="es">Mi primo</td>   <td>My cousin (boy)</td></tr>
+                <tr><td class="es">Mi prima</td>   <td>My cousin (girl)</td></tr>
+                <tr><td class="es">Y yo</td>       <td>And me</td></tr>
+            </tbody>
+        </table>
+
+        <h2 class="section">Adjetivos que no cambian de género</h2>
+        <table class="ref">
+            <thead><tr><th>Español</th><th>English</th></tr></thead>
+            <tbody>
+                <tr><td class="es">Inteligente</td> <td>Intelligent</td></tr>
+                <tr><td class="es">Interesante</td> <td>Interesting</td></tr>
+                <tr><td class="es">Feliz</td>       <td>Happy</td></tr>
+                <tr><td class="es">Amable</td>      <td>Kind</td></tr>
+                <tr><td class="es">Fuerte</td>      <td>Strong</td></tr>
+                <tr><td class="es">Joven</td>       <td>Young</td></tr>
+                <tr><td class="es">Grande</td>      <td>Big</td></tr>
+                <tr><td class="es">Responsable</td> <td>Responsible</td></tr>
+                <tr><td class="es">Paciente</td>    <td>Patient</td></tr>
+                <tr><td class="es">Importante</td>  <td>Important</td></tr>
+                <tr><td class="es">Increíble</td>   <td>Incredible</td></tr>
+                <tr><td class="es">Popular</td>     <td>Popular</td></tr>
+                <tr><td class="es">Especial</td>    <td>Special</td></tr>
+                <tr><td class="es">Excelente</td>   <td>Excellent</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- =================================================================== STANDARDS ==== -->
+    <section class="chapter">
+        <header class="masthead">
+            <div class="brand">Lake Country Spanish</div>
+            <div class="crumb">5.º Grado · Standards</div>
+        </header>
+
+        <p class="chapter-kicker">Capítulo 9</p>
+        <h1 class="chapter-head">Standards Alignment — WI DPI &amp; ACTFL</h1>
+        <p class="standards-note">
+            WI DPI World Languages standards (June 2019) are built on the ACTFL World-Readiness framework — same communication modes, same proficiency bands.
+            Both labels shown below: WI code for public-school compliance, ACTFL mode + level for private/parochial alignment.
+            Recorded for course-based-curriculum compliance; not assessed with rubrics in class.
+        </p>
+
+        <table class="standards">
+            <thead>
+                <tr>
+                    <th style="width: 26%;">Standard (WI / ACTFL)</th>
+                    <th>Practice</th>
+                    <th>Performance Indicator</th>
+                    <th>How it's addressed</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <span class="code">WL.IT.1.c.n2</span><br>
+                        <span class="actfl">ACTFL Interpretive · Novice Mid</span>
+                    </td>
+                    <td>1.c — Authentic conversations</td>
+                    <td>Identify some basic facts from memorized words and phrases when supported by gestures or visuals in conversations.</td>
+                    <td>Comandos de Clase — students respond to spoken commands with gestures (TPR)</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="code">WL.IP.2.a.n2</span><br>
+                        <span class="actfl">ACTFL Interpersonal · Novice Mid</span>
+                    </td>
+                    <td>2.a — Exchange information</td>
+                    <td>Provide and exchange information on very familiar topics using practiced words, phrases, and memorized chunks.</td>
+                    <td>Self-introductions ("Buenos días, me llamo ___"), family descriptions</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="code">WL.IP.2.b.n1</span><br>
+                        <span class="actfl">ACTFL Interpersonal · Novice Low</span>
+                    </td>
+                    <td>2.b — Meet needs / situations</td>
+                    <td>Express basic needs with practiced or memorized words and phrases, with gestures or visuals.</td>
+                    <td>Following classroom commands (TPR — total physical response)</td>
+                </tr>
+                <tr>
+                    <td>
+                        <span class="code">WL.PS.3.a.n2</span><br>
+                        <span class="actfl">ACTFL Presentational · Novice Mid</span>
+                    </td>
+                    <td>3.a — Describe lives, experiences, events</td>
+                    <td>Introduce self and others using practiced or memorized words, phrases, and short sentences with gestures or visuals.</td>
+                    <td>Yo soy ___ + family/adjective descriptions</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <footer class="doc-footer">
+            <span>Lake Country Spanish · 5.º Grado · Construyendo los Cimientos</span>
+            <span>Cece Kemnitzer · June 2026</span>
+        </footer>
+    </section>
+
+</article>
+
+</body>
+</html>
