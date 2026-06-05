@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Lake Country Spanish — Los Colores, Day 1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        @page {
+            size: letter;
+            margin: 0.7in;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .sheet { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+        }
+
+        :root {
+            --ink: #1f2937;
+            --ink-soft: #4b5563;
+            --ink-soft-2: #6b7280;
+            --navy: #1E3A8A;
+            --navy-soft: #e0e7ff;
+            --accent: #f59e0b;
+            --accent-soft: #fef3c7;
+            --teal-soft: #ccfbf1;
+            --rule: #d1d5db;
+
+            --tier-core: #ecfdf5;
+            --tier-core-ring: #10b981;
+            --tier-core-ink: #047857;
+
+            --tier-stretch: #eff6ff;
+            --tier-stretch-ring: #3b82f6;
+            --tier-stretch-ink: #1d4ed8;
+
+            --tier-challenge: #fdf4ff;
+            --tier-challenge-ring: #a855f7;
+            --tier-challenge-ink: #7e22ce;
+        }
+
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: #f3f4f6;
+            font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+            font-size: 11.5pt;
+            line-height: 1.55;
+            color: var(--ink);
+        }
+
+        .toolbar {
+            max-width: 8.5in;
+            margin: 14px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #4b5563;
+        }
+        .toolbar button {
+            background: #1E3A8A;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .sheet {
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto 24px auto;
+            padding: 0.7in 0.85in;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+        }
+
+        /* --- masthead --- */
+        .masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--navy);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+        .brand {
+            font-family: 'Lora', Georgia, serif;
+            font-weight: 700;
+            font-size: 14pt;
+            color: var(--navy);
+            letter-spacing: 0.5px;
+        }
+        .crumb {
+            font-size: 10pt;
+            color: var(--ink-soft);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h1.lesson-title {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 28pt;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 4px 0 2px 0;
+            line-height: 1.15;
+        }
+        .lesson-subtitle {
+            font-size: 13pt;
+            color: var(--ink-soft);
+            font-weight: 500;
+            margin: 0 0 14px 0;
+        }
+
+        /* --- objective callout --- */
+        .objective {
+            background: var(--accent-soft);
+            border-left: 4px solid var(--accent);
+            padding: 12px 18px;
+            margin: 0 0 22px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .objective .label {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            color: #92400e;
+            margin: 0 0 4px 0;
+        }
+        .objective p {
+            margin: 0;
+            font-size: 12pt;
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        /* --- vocab tiers --- */
+        .vocab-tiers {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 0 0 22px 0;
+        }
+        .vocab-tier {
+            border: 1.5px solid;
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+        .vocab-tier .tier-label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            margin: 0 0 6px 0;
+        }
+        .vocab-tier .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .vocab-tier .chip {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 10pt;
+            background: white;
+        }
+        .vocab-tier.core { background: var(--tier-core); border-color: var(--tier-core-ring); }
+        .vocab-tier.core .tier-label, .vocab-tier.core .chip { color: var(--tier-core-ink); }
+        .vocab-tier.core .chip { border: 1px solid var(--tier-core-ring); }
+        .vocab-tier.stretch { background: var(--tier-stretch); border-color: var(--tier-stretch-ring); }
+        .vocab-tier.stretch .tier-label, .vocab-tier.stretch .chip { color: var(--tier-stretch-ink); }
+        .vocab-tier.stretch .chip { border: 1px solid var(--tier-stretch-ring); }
+        .vocab-tier.challenge { background: var(--tier-challenge); border-color: var(--tier-challenge-ring); }
+        .vocab-tier.challenge .tier-label, .vocab-tier.challenge .chip { color: var(--tier-challenge-ink); }
+        .vocab-tier.challenge .chip { border: 1px solid var(--tier-challenge-ring); }
+
+        /* --- materials --- */
+        .materials {
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 12px 18px;
+            margin: 0 0 24px 0;
+        }
+        .materials .label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            color: var(--ink-soft-2);
+            margin: 0 0 4px 0;
+        }
+        .materials ul {
+            margin: 4px 0 0 0;
+            columns: 2;
+            column-gap: 24px;
+        }
+
+        /* --- section headings --- */
+        h2.section {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 16pt;
+            font-weight: 700;
+            color: var(--navy);
+            margin: 26px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--rule);
+            page-break-after: avoid;
+        }
+        h2.section .en {
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 500;
+            font-size: 11pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+            margin-left: 8px;
+            letter-spacing: 0.3px;
+        }
+        h3.subsection {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 18px 0 6px 0;
+            page-break-after: avoid;
+        }
+
+        p { margin: 6px 0 10px 0; }
+        ul, ol { margin: 6px 0 10px 0; padding-left: 22px; }
+        li { margin: 3px 0; }
+        strong { color: var(--ink); }
+
+        /* --- script / dialogue --- */
+        .script {
+            border-left: 3px solid var(--navy-soft);
+            padding: 4px 0 4px 16px;
+            margin: 10px 0;
+            color: var(--ink);
+            font-size: 11.5pt;
+        }
+        .script .role {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .script p { margin: 2px 0; }
+        .stage {
+            font-style: italic;
+            color: var(--ink-soft);
+            font-size: 10.5pt;
+        }
+
+        /* --- song box --- */
+        .song {
+            background: var(--teal-soft);
+            border-radius: 6px;
+            padding: 10px 16px;
+            margin: 12px 0;
+        }
+        .song .label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            color: #0f766e;
+            margin: 0 0 2px 0;
+        }
+        .song .title {
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            font-size: 11.5pt;
+        }
+        .song .lyric {
+            font-style: italic;
+            color: var(--ink);
+            margin: 4px 0;
+        }
+        .song .link {
+            font-size: 10pt;
+            color: var(--ink-soft-2);
+        }
+
+        /* --- differentiation callout --- */
+        .diff {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            gap: 12px;
+            background: #fafafa;
+            border-left: 3px solid;
+            border-radius: 0 6px 6px 0;
+            padding: 8px 14px;
+            margin: 10px 0;
+            font-size: 10.5pt;
+        }
+        .diff.support { border-left-color: var(--tier-stretch-ring); }
+        .diff.challenge { border-left-color: var(--tier-challenge-ring); }
+        .diff .tag {
+            font-size: 9pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            padding-top: 2px;
+        }
+        .diff.support .tag { color: var(--tier-stretch-ink); }
+        .diff.challenge .tag { color: var(--tier-challenge-ink); }
+        .diff p { margin: 0; }
+
+        /* --- numbered game list --- */
+        .games-list {
+            counter-reset: gameitem;
+            list-style: none;
+            padding-left: 0;
+            margin: 8px 0 12px 0;
+        }
+        .games-list > li {
+            counter-increment: gameitem;
+            position: relative;
+            padding: 10px 14px 10px 48px;
+            margin: 0 0 10px 0;
+            background: #f9fafb;
+            border-radius: 6px;
+            page-break-inside: avoid;
+        }
+        .games-list > li::before {
+            content: counter(gameitem);
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 22px;
+            height: 22px;
+            background: var(--navy);
+            color: white;
+            font-weight: 700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11pt;
+        }
+        .games-list .game-title {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 12pt;
+            margin: 0 0 4px 0;
+        }
+        .games-list ul { margin: 4px 0; }
+
+        /* --- standards table --- */
+        h2.standards-title {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--navy);
+            margin: 32px 0 6px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--rule);
+            page-break-after: avoid;
+        }
+        .standards-note {
+            font-size: 10pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+            margin: 0 0 10px 0;
+        }
+        table.standards {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9.5pt;
+            margin: 6px 0 0 0;
+        }
+        table.standards th, table.standards td {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--rule);
+            vertical-align: top;
+        }
+        table.standards th {
+            background: #f9fafb;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+            color: var(--ink-soft-2);
+        }
+        table.standards .code {
+            font-family: 'Source Code Pro', ui-monospace, Menlo, monospace;
+            font-weight: 600;
+            color: var(--navy);
+            white-space: nowrap;
+            font-size: 9pt;
+        }
+        table.standards .actfl {
+            display: inline-block;
+            margin-top: 2px;
+            font-size: 8.5pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+        }
+
+        /* --- footer --- */
+        .doc-footer {
+            margin-top: 24px;
+            padding-top: 8px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5pt;
+            color: var(--ink-soft-2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+    <div><strong>Curriculum proposal preview</strong> — Karen-authored content, professional teacher-binder format</div>
+    <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<article class="sheet">
+
+    <header class="masthead">
+        <div class="brand">Lake Country Spanish</div>
+        <div class="crumb">K–2 · Trimestre 1 · Día 1 · 30 min</div>
+    </header>
+
+    <h1 class="lesson-title">Los Colores</h1>
+    <p class="lesson-subtitle">Lección 1 — Day 1 of the colors unit</p>
+
+    <div class="objective">
+        <p class="label">Objetivo</p>
+        <p>Los estudiantes podrán identificar los colores y usarlos en frases simples. La maestra ajusta la profundidad del vocabulario según el nivel del grupo.</p>
+    </div>
+
+    <div class="vocab-tiers">
+        <div class="vocab-tier core">
+            <p class="tier-label">Core · Everyone</p>
+            <div class="chips">
+                <span class="chip">rojo</span>
+                <span class="chip">azul</span>
+                <span class="chip">amarillo</span>
+            </div>
+        </div>
+        <div class="vocab-tier stretch">
+            <p class="tier-label">Stretch · As ready</p>
+            <div class="chips">
+                <span class="chip">verde</span>
+                <span class="chip">anaranjado</span>
+                <span class="chip">morado</span>
+                <span class="chip">rosa</span>
+                <span class="chip">negro</span>
+                <span class="chip">blanco</span>
+            </div>
+        </div>
+        <div class="vocab-tier challenge">
+            <p class="tier-label">Challenge · Advanced / 2nd grade</p>
+            <div class="chips">
+                <span class="chip">café</span>
+                <span class="chip">marrón</span>
+                <span class="chip">gris</span>
+                <span class="chip">dorado</span>
+                <span class="chip">plateado</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="materials">
+        <p class="label">Materiales (Materials)</p>
+        <ul>
+            <li>Tarjetas de colores — Core 3 + Stretch/Challenge tiers as needed</li>
+            <li>Pelota de colores</li>
+            <li>Hoja de práctica para colorear</li>
+            <li>Bingo de colores (opcional)</li>
+            <li>Flashcards de frutas (opcional)</li>
+            <li>Bandera de un país hispanohablante para colorear</li>
+        </ul>
+    </div>
+
+    <h2 class="section"><span class="es">Apertura</span><span class="en">Opening</span></h2>
+
+    <p>Comenzamos la clase con la canción de saludo.</p>
+
+    <div class="song">
+        <p class="label">Canción · Saludo</p>
+        <p class="title">Buenos días</p>
+        <p class="lyric">¡Buenos días! ¿Cómo estás?</p>
+        <p class="link"><em>Link: TODO</em></p>
+    </div>
+
+    <h2 class="section"><span class="es">Presentación</span><span class="en">Presentation</span></h2>
+
+    <p>Uso de tarjetas de colores, una por una y con repetición.</p>
+
+    <div class="script">
+        <span class="role">Maestro/a</span>
+        <p>¿Qué color es…?</p>
+        <p>Es rojo.</p>
+        <p>Es azul.</p>
+        <p>Es amarillo.</p>
+    </div>
+
+    <p class="stage">Los estudiantes repiten varias veces.</p>
+
+    <div class="diff challenge">
+        <span class="tag">Para retar</span>
+        <p>Una vez dominados los tres primarios, agregar <strong>verde, anaranjado, morado</strong> del tier <em>Stretch</em>. Para 2.º grado o grupos rápidos, llegar hasta <strong>dorado / plateado</strong> del tier <em>Challenge</em>.</p>
+    </div>
+
+    <h3 class="subsection">Canción de los colores</h3>
+
+    <div class="song">
+        <p class="label">Canción · Presentación</p>
+        <p class="title">Rojo, rojo, ¿dónde está?</p>
+        <p class="lyric">Rojo, rojo, ¿dónde está? Aquí está, aquí está.</p>
+        <p class="link"><em>Link: TODO</em></p>
+    </div>
+
+    <h2 class="section"><span class="es">Extensión para 1.º y 2.º grado</span><span class="en">Extension for 1st &amp; 2nd grade</span></h2>
+
+    <p>Practicar con oraciones como:</p>
+
+    <ul>
+        <li>El sol es <strong>amarillo</strong>.</li>
+        <li>La hierba es <strong>verde</strong>.</li>
+        <li>El cielo es <strong>azul</strong>.</li>
+        <li>La fresa es <strong>roja</strong>.</li>
+    </ul>
+
+    <div class="diff support">
+        <span class="tag">Para apoyar</span>
+        <p>Mantenerse en los tres colores primarios. La maestra modela cada frase y los estudiantes repiten.</p>
+    </div>
+    <div class="diff challenge">
+        <span class="tag">Para retar</span>
+        <p>Introducir oraciones con colores del nivel <em>Stretch</em> o <em>Challenge</em> — "La nube es blanca," "El árbol es café."</p>
+    </div>
+
+    <h3 class="subsection">Pelota de colores</h3>
+    <p>Lanza la pelota a un estudiante y pregunta:</p>
+    <div class="script">
+        <span class="role">Maestro/a</span>
+        <p>¿Cuál es tu color favorito?</p>
+    </div>
+
+    <h2 class="section"><span class="es">Actividad: Colorear</span><span class="en">Activity: Coloring</span></h2>
+
+    <p>Todos colorean la hoja de práctica.</p>
+
+    <p class="stage">
+        Podemos indicar a los alumnos qué colores usar. Por ejemplo:
+        <em>"Colorea la cabeza azul. Los ojos verdes…"</em>
+    </p>
+
+    <h2 class="section"><span class="es">Opciones de Juegos</span><span class="en">Game Options</span></h2>
+
+    <ol class="games-list">
+        <li>
+            <p class="game-title">Simón dice</p>
+            <ul>
+                <li>"Simón dice toca algo <strong>amarillo</strong>."</li>
+                <li>"Simón dice toca algo <strong>azul</strong>."</li>
+                <li>"Toca algo <strong>rojo</strong>." <span class="stage">(sin decir "Simón dice")</span></li>
+            </ul>
+        </li>
+        <li>
+            <p class="game-title">Búsqueda de tesoros</p>
+            <ul>
+                <li>Los estudiantes buscan algo rojo, azul y amarillo en la clase.</li>
+                <li>Pueden dibujar algo que encontraron.</li>
+                <li>Se usa la hoja para colorear de animales del folder de estudiantes.</li>
+            </ul>
+        </li>
+        <li>
+            <p class="game-title">Bingo</p>
+            <ul>
+                <li>Con todos los colores.</li>
+            </ul>
+        </li>
+        <li>
+            <p class="game-title">Juego de parejas</p>
+            <p>Usar flashcards para formar pares — por ejemplo, colores y frutas:</p>
+            <ul>
+                <li>Rojo — fresa</li>
+                <li>Verde — manzana</li>
+                <li>Amarillo — limón</li>
+            </ul>
+        </li>
+    </ol>
+
+    <div class="diff challenge">
+        <span class="tag">Calibrar el grupo</span>
+        <p>Los juegos arriba se calibran ampliando o reduciendo el conjunto de tarjetas en juego. El núcleo siempre es rojo / azul / amarillo; agregar tarjetas de tier <em>Stretch</em> o <em>Challenge</em> según el grupo.</p>
+    </div>
+
+    <h2 class="section"><span class="es">Cultura</span><span class="en">Cultural Connection</span></h2>
+
+    <p>Introducimos la <strong>bandera de un país hispanohablante</strong> y la coloreamos en clase.</p>
+
+    <h2 class="section"><span class="es">Cierre</span><span class="en">Closing</span></h2>
+
+    <p>Terminamos la clase con la canción de despedida.</p>
+
+    <div class="song">
+        <p class="label">Canción · Despedida</p>
+        <p class="title">Adiós, amigos</p>
+        <p class="lyric">¡Adiós, amigos! Hasta luego. Hasta la vista. Chao, chao.</p>
+        <p class="link"><em>Link: TODO</em></p>
+    </div>
+
+    <h2 class="standards-title">Standards Alignment — WI DPI &amp; ACTFL</h2>
+    <p class="standards-note">
+        WI DPI World Languages standards (June 2019) are built on the ACTFL World-Readiness framework — same communication modes, same proficiency bands.
+        Both labels shown below: WI code for public-school compliance, ACTFL mode + level for private/parochial alignment.
+        Recorded for course-based-curriculum compliance; not assessed with rubrics in class.
+    </p>
+
+    <table class="standards">
+        <thead>
+            <tr>
+                <th style="width: 26%;">Standard (WI / ACTFL)</th>
+                <th>Practice</th>
+                <th>Performance Indicator</th>
+                <th>How it's addressed</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <span class="code">WL.IT.1.c.n1</span><br>
+                    <span class="actfl">ACTFL Interpretive · Novice Low</span>
+                </td>
+                <td>1.c — Authentic conversations</td>
+                <td>Demonstrate understanding of memorized or familiar words when supported by gestures or visuals in conversations.</td>
+                <td>Color flashcards with repetition</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="code">WL.IP.2.a.n1</span><br>
+                    <span class="actfl">ACTFL Interpersonal · Novice Low</span>
+                </td>
+                <td>2.a — Exchange information</td>
+                <td>Provide information by answering simple questions on very familiar topics, using practiced words and phrases, with gestures or visuals.</td>
+                <td>Pelota: ¿Cuál es tu color favorito?</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="code">WL.IP.2.b.n1</span><br>
+                    <span class="actfl">ACTFL Interpersonal · Novice Low</span>
+                </td>
+                <td>2.b — Meet needs / situations</td>
+                <td>Express basic needs with practiced or memorized words and phrases, with gestures or visuals.</td>
+                <td>Simón dice</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="code">WL.PS.3.a.n1</span><br>
+                    <span class="actfl">ACTFL Presentational · Novice Low</span>
+                </td>
+                <td>3.a — Describe lives, experiences, events</td>
+                <td>Introduce self with practiced or memorized words and phrases, with gestures or visuals.</td>
+                <td>Extension oraciones ("El sol es amarillo")</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="code">WL.IC.4.a.n+</span><br>
+                    <span class="actfl">ACTFL Intercultural / Cultures · Novice</span>
+                </td>
+                <td>4.a — Cultural products and perspectives</td>
+                <td>Identify, in own and other cultures, typical products related to familiar everyday life.</td>
+                <td>Bandera de un país hispanohablante</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <footer class="doc-footer">
+        <span>Lake Country Spanish · K–2 Curriculum</span>
+        <span>Los Colores · Day 1</span>
+    </footer>
+
+</article>
+
+</body>
+</html>
