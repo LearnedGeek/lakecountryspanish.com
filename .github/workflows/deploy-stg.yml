@@ -87,11 +87,12 @@ jobs:
           PG_DATABASE: lakecountryspanish_stg
           PG_USERNAME: lakecountryspanish_stg
           SITE_NAME: "Lake Country Spanish (stg)"
+          BASE_URL: "https://stg.lakecountryspanish.com"
         run: |
           # Restrict envsubst to the explicit variable list so any other
           # ${...} pattern in the template is left literal — defensive
           # against future copy-paste mistakes.
-          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME}'
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME} ${BASE_URL}'
           envsubst "$VARS" \
             < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
             > publish/appsettings.Production.json

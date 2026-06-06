@@ -74,8 +74,9 @@ jobs:
           PG_DATABASE: lakecountryspanish
           PG_USERNAME: lakecountryspanish
           SITE_NAME: "Lake Country Spanish"
+          BASE_URL: "https://lakecountryspanish.com"
         run: |
-          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME}'
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME} ${BASE_URL}'
           envsubst "$VARS" \
             < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
             > publish/appsettings.Production.json

@@ -6,6 +6,7 @@
   "AppSettings": {
     "DefaultClassPrice": 25.00,
     "SiteName": "${SITE_NAME}",
+    "BaseUrl": "${BASE_URL}",
     "AdminName": "Karen"
   },
   "EmailSettings": {

@@ -12,8 +12,8 @@ public class SmtpEmailService : IEmailService
     private readonly IWebHostEnvironment _environment;
 
     // Brand colors matching the site's Tailwind theme
-    private const string PrimaryColor = "#4F46E5";      // Indigo - main brand color
-    private const string PrimaryDark = "#3730A3";       // Darker indigo for headers
+    private const string PrimaryColor = "#1E3A8A";      // Navy - main brand color (matches site palette)
+    private const string PrimaryDark = "#172554";       // Darker navy for headers
     private const string SecondaryColor = "#E85A42";    // Coral - CTA buttons
     private const string SuccessColor = "#059669";      // Green - confirmations
     private const string WarningColor = "#F59E0B";      // Amber - milestones/warnings
@@ -119,7 +119,7 @@ public class SmtpEmailService : IEmailService
                                 </tr>
                                 <tr>
                                     <td align=""center"" style=""padding-bottom: 16px;"">
-                                        <span style=""color: #9ca3af; font-size: 13px;"">Personalized Online Spanish Lessons with Karen</span>
+                                        <span style=""color: #9ca3af; font-size: 13px;"">Personalized Online Spanish Lessons</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -217,7 +217,7 @@ public class SmtpEmailService : IEmailService
                 <td>
                     <p style=""margin: 0; color: #374151; font-size: 15px; line-height: 1.6;"">
                         ¡Hasta pronto!<br>
-                        <strong style=""color: #4F46E5;"">Karen</strong><br>
+                        <strong style=""color: {PrimaryColor};"">{GetAdminName()}</strong><br>
                         <span style=""color: #6b7280; font-size: 14px;"">Lake Country Spanish</span>
                     </p>
                 </td>
