@@ -4,7 +4,6 @@ using LakeCountrySpanish.Web.Models.ViewModels;
 using LakeCountrySpanish.Web.Services;
 using LakeCountrySpanish.Web.Services.Curriculum;
 using LakeCountrySpanish.Web.Services.Curriculum.Blocks;
-using LakeCountrySpanish.Web.Services.Curriculum.Drafter;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,62 +17,21 @@ public class CurriculumController : Controller
     private readonly IDocumentRenderingService _renderer;
     private readonly ICurriculumDayService _days;
     private readonly IBlockCompiler _blocks;
-    private readonly ICurriculumDrafter _drafter;
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
-    private readonly IWebHostEnvironment _environment;
 
     public CurriculumController(
         IDocumentRenderingService renderer,
         ICurriculumDayService days,
         IBlockCompiler blocks,
-        ICurriculumDrafter drafter,
         ApplicationDbContext context,
-        UserManager<ApplicationUser> userManager,
-        IWebHostEnvironment environment)
+        UserManager<ApplicationUser> userManager)
     {
         _renderer = renderer;
         _days = days;
         _blocks = blocks;
-        _drafter = drafter;
         _context = context;
         _userManager = userManager;
-        _environment = environment;
-    }
-
-    // -------- Sample-file preview routes (dev only; backed by docs/curriculum-system/samples) --------
-
-    public IActionResult PreviewSample()
-    {
-        var markdown = ReadSampleOrNull("los-colores.md");
-        if (markdown is null) return NotFound("Sample doc los-colores.md not found.");
-
-        return View(_renderer.Render(markdown));
-    }
-
-    public IActionResult PreviewBinder(string slug = "los-colores")
-    {
-        var lessonMd = ReadSampleOrNull($"{slug}.md");
-        if (lessonMd is null) return NotFound($"Lesson {slug}.md not found.");
-
-        var lesson = _renderer.Render(lessonMd);
-
-        var artifacts = new List<RenderedDocument>();
-        foreach (var reference in lesson.Frontmatter.Artifacts)
-        {
-            if (string.IsNullOrWhiteSpace(reference.Slug)) continue;
-            var artifactMd = ReadSampleOrNull($"{reference.Slug}.md");
-            if (artifactMd is null) continue;
-            artifacts.Add(_renderer.Render(artifactMd));
-        }
-
-        return View(new CurriculumBinderViewModel
-        {
-            Lesson = lesson,
-            Artifacts = artifacts,
-            TeacherName = User.Identity?.Name ?? "Teacher",
-            GeneratedAt = DateTime.UtcNow
-        });
     }
 
     // -------- Day admin (DB-backed) --------
@@ -107,95 +65,10 @@ public class CurriculumController : Controller
         return View(vm);
     }
 
-    // -------- AI-assisted drafter (Karen's primary path) --------
-
     /// <summary>
-    /// Brief form: a single textarea where Karen describes the lesson she wants.
-    /// Per docs/curriculum-system/ai-assisted-authoring.md this is the default
-    /// "+ New Day" experience; the existing block editor is the power-user mode.
-    /// </summary>
-    [HttpGet("Curriculum/Days/New")]
-    public async Task<IActionResult> NewDay()
-    {
-        var units = await GetUnitOptionsAsync();
-        if (units.Count == 0)
-        {
-            TempData["ErrorMessage"] = "No Units exist yet. A LearningPath + Unit must be seeded before drafting lessons.";
-            return RedirectToAction(nameof(Days));
-        }
-
-        return View("Draft", new CurriculumDraftBriefViewModel
-        {
-            AvailableUnits = units,
-            DrafterAvailable = _drafter.IsAvailable
-        });
-    }
-
-    [HttpPost("Curriculum/Days/New")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> NewDay(CurriculumDraftBriefViewModel model, CancellationToken ct)
-    {
-        model.AvailableUnits = await GetUnitOptionsAsync();
-        model.DrafterAvailable = _drafter.IsAvailable;
-        if (!ModelState.IsValid) return View("Draft", model);
-
-        if (!_drafter.IsAvailable)
-        {
-            model.ErrorMessage = "AI drafting is unavailable — the Claude API key isn't configured.";
-            return View("Draft", model);
-        }
-
-        var result = await _drafter.DraftAsync(new DraftLessonRequest
-        {
-            Brief = model.Brief,
-            UnitId = model.UnitId,
-            GradeBand = model.GradeBand
-        }, ct);
-
-        if (!result.Success)
-        {
-            model.ErrorMessage = result.ErrorMessage ?? "Drafting failed for an unknown reason.";
-            return View("Draft", model);
-        }
-
-        var userId = _userManager.GetUserId(User) ?? string.Empty;
-
-        var day = new Day
-        {
-            Title = result.Title,
-            Description = string.Empty,
-            UnitId = result.UnitId > 0 ? result.UnitId : (model.UnitId ?? model.AvailableUnits.First().Id),
-            DayNumberInUnit = 1,
-            GradeBand = result.GradeBand,
-            Theme = result.Theme,
-            EstimatedDurationMinutes = result.EstimatedDurationMinutes,
-            SkillFocus = SkillFocus.Mixed,
-            BodyBlocksJson = _blocks.Serialize(result.Blocks),
-            TeacherPlanMarkdown = _blocks.Compile(result.Blocks),
-            IsActive = false       // Drafts land inactive; Karen approves on the Review page.
-        };
-
-        await _days.CreateAsync(day, userId, "AI drafted from brief.");
-
-        // Attach inferred WI standards by code.
-        if (result.WiStandardCodes.Count > 0)
-        {
-            var matched = await _context.WisconsinStandards
-                .Where(s => result.WiStandardCodes.Contains(s.Code))
-                .ToListAsync(ct);
-            var tracked = await _context.Days.Include(d => d.WisconsinStandards).FirstAsync(d => d.Id == day.Id, ct);
-            foreach (var std in matched) tracked.WisconsinStandards.Add(std);
-            await _context.SaveChangesAsync(ct);
-        }
-
-        TempData["SuccessMessage"] = $"Drafted \"{day.Title}\". Review below.";
-        return RedirectToAction(nameof(ReviewDay), new { id = day.Id });
-    }
-
-    /// <summary>
-    /// Read-only rendered review of a Day. Karen's primary view of a drafted
-    /// (or hand-authored) lesson — uses the same render pipeline the binder
-    /// uses, so what she sees is what teachers will print.
+    /// Read-only rendered review of a Day. The primary view of a hand-authored
+    /// lesson — uses the same render pipeline the binder uses, so what the
+    /// reviewer sees is what teachers will print.
     /// </summary>
     [HttpGet("Curriculum/Days/{id:int}/Review")]
     public async Task<IActionResult> ReviewDay(int id)
@@ -568,14 +441,6 @@ public class CurriculumController : Controller
         d.SkillFocus = m.SkillFocus;
         d.IsActive = m.IsActive;
         return d;
-    }
-
-    private string? ReadSampleOrNull(string fileName)
-    {
-        var path = Path.GetFullPath(Path.Combine(
-            _environment.ContentRootPath, "..", "..",
-            "docs", "curriculum-system", "samples", fileName));
-        return System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : null;
     }
 
 }

@@ -26,9 +26,7 @@
   },
   "Claude": {
     "ApiKey": "${CLAUDE_API_KEY}",
-    "Model": "claude-3-5-sonnet-20241022",
-    "DrafterModel": "claude-sonnet-4-5",
-    "DrafterMaxTokens": 8192
+    "Model": "claude-3-5-sonnet-20241022"
   },
   "Pixabay": {
     "ApiKey": "${PIXABAY_API_KEY}"
