@@ -20,7 +20,7 @@ public sealed class DocumentRenderingService : IDocumentRenderingService
             .Build();
     }
 
-    public RenderedDocument Render(string markdownSource, string themeName = "lcs-k2")
+    public RenderedDocument Render(string markdownSource, string themeName = "teacher-binder")
     {
         var (frontmatterYaml, body) = SplitFrontmatter(markdownSource);
         var frontmatter = ParseFrontmatter(frontmatterYaml);

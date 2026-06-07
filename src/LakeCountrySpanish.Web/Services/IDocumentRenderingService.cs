@@ -12,7 +12,7 @@ public interface IDocumentRenderingService
     /// LCS custom container handling, and returns the rendered HTML plus the
     /// structured frontmatter.
     /// </summary>
-    RenderedDocument Render(string markdownSource, string themeName = "lcs-k2");
+    RenderedDocument Render(string markdownSource, string themeName = "teacher-binder");
 }
 
 public sealed record RenderedDocument(

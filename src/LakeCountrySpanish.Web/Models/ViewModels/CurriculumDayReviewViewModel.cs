@@ -20,5 +20,5 @@ public sealed class CurriculumDayReviewViewModel
     /// <summary>Rendered HTML body, ready to drop into the lcs-document container.</summary>
     public string RenderedHtml { get; init; } = string.Empty;
 
-    public string ThemeName { get; init; } = "lcs-k2";
+    public string ThemeName { get; init; } = "teacher-binder";
 }
