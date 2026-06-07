@@ -86,6 +86,36 @@ public class Day
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastModifiedAt { get; set; }
 
+    /// <summary>
+    /// URL-safe slug used as the public route segment (`/curriculum/{slug}`).
+    /// Derived from Title at creation; admin-editable. Unique across Days.
+    /// </summary>
+    public string Slug { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Number of class sessions this Day's content typically spans. Karen's
+    /// docs note things like "se realizará en 2 a 3 clases"; we round to a
+    /// single integer (the usual). Defaults to 1.
+    /// </summary>
+    public int Sessions { get; set; } = 1;
+
+    /// <summary>
+    /// JSON blob holding parsed lesson metadata that doesn't warrant its own
+    /// column: vocab tiers (core/stretch/challenge arrays), materials list,
+    /// cultura note, sessions count, standards alignment table. Populated by
+    /// the docx parser; reshaped lightly by the admin reviewer. Schema is
+    /// open by design — extending the docx template doesn't require a
+    /// schema migration.
+    /// </summary>
+    public string MetadataJson { get; set; } = string.Empty;
+
+    /// <summary>
+    /// When true, this Day is reachable at `/curriculum/{Slug}` for any
+    /// logged-in Student. When false (the default for drafts), the Day is
+    /// admin-visible only.
+    /// </summary>
+    public bool IsPublic { get; set; } = false;
+
     // Navigation properties
 
     /// <summary>
@@ -111,4 +141,11 @@ public class Day
     /// CurriculumVersion records snapshot the body at each save.
     /// </summary>
     public virtual ICollection<CurriculumVersion> Versions { get; set; } = new List<CurriculumVersion>();
+
+    /// <summary>
+    /// Videos referenced by this Day's lesson (opening song, presentation song,
+    /// closing song, supplemental). Parsed from the docx Songs table at
+    /// upload time; each video gets its own shortlink-able URL.
+    /// </summary>
+    public virtual ICollection<LessonVideo> Videos { get; set; } = new List<LessonVideo>();
 }

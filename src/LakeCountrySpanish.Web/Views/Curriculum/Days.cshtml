@@ -10,7 +10,10 @@
                 <h1 class="text-2xl font-bold text-gray-900">Curriculum — Days</h1>
                 <p class="text-sm text-gray-600 mt-1">@Model.Days.Count Day@(Model.Days.Count == 1 ? "" : "s") authored.</p>
             </div>
-            <a href="@Url.Action("NewDay")" class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">+ New Day</a>
+            <div class="flex gap-2">
+                <a href="@Url.Action("Upload")" class="inline-flex items-center px-4 py-2 bg-secondary-500 text-white rounded-md hover:bg-secondary-600">Upload .docx</a>
+                <a href="@Url.Action("CreateDay")" class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md hover:bg-gray-50">+ New Day (manual)</a>
+            </div>
         </div>
 
         @if (TempData["SuccessMessage"] is string ok)

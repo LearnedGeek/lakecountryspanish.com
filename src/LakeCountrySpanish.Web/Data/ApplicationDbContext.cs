@@ -73,6 +73,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
     public DbSet<MediaUsage> MediaUsages => Set<MediaUsage>();
 
+    // Lesson video table + shortlink redirector (docx-upload pipeline).
+    public DbSet<LessonVideo> LessonVideos => Set<LessonVideo>();
+    public DbSet<Shortlink> Shortlinks => Set<Shortlink>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -837,6 +841,45 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Find all usages of a media asset, or all media used by an entity
             entity.HasIndex(e => new { e.EntityType, e.EntityId });
             entity.HasIndex(e => e.MediaAssetId);
+        });
+
+        // === docx-upload pipeline: LessonVideo + Shortlink ===
+
+        builder.Entity<LessonVideo>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Url).HasMaxLength(500).IsRequired();
+
+            entity.HasOne(e => e.Day)
+                .WithMany(d => d.Videos)
+                .HasForeignKey(e => e.DayId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Common query: list videos for a Day in display order.
+            entity.HasIndex(e => new { e.DayId, e.DisplayOrder });
+        });
+
+        builder.Entity<Shortlink>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Code).HasMaxLength(3).IsRequired();
+
+            // Code is the lookup key — must be unique across all shortlinks.
+            entity.HasIndex(e => e.Code).IsUnique();
+            // Find all shortlinks targeting a specific entity (admin cleanup).
+            entity.HasIndex(e => new { e.DestinationType, e.DestinationId });
+        });
+
+        // Day: slug must be unique across all Days (public route segment).
+        builder.Entity<Day>(entity =>
+        {
+            entity.Property(e => e.Slug).HasMaxLength(120);
+            entity.HasIndex(e => e.Slug)
+                .IsUnique()
+                .HasFilter("\"Slug\" IS NOT NULL AND \"Slug\" <> ''");
         });
     }
 }

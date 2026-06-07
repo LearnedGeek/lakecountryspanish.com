@@ -13,6 +13,7 @@
     <!-- EF Core pinned to 10.0.0 to match Allevo's known-good setup; floating
          minor patches caused dotnet-ef MissingMethodException due to internal
          AbstractionsStrings API drift between 10.0.0 and 10.0.8. -->
+    <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />

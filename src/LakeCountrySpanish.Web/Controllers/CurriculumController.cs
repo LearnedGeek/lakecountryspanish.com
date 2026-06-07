@@ -17,6 +17,7 @@ public class CurriculumController : Controller
     private readonly IDocumentRenderingService _renderer;
     private readonly ICurriculumDayService _days;
     private readonly IBlockCompiler _blocks;
+    private readonly DocxLessonParser _parser;
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
 
@@ -24,12 +25,14 @@ public class CurriculumController : Controller
         IDocumentRenderingService renderer,
         ICurriculumDayService days,
         IBlockCompiler blocks,
+        DocxLessonParser parser,
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager)
     {
         _renderer = renderer;
         _days = days;
         _blocks = blocks;
+        _parser = parser;
         _context = context;
         _userManager = userManager;
     }
@@ -63,6 +66,216 @@ public class CurriculumController : Controller
         };
 
         return View(vm);
+    }
+
+    // -------- Docx upload pipeline --------
+
+    [HttpGet("Curriculum/Upload")]
+    public async Task<IActionResult> Upload()
+    {
+        var units = await GetUnitOptionsAsync();
+        if (units.Count == 0)
+        {
+            TempData["ErrorMessage"] = "No Units exist yet. Seed a LearningPath + Unit first.";
+            return RedirectToAction(nameof(Days));
+        }
+        return View(new CurriculumUploadViewModel { AvailableUnits = units });
+    }
+
+    [HttpPost("Curriculum/Upload")]
+    [ValidateAntiForgeryToken]
+    [RequestSizeLimit(20 * 1024 * 1024)]
+    public async Task<IActionResult> Upload(CurriculumUploadViewModel model, CancellationToken ct)
+    {
+        model.AvailableUnits = await GetUnitOptionsAsync();
+
+        if (model.DocxFile is null || model.DocxFile.Length == 0)
+        {
+            ModelState.AddModelError(nameof(model.DocxFile), "Please choose a .docx file.");
+            return View(model);
+        }
+        if (!model.DocxFile.FileName.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
+        {
+            ModelState.AddModelError(nameof(model.DocxFile), "File must be a .docx.");
+            return View(model);
+        }
+
+        ParsedLesson parsed;
+        try
+        {
+            using var stream = model.DocxFile.OpenReadStream();
+            parsed = _parser.Parse(stream);
+        }
+        catch (DocxParseException ex)
+        {
+            model.ErrorMessage = $"Couldn't parse the document: {ex.Message}";
+            return View(model);
+        }
+
+        // Resolve the parent Unit. Prefer the explicit dropdown selection; fall
+        // back to a title match on the parsed Unit metadata cell.
+        var unitId = model.UnitId;
+        if (unitId is null)
+        {
+            var match = await _context.Units.FirstOrDefaultAsync(
+                u => u.Title.ToLower() == parsed.Unit.ToLower(), ct);
+            if (match is null)
+            {
+                model.ErrorMessage = $"Parsed Unit \"{parsed.Unit}\" doesn't match any existing Unit. Pick one from the dropdown, or create the Unit first.";
+                return View(model);
+            }
+            unitId = match.Id;
+        }
+
+        var userId = _userManager.GetUserId(User) ?? string.Empty;
+        var gradeBand = ParseGradeBand(parsed.GradeBand);
+
+        // Body sections compiled into one Markdown blob inside a single Raw
+        // block. Karen edits in the existing block editor afterward — the
+        // parser doesn't pre-decide how the lesson should be sliced.
+        var bodyMarkdown = CompileBodyMarkdown(parsed);
+        var rawBlock = new RawMarkdownBlock { Markdown = bodyMarkdown };
+        var bodyBlocksJson = _blocks.Serialize(new List<Block> { rawBlock });
+
+        var day = new Day
+        {
+            Title = parsed.Title,
+            Description = parsed.Objective,
+            UnitId = unitId.Value,
+            DayNumberInUnit = 1,
+            GradeBand = gradeBand,
+            Theme = parsed.Theme,
+            EstimatedDurationMinutes = parsed.DurationMinutes,
+            Sessions = parsed.Sessions,
+            Slug = Slugify(parsed.Title),
+            MetadataJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                vocab = new { core = parsed.VocabCore, stretch = parsed.VocabStretch, challenge = parsed.VocabChallenge },
+                materials = parsed.Materials,
+                trimester = parsed.Trimester,
+                objective = parsed.Objective,
+                standardCodes = parsed.StandardCodes
+            }),
+            BodyBlocksJson = bodyBlocksJson,
+            TeacherPlanMarkdown = bodyMarkdown,
+            IsActive = false,
+            IsPublic = false
+        };
+
+        await _days.CreateAsync(day, userId, $"Uploaded from {model.DocxFile.FileName}");
+
+        // Songs → LessonVideos
+        foreach (var song in parsed.Songs)
+        {
+            _context.LessonVideos.Add(new LessonVideo
+            {
+                DayId = day.Id,
+                Title = song.Title,
+                Url = song.Url,
+                Role = song.Role,
+                DisplayOrder = song.DisplayOrder
+            });
+        }
+
+        // Standards → attach by code
+        if (parsed.StandardCodes.Count > 0)
+        {
+            var standards = await _context.WisconsinStandards
+                .Where(s => parsed.StandardCodes.Contains(s.Code))
+                .ToListAsync(ct);
+            var tracked = await _context.Days
+                .Include(d => d.WisconsinStandards)
+                .FirstAsync(d => d.Id == day.Id, ct);
+            foreach (var s in standards) tracked.WisconsinStandards.Add(s);
+        }
+
+        // Allocate a shortlink for the Day.
+        var code = await GenerateUniqueShortlinkCodeAsync(ct);
+        _context.Shortlinks.Add(new Shortlink
+        {
+            Code = code,
+            DestinationType = ShortlinkDestination.Lesson,
+            DestinationId = day.Id
+        });
+
+        await _context.SaveChangesAsync(ct);
+
+        TempData["SuccessMessage"] = $"Uploaded \"{day.Title}\". Shortlink: lcs/{code}. Review below.";
+        return RedirectToAction(nameof(ReviewDay), new { id = day.Id });
+    }
+
+    // -------- helpers (docx upload) --------
+
+    private static string CompileBodyMarkdown(ParsedLesson p)
+    {
+        var sb = new System.Text.StringBuilder();
+        void AppendIfPresent(LessonSection section, string heading)
+        {
+            if (!p.BodySections.TryGetValue(section, out var text) || string.IsNullOrWhiteSpace(text)) return;
+            sb.AppendLine($"## {heading}");
+            sb.AppendLine();
+            sb.AppendLine(text);
+            sb.AppendLine();
+        }
+        AppendIfPresent(LessonSection.Apertura,    "Apertura");
+        AppendIfPresent(LessonSection.Presentacion, "Presentación");
+        AppendIfPresent(LessonSection.Extension,   "Extensión");
+        AppendIfPresent(LessonSection.Actividad,   "Actividad");
+        AppendIfPresent(LessonSection.Juegos,      "Opciones de juegos");
+        AppendIfPresent(LessonSection.Cultura,     "Cultura");
+        AppendIfPresent(LessonSection.Cierre,      "Cierre");
+        return sb.ToString().Trim();
+    }
+
+    private static GradeBand ParseGradeBand(string text)
+    {
+        // Accept enum name ("K5", "Grade3") OR the human band form Karen uses
+        // ("K–2", "3-5"). Bands map to the lowest grade in the range; admin can
+        // adjust in the Day editor after upload.
+        var normalized = text.Trim().Replace("–", "-").Replace(" ", "");
+        if (Enum.TryParse<GradeBand>(normalized, true, out var direct)) return direct;
+        return normalized.ToUpperInvariant() switch
+        {
+            "K-2" or "K2"     => GradeBand.K5,
+            "3-5" or "GR3-5"  => GradeBand.Grade3,
+            "6-8" or "GR6-8"  => GradeBand.Grade6,
+            "K"               => GradeBand.K5,
+            _                 => GradeBand.K5
+        };
+    }
+
+    private static string Slugify(string title)
+    {
+        var lower = title.Trim().ToLowerInvariant();
+        var sb = new System.Text.StringBuilder();
+        foreach (var c in lower)
+        {
+            if (char.IsLetterOrDigit(c)) sb.Append(c);
+            else if (c == ' ' || c == '-' || c == '_') sb.Append('-');
+            // strip diacritics roughly
+            else if ("áàäâ".Contains(c)) sb.Append('a');
+            else if ("éèëê".Contains(c)) sb.Append('e');
+            else if ("íìïî".Contains(c)) sb.Append('i');
+            else if ("óòöô".Contains(c)) sb.Append('o');
+            else if ("úùüû".Contains(c)) sb.Append('u');
+            else if (c == 'ñ') sb.Append('n');
+        }
+        var result = sb.ToString();
+        while (result.Contains("--")) result = result.Replace("--", "-");
+        return result.Trim('-');
+    }
+
+    private async Task<string> GenerateUniqueShortlinkCodeAsync(CancellationToken ct)
+    {
+        const string alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // skip I/O/0/1 ambiguity
+        var rng = Random.Shared;
+        for (var attempt = 0; attempt < 12; attempt++)
+        {
+            var code = new string(Enumerable.Range(0, 3).Select(_ => alphabet[rng.Next(alphabet.Length)]).ToArray());
+            var taken = await _context.Shortlinks.AnyAsync(s => s.Code == code, ct);
+            if (!taken) return code;
+        }
+        throw new InvalidOperationException("Couldn't allocate a unique shortlink code after 12 attempts.");
     }
 
     /// <summary>
