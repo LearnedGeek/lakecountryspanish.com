@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <title>Lake Country Spanish — La Familia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <style>
+        @page { size: letter; margin: 0.7in; }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+            .sheet { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+        }
+
+        :root {
+            --ink: #1f2937;
+            --ink-soft: #4b5563;
+            --ink-soft-2: #6b7280;
+            --navy: #1E3A8A;
+            --navy-soft: #e0e7ff;
+            --accent: #f59e0b;
+            --accent-soft: #fef3c7;
+            --teal-soft: #ccfbf1;
+            --rule: #d1d5db;
+
+            --tier-core: #ecfdf5;
+            --tier-core-ring: #10b981;
+            --tier-core-ink: #047857;
+
+            --tier-stretch: #eff6ff;
+            --tier-stretch-ring: #3b82f6;
+            --tier-stretch-ink: #1d4ed8;
+
+            --tier-challenge: #fdf4ff;
+            --tier-challenge-ring: #a855f7;
+            --tier-challenge-ink: #7e22ce;
+        }
+
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: #f3f4f6;
+            font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+            font-size: 11.5pt;
+            line-height: 1.55;
+            color: var(--ink);
+        }
+
+        .toolbar {
+            max-width: 8.5in;
+            margin: 14px auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #4b5563;
+        }
+        .toolbar button {
+            background: #1E3A8A;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .sheet {
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto 24px auto;
+            padding: 0.7in 0.85in;
+            box-shadow: 0 6px 22px rgba(0,0,0,0.08);
+            box-sizing: border-box;
+        }
+
+        .masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--navy);
+            padding-bottom: 8px;
+            margin-bottom: 24px;
+        }
+        .brand {
+            font-family: 'Lora', Georgia, serif;
+            font-weight: 700;
+            font-size: 14pt;
+            color: var(--navy);
+            letter-spacing: 0.5px;
+        }
+        .crumb {
+            font-size: 10pt;
+            color: var(--ink-soft);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h1.lesson-title {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 28pt;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 4px 0 2px 0;
+            line-height: 1.15;
+        }
+        .lesson-subtitle {
+            font-size: 13pt;
+            color: var(--ink-soft);
+            font-weight: 500;
+            margin: 0 0 14px 0;
+        }
+
+        .objective {
+            background: var(--accent-soft);
+            border-left: 4px solid var(--accent);
+            padding: 12px 18px;
+            margin: 0 0 22px 0;
+            border-radius: 0 6px 6px 0;
+        }
+        .objective .label {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 700;
+            color: #92400e;
+            margin: 0 0 4px 0;
+        }
+        .objective p {
+            margin: 0;
+            font-size: 12pt;
+            color: var(--ink);
+            font-weight: 500;
+        }
+
+        .vocab-tiers {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 0 0 22px 0;
+        }
+        .vocab-tier {
+            border: 1.5px solid;
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+        .vocab-tier .tier-label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            margin: 0 0 6px 0;
+        }
+        .vocab-tier .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .vocab-tier .chip {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 10pt;
+            background: white;
+        }
+        .vocab-tier.core { background: var(--tier-core); border-color: var(--tier-core-ring); }
+        .vocab-tier.core .tier-label, .vocab-tier.core .chip { color: var(--tier-core-ink); }
+        .vocab-tier.core .chip { border: 1px solid var(--tier-core-ring); }
+        .vocab-tier.stretch { background: var(--tier-stretch); border-color: var(--tier-stretch-ring); }
+        .vocab-tier.stretch .tier-label, .vocab-tier.stretch .chip { color: var(--tier-stretch-ink); }
+        .vocab-tier.stretch .chip { border: 1px solid var(--tier-stretch-ring); }
+
+        .materials {
+            background: #f9fafb;
+            border-radius: 6px;
+            padding: 12px 18px;
+            margin: 0 0 24px 0;
+        }
+        .materials .label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            color: var(--ink-soft-2);
+            margin: 0 0 4px 0;
+        }
+        .materials ul {
+            margin: 4px 0 0 0;
+            columns: 2;
+            column-gap: 24px;
+        }
+
+        h2.section {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 16pt;
+            font-weight: 700;
+            color: var(--navy);
+            margin: 26px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--rule);
+            page-break-after: avoid;
+        }
+        h2.section .en {
+            font-family: 'Source Sans 3', sans-serif;
+            font-weight: 500;
+            font-size: 11pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+            margin-left: 8px;
+            letter-spacing: 0.3px;
+        }
+        h3.subsection {
+            font-family: 'Source Sans 3', sans-serif;
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: var(--ink);
+            margin: 18px 0 6px 0;
+            page-break-after: avoid;
+        }
+
+        p { margin: 6px 0 10px 0; }
+        ul, ol { margin: 6px 0 10px 0; padding-left: 22px; }
+        li { margin: 3px 0; }
+        strong { color: var(--ink); }
+
+        .script {
+            border-left: 3px solid var(--navy-soft);
+            padding: 4px 0 4px 16px;
+            margin: 10px 0;
+            color: var(--ink);
+            font-size: 11.5pt;
+        }
+        .script .role {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 10pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .script p { margin: 2px 0; }
+        .stage {
+            font-style: italic;
+            color: var(--ink-soft);
+            font-size: 10.5pt;
+        }
+
+        .song {
+            background: var(--teal-soft);
+            border-radius: 6px;
+            padding: 10px 16px;
+            margin: 12px 0;
+        }
+        .song .label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 700;
+            color: #0f766e;
+            margin: 0 0 2px 0;
+        }
+        .song .title {
+            font-weight: 600;
+            margin: 0 0 4px 0;
+            font-size: 11.5pt;
+        }
+        .song .lyric {
+            font-style: italic;
+            color: var(--ink);
+            margin: 4px 0;
+        }
+        .song .link {
+            font-size: 10pt;
+        }
+        .song .link a { color: #0f766e; text-decoration: none; font-weight: 600; }
+        .song .link a:hover { text-decoration: underline; }
+
+        .diff {
+            display: grid;
+            grid-template-columns: 110px 1fr;
+            gap: 12px;
+            background: #fafafa;
+            border-left: 3px solid;
+            border-radius: 0 6px 6px 0;
+            padding: 8px 14px;
+            margin: 10px 0;
+            font-size: 10.5pt;
+        }
+        .diff.support { border-left-color: var(--tier-stretch-ring); }
+        .diff.challenge { border-left-color: var(--tier-challenge-ring); }
+        .diff.note { border-left-color: var(--accent); }
+        .diff .tag {
+            font-size: 9pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            padding-top: 2px;
+        }
+        .diff.support .tag { color: var(--tier-stretch-ink); }
+        .diff.challenge .tag { color: var(--tier-challenge-ink); }
+        .diff.note .tag { color: #92400e; }
+        .diff p { margin: 0; }
+
+        .games-list {
+            counter-reset: gameitem;
+            list-style: none;
+            padding-left: 0;
+            margin: 8px 0 12px 0;
+        }
+        .games-list > li {
+            counter-increment: gameitem;
+            position: relative;
+            padding: 10px 14px 10px 48px;
+            margin: 0 0 10px 0;
+            background: #f9fafb;
+            border-radius: 6px;
+            page-break-inside: avoid;
+        }
+        .games-list > li::before {
+            content: counter(gameitem);
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            width: 22px;
+            height: 22px;
+            background: var(--navy);
+            color: white;
+            font-weight: 700;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11pt;
+        }
+        .games-list .game-title {
+            font-weight: 700;
+            color: var(--navy);
+            font-size: 12pt;
+            margin: 0 0 4px 0;
+        }
+        .games-list ul { margin: 4px 0; }
+
+        h2.standards-title {
+            font-family: 'Lora', Georgia, serif;
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--navy);
+            margin: 32px 0 6px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--rule);
+            page-break-after: avoid;
+        }
+        .standards-note {
+            font-size: 10pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+            margin: 0 0 10px 0;
+        }
+        table.standards {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9.5pt;
+            margin: 6px 0 0 0;
+        }
+        table.standards th, table.standards td {
+            text-align: left;
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--rule);
+            vertical-align: top;
+        }
+        table.standards th {
+            background: #f9fafb;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            font-weight: 700;
+            color: var(--ink-soft-2);
+        }
+        table.standards .code {
+            font-family: 'Source Code Pro', ui-monospace, Menlo, monospace;
+            font-weight: 600;
+            color: var(--navy);
+            white-space: nowrap;
+            font-size: 9pt;
+        }
+        table.standards .actfl {
+            display: inline-block;
+            margin-top: 2px;
+            font-size: 8.5pt;
+            color: var(--ink-soft-2);
+            font-style: italic;
+        }
+
+        .doc-footer {
+            margin-top: 24px;
+            padding-top: 8px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5pt;
+            color: var(--ink-soft-2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+    <div><strong>Curriculum proposal preview</strong> — Karen-authored content, professional teacher-binder format</div>
+    <button onclick="window.print()">Print / Save as PDF</button>
+</div>
+
+<article class="sheet">
+
+    <header class="masthead">
+        <div class="brand">Lake Country Spanish</div>
+        <div class="crumb">K–2 · Trimestre 1 · 3 clases · 30 min cada una</div>
+    </header>
+
+    <h1 class="lesson-title">La Familia</h1>
+    <p class="lesson-subtitle">Unit — meeting the members of the family</p>
+
+    <div class="objective">
+        <p class="label">Objetivo</p>
+        <p>Los estudiantes podrán identificar los miembros de la familia. La maestra ajusta el vocabulario según el nivel del grupo.</p>
+    </div>
+
+    <div class="vocab-tiers">
+        <div class="vocab-tier core">
+            <p class="tier-label">Core · Immediate family + pets</p>
+            <div class="chips">
+                <span class="chip">mamá</span>
+                <span class="chip">papá</span>
+                <span class="chip">hermano</span>
+                <span class="chip">hermana</span>
+                <span class="chip">perro</span>
+                <span class="chip">gato</span>
+                <span class="chip">mascota</span>
+            </div>
+        </div>
+        <div class="vocab-tier stretch">
+            <p class="tier-label">Stretch · Extended family</p>
+            <div class="chips">
+                <span class="chip">abuelo</span>
+                <span class="chip">abuela</span>
+                <span class="chip">bebé</span>
+                <span class="chip">tío</span>
+                <span class="chip">tía</span>
+                <span class="chip">primo</span>
+                <span class="chip">prima</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="materials">
+        <p class="label">Materiales (Materials)</p>
+        <ul>
+            <li>Tarjetas con fotos de cada miembro de la familia</li>
+            <li>Hoja de trazado de palabras</li>
+            <li>Hoja de match (familia)</li>
+            <li>Libro de la familia para colorear</li>
+            <li>Plantilla de bingo de la familia</li>
+            <li>Pelota</li>
+            <li>Sillas para 'Las sillas musicales'</li>
+            <li>Bandera de Chile (u otro país hispanohablante)</li>
+        </ul>
+    </div>
+
+    <div class="diff note">
+        <span class="tag">Tiempo</span>
+        <p>Esta lección se realiza típicamente en <strong>3 clases</strong> para asegurar la memorización del vocabulario. Core (familia inmediata) en la primera clase; Stretch (familia extendida) añadido en la segunda y tercera.</p>
+    </div>
+
+    <h2 class="section"><span class="es">Apertura</span><span class="en">Opening</span></h2>
+
+    <p>Comenzamos la clase con la canción del saludo.</p>
+
+    <div class="song">
+        <p class="label">Canción · Saludo</p>
+        <p class="title">Buenos días, ¿cómo estás?</p>
+        <p class="lyric">Buenos días, ¿cómo estás? Muy bien, gracias…</p>
+        <p class="link">🎥 <a href="https://youtu.be/X-UXGWTEfEI?si=QCQYSD8HJP-wIaqq" target="_blank">YouTube — Buenos días, ¿cómo estás?</a></p>
+    </div>
+
+    <h2 class="section"><span class="es">Presentación</span><span class="en">Presentation</span></h2>
+
+    <p>Uso de las tarjetas con cada miembro de la familia. Se repite varias veces el vocabulario junto a la clase.</p>
+    <p>Puedes usar también la <strong>hoja de match</strong> y repetir con ellos cada vez que hacen match.</p>
+
+    <h3 class="subsection">Canción de la Familia</h3>
+
+    <div class="song">
+        <p class="label">Canción · Presentación</p>
+        <p class="title">Mi familia, mi familia</p>
+        <p class="lyric">Mi familia, mi familia…<br>
+            Papá, mamá, hermano, hermana, abuelo, abuela, bebé <em>(shshsh, bebé shshsh)</em>, tío, tía, primo, prima, y yo.
+        </p>
+        <p class="link">🎥 <a href="https://youtu.be/Smm7csgMoMs?si=uT9Ai94GRKUfmGg9" target="_blank">YouTube — Mi familia</a></p>
+    </div>
+
+    <h2 class="section"><span class="es">Extensión para 1.º y 2.º grado</span><span class="en">Extension for 1st &amp; 2nd grade</span></h2>
+
+    <p>Practicar oraciones personales:</p>
+    <ul>
+        <li>Mi papá se llama <strong>______</strong>.</li>
+        <li>Mi mamá se llama <strong>______</strong>.</li>
+        <li>Mi hermana se llama <strong>______</strong>.</li>
+        <li>Mi hermano se llama <strong>______</strong>.</li>
+        <li>Mi perro se llama <strong>______</strong>.</li>
+        <li>Mi gato se llama <strong>______</strong>.</li>
+        <li>Mi mascota se llama <strong>______</strong>.</li>
+    </ul>
+
+    <div class="diff support">
+        <span class="tag">Para apoyar</span>
+        <p>Mantenerse en familia inmediata (mamá, papá, hermano, hermana). La maestra modela cada frase y los estudiantes repiten.</p>
+    </div>
+    <div class="diff challenge">
+        <span class="tag">Para retar</span>
+        <p>Introducir familia extendida y descripciones más largas — "Mi abuela se llama María y tiene un perro."</p>
+    </div>
+
+    <h2 class="section"><span class="es">Actividad: Colorear</span><span class="en">Activity: Coloring</span></h2>
+
+    <p>Coloreamos nuestro <strong>libro de la familia</strong> y trazamos las palabras.</p>
+
+    <h2 class="section"><span class="es">Opciones de Juegos</span><span class="en">Game Options</span></h2>
+
+    <ol class="games-list">
+        <li>
+            <p class="game-title">Bingo de la familia</p>
+            <ul>
+                <li>Se usa la plantilla de bingo de la familia.</li>
+            </ul>
+        </li>
+        <li>
+            <p class="game-title">La pelota de la familia</p>
+            <ul>
+                <li>Los niños se pasan la pelota mientras suena la música.</li>
+                <li>Cuando la música se detiene, el niño con la pelota dice un miembro de la familia, o responde una pregunta:</li>
+                <li class="stage">"¿Quién es la mamá de tu mamá?" → <strong>La abuela.</strong></li>
+            </ul>
+        </li>
+        <li>
+            <p class="game-title">Dibuja a tu familia</p>
+            <ul>
+                <li>Cada niño dibuja su familia.</li>
+                <li>Luego la presenta a la clase: <em>"Mi papá es… Mi mamá se llama…"</em></li>
+            </ul>
+        </li>
+        <li>
+            <p class="game-title">Memoria familiar</p>
+            <ul>
+                <li>Se colocan dos pares de tarjetas con miembros de la familia (boca abajo).</li>
+                <li>Los niños voltean dos tarjetas por turno.</li>
+                <li>Cuando encuentran un par, dicen el nombre en español <em>(abuela, primo, etc.)</em></li>
+            </ul>
+        </li>
+        <li>
+            <p class="game-title">Las sillas musicales</p>
+            <ul>
+                <li>Se colocan sillas en círculo y se pone una canción en español.</li>
+                <li>Cuando para la canción, los niños se sientan.</li>
+                <li>El que no encuentra asiento tiene que decir un miembro de la familia. Si no lo dice, sale del juego y se sienta a tu lado.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <div class="diff challenge">
+        <span class="tag">Calibrar el grupo</span>
+        <p>Todos los juegos arriba se calibran usando solo familia inmediata (<em>Core</em>) o ampliando a familia extendida (<em>Stretch</em>) según el grupo.</p>
+    </div>
+
+    <h2 class="section"><span class="es">Cultura</span><span class="en">Cultural Connection</span></h2>
+
+    <p>Introducimos la <strong>bandera de un país hispanohablante</strong> y la coloreamos en clase.</p>
+    <p class="stage">Sugerencia: <strong>Chile</strong>.</p>
+
+    <h2 class="section"><span class="es">Cierre</span><span class="en">Closing</span></h2>
+
+    <p>Terminamos la clase con la canción de despedida.</p>
+
+    <div class="song">
+        <p class="label">Canción · Despedida</p>
+        <p class="title">Adiós, amigos</p>
+        <p class="lyric">¡Adiós, amigos! Hasta luego. Hasta la vista. Chao, chao.</p>
+        <p class="link"><em>Link: TODO</em></p>
+    </div>
+
+    <h2 class="standards-title">Standards Alignment — WI DPI &amp; ACTFL</h2>
+    <p class="standards-note">
+        WI DPI World Languages standards (June 2019) are built on the ACTFL World-Readiness framework — same communication modes, same proficiency bands.
+        Both labels shown below: WI code for public-school compliance, ACTFL mode + level for private/parochial alignment.
+        Recorded for course-based-curriculum compliance; not assessed with rubrics in class.
+    </p>
+
+    <table class="standards">
+        <thead>
+            <tr>
+                <th style="width: 26%;">Standard (WI / ACTFL)</th>
+                <th>Practice</th>
+                <th>Performance Indicator</th>
+                <th>How it's addressed</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <span class="code">WL.IT.1.c.n1</span><br>
+                    <span class="actfl">ACTFL Interpretive · Novice Low</span>
+                </td>
+                <td>1.c — Authentic conversations</td>
+                <td>Demonstrate understanding of memorized or familiar words when supported by gestures or visuals in conversations.</td>
+                <td>Tarjetas con fotos + repetición; canción "Mi familia"</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="code">WL.IP.2.a.n1</span><br>
+                    <span class="actfl">ACTFL Interpersonal · Novice Low</span>
+                </td>
+                <td>2.a — Exchange information</td>
+                <td>Provide information by answering simple questions on very familiar topics, using practiced words, with gestures or visuals.</td>
+                <td>La pelota — "¿Quién es la mamá de tu mamá?"</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="code">WL.PS.3.a.n1</span><br>
+                    <span class="actfl">ACTFL Presentational · Novice Low</span>
+                </td>
+                <td>3.a — Describe lives, experiences, events</td>
+                <td>Introduce self with practiced or memorized words and phrases, with gestures or visuals.</td>
+                <td>"Mi papá se llama…"; Dibuja a tu familia</td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="code">WL.IC.4.a.n+</span><br>
+                    <span class="actfl">ACTFL Intercultural / Cultures · Novice</span>
+                </td>
+                <td>4.a — Cultural products and perspectives</td>
+                <td>Identify, in own and other cultures, typical products related to familiar everyday life.</td>
+                <td>Bandera de Chile (u otro país hispanohablante)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <footer class="doc-footer">
+        <span>Lake Country Spanish · K–2 Curriculum</span>
+        <span>La Familia</span>
+    </footer>
+
+</article>
+
+</body>
+</html>
