@@ -112,23 +112,68 @@ public class CurriculumController : Controller
             return View(model);
         }
 
-        // Resolve the parent Unit. Prefer the explicit dropdown selection; fall
-        // back to a title match on the parsed Unit metadata cell.
-        var unitId = model.UnitId;
-        if (unitId is null)
+        var userId = _userManager.GetUserId(User) ?? string.Empty;
+        var gradeBand = ParseGradeBand(parsed.GradeBand);
+
+        // Resolve the parent Unit. Order of preference:
+        //   1. Explicit dropdown selection (admin override).
+        //   2. Case-insensitive title match against existing Units.
+        //   3. Auto-create a Unit with the parsed name, under the first
+        //      LearningPath whose grade band matches (or the first path
+        //      overall if no band match).
+        // Auto-creation means Karen never has to pre-seed Units to upload
+        // a new lesson — typos won't block her, though they will create
+        // a duplicate Unit she can rename later.
+        int unitId;
+        if (model.UnitId is int explicitChoice)
+        {
+            unitId = explicitChoice;
+        }
+        else
         {
             var match = await _context.Units.FirstOrDefaultAsync(
                 u => u.Title.ToLower() == parsed.Unit.ToLower(), ct);
-            if (match is null)
+            if (match is not null)
             {
-                model.ErrorMessage = $"Parsed Unit \"{parsed.Unit}\" doesn't match any existing Unit. Pick one from the dropdown, or create the Unit first.";
-                return View(model);
+                unitId = match.Id;
             }
-            unitId = match.Id;
+            else
+            {
+                if (string.IsNullOrWhiteSpace(parsed.Unit))
+                {
+                    model.ErrorMessage = "The Metadata table is missing a Unit name.";
+                    return View(model);
+                }
+                var path = await _context.LearningPaths
+                               .Where(p => p.IsActive && p.GradeBand == gradeBand)
+                               .FirstOrDefaultAsync(ct)
+                           ?? await _context.LearningPaths
+                               .Where(p => p.IsActive)
+                               .OrderBy(p => p.Id)
+                               .FirstOrDefaultAsync(ct);
+                if (path is null)
+                {
+                    model.ErrorMessage = "No active LearningPath exists. Seed at least one before uploading lessons.";
+                    return View(model);
+                }
+                var nextUnitNumber = await _context.Units
+                    .Where(u => u.LearningPathId == path.Id)
+                    .Select(u => (int?)u.UnitNumber)
+                    .MaxAsync(ct) ?? 0;
+                var newUnit = new Unit
+                {
+                    Title = parsed.Unit.Trim(),
+                    UnitNumber = nextUnitNumber + 1,
+                    LearningPathId = path.Id,
+                    Theme = parsed.Theme,
+                    IsActive = true
+                };
+                _context.Units.Add(newUnit);
+                await _context.SaveChangesAsync(ct);
+                unitId = newUnit.Id;
+                TempData["InfoMessage"] = $"Created new Unit \"{newUnit.Title}\" under LearningPath \"{path.Title}\".";
+            }
         }
-
-        var userId = _userManager.GetUserId(User) ?? string.Empty;
-        var gradeBand = ParseGradeBand(parsed.GradeBand);
 
         // Body sections compiled into one Markdown blob inside a single Raw
         // block. Karen edits in the existing block editor afterward — the
@@ -141,7 +186,7 @@ public class CurriculumController : Controller
         {
             Title = parsed.Title,
             Description = parsed.Objective,
-            UnitId = unitId.Value,
+            UnitId = unitId,
             DayNumberInUnit = 1,
             GradeBand = gradeBand,
             Theme = parsed.Theme,

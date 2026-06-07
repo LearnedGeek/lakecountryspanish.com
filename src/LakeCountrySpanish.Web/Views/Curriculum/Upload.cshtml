@@ -44,17 +44,19 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1" for="UnitId">Parent Unit (optional override)</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1" for="UnitId">Parent Unit</label>
                 <select id="UnitId" name="UnitId"
                         class="block w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                    <option value="">— Match by Unit cell in the document —</option>
+                    <option value="">— Auto: match by document, or create if new —</option>
                     @foreach (var u in Model.AvailableUnits)
                     {
                         <option value="@u.Id">@u.Title</option>
                     }
                 </select>
                 <p class="mt-1 text-xs text-gray-500">
-                    If the Unit cell in the document doesn't match any existing Unit, pick one here.
+                    Leave on auto and we'll match the Unit cell in the document. If no Unit by that name exists yet,
+                    we create one under the first LearningPath that fits the grade band. Override here to file
+                    this lesson under a specific Unit.
                 </p>
             </div>
 
