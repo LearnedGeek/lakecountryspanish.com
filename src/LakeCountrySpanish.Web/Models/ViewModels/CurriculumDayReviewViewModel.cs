@@ -17,8 +17,14 @@ public sealed class CurriculumDayReviewViewModel
     public bool IsActive { get; init; }
     public IReadOnlyList<string> WiStandardCodes { get; init; } = Array.Empty<string>();
 
-    /// <summary>Rendered HTML body, ready to drop into the lcs-document container.</summary>
+    /// <summary>Legacy plain-Markdown render — kept only for diagnostics.</summary>
     public string RenderedHtml { get; init; } = string.Empty;
 
     public string ThemeName { get; init; } = "teacher-binder";
+
+    /// <summary>
+    /// Structured proposal-aesthetic print model. The Review page renders
+    /// from this; the lighter <see cref="RenderedHtml"/> is unused.
+    /// </summary>
+    public LessonPrintViewModel Print { get; init; } = new();
 }

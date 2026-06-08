@@ -19,10 +19,8 @@
 
             <!-- Rendered lesson -->
             <div class="lg:col-span-9">
-                <div class="bg-white rounded-lg shadow p-2">
-                    <div class="lcs-document" style="max-width:none; padding:1in 1.25in;">
-                        @Html.Raw(Model.RenderedHtml)
-                    </div>
+                <div class="bg-white rounded-lg shadow">
+                    @await Html.PartialAsync("_LessonPrint", Model.Print)
                 </div>
             </div>
 

@@ -1,0 +1,166 @@
+@using LakeCountrySpanish.Web.Models.ViewModels
+@using LakeCountrySpanish.Web.Services
+@model LakeCountrySpanish.Web.Models.ViewModels.LessonPrintViewModel
+@inject LakeCountrySpanish.Web.Services.IDocumentRenderingService _renderer
+@{
+    string MarkdownToHtml(string md)
+    {
+        if (string.IsNullOrWhiteSpace(md)) return string.Empty;
+        // Wrap as a doc with empty frontmatter so DocumentRenderingService runs Markdig.
+        return _renderer.Render("---\n---\n" + md).BodyHtml;
+    }
+    var subtitleParts = new List<string>();
+    if (!string.IsNullOrWhiteSpace(Model.GradeBandLabel)) subtitleParts.Add(Model.GradeBandLabel);
+    if (Model.Trimester > 0) subtitleParts.Add($"Trimestre {Model.Trimester}");
+    if (Model.Sessions > 1) subtitleParts.Add($"{Model.Sessions} clases");
+    else if (Model.Sessions == 1) subtitleParts.Add("Día 1");
+    if (Model.DurationMinutes > 0) subtitleParts.Add($"{Model.DurationMinutes} min");
+}
+
+<article class="lcs-document lesson-print">
+
+    <header class="lp-masthead">
+        <div class="lp-brand">Lake Country Spanish</div>
+        <div class="lp-crumb">@string.Join(" · ", subtitleParts)</div>
+    </header>
+
+    <h1 class="lp-title">@Model.Title</h1>
+    @if (!string.IsNullOrWhiteSpace(Model.UnitTitle))
+    {
+        <p class="lp-subtitle">Unit — @Model.UnitTitle</p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Objective))
+    {
+        <div class="lp-objective">
+            <p class="lp-label">Objetivo</p>
+            <p>@Model.Objective</p>
+        </div>
+    }
+
+    @if (Model.VocabCore.Any() || Model.VocabStretch.Any() || Model.VocabChallenge.Any())
+    {
+        var tierCount = (Model.VocabCore.Any() ? 1 : 0) + (Model.VocabStretch.Any() ? 1 : 0) + (Model.VocabChallenge.Any() ? 1 : 0);
+        <div class="lp-vocab-tiers" data-cols="@tierCount">
+            @if (Model.VocabCore.Any())
+            {
+                <div class="lp-vocab-tier lp-tier-core">
+                    <p class="lp-tier-label">Core · Everyone</p>
+                    <div class="lp-chips">
+                        @foreach (var w in Model.VocabCore) { <span class="lp-chip">@w</span> }
+                    </div>
+                </div>
+            }
+            @if (Model.VocabStretch.Any())
+            {
+                <div class="lp-vocab-tier lp-tier-stretch">
+                    <p class="lp-tier-label">Stretch · As ready</p>
+                    <div class="lp-chips">
+                        @foreach (var w in Model.VocabStretch) { <span class="lp-chip">@w</span> }
+                    </div>
+                </div>
+            }
+            @if (Model.VocabChallenge.Any())
+            {
+                <div class="lp-vocab-tier lp-tier-challenge">
+                    <p class="lp-tier-label">Challenge · Advanced</p>
+                    <div class="lp-chips">
+                        @foreach (var w in Model.VocabChallenge) { <span class="lp-chip">@w</span> }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @if (Model.Materials.Any())
+    {
+        <div class="lp-materials">
+            <p class="lp-label">Materiales <span class="lp-en">(Materials)</span></p>
+            <ul>
+                @foreach (var m in Model.Materials) { <li>@m</li> }
+            </ul>
+        </div>
+    }
+
+    @foreach (var bodyPart in Model.BodySections)
+    {
+        var songsForSection = bodyPart.Spanish.StartsWith("Apertura") ? Model.Videos.Where(v => v.Role == LakeCountrySpanish.Web.Models.Entities.LessonVideoRole.Opening)
+            : bodyPart.Spanish.StartsWith("Presentación") ? Model.Videos.Where(v => v.Role == LakeCountrySpanish.Web.Models.Entities.LessonVideoRole.Presentation)
+            : bodyPart.Spanish.StartsWith("Cierre") ? Model.Videos.Where(v => v.Role == LakeCountrySpanish.Web.Models.Entities.LessonVideoRole.Closing)
+            : Enumerable.Empty<LakeCountrySpanish.Web.Models.Entities.LessonVideo>();
+
+        <h2 class="lp-section">
+            <span class="lp-es">@bodyPart.Spanish</span>
+            @if (!string.IsNullOrEmpty(bodyPart.English))
+            {
+                <span class="lp-en">@bodyPart.English</span>
+            }
+        </h2>
+        @Html.Raw(MarkdownToHtml(bodyPart.Markdown))
+
+        foreach (var v in songsForSection)
+        {
+            <div class="lp-song">
+                <p class="lp-song-label">Canción · @SongRoleLabel(v.Role)</p>
+                <p class="lp-song-title">@v.Title</p>
+                <p class="lp-song-link">🎥 <a href="@v.Url" target="_blank" rel="noopener">@v.Url</a></p>
+            </div>
+        }
+    }
+
+    @{
+        var orphanSongs = Model.Videos.Where(v => v.Role == LakeCountrySpanish.Web.Models.Entities.LessonVideoRole.Supplemental).ToList();
+    }
+    @if (orphanSongs.Any())
+    {
+        <h2 class="lp-section">
+            <span class="lp-es">Recursos adicionales</span>
+            <span class="lp-en">Additional Resources</span>
+        </h2>
+        @foreach (var v in orphanSongs)
+        {
+            <div class="lp-song">
+                <p class="lp-song-title">@v.Title</p>
+                <p class="lp-song-link">🎥 <a href="@v.Url" target="_blank" rel="noopener">@v.Url</a></p>
+            </div>
+        }
+    }
+
+    @if (Model.Standards.Any())
+    {
+        <h2 class="lp-standards-title">Standards Alignment — WI DPI &amp; ACTFL</h2>
+        <p class="lp-standards-note">
+            WI DPI World Languages standards (June 2019) are built on the ACTFL World-Readiness framework — same communication modes, same proficiency bands.
+            Both labels shown: WI code for public-school compliance, ACTFL mode + level for private/parochial alignment.
+        </p>
+        <table class="lp-standards-table">
+            <thead>
+                <tr><th>Standard (WI / ACTFL)</th><th>Practice</th><th>Performance Indicator</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Standards)
+                {
+                    <tr>
+                        <td>
+                            <span class="lp-code">@s.WiCode</span><br>
+                            <span class="lp-actfl">@s.ActflLabel</span>
+                        </td>
+                        <td>@s.Practice</td>
+                        <td>@s.Indicator</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+</article>
+
+@functions {
+    static string SongRoleLabel(LakeCountrySpanish.Web.Models.Entities.LessonVideoRole r) => r switch
+    {
+        LakeCountrySpanish.Web.Models.Entities.LessonVideoRole.Opening      => "Saludo",
+        LakeCountrySpanish.Web.Models.Entities.LessonVideoRole.Presentation => "Presentación",
+        LakeCountrySpanish.Web.Models.Entities.LessonVideoRole.Closing      => "Despedida",
+        _                                                                  => "Recurso"
+    };
+}
