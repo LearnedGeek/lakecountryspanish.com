@@ -515,6 +515,23 @@ public class CurriculumController : Controller
     }
 
     /// <summary>
+    /// Same rendered lesson as Review, but with no admin chrome — suitable for
+    /// Ctrl+P / Save as PDF. Identical render path so what teachers see in the
+    /// binder is byte-identical to what the reviewer signs off on.
+    /// </summary>
+    [HttpGet("Curriculum/Days/{id:int}/Print")]
+    public async Task<IActionResult> PrintDay(int id)
+    {
+        var day = await _context.Days
+            .Include(d => d.Unit)
+            .Include(d => d.WisconsinStandards)
+            .Include(d => d.Videos)
+            .FirstOrDefaultAsync(d => d.Id == id);
+        if (day is null) return NotFound();
+        return View(BuildLessonPrintViewModel(day));
+    }
+
+    /// <summary>
     /// Flip a drafted Day to active so it shows up in the Days list as available
     /// for binder composition. Idempotent.
     /// </summary>

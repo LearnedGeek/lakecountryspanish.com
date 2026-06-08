@@ -1,0 +1,67 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.LessonPrintViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = $"{Model.Title} — Lake Country Spanish";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"]</title>
+    <link rel="stylesheet" href="~/themes/teacher-binder/teacher-binder.css" />
+    <style>
+        body {
+            background: #f3f4f6;
+            margin: 0;
+            padding: 24px 0;
+        }
+        .print-toolbar {
+            max-width: 8.5in;
+            margin: 0 auto 16px auto;
+            padding: 0 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+            color: #4b5563;
+        }
+        .print-toolbar button {
+            background: #1E3A8A;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .print-toolbar a { color: #4b5563; text-decoration: none; }
+        .print-toolbar a:hover { text-decoration: underline; }
+        .sheet {
+            background: white;
+            max-width: 8.5in;
+            margin: 0 auto;
+            box-shadow: 0 6px 22px rgba(0, 0, 0, 0.08);
+        }
+        @@media print {
+            body { background: white; padding: 0; }
+            .print-toolbar { display: none !important; }
+            .sheet { box-shadow: none; max-width: none; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-toolbar">
+        <a href="@Url.Action("ReviewDay", new { id = Model.DayId })">← Back to Review</a>
+        <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <div class="sheet">
+        @await Html.PartialAsync("_LessonPrint", Model)
+    </div>
+
+</body>
+</html>
