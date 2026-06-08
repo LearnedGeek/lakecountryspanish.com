@@ -40,7 +40,6 @@ public class CurriculumController : Controller
     // -------- Day admin (DB-backed) --------
 
     [HttpGet("Curriculum/Lessons")]
-    [HttpGet("Curriculum/Days")] // legacy alias — TODO remove after one cycle
     public async Task<IActionResult> Lessons(int? unitId = null, GradeBand? gradeBand = null)
     {
         var days = await _days.ListAsync(unitId, gradeBand, includeInactive: true);
@@ -342,7 +341,7 @@ public class CurriculumController : Controller
     /// lesson — uses the same render pipeline the binder uses, so what the
     /// reviewer sees is what teachers will print.
     /// </summary>
-    [HttpGet("Curriculum/Days/{id:int}/Review")]
+    [HttpGet("Curriculum/Lessons/{id:int}/Review")]
     public async Task<IActionResult> ReviewDay(int id)
     {
         var day = await _context.Days
@@ -520,7 +519,7 @@ public class CurriculumController : Controller
     /// Ctrl+P / Save as PDF. Identical render path so what teachers see in the
     /// binder is byte-identical to what the reviewer signs off on.
     /// </summary>
-    [HttpGet("Curriculum/Days/{id:int}/Print")]
+    [HttpGet("Curriculum/Lessons/{id:int}/Print")]
     public async Task<IActionResult> PrintDay(int id)
     {
         var day = await _context.Days
@@ -536,7 +535,7 @@ public class CurriculumController : Controller
     /// Flip a drafted Day to active so it shows up in the Days list as available
     /// for binder composition. Idempotent.
     /// </summary>
-    [HttpPost("Curriculum/Days/{id:int}/Approve")]
+    [HttpPost("Curriculum/Lessons/{id:int}/Approve")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ApproveDay(int id, CancellationToken ct)
     {
@@ -554,7 +553,7 @@ public class CurriculumController : Controller
 
     // -------- Power-user mode: metadata-only Create + block editor on Edit --------
 
-    [HttpGet("Curriculum/Days/Create")]
+    [HttpGet("Curriculum/Lessons/Create")]
     public async Task<IActionResult> CreateDay()
     {
         var units = await GetUnitOptionsAsync();
@@ -571,7 +570,7 @@ public class CurriculumController : Controller
         });
     }
 
-    [HttpPost("Curriculum/Days/Create")]
+    [HttpPost("Curriculum/Lessons/Create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateDay(CurriculumDayFormViewModel model)
     {
@@ -591,7 +590,7 @@ public class CurriculumController : Controller
         return RedirectToAction(nameof(EditDay), new { id = day.Id });
     }
 
-    [HttpGet("Curriculum/Days/Edit/{id:int}")]
+    [HttpGet("Curriculum/Lessons/Edit/{id:int}")]
     public async Task<IActionResult> EditDay(int id)
     {
         var day = await _days.GetAsync(id);
@@ -616,7 +615,7 @@ public class CurriculumController : Controller
         return View("DayForm", vm);
     }
 
-    [HttpPost("Curriculum/Days/Edit/{id:int}")]
+    [HttpPost("Curriculum/Lessons/Edit/{id:int}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditDay(int id, CurriculumDayFormViewModel model)
     {
@@ -647,7 +646,7 @@ public class CurriculumController : Controller
     /// from the editor textarea (form-urlencoded) and returns just the rendered
     /// HTML fragment for the preview pane. No DB write.
     /// </summary>
-    [HttpPost("Curriculum/Days/Preview")]
+    [HttpPost("Curriculum/Lessons/Preview")]
     [ValidateAntiForgeryToken]
     public IActionResult PreviewDay([FromForm] string markdown)
     {
@@ -669,7 +668,7 @@ public class CurriculumController : Controller
     /// from the Day row; the form sends an in-flight save through SaveBlock
     /// endpoints before requesting a preview refresh.
     /// </summary>
-    [HttpGet("Curriculum/Days/{dayId:int}/Preview")]
+    [HttpGet("Curriculum/Lessons/{dayId:int}/Preview")]
     public async Task<IActionResult> PreviewDayBlocks(int dayId)
     {
         var day = await _days.GetAsync(dayId);
@@ -687,7 +686,7 @@ public class CurriculumController : Controller
     // -------- Block editor HTMX endpoints --------
 
     /// <summary>Re-render a single block in view mode — used as the Cancel target.</summary>
-    [HttpGet("Curriculum/Days/{dayId:int}/Blocks/{blockId}")]
+    [HttpGet("Curriculum/Lessons/{dayId:int}/Blocks/{blockId}")]
     public async Task<IActionResult> ViewBlock(int dayId, string blockId)
     {
         var day = await _days.GetAsync(dayId);
@@ -698,7 +697,7 @@ public class CurriculumController : Controller
         return PartialView("Blocks/_BlockItem", new BlockItemViewModel { DayId = dayId, Block = block });
     }
 
-    [HttpGet("Curriculum/Days/{dayId:int}/Blocks/{blockId}/Edit")]
+    [HttpGet("Curriculum/Lessons/{dayId:int}/Blocks/{blockId}/Edit")]
     public async Task<IActionResult> EditBlock(int dayId, string blockId)
     {
         var day = await _days.GetAsync(dayId);
@@ -710,7 +709,7 @@ public class CurriculumController : Controller
     }
 
     /// <summary>Appends a new block of the requested kind. Returns the rendered item fragment.</summary>
-    [HttpPost("Curriculum/Days/{dayId:int}/Blocks")]
+    [HttpPost("Curriculum/Lessons/{dayId:int}/Blocks")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddBlock(int dayId, [FromForm] string kind)
     {
@@ -737,7 +736,7 @@ public class CurriculumController : Controller
     /// untyped form keys arrive as IFormCollection and are dispatched on the
     /// existing block's runtime type.
     /// </summary>
-    [HttpPost("Curriculum/Days/{dayId:int}/Blocks/{blockId}")]
+    [HttpPost("Curriculum/Lessons/{dayId:int}/Blocks/{blockId}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveBlock(int dayId, string blockId, [FromForm] IFormCollection form)
     {
@@ -763,7 +762,7 @@ public class CurriculumController : Controller
         return PartialView("Blocks/_BlockItem", new BlockItemViewModel { DayId = dayId, Block = updated });
     }
 
-    [HttpDelete("Curriculum/Days/{dayId:int}/Blocks/{blockId}")]
+    [HttpDelete("Curriculum/Lessons/{dayId:int}/Blocks/{blockId}")]
     public async Task<IActionResult> DeleteBlock(int dayId, string blockId)
     {
         var day = await _days.GetAsync(dayId);

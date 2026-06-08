@@ -21,7 +21,7 @@
 
         <div class="flex items-center justify-between mb-4">
             <h1 class="text-2xl font-bold text-gray-900">@Model.PageTitle</h1>
-            <a href="@Url.Action("Days")" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to Days</a>
+            <a href="@Url.Action("Lessons")" class="text-sm text-indigo-600 hover:text-indigo-800">← Back to Curriculum</a>
         </div>
 
         @if (Model.IsEdit)
@@ -31,7 +31,7 @@
             <details class="bg-white rounded-lg shadow mb-4 group">
                 <summary class="px-4 py-3 cursor-pointer flex flex-wrap items-center gap-3 list-none">
                     <span class="text-base font-semibold text-gray-900">@Model.Title</span>
-                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">@unitLabel · Day #@Model.DayNumberInUnit</span>
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">@unitLabel · Lesson #@Model.DayNumberInUnit</span>
                     <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">@Model.GradeBand</span>
                     @if (!string.IsNullOrEmpty(Model.Theme))
                     {
@@ -58,14 +58,14 @@
                 @await Html.PartialAsync("_DayMetadataForm", Model)
             </div>
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                Create the Day first. After save you'll land on the block editor where you add the lesson content.
+                Create the lesson first. After save you'll land on the block editor where you add the lesson content.
             </div>
         }
 
         @if (Model.IsEdit)
         {
             <!-- Block editor + live preview, side-by-side. Each block action is an
-                 HTMX round-trip under /Curriculum/Days/{dayId}/Blocks/... -->
+                 HTMX round-trip under /Curriculum/Lessons/{dayId}/Blocks/... -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
                 <div class="lg:col-span-7">
