@@ -39,8 +39,9 @@ public class CurriculumController : Controller
 
     // -------- Day admin (DB-backed) --------
 
-    [HttpGet("Curriculum/Days")]
-    public async Task<IActionResult> Days(int? unitId = null, GradeBand? gradeBand = null)
+    [HttpGet("Curriculum/Lessons")]
+    [HttpGet("Curriculum/Days")] // legacy alias — TODO remove after one cycle
+    public async Task<IActionResult> Lessons(int? unitId = null, GradeBand? gradeBand = null)
     {
         var days = await _days.ListAsync(unitId, gradeBand, includeInactive: true);
         var units = await GetUnitOptionsAsync();
@@ -65,7 +66,7 @@ public class CurriculumController : Controller
             AvailableUnits = units
         };
 
-        return View(vm);
+        return View("Lessons", vm);
     }
 
     // -------- Docx upload pipeline --------
@@ -77,7 +78,7 @@ public class CurriculumController : Controller
         if (units.Count == 0)
         {
             TempData["ErrorMessage"] = "No Units exist yet. Seed a LearningPath + Unit first.";
-            return RedirectToAction(nameof(Days));
+            return RedirectToAction(nameof(Lessons));
         }
         return View(new CurriculumUploadViewModel { AvailableUnits = units });
     }
@@ -560,7 +561,7 @@ public class CurriculumController : Controller
         if (units.Count == 0)
         {
             TempData["ErrorMessage"] = "No Units exist yet. Seed a LearningPath + Unit first, or build the Units admin to create one.";
-            return RedirectToAction(nameof(Days));
+            return RedirectToAction(nameof(Lessons));
         }
 
         return View("DayForm", new CurriculumDayFormViewModel

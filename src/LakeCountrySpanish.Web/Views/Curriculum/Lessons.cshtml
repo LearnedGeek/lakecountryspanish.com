@@ -1,18 +1,37 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.CurriculumDayListViewModel
 @{
-    ViewData["Title"] = "Curriculum — Days";
+    ViewData["Title"] = "Curriculum";
 }
 
 <div class="bg-gray-50 min-h-screen">
     <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-6">
+
+        <div class="flex items-start justify-between mb-6 gap-4 flex-wrap">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Curriculum — Days</h1>
-                <p class="text-sm text-gray-600 mt-1">@Model.Days.Count Day@(Model.Days.Count == 1 ? "" : "s") authored.</p>
+                <h1 class="text-2xl font-bold text-gray-900">Curriculum</h1>
+                <p class="text-sm text-gray-600 mt-1">@Model.Days.Count lesson@(Model.Days.Count == 1 ? "" : "s") authored.</p>
             </div>
-            <div class="flex gap-2">
-                <a href="@Url.Action("Upload")" class="inline-flex items-center px-4 py-2 bg-secondary-500 text-white rounded-md hover:bg-secondary-600">Upload .docx</a>
-                <a href="@Url.Action("CreateDay")" class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md hover:bg-gray-50">+ New Day (manual)</a>
+            <div class="flex gap-2 flex-wrap">
+                <a href="@Url.Action("Upload")" class="inline-flex items-center px-4 py-2 bg-secondary-500 text-white rounded-md hover:bg-secondary-600 font-medium text-sm">Upload .docx</a>
+                <a href="@Url.Action("CreateDay")" class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md hover:bg-gray-50 text-sm">+ New (manual)</a>
+            </div>
+        </div>
+
+        <div class="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <p class="text-sm font-semibold text-gray-900 mb-1">Authoring a new lesson?</p>
+            <p class="text-sm text-gray-600 mb-3">
+                Download the LCS lesson template (Word), fill it in, then upload it above.
+                The sample is a fully-completed lesson you can open side-by-side as a reference.
+            </p>
+            <div class="flex gap-2 flex-wrap">
+                <a href="/curriculum/lesson-template.docx" download
+                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded text-sm font-medium hover:bg-indigo-100">
+                    📄 Download blank template
+                </a>
+                <a href="/curriculum/sample-la-familia.docx" download
+                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                    📄 Download sample (La Familia)
+                </a>
             </div>
         </div>
 
@@ -54,8 +73,8 @@
         @if (Model.Days.Count == 0)
         {
             <div class="bg-white rounded-lg shadow p-12 text-center text-gray-500">
-                <p class="text-lg mb-2">No Days yet.</p>
-                <p class="text-sm">Create one to get started.</p>
+                <p class="text-lg mb-2">No lessons yet.</p>
+                <p class="text-sm">Download the template above, fill it in, and upload to get started.</p>
             </div>
         }
         else
@@ -64,7 +83,7 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit / Day #</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit / Lesson #</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
                             <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Theme</th>
