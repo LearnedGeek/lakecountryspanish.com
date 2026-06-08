@@ -43,6 +43,15 @@
                         }
                     </div>
 
+                    @if (!string.IsNullOrEmpty(Model.ShortlinkCode))
+                    {
+                        <div>
+                            <h2 class="text-xs font-semibold uppercase text-gray-500 tracking-wide">Shortlink</h2>
+                            <p class="mt-1 text-sm font-mono font-semibold text-indigo-700">lcs/@Model.ShortlinkCode</p>
+                            <p class="mt-0.5 text-xs text-gray-500">Teachers type this to get to the lesson.</p>
+                        </div>
+                    }
+
                     @if (Model.WiStandardCodes.Count > 0)
                     {
                         <div>

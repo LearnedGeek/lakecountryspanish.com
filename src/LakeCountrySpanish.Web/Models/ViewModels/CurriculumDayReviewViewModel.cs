@@ -27,4 +27,10 @@ public sealed class CurriculumDayReviewViewModel
     /// from this; the lighter <see cref="RenderedHtml"/> is unused.
     /// </summary>
     public LessonPrintViewModel Print { get; init; } = new();
+
+    /// <summary>
+    /// 3-character shortlink code for this lesson, e.g. "XFA". Renders as
+    /// "lcs/XFA" in the sidebar. Null if no shortlink has been allocated.
+    /// </summary>
+    public string? ShortlinkCode { get; init; }
 }

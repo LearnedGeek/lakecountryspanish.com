@@ -352,6 +352,10 @@ public class CurriculumController : Controller
         if (day is null) return NotFound();
 
         var print = BuildLessonPrintViewModel(day);
+        var shortlinkCode = await _context.Shortlinks
+            .Where(s => s.DestinationType == ShortlinkDestination.Lesson && s.DestinationId == day.Id)
+            .Select(s => s.Code)
+            .FirstOrDefaultAsync();
 
         return View(new CurriculumDayReviewViewModel
         {
@@ -364,7 +368,8 @@ public class CurriculumController : Controller
             IsActive = day.IsActive,
             WiStandardCodes = day.WisconsinStandards.Select(s => s.Code).OrderBy(c => c).ToList(),
             RenderedHtml = string.Empty, // legacy; ReviewDay now uses Print
-            Print = print
+            Print = print,
+            ShortlinkCode = shortlinkCode
         });
     }
 
