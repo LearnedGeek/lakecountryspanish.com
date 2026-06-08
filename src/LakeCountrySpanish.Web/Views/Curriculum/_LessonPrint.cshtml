@@ -6,8 +6,10 @@
     string MarkdownToHtml(string md)
     {
         if (string.IsNullOrWhiteSpace(md)) return string.Empty;
-        // Wrap as a doc with empty frontmatter so DocumentRenderingService runs Markdig.
-        return _renderer.Render("---\n---\n" + md).BodyHtml;
+        // Body sections have no frontmatter; SplitFrontmatter returns
+        // (empty, source) when the input doesn't start with --- so we can
+        // pass the raw Markdown directly.
+        return _renderer.Render(md).BodyHtml;
     }
     var subtitleParts = new List<string>();
     if (!string.IsNullOrWhiteSpace(Model.GradeBandLabel)) subtitleParts.Add(Model.GradeBandLabel);

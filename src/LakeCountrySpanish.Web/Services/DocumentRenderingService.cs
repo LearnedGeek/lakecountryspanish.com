@@ -77,7 +77,10 @@ public sealed class DocumentRenderingService : IDocumentRenderingService
         var newlineAfterOpen = source.IndexOf('\n');
         if (newlineAfterOpen < 0) return (string.Empty, source);
 
-        var closeFence = source.IndexOf("\n---", newlineAfterOpen, StringComparison.Ordinal);
+        // Search for the closing fence AFTER the opening line so an
+        // empty-frontmatter doc (`---\n---\n...`) doesn't make the close
+        // fence overlap the opening one and produce a negative substring length.
+        var closeFence = source.IndexOf("\n---", newlineAfterOpen + 1, StringComparison.Ordinal);
         if (closeFence < 0) return (string.Empty, source);
 
         var yaml = source[(newlineAfterOpen + 1)..closeFence];
