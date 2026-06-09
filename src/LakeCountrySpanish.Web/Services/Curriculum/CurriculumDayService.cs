@@ -70,7 +70,17 @@ public sealed class CurriculumDayService : ICurriculumDayService
         var existing = await _context.Days.FirstOrDefaultAsync(d => d.Id == day.Id, ct)
                        ?? throw new InvalidOperationException($"Day {day.Id} not found.");
 
-        var bodyChanged = !string.Equals(existing.TeacherPlanMarkdown, day.TeacherPlanMarkdown, StringComparison.Ordinal);
+        // Callers (CurriculumController) typically pass a tracked, already-
+        // mutated entity, so `existing` and `day` are the same reference and
+        // a direct `existing.Foo != day.Foo` comparison always returns false.
+        // Read the pre-update snapshot from EF's change tracker instead.
+        var entry = _context.Entry(existing);
+        var originalBody = entry.OriginalValues.GetValue<string>(nameof(Day.TeacherPlanMarkdown)) ?? string.Empty;
+        var originalActive = entry.OriginalValues.GetValue<bool>(nameof(Day.IsActive));
+
+        var bodyChanged = !string.Equals(originalBody, day.TeacherPlanMarkdown, StringComparison.Ordinal);
+        var activationChanged = originalActive != day.IsActive;
+        var activatedNow = activationChanged && day.IsActive;
 
         existing.Title = day.Title;
         existing.Description = day.Description;
@@ -83,29 +93,47 @@ public sealed class CurriculumDayService : ICurriculumDayService
         existing.SkillFocus = day.SkillFocus;
         existing.IsActive = day.IsActive;
         existing.LastModifiedAt = DateTime.UtcNow;
+        existing.LastModifiedById = editorUserId;
 
-        if (bodyChanged)
+        // Activation is treated as an approval/review event — re-stamp the
+        // reviewer fields each time someone re-activates a lesson. Deactivation
+        // leaves the historical "last approved on X by Y" record intact.
+        if (activatedNow)
         {
-            var nextVersion = await _context.CurriculumVersions
-                .Where(v => v.EntityType == EntityType && v.EntityId == day.Id)
-                .MaxAsync(v => (int?)v.VersionNumber, ct) ?? 0;
-
-            _context.CurriculumVersions.Add(new CurriculumVersion
+            existing.ReviewedById = editorUserId;
+            existing.ReviewedAt = DateTime.UtcNow;
+            if (!string.IsNullOrWhiteSpace(changeNotes))
             {
-                EntityType = EntityType,
-                EntityId = day.Id,
-                VersionNumber = nextVersion + 1,
-                BodySnapshotMarkdown = day.TeacherPlanMarkdown,
-                EffectiveDate = DateTime.UtcNow,
-                ChangedById = editorUserId,
-                ChangeNotes = changeNotes,
-                CreatedAt = DateTime.UtcNow
-            });
+                existing.ReviewNotes = changeNotes;
+            }
         }
+
+        // Write a CurriculumVersion row for every update, not just body
+        // changes — that's how we get a persistent who-did-what audit trail
+        // for metadata-only edits and IsActive toggles. The snapshot just
+        // re-stores the current body when nothing changed; row count is
+        // trivial at LCS scale.
+        var nextVersion = await _context.CurriculumVersions
+            .Where(v => v.EntityType == EntityType && v.EntityId == day.Id)
+            .MaxAsync(v => (int?)v.VersionNumber, ct) ?? 0;
+
+        _context.CurriculumVersions.Add(new CurriculumVersion
+        {
+            EntityType = EntityType,
+            EntityId = day.Id,
+            VersionNumber = nextVersion + 1,
+            BodySnapshotMarkdown = day.TeacherPlanMarkdown,
+            EffectiveDate = DateTime.UtcNow,
+            ChangedById = editorUserId,
+            ChangeNotes = changeNotes,
+            CreatedAt = DateTime.UtcNow
+        });
 
         await _context.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Updated Day {DayId} (body changed: {Changed}) by user {UserId}", day.Id, bodyChanged, editorUserId);
+        _logger.LogInformation(
+            "Updated Day {DayId} (body changed: {BodyChanged}, activation changed: {ActivationChanged}) by user {UserId}",
+            day.Id, bodyChanged, activationChanged, editorUserId);
         return existing;
     }
 }

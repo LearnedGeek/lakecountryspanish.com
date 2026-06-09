@@ -87,6 +87,15 @@ public class Day
     public DateTime? LastModifiedAt { get; set; }
 
     /// <summary>
+    /// FK to ApplicationUser who last touched this Day (any field). Distinct
+    /// from CreatedById (immutable) and ReviewedById (only stamped on the
+    /// activation/approval event). Closes the audit-trail gap for metadata-
+    /// only edits and IsActive toggles, which don't produce a body-diff
+    /// CurriculumVersion row.
+    /// </summary>
+    public string? LastModifiedById { get; set; }
+
+    /// <summary>
     /// URL-safe slug used as the public route segment (`/curriculum/{slug}`).
     /// Derived from Title at creation; admin-editable. Unique across Days.
     /// </summary>
