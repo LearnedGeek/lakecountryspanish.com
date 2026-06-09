@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
-[Authorize(Roles = AppRoles.Admin)]
+[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Teacher}")]
 public class CurriculumController : Controller
 {
     private readonly IDocumentRenderingService _renderer;
@@ -394,23 +394,29 @@ public class CurriculumController : Controller
     }
 
     /// <summary>
-    /// Flip a drafted Day to active so it shows up in the Days list as available
-    /// for binder composition. Idempotent.
+    /// Flip a Day's IsActive flag in either direction. Activating publishes the
+    /// lesson to the public shortlink + curriculum routes; deactivating pulls it
+    /// back to draft so it stays in the admin list but 404s from public view.
     /// </summary>
-    [HttpPost("Curriculum/Lessons/{id:int}/Approve")]
+    [HttpPost("Curriculum/Lessons/{id:int}/Toggle")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApproveDay(int id, CancellationToken ct)
+    public async Task<IActionResult> ToggleActive(int id, string? returnTo, CancellationToken ct)
     {
         var day = await _days.GetAsync(id, ct);
         if (day is null) return NotFound();
-        if (!day.IsActive)
-        {
-            day.IsActive = true;
-            var userId = _userManager.GetUserId(User) ?? string.Empty;
-            await _days.UpdateAsync(day, userId, "Activated by reviewer.", ct);
-        }
-        TempData["SuccessMessage"] = $"\"{day.Title}\" is active.";
-        return RedirectToAction(nameof(ReviewDay), new { id });
+
+        day.IsActive = !day.IsActive;
+        var userId = _userManager.GetUserId(User) ?? string.Empty;
+        var note = day.IsActive ? "Activated by reviewer." : "Deactivated by reviewer.";
+        await _days.UpdateAsync(day, userId, note, ct);
+
+        TempData["SuccessMessage"] = day.IsActive
+            ? $"\"{day.Title}\" is active."
+            : $"\"{day.Title}\" moved back to draft.";
+
+        return string.Equals(returnTo, "list", StringComparison.OrdinalIgnoreCase)
+            ? RedirectToAction(nameof(Lessons))
+            : RedirectToAction(nameof(ReviewDay), new { id });
     }
 
     // -------- Power-user mode: metadata-only Create + block editor on Edit --------

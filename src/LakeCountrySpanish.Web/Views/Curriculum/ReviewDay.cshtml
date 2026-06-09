@@ -66,13 +66,17 @@
                     }
 
                     <div class="space-y-2 pt-2 border-t border-gray-100">
-                        @if (!Model.IsActive)
-                        {
-                            <form asp-action="ApproveDay" asp-route-id="@Model.DayId" method="post">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm">Approve &amp; activate</button>
-                            </form>
-                        }
+                        <form asp-action="ToggleActive" asp-route-id="@Model.DayId" method="post">
+                            @Html.AntiForgeryToken()
+                            @if (!Model.IsActive)
+                            {
+                                <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium">Approve &amp; activate</button>
+                            }
+                            else
+                            {
+                                <button type="submit" class="w-full px-4 py-2 bg-white border border-yellow-300 text-yellow-800 rounded hover:bg-yellow-50 text-sm font-medium">Move back to draft</button>
+                            }
+                        </form>
 
                         <a href="@Url.Action("PrintDay", new { id = Model.DayId })"
                            target="_blank"
@@ -80,9 +84,9 @@
                             Print / Save as PDF
                         </a>
 
-                        <a href="@Url.Action("EditDay", new { id = Model.DayId })"
+                        <a href="@Url.Action("Upload")"
                            class="block w-full text-center px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-700">
-                            Make manual edits
+                            Replace from .docx
                         </a>
 
                         <a href="@Url.Action("Lessons")"
