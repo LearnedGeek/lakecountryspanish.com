@@ -115,6 +115,26 @@ public class CurriculumController : Controller
         var userId = _userManager.GetUserId(User) ?? string.Empty;
         var gradeBand = ParseGradeBand(parsed.GradeBand);
 
+        // Catch the most common author mistake before we hit the DB: copying
+        // a sample template, changing Unit, but forgetting to change Title.
+        // The Slug unique index would reject the INSERT with a generic
+        // DbUpdateException, leaving the author staring at a 500 with no
+        // hint about what to fix. Pre-check the slug so we can give them a
+        // direct message instead.
+        var candidateSlug = Slugify(parsed.Title);
+        var slugClash = await _context.Days
+            .Where(d => d.Slug == candidateSlug)
+            .Select(d => new { d.Id, d.Title })
+            .FirstOrDefaultAsync(ct);
+        if (slugClash is not null)
+        {
+            model.ErrorMessage =
+                $"A lesson titled \"{slugClash.Title}\" already exists. " +
+                $"Open your .docx, change the Title row in the Metadata table to the new lesson's name " +
+                $"(not the sample's), save, and upload again.";
+            return View(model);
+        }
+
         // Resolve the parent Unit. Order of preference:
         //   1. Explicit dropdown selection (admin override).
         //   2. Case-insensitive title match against existing Units.
