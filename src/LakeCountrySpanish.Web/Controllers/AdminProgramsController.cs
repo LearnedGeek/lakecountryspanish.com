@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
+using SkiaSharp;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
@@ -198,7 +199,12 @@ public class AdminProgramsController : Controller
         }
     }
 
-    /// <summary>PNG QR code encoding the public /join/{slug} URL. Renders 300px square.</summary>
+    /// <summary>
+    /// PNG QR code encoding the public /join/{slug} URL, with an identifying label
+    /// composited below (program name + location + short URL). The label baked into
+    /// the image itself matters when Karen prints a stack of QRs and hands them off
+    /// to a print shop or for flyer copying — otherwise she can't tell which is which.
+    /// </summary>
     [HttpGet("{id:int}/Qr")]
     public async Task<IActionResult> Qr(int id, CancellationToken ct)
     {
@@ -209,8 +215,120 @@ public class AdminProgramsController : Controller
 
         using var generator = new QRCodeGenerator();
         using var data = generator.CreateQrCode(joinUrl, QRCodeGenerator.ECCLevel.Q);
-        var png = new PngByteQRCode(data).GetGraphic(pixelsPerModule: 10);
-        return File(png, "image/png", $"lcs-{program.Slug}-qr.png");
+        var qrPng = new PngByteQRCode(data).GetGraphic(pixelsPerModule: 12);
+
+        var labeledPng = ComposeLabeledQr(qrPng, program, joinUrl);
+        return File(labeledPng, "image/png", $"lcs-{program.Slug}-qr.png");
+    }
+
+    /// <summary>
+    /// Composites the raw QR PNG onto a taller white canvas with program name +
+    /// location + shortened URL rendered below it in SkiaSharp. Falls back to the
+    /// original unlabeled PNG if no usable system font is available (the flyer QR
+    /// still works — parents just don't see the identifying text).
+    /// </summary>
+    private static byte[] ComposeLabeledQr(byte[] qrPng, EnrollmentProgram program, string joinUrl)
+    {
+        using var qrBitmap = SKBitmap.Decode(qrPng);
+        if (qrBitmap is null) return qrPng;
+
+        var titleTypeface = ResolveTypeface(SKFontStyle.Bold);
+        var bodyTypeface = ResolveTypeface(SKFontStyle.Normal);
+
+        if (titleTypeface is null || bodyTypeface is null)
+        {
+            // No usable font — return the raw QR so at least scanning still works.
+            return qrPng;
+        }
+
+        using (titleTypeface)
+        using (bodyTypeface)
+        using (var titleFont = new SKFont(titleTypeface, 26f))
+        using (var subtitleFont = new SKFont(bodyTypeface, 16f))
+        using (var urlFont = new SKFont(bodyTypeface, 14f))
+        {
+            const float sidePadding = 16f;
+            const float topPadding = 16f;
+            const float gapAboveText = 20f;
+            const float lineGap = 6f;
+
+            var title = program.Name;
+            var subtitle = string.IsNullOrEmpty(program.LocationName) ? program.MeetingDays : program.LocationName;
+            var url = joinUrl.Replace("https://", "").Replace("http://", "");
+
+            var canvasWidth = qrBitmap.Width + (int)(sidePadding * 2);
+            // Height: top padding + QR + gap + 3 text lines + line gaps + bottom padding.
+            var textBlockHeight = titleFont.Size + lineGap + subtitleFont.Size + lineGap + urlFont.Size;
+            var canvasHeight = (int)(topPadding + qrBitmap.Height + gapAboveText + textBlockHeight + topPadding);
+
+            var info = new SKImageInfo(canvasWidth, canvasHeight, SKColorType.Rgba8888, SKAlphaType.Premul);
+            using var surface = SKSurface.Create(info);
+            var canvas = surface.Canvas;
+
+            canvas.Clear(SKColors.White);
+
+            // Draw the QR centered horizontally at the top.
+            canvas.DrawBitmap(qrBitmap, sidePadding, topPadding);
+
+            using var titlePaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
+            using var subtitlePaint = new SKPaint { Color = new SKColor(0x4b, 0x55, 0x63), IsAntialias = true };
+            using var urlPaint = new SKPaint { Color = new SKColor(0x6b, 0x72, 0x80), IsAntialias = true };
+
+            var centerX = canvasWidth / 2f;
+            var textY = topPadding + qrBitmap.Height + gapAboveText + titleFont.Size;
+
+            DrawCenteredText(canvas, title, titleFont, titlePaint, centerX, textY, canvasWidth - sidePadding * 2);
+            textY += lineGap + subtitleFont.Size;
+            DrawCenteredText(canvas, subtitle, subtitleFont, subtitlePaint, centerX, textY, canvasWidth - sidePadding * 2);
+            textY += lineGap + urlFont.Size;
+            DrawCenteredText(canvas, url, urlFont, urlPaint, centerX, textY, canvasWidth - sidePadding * 2);
+
+            using var image = surface.Snapshot();
+            using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
+            return encoded.ToArray();
+        }
+    }
+
+    /// <summary>
+    /// Finds a workable typeface by trying common cross-platform families in order,
+    /// then falling back to the platform default. Returns null only if the system
+    /// has no fonts at all — extremely unusual, but the caller degrades gracefully.
+    /// </summary>
+    private static SKTypeface? ResolveTypeface(SKFontStyle style)
+    {
+        // "DejaVu Sans" — bundled with Ubuntu / Debian by default (fonts-dejavu-core)
+        // "Arial" — bundled with Windows
+        // "Helvetica" — bundled with macOS
+        // Default — whatever SkiaSharp picks from the platform font manager
+        foreach (var family in new[] { "DejaVu Sans", "Liberation Sans", "Arial", "Helvetica" })
+        {
+            var tf = SKFontManager.Default.MatchFamily(family, style);
+            if (tf is not null) return tf;
+        }
+        return SKFontManager.Default.MatchFamily(null, style)
+            ?? SKTypeface.Default;
+    }
+
+    /// <summary>Draws text centered on <paramref name="centerX"/>, truncated with an ellipsis if it exceeds <paramref name="maxWidth"/>.</summary>
+    private static void DrawCenteredText(SKCanvas canvas, string text, SKFont font, SKPaint paint, float centerX, float y, float maxWidth)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+
+        var display = text;
+        var measured = font.MeasureText(display);
+        if (measured > maxWidth)
+        {
+            // Trim character-by-character until it fits, then append an ellipsis.
+            while (display.Length > 1 && font.MeasureText(display + "…") > maxWidth)
+            {
+                display = display[..^1];
+            }
+            display += "…";
+        }
+
+        var textWidth = font.MeasureText(display);
+        var x = centerX - textWidth / 2f;
+        canvas.DrawText(display, x, y, SKTextAlign.Left, font, paint);
     }
 
     /// <summary>
