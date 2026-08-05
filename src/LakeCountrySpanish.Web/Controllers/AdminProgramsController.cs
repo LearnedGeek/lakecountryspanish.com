@@ -92,6 +92,11 @@ public class AdminProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(ProgramFormViewModel model, CancellationToken ct)
     {
+        if (!AnyMeetingDayPicked(model))
+        {
+            ModelState.AddModelError(nameof(model.MeetingDaySun), "Please pick at least one meeting day.");
+        }
+
         if (!ModelState.IsValid) return View("Form", model);
 
         if (!TryHandleHeroImageUpload(model, out var uploadError))
@@ -157,6 +162,11 @@ public class AdminProgramsController : Controller
     public async Task<IActionResult> Edit(int id, ProgramFormViewModel model, CancellationToken ct)
     {
         if (id != model.Id) return BadRequest();
+        if (!AnyMeetingDayPicked(model))
+        {
+            ModelState.AddModelError(nameof(model.MeetingDaySun), "Please pick at least one meeting day.");
+        }
+
         if (!ModelState.IsValid) return View("Form", model);
 
         if (!TryHandleHeroImageUpload(model, out var uploadError))
@@ -200,6 +210,11 @@ public class AdminProgramsController : Controller
     }
 
     // ---------------- helpers ----------------
+
+    private static bool AnyMeetingDayPicked(ProgramFormViewModel model) =>
+        model.MeetingDaySun || model.MeetingDayMon || model.MeetingDayTue ||
+        model.MeetingDayWed || model.MeetingDayThu || model.MeetingDayFri ||
+        model.MeetingDaySat;
 
     private string BuildJoinUrl(string slug)
     {

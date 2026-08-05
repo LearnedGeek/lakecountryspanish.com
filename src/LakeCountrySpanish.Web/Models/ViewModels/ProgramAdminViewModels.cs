@@ -85,9 +85,13 @@ public sealed class ProgramFormViewModel
     /// Derived from the seven weekday checkboxes below on submit; also displayed
     /// back on edit if the stored value doesn't parse to a checkbox pattern.
     /// Stored form: "Tuesdays" / "Mondays & Wednesdays" / "Mondays, Wednesdays & Fridays".
+    /// Nullable to opt out of ASP.NET Core's implicit-required-for-non-nullable-strings
+    /// behavior — this field is populated server-side from the checkbox booleans in
+    /// <see cref="ToEntity"/>, not typed by the admin, so it always posts as empty and
+    /// would otherwise trip the implicit Required validator.
     /// </summary>
     [Display(Name = "Meeting days")]
-    public string MeetingDays { get; set; } = string.Empty;
+    public string? MeetingDays { get; set; }
 
     [Display(Name = "Sun")] public bool MeetingDaySun { get; set; }
     [Display(Name = "Mon")] public bool MeetingDayMon { get; set; }
