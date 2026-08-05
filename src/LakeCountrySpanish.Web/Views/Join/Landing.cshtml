@@ -1,0 +1,243 @@
+@using LakeCountrySpanish.Web.Models.Entities
+@model LakeCountrySpanish.Web.Models.ViewModels.ProgramEnrollmentFormViewModel
+@{
+    var p = Model.Program;
+    ViewData["Title"] = p.Name;
+    ViewData["MetaDescription"] = string.IsNullOrEmpty(p.TagLine)
+        ? $"Enroll your child in {p.Name} — Lake Country Spanish."
+        : p.TagLine;
+    // Program-controlled hero background; falls back to a soft accent gradient
+    // when the admin left the field blank.
+    var heroStyle = string.IsNullOrEmpty(p.HeroImagePath)
+        ? "background: linear-gradient(135deg, #4361ee 0%, #e85a42 100%);"
+        : $"background-image: linear-gradient(135deg, rgba(30,58,95,0.55), rgba(232,90,66,0.45)), url('{p.HeroImagePath}'); background-size: cover; background-position: center;";
+}
+
+<div class="bg-white min-h-screen">
+
+    <!-- Hero -->
+    <div class="relative py-20 text-white" style="@heroStyle">
+        <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="font-display text-4xl sm:text-5xl font-bold drop-shadow">@p.Name</h1>
+            @if (!string.IsNullOrEmpty(p.TagLine))
+            {
+                <p class="mt-3 text-lg text-white/95">@p.TagLine</p>
+            }
+            <div class="mt-5 flex flex-wrap justify-center gap-2 text-sm">
+                <span class="bg-white/90 text-gray-900 px-3 py-1 rounded-full font-semibold">Grades @p.GradeRange · ages @p.AgeMin–@p.AgeMax</span>
+                <span class="bg-white/90 text-gray-900 px-3 py-1 rounded-full font-semibold">@p.MeetingDays · @p.StartTime.ToString("h:mm tt")–@p.EndTime.ToString("h:mm tt")</span>
+                <span class="bg-white/90 text-gray-900 px-3 py-1 rounded-full font-semibold">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+
+        @if (TempData["InfoMessage"] is string info)
+        {
+            <div class="mb-4 px-4 py-3 rounded bg-blue-50 border border-blue-200 text-blue-900 text-sm">@info</div>
+        }
+
+        <!-- Program description -->
+        @if (!string.IsNullOrEmpty(p.Description))
+        {
+            <div class="prose prose-slate max-w-none mb-8">
+                @Html.Raw(Markdig.Markdown.ToHtml(p.Description))
+            </div>
+        }
+
+        <!-- Enrollment form -->
+        <form method="post" asp-action="Submit" asp-route-slug="@p.Slug" class="space-y-6">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ProgramId" />
+            <input type="hidden" asp-for="ProgramSlug" />
+
+            <div asp-validation-summary="ModelOnly" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-4 py-3"></div>
+
+            <!-- Parent -->
+            <section class="bg-white border border-gray-200 rounded-lg p-4">
+                <h2 class="font-display text-lg font-bold text-gray-900 mb-3">About you (the parent or guardian)</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label asp-for="ParentFirstName" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ParentFirstName" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="ParentFirstName" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ParentLastName" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ParentLastName" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="ParentLastName" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ParentEmail" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ParentEmail" type="email" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="ParentEmail" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="ParentPhone" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ParentPhone" type="tel" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="ParentPhone" class="text-xs text-red-600"></span>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="ParentAddressLine1" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ParentAddressLine1" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div>
+                        <label asp-for="ParentCity" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ParentCity" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label asp-for="ParentState" class="block text-sm font-medium text-gray-700"></label>
+                            <input asp-for="ParentState" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        </div>
+                        <div>
+                            <label asp-for="ParentZip" class="block text-sm font-medium text-gray-700"></label>
+                            <input asp-for="ParentZip" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Student -->
+            <section class="bg-white border border-gray-200 rounded-lg p-4">
+                <h2 class="font-display text-lg font-bold text-gray-900 mb-3">About your child</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label asp-for="StudentFirstName" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="StudentFirstName" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="StudentFirstName" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="StudentLastName" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="StudentLastName" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="StudentLastName" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="StudentGrade" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="StudentGrade" placeholder="e.g. 3, 4, 5, 6" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div>
+                        <label asp-for="StudentBirthDate" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="StudentBirthDate" type="date" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="MedicalConcerns" class="block text-sm font-medium text-gray-700"></label>
+                        <textarea asp-for="MedicalConcerns" rows="2" placeholder="Allergies, medications, conditions we should know about — or leave blank."
+                                  class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"></textarea>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="StudentNotes" class="block text-sm font-medium text-gray-700"></label>
+                        <textarea asp-for="StudentNotes" rows="2" placeholder="Anything else Karen should know about your child."
+                                  class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Emergency + pickup -->
+            <section class="bg-white border border-gray-200 rounded-lg p-4">
+                <h2 class="font-display text-lg font-bold text-gray-900 mb-3">Emergency contact &amp; pickup</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label asp-for="EmergencyName" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="EmergencyName" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div>
+                        <label asp-for="EmergencyPhone" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="EmergencyPhone" type="tel" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="EmergencyRelationship" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="EmergencyRelationship" placeholder="e.g. grandmother, aunt, family friend" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="PickupAuthorization" class="block text-sm font-medium text-gray-700"></label>
+                        <textarea asp-for="PickupAuthorization" rows="3" placeholder="e.g.&#10;Jane Doe (mom)&#10;John Doe (dad)&#10;Sarah Smith (grandmother)"
+                                  class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Who is allowed to pick up your child from class? Include their relationship.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Payment choice -->
+            <section class="bg-white border border-gray-200 rounded-lg p-4">
+                <h2 class="font-display text-lg font-bold text-gray-900 mb-3">Payment</h2>
+                <div class="space-y-2">
+                    <label class="flex items-start gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:bg-gray-50">
+                        <input asp-for="PaymentType" type="radio" value="@ProgramPaymentType.FullOneTime" class="mt-1" />
+                        <div class="flex-1">
+                            <div class="font-semibold text-gray-900">Pay in full — $@p.FullPrice.ToString("N2")</div>
+                            <div class="text-xs text-gray-600">One credit card charge, done.</div>
+                        </div>
+                    </label>
+
+                    @if (p.InstallmentsEnabled)
+                    {
+                        <label class="flex items-start gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:bg-gray-50">
+                            <input asp-for="PaymentType" type="radio" value="@ProgramPaymentType.TwoInstallment" class="mt-1" />
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">
+                                    @p.InstallmentCount installments of $@p.InstallmentAmount.ToString("N2")
+                                </div>
+                                <div class="text-xs text-gray-600">
+                                    First installment today; second charges automatically in about 30 days.
+                                    @if (p.FinalInstallmentDueDate.HasValue)
+                                    {
+                                        <span>Final installment complete by @p.FinalInstallmentDueDate.Value.ToString("MMM d, yyyy").</span>
+                                    }
+                                </div>
+                            </div>
+                        </label>
+                    }
+
+                    @if (p.CashOptionEnabled)
+                    {
+                        <label class="flex items-start gap-3 p-3 border border-gray-200 rounded cursor-pointer hover:bg-gray-50">
+                            <input asp-for="PaymentType" type="radio" value="@ProgramPaymentType.CashInHand" class="mt-1" />
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900">I'll pay Karen at the booth (cash or check)</div>
+                                <div class="text-xs text-gray-600">Skip online payment — Karen will confirm your payment in person.</div>
+                            </div>
+                        </label>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(p.RefundPolicyText))
+                {
+                    <p class="mt-3 text-xs text-gray-500 italic">@p.RefundPolicyText</p>
+                }
+            </section>
+
+            <!-- Waiver -->
+            <section class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h2 class="font-display text-lg font-bold text-gray-900 mb-3">Waiver</h2>
+                <div class="prose prose-sm max-w-none text-gray-700 bg-white p-3 rounded border border-gray-200 max-h-64 overflow-y-auto mb-3">
+                    @Html.Raw(Markdig.Markdown.ToHtml(p.WaiverText))
+                </div>
+                <label class="flex items-start gap-2 text-sm text-gray-900 font-semibold">
+                    <input asp-for="WaiverAccepted" type="checkbox" class="mt-1" required />
+                    I have read and agree to the above.
+                </label>
+                <span asp-validation-for="WaiverAccepted" class="text-xs text-red-600 block ml-6"></span>
+
+                <label class="flex items-start gap-2 text-sm text-gray-700 mt-3">
+                    <input asp-for="PhotoReleaseGranted" type="checkbox" class="mt-1" />
+                    <span>
+                        <strong>Optional:</strong> I grant Lake Country Spanish permission to photograph or video
+                        my child during program activities for use on the website, social media, or promotional
+                        materials. <em>You can leave this unchecked and still enroll.</em>
+                    </span>
+                </label>
+            </section>
+
+            <div class="flex items-center gap-2 pt-2">
+                <button type="submit" class="px-6 py-3 bg-secondary-500 text-white font-semibold rounded-md hover:bg-secondary-600 shadow-md">
+                    Complete enrollment
+                </button>
+                <p class="text-xs text-gray-500 ml-3">
+                    Questions? Call @p.ContactPhone or email <a href="mailto:@p.ContactEmail" class="text-indigo-600 hover:underline">@p.ContactEmail</a>.
+                </p>
+            </div>
+        </form>
+
+    </div>
+</div>

@@ -1,0 +1,198 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.ProgramFormViewModel
+@{
+    ViewData["Title"] = Model.PageTitle;
+    var formAction = Model.IsEdit
+        ? Url.Action("Edit", new { id = Model.Id })
+        : Url.Action("Create");
+    var lockedTip = "Pricing is locked once Stripe has provisioned this program. Duplicate to change.";
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-4">
+            <h1 class="text-2xl font-bold text-gray-900">@Model.PageTitle</h1>
+            <a href="@Url.Action("Index")" class="text-sm text-indigo-600 hover:text-indigo-800">← All programs</a>
+        </div>
+
+        <form method="post" action="@formAction">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+
+            <div asp-validation-summary="ModelOnly" class="mb-3 text-sm text-red-600"></div>
+
+            <!-- Basics -->
+            <section class="bg-white rounded-lg shadow p-4 mb-4">
+                <h2 class="text-sm font-semibold text-gray-800 mb-3">Basics</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="sm:col-span-2">
+                        <label asp-for="Name" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="Name" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="Name" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Slug" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="Slug" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono" placeholder="bailamos-stmatthews" />
+                        <span asp-validation-for="Slug" class="text-xs text-red-600"></span>
+                        <p class="text-xs text-gray-500 mt-1">URL: /join/<span class="font-mono">@(string.IsNullOrEmpty(Model.Slug) ? "{slug}" : Model.Slug)</span></p>
+                    </div>
+                    <div>
+                        <label asp-for="TagLine" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="TagLine" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" placeholder="An After-School Spanish Enrichment Program" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="Description" class="block text-sm font-medium text-gray-700"></label>
+                        <textarea asp-for="Description" rows="4" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Markdown supported.</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="HeroImagePath" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="HeroImagePath" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono" placeholder="/img/programs/dance-and-learn-spanish-after-school-program.jpeg" />
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logistics -->
+            <section class="bg-white rounded-lg shadow p-4 mb-4">
+                <h2 class="text-sm font-semibold text-gray-800 mb-3">Logistics</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label asp-for="LocationName" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="LocationName" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" placeholder="St Matthew's School" />
+                        <span asp-validation-for="LocationName" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="LocationAddress" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="LocationAddress" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <span asp-validation-for="LocationAddress" class="text-xs text-red-600"></span>
+                    </div>
+                    <div>
+                        <label asp-for="StartDate" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="StartDate" type="date" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div>
+                        <label asp-for="EndDate" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="EndDate" type="date" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div>
+                        <label asp-for="MeetingDays" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="MeetingDays" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" placeholder="Tuesdays" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label asp-for="StartTime" class="block text-sm font-medium text-gray-700"></label>
+                            <input asp-for="StartTime" type="time" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        </div>
+                        <div>
+                            <label asp-for="EndTime" class="block text-sm font-medium text-gray-700"></label>
+                            <input asp-for="EndTime" type="time" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        </div>
+                    </div>
+                    <div>
+                        <label asp-for="GradeRange" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="GradeRange" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" placeholder="3-6" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label asp-for="AgeMin" class="block text-sm font-medium text-gray-700"></label>
+                            <input asp-for="AgeMin" type="number" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        </div>
+                        <div>
+                            <label asp-for="AgeMax" class="block text-sm font-medium text-gray-700"></label>
+                            <input asp-for="AgeMax" type="number" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pricing -->
+            <section class="bg-white rounded-lg shadow p-4 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-gray-800">Pricing</h2>
+                    @if (Model.PricingLocked)
+                    {
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800" title="@lockedTip">🔒 Locked (Stripe provisioned)</span>
+                    }
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label asp-for="FullPrice" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="FullPrice" type="number" step="0.01" min="0"
+                               class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"
+                               readonly="@Model.PricingLocked" />
+                        <span asp-validation-for="FullPrice" class="text-xs text-red-600"></span>
+                    </div>
+                    <div class="flex items-end">
+                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                            <input asp-for="InstallmentsEnabled" type="checkbox" />
+                            Offer installment plan
+                        </label>
+                    </div>
+                    <div>
+                        <label asp-for="InstallmentCount" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="InstallmentCount" type="number" min="2" max="12"
+                               class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"
+                               readonly="@Model.PricingLocked" />
+                        <p class="text-xs text-gray-500 mt-1">
+                            Per-installment amount is derived: $@((Model.InstallmentCount > 0 ? Math.Round(Model.FullPrice / Model.InstallmentCount, 2) : Model.FullPrice).ToString("N2"))
+                        </p>
+                    </div>
+                    <div>
+                        <label asp-for="FinalInstallmentDueDate" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="FinalInstallmentDueDate" type="date" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <p class="text-xs text-gray-500 mt-1">Informational — cadence is monthly starting at signup.</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="flex items-center gap-2 text-sm text-gray-700">
+                            <input asp-for="CashOptionEnabled" type="checkbox" />
+                            Allow cash/check-in-hand payment (turn on for booth signup)
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Legal / contact -->
+            <section class="bg-white rounded-lg shadow p-4 mb-4">
+                <h2 class="text-sm font-semibold text-gray-800 mb-3">Waiver, refund, contact</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="sm:col-span-2">
+                        <label asp-for="WaiverText" class="block text-sm font-medium text-gray-700"></label>
+                        <textarea asp-for="WaiverText" rows="12" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Markdown supported. Shown as-is on the enrollment page. Consider attorney review for scale.</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label asp-for="RefundPolicyText" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="RefundPolicyText" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div>
+                        <label asp-for="ContactPhone" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ContactPhone" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                    <div>
+                        <label asp-for="ContactEmail" class="block text-sm font-medium text-gray-700"></label>
+                        <input asp-for="ContactEmail" type="email" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                    </div>
+                </div>
+            </section>
+
+            <!-- Status -->
+            <section class="bg-white rounded-lg shadow p-4 mb-4">
+                <h2 class="text-sm font-semibold text-gray-800 mb-3">Status</h2>
+                <label class="flex items-center gap-2 text-sm text-gray-700 mb-2">
+                    <input asp-for="IsActive" type="checkbox" />
+                    Accepting enrollments
+                </label>
+                <label class="flex items-center gap-2 text-sm text-gray-700">
+                    <input asp-for="IsListed" type="checkbox" />
+                    Show on public /programs index (leave off for QR-only)
+                </label>
+            </section>
+
+            <div class="flex items-center gap-2 pt-2">
+                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-semibold">
+                    @(Model.IsEdit ? "Save changes" : "Create program")
+                </button>
+                <a href="@(Model.IsEdit ? Url.Action("Detail", new { id = Model.Id }) : Url.Action("Index"))" class="text-sm text-gray-600 ml-2 hover:text-gray-800">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

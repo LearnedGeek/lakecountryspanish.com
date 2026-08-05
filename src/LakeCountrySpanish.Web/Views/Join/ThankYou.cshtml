@@ -1,0 +1,89 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.ProgramEnrollmentThankYouViewModel
+@{
+    var p = Model.Program;
+    var e = Model.Enrollment;
+    ViewData["Title"] = $"Thank you — {p.Name}";
+}
+
+<div class="bg-white min-h-screen">
+
+    <!-- Success band -->
+    <div class="bg-gradient-to-br from-secondary-500 via-secondary-600 to-primary-700 py-16 text-white text-center">
+        <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+            <div class="text-6xl mb-3">🎉</div>
+            <h1 class="font-display text-3xl sm:text-4xl font-bold">Thank you, @e.ParentFirstName!</h1>
+            <p class="mt-3 text-lg text-white/95">@Model.PaymentStatusHeadline</p>
+        </div>
+    </div>
+
+    <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8 space-y-6">
+
+        <!-- Enrollment summary -->
+        <section class="bg-white border border-gray-200 rounded-lg p-5">
+            <h2 class="font-display text-lg font-bold text-gray-900 mb-3">Enrollment summary</h2>
+            <dl class="text-sm text-gray-700 space-y-2">
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <dt class="text-gray-500">Program</dt>
+                    <dd class="font-semibold text-right">@p.Name</dd>
+                </div>
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <dt class="text-gray-500">Student</dt>
+                    <dd class="font-semibold">@e.StudentFirstName @e.StudentLastName · Grade @e.StudentGrade</dd>
+                </div>
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <dt class="text-gray-500">Dates</dt>
+                    <dd>@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</dd>
+                </div>
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <dt class="text-gray-500">Meets</dt>
+                    <dd>@p.MeetingDays · @p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
+                </div>
+                <div class="flex justify-between border-b border-gray-100 pb-2">
+                    <dt class="text-gray-500">Location</dt>
+                    <dd class="text-right">@p.LocationName<br /><span class="text-xs text-gray-500">@p.LocationAddress</span></dd>
+                </div>
+                <div class="flex justify-between">
+                    <dt class="text-gray-500">Payment</dt>
+                    <dd class="text-right font-semibold">
+                        @switch (e.PaymentType)
+                        {
+                            case LakeCountrySpanish.Web.Models.Entities.ProgramPaymentType.FullOneTime:
+                                <span>$@p.FullPrice.ToString("N2") · paid in full</span>
+                                break;
+                            case LakeCountrySpanish.Web.Models.Entities.ProgramPaymentType.TwoInstallment:
+                                <span>2 × $@p.InstallmentAmount.ToString("N2") · first paid today</span>
+                                break;
+                            case LakeCountrySpanish.Web.Models.Entities.ProgramPaymentType.CashInHand:
+                                <span>$@p.FullPrice.ToString("N2") · pay Karen at the booth</span>
+                                break;
+                        }
+                    </dd>
+                </div>
+            </dl>
+        </section>
+
+        <!-- What happens next -->
+        <section class="bg-blue-50 border border-blue-200 rounded-lg p-5">
+            <h2 class="font-display text-lg font-bold text-blue-900 mb-3">What happens next</h2>
+            <ul class="text-sm text-blue-900 space-y-2 list-disc pl-5">
+                <li>A confirmation email will be sent to <strong>@e.ParentEmail</strong> shortly.</li>
+                @if (e.PaymentType == LakeCountrySpanish.Web.Models.Entities.ProgramPaymentType.TwoInstallment)
+                {
+                    <li>Your second installment will automatically charge in about 30 days — no action needed on your end.</li>
+                }
+                @if (e.PaymentType == LakeCountrySpanish.Web.Models.Entities.ProgramPaymentType.CashInHand)
+                {
+                    <li>Please bring your payment ($@p.FullPrice.ToString("N2")) to Karen at the booth or arrange with her directly.</li>
+                }
+                <li>Karen will reach out before the program starts (@p.StartDate.ToString("MMMM d")) with any final details.</li>
+                <li>Questions in the meantime? Call @p.ContactPhone or email <a href="mailto:@p.ContactEmail" class="underline">@p.ContactEmail</a>.</li>
+            </ul>
+        </section>
+
+        <div class="text-center">
+            <a href="/" class="inline-flex items-center gap-2 text-sm text-indigo-700 hover:text-indigo-900">
+                ← Back to Lake Country Spanish
+            </a>
+        </div>
+    </div>
+</div>

@@ -3,6 +3,7 @@ using Stripe;
 using Stripe.Checkout;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
+using LakeCountrySpanish.Web.Services.Programs;
 // Aliases to resolve ambiguity with Stripe types
 using StripeSubscription = Stripe.Subscription;
 using StripeSubService = Stripe.SubscriptionService;
@@ -20,19 +21,22 @@ public class StripeSubscriptionService : ISubscriptionService
     private readonly ILogger<StripeSubscriptionService> _logger;
     private readonly ITicketService _ticketService;
     private readonly IEmailService _emailService;
+    private readonly IProgramEnrollmentService _enrollmentService;
 
     public StripeSubscriptionService(
         ApplicationDbContext context,
         IConfiguration configuration,
         ILogger<StripeSubscriptionService> logger,
         ITicketService ticketService,
-        IEmailService emailService)
+        IEmailService emailService,
+        IProgramEnrollmentService enrollmentService)
     {
         _context = context;
         _configuration = configuration;
         _logger = logger;
         _ticketService = ticketService;
         _emailService = emailService;
+        _enrollmentService = enrollmentService;
     }
 
     #region Tier Queries
@@ -163,6 +167,11 @@ public class StripeSubscriptionService : ISubscriptionService
                     await HandleSubscriptionDeleted(stripeEvent);
                     break;
 
+                // Modern Stripe API versions emit "invoice.paid" for successful
+                // invoice payments; older versions emitted "invoice.payment_succeeded".
+                // Both carry the same Invoice payload — accept both aliases so the
+                // handler works regardless of API version negotiation.
+                case "invoice.paid":
                 case "invoice.payment_succeeded":
                     await HandleInvoicePaymentSucceeded(stripeEvent);
                     break;
@@ -296,6 +305,14 @@ public class StripeSubscriptionService : ISubscriptionService
     {
         var invoice = stripeEvent.Data.Object as Invoice;
         if (invoice == null) return;
+
+        // First look: does this invoice belong to a program-enrollment installment
+        // subscription? If yes, the enrollment service owns the state transition
+        // and we skip the LCS Subscription tier flow entirely.
+        if (await _enrollmentService.HandleInvoicePaidAsync(invoice))
+        {
+            return;
+        }
 
         // Get subscription ID from invoice - try multiple approaches for SDK compatibility
         var stripeSubscriptionId = GetSubscriptionIdFromInvoice(invoice);

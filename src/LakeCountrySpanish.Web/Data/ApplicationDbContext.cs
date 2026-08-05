@@ -77,6 +77,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<LessonVideo> LessonVideos => Set<LessonVideo>();
     public DbSet<Shortlink> Shortlinks => Set<Shortlink>();
 
+    // Program enrollment (unlisted /join/{slug} landing pages for open houses).
+    public DbSet<EnrollmentProgram> Programs => Set<EnrollmentProgram>();
+    public DbSet<ProgramEnrollment> ProgramEnrollments => Set<ProgramEnrollment>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -880,6 +884,70 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(e => e.Slug)
                 .IsUnique()
                 .HasFilter("\"Slug\" IS NOT NULL AND \"Slug\" <> ''");
+        });
+
+        // === EnrollmentProgram + ProgramEnrollment ===
+
+        builder.Entity<EnrollmentProgram>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Slug).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.Name).HasMaxLength(160).IsRequired();
+            entity.Property(e => e.TagLine).HasMaxLength(200);
+            entity.Property(e => e.LocationName).HasMaxLength(120);
+            entity.Property(e => e.LocationAddress).HasMaxLength(240);
+            entity.Property(e => e.MeetingDays).HasMaxLength(80);
+            entity.Property(e => e.GradeRange).HasMaxLength(20);
+            entity.Property(e => e.ContactPhone).HasMaxLength(20);
+            entity.Property(e => e.ContactEmail).HasMaxLength(120);
+
+            // FullPrice controls billing; store as decimal(18,2) to match other money columns.
+            entity.Property(e => e.FullPrice).HasColumnType("decimal(18,2)");
+
+            // Slug is the public URL segment — must be unique.
+            entity.HasIndex(e => e.Slug).IsUnique();
+
+            // Common admin queries: list active programs; filter by listed/unlisted.
+            entity.HasIndex(e => new { e.IsActive, e.IsListed });
+        });
+
+        builder.Entity<ProgramEnrollment>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Program)
+                .WithMany(p => p.Enrollments)
+                .HasForeignKey(e => e.ProgramId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.Property(e => e.ParentFirstName).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.ParentLastName).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.ParentEmail).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.ParentPhone).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.ParentAddressLine1).HasMaxLength(200);
+            entity.Property(e => e.ParentCity).HasMaxLength(80);
+            entity.Property(e => e.ParentState).HasMaxLength(20);
+            entity.Property(e => e.ParentZip).HasMaxLength(20);
+
+            entity.Property(e => e.StudentFirstName).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.StudentLastName).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.StudentGrade).HasMaxLength(20);
+
+            entity.Property(e => e.EmergencyName).HasMaxLength(160);
+            entity.Property(e => e.EmergencyPhone).HasMaxLength(20);
+            entity.Property(e => e.EmergencyRelationship).HasMaxLength(60);
+
+            entity.Property(e => e.TotalAmountPaid).HasColumnType("decimal(18,2)");
+
+            // Admin views the roster per program, sorted by signup order.
+            entity.HasIndex(e => new { e.ProgramId, e.CreatedAt });
+            // Quick lookup by Stripe session id when a webhook or return handler arrives.
+            entity.HasIndex(e => e.StripeCheckoutSessionId)
+                .HasFilter("\"StripeCheckoutSessionId\" IS NOT NULL");
+            // Same for subscription id (installment path).
+            entity.HasIndex(e => e.StripeSubscriptionId)
+                .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
         });
     }
 }

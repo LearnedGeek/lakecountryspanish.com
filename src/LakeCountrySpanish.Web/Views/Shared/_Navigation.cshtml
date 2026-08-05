@@ -22,6 +22,7 @@
                             {
                                 <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Admin Dashboard</a>
                                 <a asp-controller="Curriculum" asp-action="Lessons" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Curriculum</a>
+                                <a asp-controller="AdminPrograms" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Programs</a>
                                 <a asp-controller="Media" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Media</a>
                             }
                             else if (User.IsInRole("Teacher"))

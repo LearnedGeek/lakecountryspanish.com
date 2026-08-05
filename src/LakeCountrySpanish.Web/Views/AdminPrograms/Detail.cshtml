@@ -1,0 +1,115 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.ProgramDetailViewModel
+@{
+    ViewData["Title"] = Model.Program.Name;
+    var p = Model.Program;
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+
+        @if (TempData["SuccessMessage"] is string ok)
+        {
+            <div class="mb-4 px-4 py-3 rounded bg-green-50 text-green-800 border border-green-200">@ok</div>
+        }
+
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">@p.Name</h1>
+                <p class="text-sm text-gray-600 mt-1">@p.TagLine</p>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    @if (p.IsActive)
+                    {
+                        <span class="inline-flex px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs">Accepting enrollments</span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 text-xs">Inactive</span>
+                    }
+                    @if (p.IsListed)
+                    {
+                        <span class="inline-flex px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-xs">Listed publicly</span>
+                    }
+                    else
+                    {
+                        <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs">Unlisted (QR only)</span>
+                    }
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <a href="@Url.Action("Edit", new { id = p.Id })" class="px-3 py-2 bg-white border border-gray-300 text-sm rounded hover:bg-gray-50">Edit</a>
+                <a href="@Url.Action("Index")" class="text-sm text-indigo-600 hover:text-indigo-800 self-center">← All programs</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+            <!-- Program summary -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow p-4">
+                <h2 class="text-xs font-semibold uppercase text-gray-500 tracking-wide mb-3">Program details</h2>
+                <dl class="text-sm text-gray-700 space-y-2">
+                    <div class="flex justify-between"><dt class="text-gray-500">Location</dt><dd class="text-right">@p.LocationName<br /><span class="text-xs text-gray-500">@p.LocationAddress</span></dd></div>
+                    <div class="flex justify-between"><dt class="text-gray-500">Dates</dt><dd>@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</dd></div>
+                    <div class="flex justify-between"><dt class="text-gray-500">Meets</dt><dd>@p.MeetingDays · @p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd></div>
+                    <div class="flex justify-between"><dt class="text-gray-500">Grades / Ages</dt><dd>@p.GradeRange · ages @p.AgeMin–@p.AgeMax</dd></div>
+                    <div class="flex justify-between border-t border-gray-100 pt-2"><dt class="text-gray-500">Full price</dt><dd class="font-semibold">$@p.FullPrice.ToString("N2")</dd></div>
+                    @if (p.InstallmentsEnabled)
+                    {
+                        <div class="flex justify-between"><dt class="text-gray-500">Installments</dt><dd>@p.InstallmentCount × $@p.InstallmentAmount.ToString("N2")</dd></div>
+                        @if (p.FinalInstallmentDueDate.HasValue)
+                        {
+                            <div class="flex justify-between"><dt class="text-gray-500">Final installment due</dt><dd>@p.FinalInstallmentDueDate.Value.ToString("MMM d, yyyy")</dd></div>
+                        }
+                    }
+                    <div class="flex justify-between"><dt class="text-gray-500">Cash-in-hand</dt><dd>@(p.CashOptionEnabled ? "Offered" : "Not offered")</dd></div>
+                    <div class="flex justify-between border-t border-gray-100 pt-2"><dt class="text-gray-500">Contact</dt><dd>@p.ContactPhone<br /><span class="text-xs">@p.ContactEmail</span></dd></div>
+                    @if (!string.IsNullOrEmpty(p.StripeProductId))
+                    {
+                        <div class="flex justify-between border-t border-gray-100 pt-2"><dt class="text-gray-500">Stripe Product</dt><dd class="font-mono text-xs">@p.StripeProductId</dd></div>
+                    }
+                </dl>
+            </div>
+
+            <!-- QR code + Join URL -->
+            <div class="bg-white rounded-lg shadow p-4">
+                <h2 class="text-xs font-semibold uppercase text-gray-500 tracking-wide mb-3">QR code + join URL</h2>
+                <div class="flex flex-col items-center gap-3">
+                    <img src="@Url.Action("Qr", new { id = p.Id })"
+                         alt="QR code for @p.Name"
+                         class="w-64 h-64 border border-gray-200 rounded" />
+                    <a href="@Url.Action("Qr", new { id = p.Id })" download class="text-xs text-indigo-600 hover:text-indigo-800">Download PNG</a>
+                    <div class="w-full text-center">
+                        <div class="text-xs text-gray-500 mb-1">Public URL</div>
+                        <a href="@Model.JoinUrl" target="_blank" class="text-sm font-mono text-indigo-700 break-all hover:underline">@Model.JoinUrl</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enrollment stats -->
+            <div class="lg:col-span-3 bg-white rounded-lg shadow p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-semibold uppercase text-gray-500 tracking-wide">Enrollments</h2>
+                    <span class="text-xs text-gray-400">Full roster + CSV export ships next slice.</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-gray-50 rounded p-3 text-center">
+                        <div class="text-2xl font-bold text-gray-900">@Model.EnrollmentCount</div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wide">Total</div>
+                    </div>
+                    <div class="bg-green-50 rounded p-3 text-center">
+                        <div class="text-2xl font-bold text-green-800">@Model.PaidCount</div>
+                        <div class="text-xs text-green-700 uppercase tracking-wide">Paid</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded p-3 text-center">
+                        <div class="text-2xl font-bold text-yellow-800">@Model.PendingCount</div>
+                        <div class="text-xs text-yellow-700 uppercase tracking-wide">Pending Stripe</div>
+                    </div>
+                    <div class="bg-blue-50 rounded p-3 text-center">
+                        <div class="text-2xl font-bold text-blue-800">@Model.CashPendingCount</div>
+                        <div class="text-xs text-blue-700 uppercase tracking-wide">Cash pending</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

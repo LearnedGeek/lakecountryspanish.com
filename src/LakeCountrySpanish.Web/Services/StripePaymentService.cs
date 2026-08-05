@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
+using LakeCountrySpanish.Web.Services.Programs;
 using Stripe;
 using Stripe.Checkout;
 
@@ -11,17 +12,20 @@ public class StripePaymentService : IPaymentService
     private readonly ApplicationDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    private readonly IProgramEnrollmentService _enrollmentService;
     private readonly ILogger<StripePaymentService> _logger;
 
     public StripePaymentService(
         ApplicationDbContext context,
         IConfiguration configuration,
         IEmailService emailService,
+        IProgramEnrollmentService enrollmentService,
         ILogger<StripePaymentService> logger)
     {
         _context = context;
         _configuration = configuration;
         _emailService = emailService;
+        _enrollmentService = enrollmentService;
         _logger = logger;
     }
 
@@ -138,8 +142,22 @@ public class StripePaymentService : IPaymentService
                     return WebhookProcessingResult.Failed("Session object was null");
                 }
 
+                // Program-enrollment sessions carry a dedicated metadata sentinel
+                // so the enrollment service can own the whole lifecycle (Payment
+                // records aren't involved). Dispatch early and skip standard flow.
+                if (session.Metadata != null
+                    && session.Metadata.TryGetValue("lcs.type", out var lcsType)
+                    && lcsType == "program-enrollment")
+                {
+                    var handled = await _enrollmentService.HandleCheckoutSessionCompletedAsync(session);
+                    return handled
+                        ? WebhookProcessingResult.Skipped("Program enrollment handled")
+                        : WebhookProcessingResult.Failed("Enrollment handler declined the session");
+                }
+
                 // Check for tip payment type
-                if (session.Metadata.TryGetValue("type", out var paymentType) && paymentType == "tip")
+                if (session.Metadata != null &&
+                    session.Metadata.TryGetValue("type", out var paymentType) && paymentType == "tip")
                 {
                     _logger.LogInformation("Webhook is for tip payment, skipping standard processing");
                     return WebhookProcessingResult.Skipped("Tip payment handled separately");

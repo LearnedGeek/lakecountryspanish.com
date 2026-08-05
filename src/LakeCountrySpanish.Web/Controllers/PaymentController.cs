@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,17 +16,20 @@ public class PaymentController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IPaymentService _paymentService;
+    private readonly ISubscriptionService _subscriptionService;
     private readonly IConfiguration _configuration;
 
     public PaymentController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         IPaymentService paymentService,
+        ISubscriptionService subscriptionService,
         IConfiguration configuration)
     {
         _context = context;
         _userManager = userManager;
         _paymentService = paymentService;
+        _subscriptionService = subscriptionService;
         _configuration = configuration;
     }
 
@@ -129,7 +133,14 @@ public class PaymentController : Controller
         return RedirectToAction("Dashboard", "Student");
     }
 
-    // Webhook endpoint for Stripe
+    // Webhook endpoint for Stripe. Handles two families of events:
+    //   * checkout.session.completed + charge.refunded  → StripePaymentService
+    //   * customer.subscription.*  + invoice.paid|payment_succeeded|payment_failed
+    //                              → StripeSubscriptionService
+    // Both live behind this single URL so Karen only maintains one endpoint
+    // in the Stripe dashboard (rather than adding a second subscription webhook,
+    // which would need its own signing secret and dashboard config). Each service
+    // still performs its own signature validation against Stripe:WebhookSecret.
     [HttpPost]
     [AllowAnonymous]
     [Route("api/payment/webhook")]
@@ -141,6 +152,17 @@ public class PaymentController : Controller
         if (string.IsNullOrEmpty(signature))
         {
             return BadRequest("Missing Stripe-Signature header");
+        }
+
+        // Peek at the event type BEFORE signature verification so we can route
+        // to the right service. This is safe: the destination service re-parses
+        // and verifies the signature itself — the peek is used only for dispatch.
+        var eventType = TryPeekEventType(json);
+
+        if (IsSubscriptionEvent(eventType))
+        {
+            var ok = await _subscriptionService.ProcessSubscriptionWebhookAsync(json, signature);
+            return ok ? Ok() : StatusCode(500, "Subscription webhook processing failed");
         }
 
         var result = await _paymentService.ProcessWebhookAsync(json, signature);
@@ -162,6 +184,30 @@ public class PaymentController : Controller
         // 200 - Success or already processed (duplicate)
         return Ok();
     }
+
+    private static string? TryPeekEventType(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("type", out var t) ? t.GetString() : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static bool IsSubscriptionEvent(string? eventType) => eventType switch
+    {
+        "customer.subscription.created" => true,
+        "customer.subscription.updated" => true,
+        "customer.subscription.deleted" => true,
+        "invoice.paid"                  => true,
+        "invoice.payment_succeeded"     => true,
+        "invoice.payment_failed"        => true,
+        _ => false
+    };
 
     // Buy Package
     [HttpGet]

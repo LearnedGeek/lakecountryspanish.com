@@ -67,6 +67,10 @@ builder.Services.AddScoped<IPlacementTestService, PlacementTestService>();
 builder.Services.AddScoped<IAnalyticsService, AnalyticsService>();
 builder.Services.AddSingleton<IDocumentRenderingService, DocumentRenderingService>();
 
+// Enrollment Programs: unlisted /join/{slug} landing pages for open houses.
+builder.Services.AddScoped<LakeCountrySpanish.Web.Services.Programs.IEnrollmentProgramService, LakeCountrySpanish.Web.Services.Programs.EnrollmentProgramService>();
+builder.Services.AddScoped<LakeCountrySpanish.Web.Services.Programs.IProgramEnrollmentService, LakeCountrySpanish.Web.Services.Programs.ProgramEnrollmentService>();
+
 // Media library: image processing primitives + storage orchestration + source adapters.
 // PixabaySettings binds the gitignored appsettings.Local.json "Pixabay" section.
 builder.Services.Configure<PixabaySettings>(builder.Configuration.GetSection(PixabaySettings.SectionName));
