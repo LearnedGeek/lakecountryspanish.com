@@ -94,6 +94,12 @@ jobs:
           # Same pattern as stg, paths swapped to the non-suffixed prod
           # directory + systemd unit. /var/www/lakecountryspanish.prev
           # holds the previous deploy for one-mv rollback.
+          #
+          # User-uploaded assets (hero images, future uploads) live at
+          # /var/lib/lakecountryspanish-data/ so they survive deploys —
+          # matches the /var/lib/{app-slug}-data/ convention used by
+          # learnedgeek-data and dani-data on this same VPS. See
+          # deploy-stg.yml for the full rationale.
           cd publish
           tar -cf - . | ssh -i ~/.ssh/deploy_key \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
@@ -101,11 +107,21 @@ jobs:
              STAGING=/var/www/lakecountryspanish.new
              ACTIVE=/var/www/lakecountryspanish
              PREV=/var/www/lakecountryspanish.prev
+             UPLOADS=/var/lib/lakecountryspanish-data/img/programs
              rm -rf "$STAGING"
              mkdir -p "$STAGING"
              cd "$STAGING"
              tar -xf -
+             mkdir -p "$UPLOADS"
+             if [ -d "$ACTIVE/wwwroot/img/programs" ] && [ ! -L "$ACTIVE/wwwroot/img/programs" ]; then
+               rsync -a --ignore-existing "$ACTIVE/wwwroot/img/programs/" "$UPLOADS/"
+             fi
+             rsync -a --ignore-existing "$STAGING/wwwroot/img/programs/" "$UPLOADS/"
+             rm -rf "$STAGING/wwwroot/img/programs"
+             ln -s "$UPLOADS" "$STAGING/wwwroot/img/programs"
+             chown -R www-data:www-data "$UPLOADS"
              chown -R www-data:www-data "$STAGING"
+             chown -h www-data:www-data "$STAGING/wwwroot/img/programs"
              chmod 600 "$STAGING/appsettings.Production.json"
              systemctl stop lakecountryspanish
              if [ -d "$ACTIVE" ]; then

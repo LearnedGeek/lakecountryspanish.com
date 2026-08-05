@@ -70,7 +70,7 @@
                 <div class="flex flex-col items-center gap-3">
                     <img src="@Url.Action("Qr", new { id = p.Id })"
                          alt="QR code for @p.Name"
-                         class="w-64 h-64 border border-gray-200 rounded" />
+                         class="w-64 h-auto border border-gray-200 rounded" />
                     <div class="flex gap-3 text-xs">
                         <a href="@Url.Action("PrintCard", new { id = p.Id })" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium">🖨 Print card</a>
                         <a href="@Url.Action("Qr", new { id = p.Id })" download class="text-indigo-600 hover:text-indigo-800">Download PNG</a>

@@ -119,6 +119,17 @@ jobs:
           # the active site is untouched. Previous version is kept at
           # /var/www/lakecountryspanish-stg.prev so manual rollback is one
           # `mv` away.
+          #
+          # User-uploaded assets (hero images, future document uploads)
+          # live outside the deploy directory at
+          # /var/lib/lakecountryspanish-stg-data/ so they survive deploys —
+          # matches the /var/lib/{app-slug}-data/ convention used by
+          # learnedgeek-data (byco.json, huntapp.json) and dani-data (audio
+          # cache) on this same VPS. Deploys blow away wwwroot each time,
+          # which would otherwise wipe every upload. On each deploy we
+          # replace the deployed wwwroot/img/programs with a symlink to
+          # the persistent dir, first seeding any git-tracked defaults
+          # (--ignore-existing so user uploads win over seeds).
           cd publish
           tar -cf - . | ssh -i ~/.ssh/deploy_key \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
@@ -126,14 +137,32 @@ jobs:
              STAGING=/var/www/lakecountryspanish-stg.new
              ACTIVE=/var/www/lakecountryspanish-stg
              PREV=/var/www/lakecountryspanish-stg.prev
+             UPLOADS=/var/lib/lakecountryspanish-stg-data/img/programs
              rm -rf "$STAGING"
              mkdir -p "$STAGING"
              cd "$STAGING"
              tar -xf -
+             # Ensure persistent uploads dir exists (idempotent) and rescue
+             # any existing user uploads that live in the currently-active
+             # wwwroot from prior deploys so they graduate to the persistent
+             # location before we symlink.
+             mkdir -p "$UPLOADS"
+             if [ -d "$ACTIVE/wwwroot/img/programs" ] && [ ! -L "$ACTIVE/wwwroot/img/programs" ]; then
+               rsync -a --ignore-existing "$ACTIVE/wwwroot/img/programs/" "$UPLOADS/"
+             fi
+             # Seed the persistent dir with any git-tracked defaults the
+             # deploy brings, without overwriting existing (potentially
+             # user-uploaded) files.
+             rsync -a --ignore-existing "$STAGING/wwwroot/img/programs/" "$UPLOADS/"
+             # Replace the deployed folder with a symlink to persistent uploads.
+             rm -rf "$STAGING/wwwroot/img/programs"
+             ln -s "$UPLOADS" "$STAGING/wwwroot/img/programs"
+             chown -R www-data:www-data "$UPLOADS"
              # Service runs as www-data. Set ownership before the swap so
              # the service can read its appsettings.Production.json and
-             # write DataProtection keys.
+             # write DataProtection keys. Preserve the symlink (chown -h).
              chown -R www-data:www-data "$STAGING"
+             chown -h www-data:www-data "$STAGING/wwwroot/img/programs"
              # appsettings.Production.json carries secrets — restrict
              # readability to www-data only.
              chmod 600 "$STAGING/appsettings.Production.json"
