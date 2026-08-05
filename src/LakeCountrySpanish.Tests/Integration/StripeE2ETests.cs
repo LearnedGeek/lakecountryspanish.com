@@ -4,6 +4,7 @@ using Moq;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Services;
+using LakeCountrySpanish.Web.Services.Programs;
 using Stripe;
 using Stripe.Checkout;
 
@@ -75,7 +76,8 @@ public class StripeE2ETests : IDisposable
         });
         _configuration = configBuilder.Build();
 
-        _service = new StripePaymentService(_context, _configuration, _emailServiceMock.Object, _loggerMock.Object);
+        var enrollmentServiceMock = new Mock<IProgramEnrollmentService>();
+        _service = new StripePaymentService(_context, _configuration, _emailServiceMock.Object, enrollmentServiceMock.Object, _loggerMock.Object);
 
         // Setup test data
         _testStudent = new ApplicationUser

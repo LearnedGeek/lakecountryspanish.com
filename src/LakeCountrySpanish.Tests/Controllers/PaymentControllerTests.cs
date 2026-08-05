@@ -32,11 +32,13 @@ public class PaymentControllerTests : IDisposable
 
         _paymentServiceMock = new Mock<IPaymentService>();
         _configurationMock = new Mock<IConfiguration>();
+        var subscriptionServiceMock = new Mock<ISubscriptionService>();
 
         _controller = new PaymentController(
             _context,
             _userManagerMock.Object,
             _paymentServiceMock.Object,
+            subscriptionServiceMock.Object,
             _configurationMock.Object);
 
         _testStudent = new ApplicationUser

@@ -4,6 +4,7 @@ using Moq;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Services;
+using LakeCountrySpanish.Web.Services.Programs;
 
 namespace LakeCountrySpanish.Tests.Services;
 
@@ -38,7 +39,8 @@ public class StripePaymentServiceTests : IDisposable
         configSection.Setup(s => s.Value).Returns("25.00");
         _configMock.Setup(c => c.GetSection("AppSettings:DefaultClassPrice")).Returns(configSection.Object);
 
-        _service = new StripePaymentService(_context, _configMock.Object, _emailServiceMock.Object, _loggerMock.Object);
+        var enrollmentServiceMock = new Mock<IProgramEnrollmentService>();
+        _service = new StripePaymentService(_context, _configMock.Object, _emailServiceMock.Object, enrollmentServiceMock.Object, _loggerMock.Object);
 
         // Setup test data
         _testStudent = new ApplicationUser
