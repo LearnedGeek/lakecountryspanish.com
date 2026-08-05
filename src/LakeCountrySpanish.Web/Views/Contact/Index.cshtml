@@ -2,129 +2,163 @@
 @{
     ViewData["Title"] = "Contact";
     ViewData["MetaDescription"] = "Contact Lake Country Spanish to schedule your first Spanish lesson or ask questions about private tutoring. Quick responses, flexible scheduling, and personalized learning plans.";
+
+    // Shared field classes — match the admin form + /join/{slug} for site-wide
+    // consistency. Parents shouldn't see two different form styles depending
+    // on where they land.
+    var fieldClass    = "block w-full rounded-lg border-2 border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm placeholder-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15";
+    var textareaClass = "block w-full rounded-lg border-2 border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15";
+    var labelClass    = "block text-sm font-semibold text-gray-800 mb-1.5";
+    var errorClass    = "mt-1 text-xs font-medium text-red-600";
 }
 
-<div class="bg-white">
+<div class="bg-gray-100 min-h-screen">
     <!-- Hero -->
     <div class="bg-gradient-to-r from-primary-600 to-primary-700 py-16">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-4xl font-bold text-white">Get in Touch</h1>
-            <p class="mt-4 text-xl text-gray-100">Ready to start learning Spanish? Send Karen a message!</p>
+            <h1 class="font-display text-4xl sm:text-5xl font-bold text-white drop-shadow">Get in Touch</h1>
+            <p class="mt-4 text-xl text-white/95">Ready to start learning Spanish? Send us a message!</p>
         </div>
     </div>
 
-    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div class="lg:grid lg:grid-cols-2 lg:gap-16">
+    <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div class="lg:grid lg:grid-cols-5 lg:gap-10">
+
             <!-- Contact Info -->
-            <div>
-                <h2 class="text-2xl font-bold text-gray-900">Let's Connect</h2>
-                <p class="mt-4 text-gray-600">
-                    Fill out the form and Karen will get back to you to discuss your Spanish learning goals
+            <div class="lg:col-span-2">
+                <h2 class="font-display text-2xl font-bold text-gray-900">Let's Connect</h2>
+                <p class="mt-3 text-gray-600">
+                    Fill out the form and we'll get back to you to discuss your Spanish learning goals
                     and schedule your first lesson.
                 </p>
 
-                <div class="mt-8 space-y-6">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <div class="mt-8 space-y-4">
+                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border-2 border-gray-200 shadow-sm">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                            <svg class="h-5 w-5 text-primary-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <div class="ml-3">
-                            <h3 class="text-lg font-medium text-gray-900">Response Time</h3>
-                            <p class="text-gray-600">Usually within 24 hours</p>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Response Time</h3>
+                            <p class="text-sm text-gray-600 mt-0.5">Usually within 24 hours</p>
                         </div>
                     </div>
 
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border-2 border-gray-200 shadow-sm">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-teal-100 flex items-center justify-center">
+                            <svg class="h-5 w-5 text-teal-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25" />
                             </svg>
                         </div>
-                        <div class="ml-3">
-                            <h3 class="text-lg font-medium text-gray-900">Online Lessons</h3>
-                            <p class="text-gray-600">Via Zoom or Google Meet</p>
+                        <div>
+                            <h3 class="font-bold text-gray-900">Online Lessons</h3>
+                            <p class="text-sm text-gray-600 mt-0.5">Via Zoom or Google Meet</p>
                         </div>
                     </div>
 
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <div class="flex items-start gap-4 p-4 rounded-2xl bg-white border-2 border-gray-200 shadow-sm">
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                            <svg class="h-5 w-5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
                             </svg>
                         </div>
-                        <div class="ml-3">
-                            <h3 class="text-lg font-medium text-gray-900">All Levels Welcome</h3>
-                            <p class="text-gray-600">From beginners to advanced learners</p>
+                        <div>
+                            <h3 class="font-bold text-gray-900">All Levels Welcome</h3>
+                            <p class="text-sm text-gray-600 mt-0.5">From beginners to advanced learners</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Contact Form -->
-            <div class="mt-12 lg:mt-0">
-                <div class="bg-gray-50 rounded-xl p-8">
-                    <form asp-action="Index" method="post" id="contactForm">
-                        <div asp-validation-summary="ModelOnly" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6"></div>
+            <div class="mt-10 lg:mt-0 lg:col-span-3">
+                <section class="bg-white rounded-2xl shadow-md border-l-4 border-indigo-500 overflow-hidden">
+                    <header class="border-b border-gray-100 px-6 py-4 bg-indigo-50/40">
+                        <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span class="text-indigo-600">✉</span> Send us a message
+                        </h2>
+                    </header>
+                    <form asp-action="Index" method="post" id="contactForm" class="p-6 space-y-5">
 
-                        <div class="space-y-6">
-                            <div>
-                                <label asp-for="Name" class="block text-sm font-medium text-gray-700"></label>
-                                <input asp-for="Name" type="text" required
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-3 border" />
-                                <span asp-validation-for="Name" class="text-red-500 text-sm"></span>
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="rounded-xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">
+                                <div class="flex items-start gap-2">
+                                    <span class="text-red-600 text-lg leading-none mt-0.5">⚠</span>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-bold text-red-800 mb-1">Please fix the following before sending:</div>
+                                        <ul class="list-disc list-inside text-sm text-red-700 space-y-0.5">
+                                            @foreach (var entry in ViewData.ModelState)
+                                            {
+                                                foreach (var err in entry.Value.Errors)
+                                                {
+                                                    <li>
+                                                        @if (!string.IsNullOrEmpty(entry.Key))
+                                                        {
+                                                            <span class="font-semibold">@entry.Key:</span>
+                                                        }
+                                                        @(string.IsNullOrEmpty(err.ErrorMessage) ? "Invalid value" : err.ErrorMessage)
+                                                    </li>
+                                                }
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
+                        }
 
-                            <div>
-                                <label asp-for="Email" class="block text-sm font-medium text-gray-700"></label>
-                                <input asp-for="Email" type="email" required
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-3 border" />
-                                <span asp-validation-for="Email" class="text-red-500 text-sm"></span>
-                            </div>
-
-                            <div>
-                                <label asp-for="Phone" class="block text-sm font-medium text-gray-700"></label>
-                                <input asp-for="Phone" type="tel"
-                                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-3 border" />
-                                <span asp-validation-for="Phone" class="text-red-500 text-sm"></span>
-                            </div>
-
-                            <div>
-                                <label asp-for="Message" class="block text-sm font-medium text-gray-700"></label>
-                                <textarea asp-for="Message" rows="5" required
-                                          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-4 py-3 border"
-                                          placeholder="Tell me about your Spanish learning goals..."></textarea>
-                                <span asp-validation-for="Message" class="text-red-500 text-sm"></span>
-                            </div>
-
-                            <!-- Honeypot field - hidden from users, bots will fill it -->
-                            <div class="absolute -left-[9999px]" aria-hidden="true">
-                                <label for="website">Website</label>
-                                <input type="text" asp-for="Website" id="website" tabindex="-1" autocomplete="off" />
-                            </div>
-
-                            <!-- reCAPTCHA token -->
-                            <input type="hidden" asp-for="RecaptchaToken" id="recaptchaToken" />
-
-                            <!-- reCAPTCHA disclosure notice (required by Google) -->
-                            <p class="text-xs text-gray-500">
-                                This site is protected by reCAPTCHA and the Google
-                                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="underline hover:text-gray-700">Privacy Policy</a> and
-                                <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="underline hover:text-gray-700">Terms of Service</a> apply.
-                            </p>
-
-                            <div>
-                                @await Component.InvokeAsync("Button", new {
-                                    text = "Send Message",
-                                    type = "primary",
-                                    submit = true,
-                                    cssClass = "w-full justify-center py-3"
-                                })
-                            </div>
+                        <div>
+                            <label asp-for="Name" class="@labelClass"></label>
+                            <input asp-for="Name" type="text" required class="@fieldClass" />
+                            <span asp-validation-for="Name" class="@errorClass"></span>
                         </div>
+
+                        <div>
+                            <label asp-for="Email" class="@labelClass"></label>
+                            <input asp-for="Email" type="email" required class="@fieldClass" placeholder="you@example.com" />
+                            <span asp-validation-for="Email" class="@errorClass"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Phone" class="@labelClass"></label>
+                            <input asp-for="Phone" type="tel" class="@fieldClass" placeholder="(262) 555-0100" />
+                            <span asp-validation-for="Phone" class="@errorClass"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Message" class="@labelClass"></label>
+                            <textarea asp-for="Message" rows="5" required
+                                      class="@textareaClass text-base"
+                                      placeholder="Tell us about your Spanish learning goals..."></textarea>
+                            <span asp-validation-for="Message" class="@errorClass"></span>
+                        </div>
+
+                        <!-- Honeypot field - hidden from users, bots will fill it -->
+                        <div class="absolute -left-[9999px]" aria-hidden="true">
+                            <label for="website">Website</label>
+                            <input type="text" asp-for="Website" id="website" tabindex="-1" autocomplete="off" />
+                        </div>
+
+                        <!-- reCAPTCHA token -->
+                        <input type="hidden" asp-for="RecaptchaToken" id="recaptchaToken" />
+
+                        <!-- reCAPTCHA disclosure notice (required by Google) -->
+                        <p class="text-xs text-gray-500 pt-2 border-t border-gray-100">
+                            This site is protected by reCAPTCHA and the Google
+                            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="underline hover:text-gray-700">Privacy Policy</a> and
+                            <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="underline hover:text-gray-700">Terms of Service</a> apply.
+                        </p>
+
+                        <button type="submit"
+                                class="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-secondary-500 text-white text-base font-bold rounded-xl shadow-lg shadow-secondary-500/30 hover:bg-secondary-600 hover:shadow-secondary-500/40 focus:outline-none focus:ring-4 focus:ring-secondary-500/30 transition-all">
+                            Send Message
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </button>
                     </form>
-                </div>
+                </section>
             </div>
         </div>
     </div>
