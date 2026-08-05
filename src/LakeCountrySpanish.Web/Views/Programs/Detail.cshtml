@@ -71,7 +71,10 @@
                         @if (showInlineEventImage)
                         {
                             <figure class="mb-6 md:mb-0 md:float-right md:ml-6 md:w-64">
-                                <img src="@p.EventImagePath" alt="@p.Name" class="rounded-xl border border-gray-200 shadow-sm w-full h-auto" loading="lazy" />
+                                <button type="button" class="event-image-trigger group block w-full text-left" data-src="@p.EventImagePath" data-alt="@p.Name" aria-label="Open larger image">
+                                    <img src="@p.EventImagePath" alt="@p.Name" class="rounded-xl border border-gray-200 shadow-sm w-full h-auto group-hover:shadow-lg group-hover:brightness-95 transition-all" loading="lazy" />
+                                    <figcaption class="mt-1.5 text-xs text-gray-500 text-center group-hover:text-gray-700">Click to enlarge</figcaption>
+                                </button>
                             </figure>
                         }
                         @if (!string.IsNullOrEmpty(p.Description))
@@ -203,3 +206,67 @@
         </div>
     </div>
 </div>
+
+<!-- Lightbox modal — vanilla, no dependencies. Opens when any .event-image-trigger
+     button is clicked. Close via backdrop click, X button, or Esc. -->
+<div id="event-image-lightbox"
+     class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 backdrop-blur-sm p-4"
+     role="dialog" aria-modal="true" aria-label="Enlarged program image">
+    <button type="button" id="event-image-lightbox-close"
+            class="absolute top-4 right-4 h-12 w-12 flex items-center justify-center rounded-full bg-white/10 text-white text-2xl hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/30 transition"
+            aria-label="Close">
+        ✕
+    </button>
+    <img id="event-image-lightbox-img" src="" alt=""
+         class="max-h-[90vh] max-w-[95vw] rounded-lg shadow-2xl object-contain" />
+</div>
+
+<script>
+    (function () {
+        const lightbox = document.getElementById('event-image-lightbox');
+        const lightboxImg = document.getElementById('event-image-lightbox-img');
+        const closeBtn = document.getElementById('event-image-lightbox-close');
+        const triggers = document.querySelectorAll('.event-image-trigger');
+        if (!lightbox || triggers.length === 0) return;
+
+        let lastFocused = null;
+
+        function open(src, alt) {
+            lastFocused = document.activeElement;
+            lightboxImg.src = src;
+            lightboxImg.alt = alt || '';
+            lightbox.classList.remove('hidden');
+            lightbox.classList.add('flex');
+            document.body.style.overflow = 'hidden';
+            closeBtn.focus();
+        }
+
+        function close() {
+            lightbox.classList.add('hidden');
+            lightbox.classList.remove('flex');
+            lightboxImg.src = '';
+            document.body.style.overflow = '';
+            if (lastFocused && typeof lastFocused.focus === 'function') {
+                lastFocused.focus();
+            }
+        }
+
+        triggers.forEach(function (t) {
+            t.addEventListener('click', function () {
+                open(t.dataset.src, t.dataset.alt);
+            });
+        });
+
+        closeBtn.addEventListener('click', close);
+
+        // Backdrop click (but not clicks on the image itself)
+        lightbox.addEventListener('click', function (e) {
+            if (e.target === lightbox) close();
+        });
+
+        // Esc to close
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) close();
+        });
+    })();
+</script>
