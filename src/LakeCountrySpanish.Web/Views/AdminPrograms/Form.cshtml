@@ -5,261 +5,323 @@
         ? Url.Action("Edit", new { id = Model.Id })
         : Url.Action("Create");
     var lockedTip = "Pricing is locked once Stripe has provisioned this program. Duplicate to change.";
+
+    // Shared field classes — every input on the form uses the same visible
+    // surface + border + focus treatment so Karen and Cece can see at a glance
+    // where they can type. M3-Expressive-flavored: outlined field with a
+    // strong focus ring, generous height for touch.
+    var fieldClass    = "block w-full rounded-lg border-2 border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm placeholder-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 disabled:bg-gray-50 disabled:text-gray-500";
+    var textareaClass = "block w-full rounded-lg border-2 border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm placeholder-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15";
+    var labelClass    = "block text-sm font-semibold text-gray-800 mb-1.5";
+    var hintClass     = "mt-1.5 text-xs text-gray-500";
+    var errorClass    = "mt-1 text-xs font-medium text-red-600";
 }
 
-<div class="bg-gray-50 min-h-screen">
-    <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-4">
-            <h1 class="text-2xl font-bold text-gray-900">@Model.PageTitle</h1>
-            <a href="@Url.Action("Index")" class="text-sm text-indigo-600 hover:text-indigo-800">← All programs</a>
+<div class="bg-gray-100 min-h-screen">
+    <div class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">@Model.PageTitle</h1>
+                <p class="text-sm text-gray-600 mt-1">Fill in the details below. Fields marked * are required.</p>
+            </div>
+            <a href="@Url.Action("Index")" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">← All programs</a>
         </div>
 
-        <form method="post" action="@formAction" enctype="multipart/form-data">
+        <form method="post" action="@formAction" enctype="multipart/form-data" class="space-y-6">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
             <input type="hidden" asp-for="HeroImagePath" />
 
             @if (!ViewData.ModelState.IsValid)
             {
-                <div class="mb-4 rounded border border-red-200 bg-red-50 p-3">
-                    <div class="text-sm font-semibold text-red-800 mb-1">Please fix the following before saving:</div>
-                    <ul class="list-disc list-inside text-sm text-red-700 space-y-0.5">
-                        @foreach (var entry in ViewData.ModelState)
-                        {
-                            foreach (var err in entry.Value.Errors)
-                            {
-                                <li>
-                                    @if (!string.IsNullOrEmpty(entry.Key))
+                <div class="rounded-xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">
+                    <div class="flex items-start gap-2">
+                        <span class="text-red-600 text-lg leading-none mt-0.5">⚠</span>
+                        <div class="flex-1">
+                            <div class="text-sm font-bold text-red-800 mb-1">Please fix the following before saving:</div>
+                            <ul class="list-disc list-inside text-sm text-red-700 space-y-0.5">
+                                @foreach (var entry in ViewData.ModelState)
+                                {
+                                    foreach (var err in entry.Value.Errors)
                                     {
-                                        <span class="font-medium">@entry.Key:</span>
+                                        <li>
+                                            @if (!string.IsNullOrEmpty(entry.Key))
+                                            {
+                                                <span class="font-semibold">@entry.Key:</span>
+                                            }
+                                            @(string.IsNullOrEmpty(err.ErrorMessage) ? "Invalid value" : err.ErrorMessage)
+                                        </li>
                                     }
-                                    @(string.IsNullOrEmpty(err.ErrorMessage) ? "Invalid value" : err.ErrorMessage)
-                                </li>
-                            }
-                        }
-                    </ul>
+                                }
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             }
 
             <!-- Basics -->
-            <section class="bg-white rounded-lg shadow p-4 mb-4">
-                <h2 class="text-sm font-semibold text-gray-800 mb-3">Basics</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-indigo-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-indigo-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-indigo-600">①</span> Basics
+                    </h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Name, tagline, description, and hero image.</p>
+                </header>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div class="sm:col-span-2">
-                        <label asp-for="Name" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="Name" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
-                        <span asp-validation-for="Name" class="text-xs text-red-600"></span>
+                        <label asp-for="Name" class="@labelClass"></label>
+                        <input asp-for="Name" class="@fieldClass" placeholder="e.g. Bailamos y Aprendemos Español" />
+                        <span asp-validation-for="Name" class="@errorClass"></span>
                     </div>
                     <div>
-                        <label asp-for="Slug" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="Slug" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono" placeholder="bailamos-stmatthews" />
-                        <span asp-validation-for="Slug" class="text-xs text-red-600"></span>
-                        <p class="text-xs text-gray-500 mt-1">URL: /join/<span class="font-mono">@(string.IsNullOrEmpty(Model.Slug) ? "{slug}" : Model.Slug)</span></p>
+                        <label asp-for="Slug" class="@labelClass"></label>
+                        <input asp-for="Slug" class="@fieldClass font-mono" placeholder="bailamos-stmatthews" />
+                        <span asp-validation-for="Slug" class="@errorClass"></span>
+                        <p class="@hintClass">URL: /join/<span class="font-mono text-gray-700">@(string.IsNullOrEmpty(Model.Slug) ? "{slug}" : Model.Slug)</span></p>
                     </div>
                     <div>
-                        <label asp-for="TagLine" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="TagLine" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" placeholder="An After-School Spanish Enrichment Program" />
+                        <label asp-for="TagLine" class="@labelClass"></label>
+                        <input asp-for="TagLine" class="@fieldClass" placeholder="An After-School Spanish Enrichment Program" />
                     </div>
                     <div class="sm:col-span-2">
-                        <label asp-for="Description" class="block text-sm font-medium text-gray-700"></label>
-                        <textarea asp-for="Description" rows="4" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono"></textarea>
-                        <p class="text-xs text-gray-500 mt-1">Markdown supported.</p>
+                        <label asp-for="Description" class="@labelClass"></label>
+                        <textarea asp-for="Description" rows="4" class="@textareaClass font-mono"></textarea>
+                        <p class="@hintClass">Markdown supported.</p>
                     </div>
                     <div class="sm:col-span-2">
-                        <label asp-for="HeroImageUpload" class="block text-sm font-medium text-gray-700"></label>
+                        <label asp-for="HeroImageUpload" class="@labelClass"></label>
                         @if (!string.IsNullOrEmpty(Model.HeroImagePath))
                         {
-                            <div class="mt-2 mb-2 flex items-center gap-3">
-                                <img src="@Model.HeroImagePath" alt="Current hero image" class="h-20 w-32 object-cover rounded border border-gray-200" />
-                                <div class="text-xs text-gray-600">
-                                    <div class="font-medium text-gray-700">Current image</div>
-                                    <div class="font-mono text-gray-500">@Model.HeroImagePath</div>
+                            <div class="mb-3 flex items-center gap-4 rounded-lg border-2 border-gray-200 bg-gray-50 p-3">
+                                <img src="@Model.HeroImagePath" alt="Current hero image" class="h-20 w-32 object-cover rounded-lg border border-gray-300" />
+                                <div class="text-xs text-gray-600 flex-1 min-w-0">
+                                    <div class="font-semibold text-gray-800">Current image</div>
+                                    <div class="font-mono text-gray-500 truncate">@Model.HeroImagePath</div>
                                     <div class="text-gray-500 mt-1">Upload a new file below to replace it.</div>
                                 </div>
                             </div>
                         }
                         <input asp-for="HeroImageUpload" type="file" accept=".jpg,.jpeg,.png,.webp"
-                               class="mt-1 block w-full text-sm text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
-                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, or WebP. Max 5 MB. Optional — leave blank for a colored gradient hero.</p>
-                        <span asp-validation-for="HeroImageUpload" class="text-xs text-red-600"></span>
+                               class="block w-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 cursor-pointer" />
+                        <p class="@hintClass">JPG, PNG, or WebP. Max 5 MB. Optional — leave blank for a colored gradient hero.</p>
+                        <span asp-validation-for="HeroImageUpload" class="@errorClass"></span>
                     </div>
                 </div>
             </section>
 
             <!-- Logistics -->
-            <section class="bg-white rounded-lg shadow p-4 mb-4">
-                <h2 class="text-sm font-semibold text-gray-800 mb-3">Logistics</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-teal-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-teal-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-teal-600">②</span> Logistics
+                    </h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Where and when the program meets.</p>
+                </header>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="LocationName" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="LocationName" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" placeholder="St Matthew's School" />
-                        <span asp-validation-for="LocationName" class="text-xs text-red-600"></span>
+                        <label asp-for="LocationName" class="@labelClass"></label>
+                        <input asp-for="LocationName" class="@fieldClass" placeholder="St Matthew's School" />
+                        <span asp-validation-for="LocationName" class="@errorClass"></span>
                     </div>
                     <div>
-                        <label asp-for="LocationAddress" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="LocationAddress" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
-                        <span asp-validation-for="LocationAddress" class="text-xs text-red-600"></span>
+                        <label asp-for="LocationAddress" class="@labelClass"></label>
+                        <input asp-for="LocationAddress" class="@fieldClass" placeholder="123 Main St, Oconomowoc, WI" />
+                        <span asp-validation-for="LocationAddress" class="@errorClass"></span>
                     </div>
                     <div>
-                        <label asp-for="StartDate" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="StartDate" type="date" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <label asp-for="StartDate" class="@labelClass"></label>
+                        <input asp-for="StartDate" type="date" class="@fieldClass" />
                     </div>
                     <div>
-                        <label asp-for="EndDate" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="EndDate" type="date" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <label asp-for="EndDate" class="@labelClass"></label>
+                        <input asp-for="EndDate" type="date" class="@fieldClass" />
                     </div>
                     <div class="sm:col-span-2">
-                        <label class="block text-sm font-medium text-gray-700">Meeting days</label>
-                        <div class="mt-1 grid grid-cols-7 gap-1 text-center">
-                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded py-1 cursor-pointer hover:bg-indigo-50">
-                                <input asp-for="MeetingDaySun" type="checkbox" class="h-4 w-4" />
-                                <span class="text-xs text-gray-700">Sun</span>
+                        <label class="@labelClass">Meeting days</label>
+                        <div class="grid grid-cols-7 gap-2 text-center">
+                            <label class="day-chip flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-gray-300 bg-white py-2.5 cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:shadow-md">
+                                <input asp-for="MeetingDaySun" type="checkbox" class="sr-only" />
+                                <span class="text-sm font-semibold">Sun</span>
                             </label>
-                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded py-1 cursor-pointer hover:bg-indigo-50">
-                                <input asp-for="MeetingDayMon" type="checkbox" class="h-4 w-4" />
-                                <span class="text-xs text-gray-700">Mon</span>
+                            <label class="day-chip flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-gray-300 bg-white py-2.5 cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:shadow-md">
+                                <input asp-for="MeetingDayMon" type="checkbox" class="sr-only" />
+                                <span class="text-sm font-semibold">Mon</span>
                             </label>
-                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded py-1 cursor-pointer hover:bg-indigo-50">
-                                <input asp-for="MeetingDayTue" type="checkbox" class="h-4 w-4" />
-                                <span class="text-xs text-gray-700">Tue</span>
+                            <label class="day-chip flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-gray-300 bg-white py-2.5 cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:shadow-md">
+                                <input asp-for="MeetingDayTue" type="checkbox" class="sr-only" />
+                                <span class="text-sm font-semibold">Tue</span>
                             </label>
-                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded py-1 cursor-pointer hover:bg-indigo-50">
-                                <input asp-for="MeetingDayWed" type="checkbox" class="h-4 w-4" />
-                                <span class="text-xs text-gray-700">Wed</span>
+                            <label class="day-chip flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-gray-300 bg-white py-2.5 cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:shadow-md">
+                                <input asp-for="MeetingDayWed" type="checkbox" class="sr-only" />
+                                <span class="text-sm font-semibold">Wed</span>
                             </label>
-                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded py-1 cursor-pointer hover:bg-indigo-50">
-                                <input asp-for="MeetingDayThu" type="checkbox" class="h-4 w-4" />
-                                <span class="text-xs text-gray-700">Thu</span>
+                            <label class="day-chip flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-gray-300 bg-white py-2.5 cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:shadow-md">
+                                <input asp-for="MeetingDayThu" type="checkbox" class="sr-only" />
+                                <span class="text-sm font-semibold">Thu</span>
                             </label>
-                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded py-1 cursor-pointer hover:bg-indigo-50">
-                                <input asp-for="MeetingDayFri" type="checkbox" class="h-4 w-4" />
-                                <span class="text-xs text-gray-700">Fri</span>
+                            <label class="day-chip flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-gray-300 bg-white py-2.5 cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:shadow-md">
+                                <input asp-for="MeetingDayFri" type="checkbox" class="sr-only" />
+                                <span class="text-sm font-semibold">Fri</span>
                             </label>
-                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded py-1 cursor-pointer hover:bg-indigo-50">
-                                <input asp-for="MeetingDaySat" type="checkbox" class="h-4 w-4" />
-                                <span class="text-xs text-gray-700">Sat</span>
+                            <label class="day-chip flex flex-col items-center justify-center gap-1 rounded-lg border-2 border-gray-300 bg-white py-2.5 cursor-pointer transition-all hover:border-indigo-400 hover:bg-indigo-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-600 has-[:checked]:text-white has-[:checked]:shadow-md">
+                                <input asp-for="MeetingDaySat" type="checkbox" class="sr-only" />
+                                <span class="text-sm font-semibold">Sat</span>
                             </label>
                         </div>
-                        <p class="text-xs text-gray-500 mt-1">
-                            Displays as: <span class="font-medium text-gray-700">@(string.IsNullOrEmpty(Model.CompileMeetingDays()) ? "(pick at least one day)" : Model.CompileMeetingDays())</span>
+                        <p class="@hintClass">
+                            Displays as: <span class="font-semibold text-gray-800">@(string.IsNullOrEmpty(Model.CompileMeetingDays()) ? "(pick at least one day)" : Model.CompileMeetingDays())</span>
                         </p>
                         <input type="hidden" asp-for="MeetingDays" />
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label asp-for="StartTime" class="block text-sm font-medium text-gray-700"></label>
-                            <input asp-for="StartTime" type="time" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
-                        </div>
-                        <div>
-                            <label asp-for="EndTime" class="block text-sm font-medium text-gray-700"></label>
-                            <input asp-for="EndTime" type="time" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
-                        </div>
+                    <div>
+                        <label asp-for="StartTime" class="@labelClass"></label>
+                        <input asp-for="StartTime" type="time" class="@fieldClass" />
                     </div>
                     <div>
-                        <label asp-for="GradeRange" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="GradeRange" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" placeholder="3-6" />
+                        <label asp-for="EndTime" class="@labelClass"></label>
+                        <input asp-for="EndTime" type="time" class="@fieldClass" />
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label asp-for="GradeRange" class="@labelClass"></label>
+                        <input asp-for="GradeRange" class="@fieldClass" placeholder="3-6" />
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label asp-for="AgeMin" class="block text-sm font-medium text-gray-700"></label>
-                            <input asp-for="AgeMin" type="number" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                            <label asp-for="AgeMin" class="@labelClass"></label>
+                            <input asp-for="AgeMin" type="number" class="@fieldClass" />
                         </div>
                         <div>
-                            <label asp-for="AgeMax" class="block text-sm font-medium text-gray-700"></label>
-                            <input asp-for="AgeMax" type="number" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                            <label asp-for="AgeMax" class="@labelClass"></label>
+                            <input asp-for="AgeMax" type="number" class="@fieldClass" />
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- Pricing -->
-            <section class="bg-white rounded-lg shadow p-4 mb-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-sm font-semibold text-gray-800">Pricing</h2>
-                    @if (Model.PricingLocked)
-                    {
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800" title="@lockedTip">🔒 Locked (Stripe provisioned)</span>
-                    }
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label asp-for="FullPrice" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="FullPrice" type="number" step="0.01" min="0"
-                               class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"
-                               readonly="@Model.PricingLocked" />
-                        <span asp-validation-for="FullPrice" class="text-xs text-red-600"></span>
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-amber-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-amber-50/40">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span class="text-amber-600">③</span> Pricing
+                            </h2>
+                            <p class="text-xs text-gray-600 mt-0.5">Payment options parents will see at signup.</p>
+                        </div>
+                        @if (Model.PricingLocked)
+                        {
+                            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 border border-yellow-300" title="@lockedTip">🔒 Locked</span>
+                        }
                     </div>
-                    <div class="flex items-end">
-                        <label class="flex items-center gap-2 text-sm text-gray-700">
-                            <input asp-for="InstallmentsEnabled" type="checkbox" />
-                            Offer installment plan
-                        </label>
-                    </div>
+                </header>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                        <label asp-for="InstallmentCount" class="block text-sm font-medium text-gray-700"></label>
+                        <label asp-for="FullPrice" class="@labelClass"></label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-3 flex items-center text-gray-500 font-semibold">$</span>
+                            <input asp-for="FullPrice" type="number" step="0.01" min="0"
+                                   class="@fieldClass pl-7"
+                                   readonly="@Model.PricingLocked" />
+                        </div>
+                        <span asp-validation-for="FullPrice" class="@errorClass"></span>
+                    </div>
+                    <label class="flex items-start gap-3 p-3 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input asp-for="InstallmentsEnabled" type="checkbox" class="mt-0.5 h-5 w-5 rounded border-2 border-gray-300 text-indigo-600 focus:ring-4 focus:ring-indigo-500/15" />
+                        <div>
+                            <div class="text-sm font-semibold text-gray-900">Offer installment plan</div>
+                            <div class="text-xs text-gray-600">Parents can split the price into monthly payments.</div>
+                        </div>
+                    </label>
+                    <div>
+                        <label asp-for="InstallmentCount" class="@labelClass"></label>
                         <input asp-for="InstallmentCount" type="number" min="2" max="12"
-                               class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm"
+                               class="@fieldClass"
                                readonly="@Model.PricingLocked" />
-                        <p class="text-xs text-gray-500 mt-1">
-                            Per-installment amount is derived: $@((Model.InstallmentCount > 0 ? Math.Round(Model.FullPrice / Model.InstallmentCount, 2) : Model.FullPrice).ToString("N2"))
+                        <p class="@hintClass">
+                            Per-installment amount: <span class="font-semibold text-gray-800">$@((Model.InstallmentCount > 0 ? Math.Round(Model.FullPrice / Model.InstallmentCount, 2) : Model.FullPrice).ToString("N2"))</span>
                         </p>
                     </div>
                     <div>
-                        <label asp-for="FinalInstallmentDueDate" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="FinalInstallmentDueDate" type="date" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
-                        <p class="text-xs text-gray-500 mt-1">Informational — cadence is monthly starting at signup.</p>
+                        <label asp-for="FinalInstallmentDueDate" class="@labelClass"></label>
+                        <input asp-for="FinalInstallmentDueDate" type="date" class="@fieldClass" />
+                        <p class="@hintClass">Informational — cadence is monthly starting at signup.</p>
                     </div>
-                    <div class="sm:col-span-2">
-                        <label class="flex items-center gap-2 text-sm text-gray-700">
-                            <input asp-for="CashOptionEnabled" type="checkbox" />
-                            Allow cash/check-in-hand payment (turn on for booth signup)
-                        </label>
-                    </div>
+                    <label class="sm:col-span-2 flex items-start gap-3 p-3 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input asp-for="CashOptionEnabled" type="checkbox" class="mt-0.5 h-5 w-5 rounded border-2 border-gray-300 text-indigo-600 focus:ring-4 focus:ring-indigo-500/15" />
+                        <div>
+                            <div class="text-sm font-semibold text-gray-900">Allow cash/check at the booth</div>
+                            <div class="text-xs text-gray-600">Show a "pay in person" option on the enrollment form. Turn on for booth signup.</div>
+                        </div>
+                    </label>
                 </div>
             </section>
 
             <!-- Legal / contact -->
-            <section class="bg-white rounded-lg shadow p-4 mb-4">
-                <h2 class="text-sm font-semibold text-gray-800 mb-3">Waiver, refund, contact</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-rose-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-rose-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-rose-600">④</span> Waiver, refund, contact
+                    </h2>
+                    <p class="text-xs text-gray-600 mt-0.5">What parents see on the sign-up page.</p>
+                </header>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div class="sm:col-span-2">
-                        <label asp-for="WaiverText" class="block text-sm font-medium text-gray-700"></label>
-                        <textarea asp-for="WaiverText" rows="12" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm font-mono"></textarea>
-                        <p class="text-xs text-gray-500 mt-1">Markdown supported. Shown as-is on the enrollment page. Consider attorney review for scale.</p>
+                        <label asp-for="WaiverText" class="@labelClass"></label>
+                        <textarea asp-for="WaiverText" rows="12" class="@textareaClass font-mono"></textarea>
+                        <p class="@hintClass">Markdown supported. Shown as-is on the enrollment page. Consider attorney review for scale.</p>
                     </div>
                     <div class="sm:col-span-2">
-                        <label asp-for="RefundPolicyText" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="RefundPolicyText" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <label asp-for="RefundPolicyText" class="@labelClass"></label>
+                        <input asp-for="RefundPolicyText" class="@fieldClass" placeholder="No refunds beyond the first week." />
                     </div>
                     <div>
-                        <label asp-for="ContactPhone" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="ContactPhone" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <label asp-for="ContactPhone" class="@labelClass"></label>
+                        <input asp-for="ContactPhone" class="@fieldClass" placeholder="262-490-0304" />
                     </div>
                     <div>
-                        <label asp-for="ContactEmail" class="block text-sm font-medium text-gray-700"></label>
-                        <input asp-for="ContactEmail" type="email" class="mt-1 block w-full rounded border-gray-300 shadow-sm text-sm" />
+                        <label asp-for="ContactEmail" class="@labelClass"></label>
+                        <input asp-for="ContactEmail" type="email" class="@fieldClass" placeholder="info@lakecountryspanish.com" />
                     </div>
                 </div>
             </section>
 
             <!-- Status -->
-            <section class="bg-white rounded-lg shadow p-4 mb-4">
-                <h2 class="text-sm font-semibold text-gray-800 mb-3">Status</h2>
-                <label class="flex items-center gap-2 text-sm text-gray-700 mb-2">
-                    <input asp-for="IsActive" type="checkbox" />
-                    Accepting enrollments
-                </label>
-                <label class="flex items-center gap-2 text-sm text-gray-700">
-                    <input asp-for="IsListed" type="checkbox" />
-                    Show on public /programs calendar (leave off for private / invite-only)
-                </label>
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-emerald-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-emerald-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-emerald-600">⑤</span> Status
+                    </h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Visibility and enrollment window.</p>
+                </header>
+                <div class="p-6 space-y-3">
+                    <label class="flex items-start gap-3 p-3 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input asp-for="IsActive" type="checkbox" class="mt-0.5 h-5 w-5 rounded border-2 border-gray-300 text-indigo-600 focus:ring-4 focus:ring-indigo-500/15" />
+                        <div>
+                            <div class="text-sm font-semibold text-gray-900">Accepting enrollments</div>
+                            <div class="text-xs text-gray-600">Turn off to hide the /join page and stop new signups.</div>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-3 p-3 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input asp-for="IsListed" type="checkbox" class="mt-0.5 h-5 w-5 rounded border-2 border-gray-300 text-indigo-600 focus:ring-4 focus:ring-indigo-500/15" />
+                        <div>
+                            <div class="text-sm font-semibold text-gray-900">Show on public /programs calendar</div>
+                            <div class="text-xs text-gray-600">On by default so past + prospective parents can find it. Leave off for private / invite-only events.</div>
+                        </div>
+                    </label>
+                </div>
             </section>
 
-            <div class="flex items-center gap-2 pt-2">
-                <button type="submit" class="px-5 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 font-semibold">
+            <!-- Actions -->
+            <div class="flex items-center justify-between gap-4 pt-2 pb-8">
+                <a href="@(Model.IsEdit ? Url.Action("Detail", new { id = Model.Id }) : Url.Action("Index"))" class="text-sm font-semibold text-gray-600 hover:text-gray-900">
+                    ← Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center gap-2 px-8 py-3.5 bg-indigo-600 text-white text-base font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:shadow-indigo-500/40 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all">
                     @(Model.IsEdit ? "Save changes" : "Create program")
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
                 </button>
-                <a href="@(Model.IsEdit ? Url.Action("Detail", new { id = Model.Id }) : Url.Action("Index"))" class="text-sm text-gray-600 ml-2 hover:text-gray-800">Cancel</a>
             </div>
         </form>
     </div>
