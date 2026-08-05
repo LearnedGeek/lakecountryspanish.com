@@ -15,6 +15,7 @@
                     <div class="flex items-baseline space-x-4">
                         <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Home</a>
                         <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Meet Us</a>
+                        <a asp-controller="Programs" asp-action="Index" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Programs</a>
                         <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Contact</a>
                         @if (SignInManager.IsSignedIn(User))
                         {
@@ -22,7 +23,7 @@
                             {
                                 <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Admin Dashboard</a>
                                 <a asp-controller="Curriculum" asp-action="Lessons" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Curriculum</a>
-                                <a asp-controller="AdminPrograms" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Programs</a>
+                                <a asp-controller="AdminPrograms" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Manage Programs</a>
                                 <a asp-controller="Media" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Media</a>
                             }
                             else if (User.IsInRole("Teacher"))
@@ -96,6 +97,7 @@
         <div class="space-y-1 px-2 pb-3 pt-2 border-t border-primary-700">
             <a asp-controller="Home" asp-action="Index" class="text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Home</a>
             <a asp-controller="Home" asp-action="About" class="text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Meet Us</a>
+            <a asp-controller="Programs" asp-action="Index" class="text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Programs</a>
             <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Contact</a>
             @if (SignInManager.IsSignedIn(User))
             {
@@ -103,6 +105,7 @@
                 {
                     <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Admin Dashboard</a>
                     <a asp-controller="Curriculum" asp-action="Lessons" class="text-secondary-300 hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Curriculum</a>
+                    <a asp-controller="AdminPrograms" asp-action="Index" class="text-secondary-300 hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Manage Programs</a>
                     <a asp-controller="Media" asp-action="Index" class="text-secondary-300 hover:bg-primary-700 block rounded-md px-3 py-2 text-base font-medium transition">Media</a>
                 }
                 else if (User.IsInRole("Teacher"))

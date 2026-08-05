@@ -1,0 +1,196 @@
+@using LakeCountrySpanish.Web.Models.Entities
+@model LakeCountrySpanish.Web.Models.ViewModels.ProgramsCalendarViewModel
+@{
+    ViewData["Title"] = "Programs";
+    ViewData["MetaDescription"] = "Lake Country Spanish — after-school Spanish programs, camps, and open houses in the Lake Country area of Wisconsin.";
+}
+
+@functions {
+    // Compact "5 days left" / "Enroll by Aug 15" copy.
+    string DeadlineLabel(EnrollmentProgram p)
+    {
+        var days = (int)Math.Ceiling((p.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
+        if (days <= 0) return "Enrollment closed";
+        if (days == 1) return "1 day left";
+        if (days <= 14) return $"{days} days left";
+        return $"Enroll by {p.EffectiveEnrollmentDeadline:MMM d}";
+    }
+
+    string DeadlinePillClass(EnrollmentProgram p)
+    {
+        var days = (int)Math.Ceiling((p.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
+        if (days <= 0) return "bg-gray-200 text-gray-700 border-gray-300";
+        if (days <= 3) return "bg-red-100 text-red-800 border-red-200";
+        if (days <= 7) return "bg-amber-100 text-amber-900 border-amber-300";
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    }
+}
+
+<div class="bg-gray-100 min-h-screen">
+    <!-- Hero -->
+    <div class="bg-gradient-to-r from-primary-600 to-teal-600 py-16">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="font-display text-4xl sm:text-5xl font-bold text-white drop-shadow">Our Programs</h1>
+            <p class="mt-4 text-xl text-white/95 max-w-2xl mx-auto">
+                Real Spanish, real culture, real fun. Browse upcoming programs and enroll online in minutes.
+            </p>
+        </div>
+    </div>
+
+    <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+
+        @if (!Model.HasAny)
+        {
+            <div class="bg-white rounded-2xl shadow-md border-2 border-dashed border-gray-300 p-12 text-center max-w-2xl mx-auto">
+                <div class="text-5xl mb-3">📅</div>
+                <p class="text-lg font-bold text-gray-800">No programs listed yet</p>
+                <p class="text-sm text-gray-600 mt-2">
+                    Interested in bringing a program to your school or community?
+                    <a href="@Url.Action("Index", "Contact")" class="text-indigo-600 hover:text-indigo-800 font-semibold">Reach out</a>.
+                </p>
+            </div>
+        }
+
+        <!-- Enrollment open -->
+        @if (Model.EnrollmentOpen.Count > 0)
+        {
+            <section class="mb-12">
+                <div class="flex items-baseline justify-between mb-6">
+                    <h2 class="font-display text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <span class="h-3 w-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Enrolling now
+                    </h2>
+                    <span class="text-sm text-gray-500 font-medium">@Model.EnrollmentOpen.Count program@(Model.EnrollmentOpen.Count == 1 ? "" : "s")</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var p in Model.EnrollmentOpen)
+                    {
+                        <a href="@Url.Action("Landing", "Join", new { slug = p.Slug })"
+                           class="group flex flex-col bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-200 hover:border-indigo-400 overflow-hidden transition-all hover:-translate-y-1">
+                            <div class="aspect-[16/10] relative bg-gradient-to-br from-primary-500 to-secondary-500 overflow-hidden">
+                                @if (!string.IsNullOrEmpty(p.HeroImagePath))
+                                {
+                                    <img src="@p.HeroImagePath" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                                }
+                                <div class="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm @DeadlinePillClass(p)">
+                                    ⏱ @DeadlineLabel(p)
+                                </div>
+                            </div>
+                            <div class="flex-1 flex flex-col p-5">
+                                <h3 class="font-display text-xl font-bold text-gray-900 group-hover:text-indigo-700 mb-1">@p.Name</h3>
+                                @if (!string.IsNullOrEmpty(p.TagLine))
+                                {
+                                    <p class="text-sm text-gray-600 mb-3">@p.TagLine</p>
+                                }
+                                <dl class="text-sm text-gray-700 space-y-1.5 mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-400">📍</span>
+                                        <span class="font-medium">@p.LocationName</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-400">📅</span>
+                                        <span>@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-400">🕐</span>
+                                        <span>@p.MeetingDays · @p.StartTime.ToString("h:mm tt")–@p.EndTime.ToString("h:mm tt")</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(p.GradeRange))
+                                    {
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-gray-400">🎒</span>
+                                            <span>Grades @p.GradeRange · ages @p.AgeMin–@p.AgeMax</span>
+                                        </div>
+                                    }
+                                </dl>
+                                <div class="mt-auto pt-4 border-t border-gray-100 flex items-end justify-between">
+                                    <div>
+                                        <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Full price</div>
+                                        <div class="text-2xl font-bold text-gray-900">$@p.FullPrice.ToString("N2")</div>
+                                        @if (p.InstallmentsEnabled)
+                                        {
+                                            <div class="text-xs text-gray-500 mt-0.5">or @p.InstallmentCount × $@p.InstallmentAmount.ToString("N2")</div>
+                                        }
+                                    </div>
+                                    <span class="inline-flex items-center gap-1 px-4 py-2 bg-secondary-500 text-white text-sm font-bold rounded-lg shadow-sm group-hover:bg-secondary-600 group-hover:shadow-md transition-all">
+                                        Sign up →
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Closed enrollment but program still upcoming -->
+        @if (Model.ClosedButUpcoming.Count > 0)
+        {
+            <section class="mb-12">
+                <div class="flex items-baseline justify-between mb-6">
+                    <h2 class="font-display text-2xl font-bold text-gray-800 flex items-center gap-3">
+                        <span class="h-3 w-3 rounded-full bg-gray-400"></span>
+                        Enrollment closed — in session
+                    </h2>
+                    <span class="text-sm text-gray-500 font-medium">@Model.ClosedButUpcoming.Count program@(Model.ClosedButUpcoming.Count == 1 ? "" : "s")</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var p in Model.ClosedButUpcoming)
+                    {
+                        <div class="flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden opacity-80">
+                            <div class="aspect-[16/10] relative bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden">
+                                @if (!string.IsNullOrEmpty(p.HeroImagePath))
+                                {
+                                    <img src="@p.HeroImagePath" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover grayscale" loading="lazy" />
+                                }
+                                <div class="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border bg-gray-200 text-gray-700 border-gray-300 shadow-sm">
+                                    Enrollment closed
+                                </div>
+                            </div>
+                            <div class="flex-1 flex flex-col p-5">
+                                <h3 class="font-display text-lg font-bold text-gray-800 mb-1">@p.Name</h3>
+                                <p class="text-sm text-gray-600">@p.LocationName · @p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</p>
+                                <p class="text-xs text-gray-500 mt-3">Interested in the next session? <a href="@Url.Action("Index", "Contact")" class="text-indigo-600 font-semibold hover:underline">Contact us</a>.</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Past programs -->
+        @if (Model.Past.Count > 0)
+        {
+            <section>
+                <div class="flex items-baseline justify-between mb-6">
+                    <h2 class="font-display text-2xl font-bold text-gray-700 flex items-center gap-3">
+                        <span class="h-3 w-3 rounded-full bg-gray-300"></span>
+                        Recent programs
+                    </h2>
+                    <span class="text-sm text-gray-500 font-medium">@Model.Past.Count program@(Model.Past.Count == 1 ? "" : "s")</span>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    @foreach (var p in Model.Past.Take(8))
+                    {
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden opacity-70">
+                            <div class="aspect-[4/3] relative bg-gray-200 overflow-hidden">
+                                @if (!string.IsNullOrEmpty(p.HeroImagePath))
+                                {
+                                    <img src="@p.HeroImagePath" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover grayscale" loading="lazy" />
+                                }
+                            </div>
+                            <div class="p-3">
+                                <h3 class="text-sm font-bold text-gray-800 truncate">@p.Name</h3>
+                                <p class="text-xs text-gray-500 mt-0.5">@p.LocationName</p>
+                                <p class="text-xs text-gray-500">@p.StartDate.ToString("MMM yyyy")</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <p class="text-center mt-6 text-sm text-gray-500">
+                    Want us to run something like this at your school? <a href="@Url.Action("Index", "Contact")" class="text-indigo-600 font-semibold hover:underline">Let's talk</a>.
+                </p>
+            </section>
+        }
+    </div>
+</div>

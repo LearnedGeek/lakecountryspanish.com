@@ -38,7 +38,7 @@
                         </p>
 
                         <div class="mt-8 sm:flex sm:justify-center lg:justify-start gap-4">
-                            <a href="#pricing" class="flex w-full sm:w-auto items-center justify-center rounded-xl bg-secondary-500 px-8 py-4 text-base font-semibold text-white hover:bg-secondary-600 shadow-lg shadow-secondary-500/30 hover:shadow-secondary-500/40 transition-all hover:-translate-y-0.5">
+                            <a asp-controller="Programs" asp-action="Index" class="flex w-full sm:w-auto items-center justify-center rounded-xl bg-secondary-500 px-8 py-4 text-base font-semibold text-white hover:bg-secondary-600 shadow-lg shadow-secondary-500/30 hover:shadow-secondary-500/40 transition-all hover:-translate-y-0.5">
                                 Our Programs
                                 <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
@@ -267,9 +267,15 @@
                                 <p class="text-gray-700 mb-4">
                                     Move, sing, and celebrate Spanish through dance, music, and traditions from across the Spanish-speaking world. Each session pairs a new country with age-appropriate songs and a hands-on activity kids take home.
                                 </p>
-                                <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center text-sm font-semibold text-secondary-600 hover:text-secondary-700">
-                                    Bring this to your school →
-                                </a>
+                                <div class="flex flex-wrap gap-3 items-center text-sm">
+                                    <a href="@Url.Action("Index", "Programs")" class="inline-flex items-center font-semibold text-secondary-600 hover:text-secondary-700">
+                                        See upcoming sessions →
+                                    </a>
+                                    <span class="text-gray-300">·</span>
+                                    <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center font-semibold text-primary-600 hover:text-primary-700">
+                                        Bring it to your school
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </article>
@@ -289,9 +295,15 @@
                                 <p class="text-gray-700 mb-4">
                                     ¡A bailar y aprender! An after-school program built around movement, music, and immersive Spanish. Kids explore a new Spanish-speaking country each session with rhythm, songs, and cultural celebrations that make the language stick.
                                 </p>
-                                <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center text-sm font-semibold text-secondary-600 hover:text-secondary-700">
-                                    Bring this to your school →
-                                </a>
+                                <div class="flex flex-wrap gap-3 items-center text-sm">
+                                    <a href="@Url.Action("Index", "Programs")" class="inline-flex items-center font-semibold text-secondary-600 hover:text-secondary-700">
+                                        See upcoming sessions →
+                                    </a>
+                                    <span class="text-gray-300">·</span>
+                                    <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center font-semibold text-primary-600 hover:text-primary-700">
+                                        Bring it to your school
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </article>

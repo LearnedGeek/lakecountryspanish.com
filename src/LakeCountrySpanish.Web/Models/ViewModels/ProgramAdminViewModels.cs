@@ -81,6 +81,11 @@ public sealed class ProgramFormViewModel
     [Display(Name = "End date")]
     public DateTime EndDate { get; set; }
 
+    [DataType(DataType.Date)]
+    [Display(Name = "Enrollment deadline",
+             Description = "Optional. When set, parents can't enroll after this date. Leave blank to keep enrollment open until the program starts.")]
+    public DateTime? EnrollmentDeadline { get; set; }
+
     /// <summary>
     /// Derived from the seven weekday checkboxes below on submit; also displayed
     /// back on edit if the stored value doesn't parse to a checkbox pattern.
@@ -194,6 +199,9 @@ public sealed class ProgramFormViewModel
         target.LocationAddress = LocationAddress;
         target.StartDate = DateTime.SpecifyKind(StartDate, DateTimeKind.Utc);
         target.EndDate = DateTime.SpecifyKind(EndDate, DateTimeKind.Utc);
+        target.EnrollmentDeadline = EnrollmentDeadline.HasValue
+            ? DateTime.SpecifyKind(EnrollmentDeadline.Value, DateTimeKind.Utc)
+            : null;
         target.MeetingDays = CompileMeetingDays();
         target.StartTime = StartTime;
         target.EndTime = EndTime;
@@ -230,6 +238,7 @@ public sealed class ProgramFormViewModel
             LocationAddress = p.LocationAddress,
             StartDate = p.StartDate,
             EndDate = p.EndDate,
+            EnrollmentDeadline = p.EnrollmentDeadline,
             MeetingDays = p.MeetingDays,
             StartTime = p.StartTime,
             EndTime = p.EndTime,

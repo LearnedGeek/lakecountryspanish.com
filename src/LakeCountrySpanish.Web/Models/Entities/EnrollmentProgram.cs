@@ -72,6 +72,15 @@ public class EnrollmentProgram
     public DateTime EndDate { get; set; }
 
     /// <summary>
+    /// Optional final date parents can sign up. Nullable — when unset, the
+    /// enrollment window closes at <see cref="StartDate"/> (the program starts
+    /// so no more signups). When set, the public /programs card shows an
+    /// urgency indicator ("Enroll by Aug 15") and the enrollment form
+    /// hard-blocks after this date.
+    /// </summary>
+    public DateTime? EnrollmentDeadline { get; set; }
+
+    /// <summary>
     /// Free-text schedule description shown to parents, e.g.
     /// "Tuesdays" or "Mondays &amp; Wednesdays". Written to match how Karen
     /// wants parents to read it, not a structured enum, so a multi-day program
@@ -130,6 +139,16 @@ public class EnrollmentProgram
     public decimal InstallmentAmount => InstallmentCount > 0
         ? Math.Round(FullPrice / InstallmentCount, 2, MidpointRounding.AwayFromZero)
         : FullPrice;
+
+    /// <summary>
+    /// Effective deadline for parents to enroll. Falls back to <see cref="StartDate"/>
+    /// (day the program begins) when the admin hasn't set an explicit deadline —
+    /// they can't sign up after the program starts anyway.
+    /// </summary>
+    public DateTime EffectiveEnrollmentDeadline => EnrollmentDeadline ?? StartDate;
+
+    /// <summary>True once the enrollment window has closed (past deadline).</summary>
+    public bool IsEnrollmentClosed => DateTime.UtcNow > EffectiveEnrollmentDeadline;
 
     // ---------------- Stripe wiring (auto-populated on first Save) ----------------
 

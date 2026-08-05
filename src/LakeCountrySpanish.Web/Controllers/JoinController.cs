@@ -36,6 +36,16 @@ public class JoinController : Controller
         var program = await _programs.GetBySlugAsync(slug, ct);
         if (program is null || !program.IsActive) return NotFound();
 
+        // Hard-block enrollment after the deadline (or after the program has
+        // already started, if no explicit deadline was set). Redirects to the
+        // public /programs listing so the parent lands somewhere useful
+        // instead of a wall.
+        if (program.IsEnrollmentClosed)
+        {
+            TempData["InfoMessage"] = $"Enrollment for \"{program.Name}\" has closed. Reach out via the contact form if you'd like to be notified about the next session.";
+            return RedirectToAction("Index", "Programs");
+        }
+
         if (cancelled)
         {
             TempData["InfoMessage"] = "Payment was cancelled — your enrollment wasn't saved. Try again below.";
@@ -61,6 +71,14 @@ public class JoinController : Controller
     {
         var program = await _programs.GetBySlugAsync(slug, ct);
         if (program is null || !program.IsActive) return NotFound();
+
+        // Race-condition guard: someone might have loaded the form pre-deadline
+        // and submitted after. Same short-circuit as the GET action.
+        if (program.IsEnrollmentClosed)
+        {
+            TempData["InfoMessage"] = $"Enrollment for \"{program.Name}\" closed while you were filling out the form. Reach out via the contact form if you'd like to be notified about the next session.";
+            return RedirectToAction("Index", "Programs");
+        }
 
         // Repopulate the Program-linked fields so the form can re-render on validation failure.
         model.ProgramId = program.Id;
