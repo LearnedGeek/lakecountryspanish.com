@@ -58,8 +58,10 @@
                                 <td class="px-4 py-2 text-xs text-gray-600">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</td>
                                 <td class="px-4 py-2 text-sm text-right text-gray-700">$@p.FullPrice.ToString("N2")</td>
                                 <td class="px-4 py-2 text-sm text-right">
-                                    <span class="font-semibold text-gray-900">@p.PaidCount</span>
-                                    <span class="text-gray-400">/ @p.EnrollmentCount</span>
+                                    <a href="@Url.Action("Enrollments", new { id = p.Id })" class="hover:underline" title="View roster">
+                                        <span class="font-semibold text-gray-900">@p.PaidCount</span>
+                                        <span class="text-gray-400">/ @p.EnrollmentCount</span>
+                                    </a>
                                 </td>
                                 <td class="px-4 py-2 text-xs">
                                     @if (p.IsActive)

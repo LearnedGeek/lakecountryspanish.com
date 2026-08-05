@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -29,11 +30,16 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
     private const int InstallmentCancelBufferDays = 35;
 
     private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
     private readonly ILogger<ProgramEnrollmentService> _logger;
 
-    public ProgramEnrollmentService(ApplicationDbContext context, ILogger<ProgramEnrollmentService> logger)
+    public ProgramEnrollmentService(
+        ApplicationDbContext context,
+        IEmailService emailService,
+        ILogger<ProgramEnrollmentService> logger)
     {
         _context = context;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -99,6 +105,7 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         if (input.PaymentType == ProgramPaymentType.CashInHand)
         {
             _logger.LogInformation("Program enrollment {EnrollmentId} recorded as cash-in-hand for program {ProgramId}", enrollment.Id, program.Id);
+            await SendEnrollmentEmailsSafeAsync(enrollment, program, ct);
             return EnrollmentSubmissionResult.ForCash(enrollment.Id);
         }
 
@@ -177,6 +184,13 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
 
         enrollment.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
+
+        // Send enrollment confirmation + Karen notification now that first payment
+        // has landed — for TwoInstallment this happens on installment 1, and
+        // HandleInvoicePaidAsync will send a separate "installment 2 complete"
+        // note when the final charge lands.
+        await SendEnrollmentEmailsSafeAsync(enrollment, enrollment.Program, ct);
+
         return true;
     }
 
@@ -337,6 +351,132 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
             // loudly so we notice on the first occurrence.
             _logger.LogError(ex, "Failed to set cancel_at on installment subscription {SubscriptionId}. Manual cancel needed after installment 2.", subscriptionId);
         }
+    }
+
+    // ---------------- Email helpers ----------------
+
+    /// <summary>
+    /// Sends the parent confirmation + Karen notification pair. Wraps both in
+    /// try/catch so an SMTP hiccup can't undo a successful enrollment / payment.
+    /// Karen's email comes from <see cref="EnrollmentProgram.ContactEmail"/> so a
+    /// per-program teacher (Cece for one, Karen for another) gets the right ping.
+    /// </summary>
+    private async Task SendEnrollmentEmailsSafeAsync(ProgramEnrollment enrollment, EnrollmentProgram program, CancellationToken ct)
+    {
+        try
+        {
+            var parentSubject = $"You're enrolled in {program.Name} — Lake Country Spanish";
+            var parentBody = BuildParentConfirmationBody(enrollment, program);
+            await _emailService.SendEmailAsync(
+                enrollment.ParentEmail,
+                $"{enrollment.ParentFirstName} {enrollment.ParentLastName}",
+                parentSubject,
+                parentBody);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send parent enrollment confirmation for enrollment {EnrollmentId}", enrollment.Id);
+        }
+
+        if (!string.IsNullOrWhiteSpace(program.ContactEmail))
+        {
+            try
+            {
+                var teacherSubject = $"New enrollment: {enrollment.StudentFirstName} {enrollment.StudentLastName} — {program.Name}";
+                var teacherBody = BuildTeacherNotificationBody(enrollment, program);
+                await _emailService.SendEmailAsync(
+                    program.ContactEmail,
+                    program.LocationName,
+                    teacherSubject,
+                    teacherBody);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send teacher enrollment notification for enrollment {EnrollmentId}", enrollment.Id);
+            }
+        }
+    }
+
+    private static string BuildParentConfirmationBody(ProgramEnrollment e, EnrollmentProgram p)
+    {
+        var enc = HtmlEncoder.Default;
+        var paymentBlurb = e.PaymentType switch
+        {
+            ProgramPaymentType.FullOneTime => $"Payment received in full: <strong>${e.TotalAmountPaid:N2}</strong>.",
+            ProgramPaymentType.TwoInstallment => $"First installment received: <strong>${e.TotalAmountPaid:N2}</strong>. Your second installment will be charged automatically in about 30 days.",
+            ProgramPaymentType.CashInHand => $"We'll collect <strong>${p.FullPrice:N2}</strong> from you at the booth. Bring cash or a check made out to Lake Country Spanish, LLC.",
+            _ => string.Empty
+        };
+
+        return $@"<div style=""font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #111827;"">
+    <h2 style=""color: #4f46e5;"">You're enrolled — {enc.Encode(p.Name)}</h2>
+    <p>Hi {enc.Encode(e.ParentFirstName)},</p>
+    <p>Thanks for enrolling <strong>{enc.Encode(e.StudentFirstName)} {enc.Encode(e.StudentLastName)}</strong> in <strong>{enc.Encode(p.Name)}</strong>. Here's what to remember:</p>
+
+    <table cellpadding=""8"" cellspacing=""0"" style=""border-collapse: collapse; margin: 16px 0; font-size: 14px;"">
+        <tr><td style=""color: #6b7280;"">Location</td><td>{enc.Encode(p.LocationName)}<br /><span style=""color:#6b7280; font-size: 12px;"">{enc.Encode(p.LocationAddress)}</span></td></tr>
+        <tr><td style=""color: #6b7280;"">Dates</td><td>{p.StartDate:MMM d} – {p.EndDate:MMM d, yyyy}</td></tr>
+        <tr><td style=""color: #6b7280;"">Meets</td><td>{enc.Encode(p.MeetingDays)} · {p.StartTime:h:mm tt} – {p.EndTime:h:mm tt}</td></tr>
+    </table>
+
+    <p>{paymentBlurb}</p>
+
+    <p style=""margin-top: 24px; font-size: 14px; color: #4b5563;"">
+        Questions? Reply to this email or call {enc.Encode(p.ContactPhone)}.
+    </p>
+
+    <p style=""margin-top: 24px; font-size: 12px; color: #9ca3af;"">
+        Lake Country Spanish, LLC · {enc.Encode(p.ContactEmail)}
+    </p>
+</div>";
+    }
+
+    private static string BuildTeacherNotificationBody(ProgramEnrollment e, EnrollmentProgram p)
+    {
+        var enc = HtmlEncoder.Default;
+        var paymentLine = e.PaymentType switch
+        {
+            ProgramPaymentType.FullOneTime => $"Paid in full: ${e.TotalAmountPaid:N2}",
+            ProgramPaymentType.TwoInstallment => $"Installment 1 of 2 received: ${e.TotalAmountPaid:N2} (auto-charge for installment 2 in ~30 days)",
+            ProgramPaymentType.CashInHand => $"Cash-in-hand — collect ${p.FullPrice:N2} at the booth. Mark cash confirmed in admin once received.",
+            _ => string.Empty
+        };
+
+        var medical = string.IsNullOrWhiteSpace(e.MedicalConcerns)
+            ? "<em style=\"color:#6b7280;\">None noted</em>"
+            : enc.Encode(e.MedicalConcerns!);
+
+        return $@"<div style=""font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 20px; color: #111827;"">
+    <h2 style=""color: #4f46e5;"">New enrollment — {enc.Encode(p.Name)}</h2>
+
+    <h3 style=""margin-bottom: 4px;"">Student</h3>
+    <table cellpadding=""6"" cellspacing=""0"" style=""border-collapse: collapse; font-size: 14px; margin-bottom: 16px;"">
+        <tr><td style=""color:#6b7280;"">Name</td><td><strong>{enc.Encode(e.StudentFirstName)} {enc.Encode(e.StudentLastName)}</strong></td></tr>
+        <tr><td style=""color:#6b7280;"">Grade</td><td>{enc.Encode(e.StudentGrade)}</td></tr>
+        <tr><td style=""color:#6b7280;"">Birthdate</td><td>{e.StudentBirthDate:MMM d, yyyy}</td></tr>
+        <tr><td style=""color:#6b7280; vertical-align:top;"">Medical</td><td>{medical}</td></tr>
+    </table>
+
+    <h3 style=""margin-bottom: 4px;"">Parent / guardian</h3>
+    <table cellpadding=""6"" cellspacing=""0"" style=""border-collapse: collapse; font-size: 14px; margin-bottom: 16px;"">
+        <tr><td style=""color:#6b7280;"">Name</td><td>{enc.Encode(e.ParentFirstName)} {enc.Encode(e.ParentLastName)}</td></tr>
+        <tr><td style=""color:#6b7280;"">Email</td><td>{enc.Encode(e.ParentEmail)}</td></tr>
+        <tr><td style=""color:#6b7280;"">Phone</td><td>{enc.Encode(e.ParentPhone)}</td></tr>
+    </table>
+
+    <h3 style=""margin-bottom: 4px;"">Emergency contact</h3>
+    <table cellpadding=""6"" cellspacing=""0"" style=""border-collapse: collapse; font-size: 14px; margin-bottom: 16px;"">
+        <tr><td style=""color:#6b7280;"">Name</td><td>{enc.Encode(e.EmergencyName)} ({enc.Encode(e.EmergencyRelationship)})</td></tr>
+        <tr><td style=""color:#6b7280;"">Phone</td><td>{enc.Encode(e.EmergencyPhone)}</td></tr>
+    </table>
+
+    <h3 style=""margin-bottom: 4px;"">Pickup authorization</h3>
+    <p style=""font-size: 14px; white-space: pre-wrap;"">{enc.Encode(e.PickupAuthorization)}</p>
+
+    <p style=""margin-top: 20px; padding: 12px; background: #f3f4f6; border-radius: 6px; font-size: 14px;""><strong>Payment:</strong> {paymentLine}</p>
+
+    <p style=""margin-top: 16px; font-size: 12px; color: #6b7280;"">Enrollment #{e.Id} · Enrolled {e.CreatedAt:yyyy-MM-dd HH:mm} UTC</p>
+</div>";
     }
 
     private static bool TryReadEnrollmentId(IDictionary<string, string>? metadata, out int enrollmentId)

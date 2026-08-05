@@ -315,3 +315,10 @@ public sealed class ProgramDetailViewModel
     public int PendingCount { get; init; }
     public int CashPendingCount { get; init; }
 }
+
+/// <summary>Full roster view for a program — every enrollment, with cash-confirm actions on unpaid cash rows.</summary>
+public sealed class ProgramEnrollmentsRosterViewModel
+{
+    public EnrollmentProgram Program { get; init; } = null!;
+    public IReadOnlyList<ProgramEnrollment> Enrollments { get; init; } = Array.Empty<ProgramEnrollment>();
+}

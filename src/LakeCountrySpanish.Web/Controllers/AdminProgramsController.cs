@@ -19,6 +19,7 @@ namespace LakeCountrySpanish.Web.Controllers;
 public class AdminProgramsController : Controller
 {
     private readonly IEnrollmentProgramService _programs;
+    private readonly IProgramEnrollmentService _enrollments;
     private readonly ApplicationDbContext _context;
     private readonly IWebHostEnvironment _environment;
 
@@ -28,10 +29,12 @@ public class AdminProgramsController : Controller
 
     public AdminProgramsController(
         IEnrollmentProgramService programs,
+        IProgramEnrollmentService enrollments,
         ApplicationDbContext context,
         IWebHostEnvironment environment)
     {
         _programs = programs;
+        _enrollments = enrollments;
         _context = context;
         _environment = environment;
     }
@@ -231,7 +234,105 @@ public class AdminProgramsController : Controller
         return View(vm);
     }
 
+    /// <summary>Full roster of enrollments for a program — admin-only view.</summary>
+    [HttpGet("{id:int}/Enrollments")]
+    public async Task<IActionResult> Enrollments(int id, CancellationToken ct)
+    {
+        var program = await _programs.GetByIdAsync(id, ct);
+        if (program is null) return NotFound();
+
+        var enrollments = await _context.ProgramEnrollments
+            .Where(e => e.ProgramId == id)
+            .OrderByDescending(e => e.CreatedAt)
+            .ToListAsync(ct);
+
+        var vm = new ProgramEnrollmentsRosterViewModel
+        {
+            Program = program,
+            Enrollments = enrollments
+        };
+        return View(vm);
+    }
+
+    /// <summary>CSV export of the enrollment roster — includes contact + emergency + medical fields for printing a paper roster.</summary>
+    [HttpGet("{id:int}/Enrollments.csv")]
+    public async Task<IActionResult> EnrollmentsCsv(int id, CancellationToken ct)
+    {
+        var program = await _programs.GetByIdAsync(id, ct);
+        if (program is null) return NotFound();
+
+        var enrollments = await _context.ProgramEnrollments
+            .Where(e => e.ProgramId == id)
+            .OrderBy(e => e.StudentLastName)
+            .ThenBy(e => e.StudentFirstName)
+            .ToListAsync(ct);
+
+        var csv = new System.Text.StringBuilder();
+        csv.AppendLine("Enrolled,Student,Grade,Birthdate,Parent,Email,Phone,Address,City,State,Zip,Emergency Name,Emergency Phone,Emergency Relationship,Pickup Authorization,Medical Concerns,Notes,Payment Type,Status,Amount Paid,Waiver Accepted,Photo Release");
+
+        foreach (var e in enrollments)
+        {
+            csv.Append(CsvField(e.CreatedAt.ToString("yyyy-MM-dd HH:mm"))).Append(',');
+            csv.Append(CsvField($"{e.StudentFirstName} {e.StudentLastName}")).Append(',');
+            csv.Append(CsvField(e.StudentGrade)).Append(',');
+            csv.Append(CsvField(e.StudentBirthDate.ToString("yyyy-MM-dd"))).Append(',');
+            csv.Append(CsvField($"{e.ParentFirstName} {e.ParentLastName}")).Append(',');
+            csv.Append(CsvField(e.ParentEmail)).Append(',');
+            csv.Append(CsvField(e.ParentPhone)).Append(',');
+            csv.Append(CsvField(e.ParentAddressLine1)).Append(',');
+            csv.Append(CsvField(e.ParentCity)).Append(',');
+            csv.Append(CsvField(e.ParentState)).Append(',');
+            csv.Append(CsvField(e.ParentZip)).Append(',');
+            csv.Append(CsvField(e.EmergencyName)).Append(',');
+            csv.Append(CsvField(e.EmergencyPhone)).Append(',');
+            csv.Append(CsvField(e.EmergencyRelationship)).Append(',');
+            csv.Append(CsvField(e.PickupAuthorization)).Append(',');
+            csv.Append(CsvField(e.MedicalConcerns ?? string.Empty)).Append(',');
+            csv.Append(CsvField(e.StudentNotes ?? string.Empty)).Append(',');
+            csv.Append(CsvField(e.PaymentType.ToString())).Append(',');
+            csv.Append(CsvField(e.Status.ToString())).Append(',');
+            csv.Append(CsvField(e.TotalAmountPaid.ToString("F2"))).Append(',');
+            csv.Append(CsvField(e.WaiverAcceptedAt.ToString("yyyy-MM-dd HH:mm"))).Append(',');
+            csv.Append(CsvField(e.PhotoReleaseGrantedAt?.ToString("yyyy-MM-dd HH:mm") ?? "no"));
+            csv.AppendLine();
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetPreamble()
+            .Concat(System.Text.Encoding.UTF8.GetBytes(csv.ToString()))
+            .ToArray();
+
+        var fileName = $"lcs-{program.Slug}-roster-{DateTime.UtcNow:yyyyMMdd}.csv";
+        return File(bytes, "text/csv", fileName);
+    }
+
+    /// <summary>Mark a cash-in-hand enrollment as paid once Karen has the cash.</summary>
+    [HttpPost("{id:int}/Enrollments/{enrollmentId:int}/ConfirmCash")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmCash(int id, int enrollmentId, CancellationToken ct)
+    {
+        try
+        {
+            var adminId = User.Identity?.Name ?? "unknown";
+            var enrollment = await _enrollments.MarkCashConfirmedAsync(enrollmentId, adminId, ct);
+            TempData["SuccessMessage"] = $"Marked cash received from {enrollment.ParentFirstName} {enrollment.ParentLastName} for {enrollment.StudentFirstName}.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Enrollments), new { id });
+    }
+
     // ---------------- helpers ----------------
+
+    /// <summary>RFC 4180 CSV field escape — wraps in quotes if the field contains a comma, quote, or newline; doubles internal quotes.</summary>
+    private static string CsvField(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return string.Empty;
+        var needsQuoting = value.IndexOfAny(new[] { ',', '"', '\n', '\r' }) >= 0;
+        if (!needsQuoting) return value;
+        return "\"" + value.Replace("\"", "\"\"") + "\"";
+    }
 
     private static bool AnyMeetingDayPicked(ProgramFormViewModel model) =>
         model.MeetingDaySun || model.MeetingDayMon || model.MeetingDayTue ||

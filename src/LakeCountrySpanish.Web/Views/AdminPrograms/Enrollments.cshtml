@@ -1,0 +1,164 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.ProgramEnrollmentsRosterViewModel
+@using LakeCountrySpanish.Web.Models.Entities
+@{
+    ViewData["Title"] = $"Enrollments – {Model.Program.Name}";
+    var p = Model.Program;
+    var totalCount = Model.Enrollments.Count;
+    var paidCount = Model.Enrollments.Count(e => e.Status == ProgramEnrollmentStatus.FullyPaid
+                                              || e.Status == ProgramEnrollmentStatus.FirstPaymentComplete);
+    var cashPendingCount = Model.Enrollments.Count(e => e.Status == ProgramEnrollmentStatus.CashPending);
+    var pendingStripeCount = Model.Enrollments.Count(e => e.Status == ProgramEnrollmentStatus.PendingPayment);
+}
+
+<div class="bg-gray-50 min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Enrollments</h1>
+                <p class="text-sm text-gray-600 mt-1">
+                    <a href="@Url.Action("Detail", new { id = p.Id })" class="text-indigo-600 hover:text-indigo-800">@p.Name</a>
+                    · @p.LocationName · @p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <a href="@Url.Action("EnrollmentsCsv", new { id = p.Id })"
+                   class="px-3 py-2 bg-white border border-gray-300 text-sm rounded hover:bg-gray-50">⬇ Export CSV</a>
+                <a href="@Url.Action("Detail", new { id = p.Id })" class="text-sm text-indigo-600 hover:text-indigo-800 self-center">← Program detail</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white rounded shadow p-3 text-center">
+                <div class="text-2xl font-bold text-gray-900">@totalCount</div>
+                <div class="text-xs text-gray-500 uppercase tracking-wide">Total</div>
+            </div>
+            <div class="bg-green-50 rounded shadow p-3 text-center">
+                <div class="text-2xl font-bold text-green-800">@paidCount</div>
+                <div class="text-xs text-green-700 uppercase tracking-wide">Paid / installment</div>
+            </div>
+            <div class="bg-blue-50 rounded shadow p-3 text-center">
+                <div class="text-2xl font-bold text-blue-800">@cashPendingCount</div>
+                <div class="text-xs text-blue-700 uppercase tracking-wide">Cash pending</div>
+            </div>
+            <div class="bg-yellow-50 rounded shadow p-3 text-center">
+                <div class="text-2xl font-bold text-yellow-800">@pendingStripeCount</div>
+                <div class="text-xs text-yellow-700 uppercase tracking-wide">Awaiting Stripe</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            @if (totalCount == 0)
+            {
+                <div class="p-8 text-center text-sm text-gray-500">
+                    No enrollments yet. Share the <a href="@($"/join/{p.Slug}")" class="text-indigo-600 hover:text-indigo-800 font-mono">/join/@p.Slug</a> URL or QR code.
+                </div>
+            }
+            else
+            {
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+                            <tr>
+                                <th class="px-4 py-2 text-left">Enrolled</th>
+                                <th class="px-4 py-2 text-left">Student</th>
+                                <th class="px-4 py-2 text-left">Parent</th>
+                                <th class="px-4 py-2 text-left">Contact</th>
+                                <th class="px-4 py-2 text-left">Payment</th>
+                                <th class="px-4 py-2 text-left">Status</th>
+                                <th class="px-4 py-2 text-right">Amount</th>
+                                <th class="px-4 py-2 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            @foreach (var e in Model.Enrollments)
+                            {
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                                        @e.CreatedAt.ToString("MMM d")<br /><span class="text-gray-400">@e.CreatedAt.ToString("h:mm tt")</span>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-gray-900">@e.StudentFirstName @e.StudentLastName</div>
+                                        <div class="text-xs text-gray-500">
+                                            @(string.IsNullOrEmpty(e.StudentGrade) ? "" : $"Grade {e.StudentGrade} · ")
+                                            b. @e.StudentBirthDate.ToString("MMM d, yyyy")
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(e.MedicalConcerns))
+                                        {
+                                            <div class="text-xs text-red-600 mt-1" title="@e.MedicalConcerns">⚠ Medical: @(e.MedicalConcerns.Length > 40 ? e.MedicalConcerns[..40] + "…" : e.MedicalConcerns)</div>
+                                        }
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="font-medium text-gray-900">@e.ParentFirstName @e.ParentLastName</div>
+                                        <div class="text-xs text-gray-500">Emergency: @e.EmergencyName (@e.EmergencyRelationship)</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs">
+                                        <div><a href="mailto:@e.ParentEmail" class="text-indigo-600 hover:underline">@e.ParentEmail</a></div>
+                                        <div class="text-gray-600">@e.ParentPhone</div>
+                                    </td>
+                                    <td class="px-4 py-3 text-xs">
+                                        @switch (e.PaymentType)
+                                        {
+                                            case ProgramPaymentType.FullOneTime:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">Full</span>
+                                                break;
+                                            case ProgramPaymentType.TwoInstallment:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">Installment</span>
+                                                break;
+                                            case ProgramPaymentType.CashInHand:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Cash</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td class="px-4 py-3 text-xs">
+                                        @switch (e.Status)
+                                        {
+                                            case ProgramEnrollmentStatus.FullyPaid:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-green-100 text-green-800">Paid</span>
+                                                break;
+                                            case ProgramEnrollmentStatus.FirstPaymentComplete:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Installment 1 of 2</span>
+                                                break;
+                                            case ProgramEnrollmentStatus.CashPending:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Cash pending</span>
+                                                break;
+                                            case ProgramEnrollmentStatus.PendingPayment:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">Awaiting Stripe</span>
+                                                break;
+                                            case ProgramEnrollmentStatus.Cancelled:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-red-100 text-red-800">Cancelled</span>
+                                                break;
+                                            case ProgramEnrollmentStatus.Refunded:
+                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Refunded</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                                        <div class="font-medium text-gray-900">$@e.TotalAmountPaid.ToString("N2")</div>
+                                        @if (e.PaymentType == ProgramPaymentType.TwoInstallment && e.Status == ProgramEnrollmentStatus.FirstPaymentComplete)
+                                        {
+                                            <div class="text-xs text-gray-500">of $@p.FullPrice.ToString("N2")</div>
+                                        }
+                                    </td>
+                                    <td class="px-4 py-3 text-right whitespace-nowrap">
+                                        @if (e.Status == ProgramEnrollmentStatus.CashPending)
+                                        {
+                                            <form method="post" action="@Url.Action("ConfirmCash", new { id = p.Id, enrollmentId = e.Id })" class="inline">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit"
+                                                        onclick="return confirm('Mark cash received from @e.ParentFirstName @e.ParentLastName?');"
+                                                        class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 font-medium">
+                                                    Mark cash paid
+                                                </button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
