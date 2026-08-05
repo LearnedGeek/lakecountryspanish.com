@@ -65,7 +65,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach (var p in Model.EnrollmentOpen)
                     {
-                        <a href="@Url.Action("Landing", "Join", new { slug = p.Slug })"
+                        <a href="@Url.Action("Detail", "Programs", new { slug = p.Slug })"
                            class="group flex flex-col bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-200 hover:border-indigo-400 overflow-hidden transition-all hover:-translate-y-1">
                             <div class="aspect-[16/10] relative bg-gradient-to-br from-primary-500 to-secondary-500 overflow-hidden">
                                 @if (!string.IsNullOrEmpty(p.HeroImagePath))
@@ -113,7 +113,7 @@
                                         }
                                     </div>
                                     <span class="inline-flex items-center gap-1 px-4 py-2 bg-secondary-500 text-white text-sm font-bold rounded-lg shadow-sm group-hover:bg-secondary-600 group-hover:shadow-md transition-all">
-                                        Sign up →
+                                        Details →
                                     </span>
                                 </div>
                             </div>
@@ -137,7 +137,8 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach (var p in Model.ClosedButUpcoming)
                     {
-                        <div class="flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden opacity-80">
+                        <a href="@Url.Action("Detail", "Programs", new { slug = p.Slug })"
+                           class="flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 hover:border-gray-400 hover:shadow-md overflow-hidden opacity-80 hover:opacity-100 transition-all">
                             <div class="aspect-[16/10] relative bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden">
                                 @if (!string.IsNullOrEmpty(p.HeroImagePath))
                                 {
@@ -150,9 +151,9 @@
                             <div class="flex-1 flex flex-col p-5">
                                 <h3 class="font-display text-lg font-bold text-gray-800 mb-1">@p.Name</h3>
                                 <p class="text-sm text-gray-600">@p.LocationName · @p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</p>
-                                <p class="text-xs text-gray-500 mt-3">Interested in the next session? <a href="@Url.Action("Index", "Contact")" class="text-indigo-600 font-semibold hover:underline">Contact us</a>.</p>
+                                <p class="text-xs text-gray-500 mt-3">Interested in the next session? Contact us from the details page.</p>
                             </div>
-                        </div>
+                        </a>
                     }
                 </div>
             </section>
@@ -172,7 +173,8 @@
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     @foreach (var p in Model.Past.Take(8))
                     {
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden opacity-70">
+                        <a href="@Url.Action("Detail", "Programs", new { slug = p.Slug })"
+                           class="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-gray-400 hover:shadow-md overflow-hidden opacity-70 hover:opacity-100 transition-all">
                             <div class="aspect-[4/3] relative bg-gray-200 overflow-hidden">
                                 @if (!string.IsNullOrEmpty(p.HeroImagePath))
                                 {
@@ -184,7 +186,7 @@
                                 <p class="text-xs text-gray-500 mt-0.5">@p.LocationName</p>
                                 <p class="text-xs text-gray-500">@p.StartDate.ToString("MMM yyyy")</p>
                             </div>
-                        </div>
+                        </a>
                     }
                 </div>
                 <p class="text-center mt-6 text-sm text-gray-500">

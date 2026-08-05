@@ -47,4 +47,19 @@ public class ProgramsController : Controller
         };
         return View(vm);
     }
+
+    /// <summary>
+    /// Public read-only detail page for one program. Renders the full Markdown
+    /// description + all logistics so parents can browse-and-decide before
+    /// hitting the enrollment form at <c>/join/{slug}</c>. Separate from
+    /// <c>/join/{slug}</c> so the browse experience isn't mixed with a wall
+    /// of form fields.
+    /// </summary>
+    [HttpGet("{slug}")]
+    public async Task<IActionResult> Detail(string slug, CancellationToken ct)
+    {
+        var program = await _programs.GetBySlugAsync(slug, ct);
+        if (program is null || !program.IsListed) return NotFound();
+        return View(program);
+    }
 }

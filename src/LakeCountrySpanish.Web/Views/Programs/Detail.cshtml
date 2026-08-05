@@ -1,0 +1,188 @@
+@using LakeCountrySpanish.Web.Models.Entities
+@model EnrollmentProgram
+@{
+    var p = Model;
+    ViewData["Title"] = p.Name;
+    ViewData["MetaDescription"] = string.IsNullOrEmpty(p.TagLine)
+        ? $"{p.Name} — after-school Spanish program in {p.LocationName} with Lake Country Spanish."
+        : p.TagLine;
+
+    var heroStyle = string.IsNullOrEmpty(p.HeroImagePath)
+        ? "background: linear-gradient(135deg, #4361ee 0%, #e85a42 100%);"
+        : $"background-image: linear-gradient(135deg, rgba(30,58,95,0.55), rgba(232,90,66,0.45)), url('{p.HeroImagePath}'); background-size: cover; background-position: center;";
+
+    int daysLeft = (int)Math.Ceiling((p.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
+    bool canEnroll = !p.IsEnrollmentClosed && p.IsActive;
+}
+
+@functions {
+    string DeadlineLabel(EnrollmentProgram p)
+    {
+        var days = (int)Math.Ceiling((p.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
+        if (days <= 0) return "Enrollment closed";
+        if (days == 1) return "1 day left to enroll";
+        if (days <= 14) return $"{days} days left to enroll";
+        return $"Enroll by {p.EffectiveEnrollmentDeadline:MMM d, yyyy}";
+    }
+    string DeadlinePillClass(EnrollmentProgram p)
+    {
+        var days = (int)Math.Ceiling((p.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
+        if (days <= 0) return "bg-gray-200 text-gray-700 border-gray-300";
+        if (days <= 3) return "bg-red-100 text-red-800 border-red-200";
+        if (days <= 7) return "bg-amber-100 text-amber-900 border-amber-300";
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+    }
+}
+
+<div class="bg-gray-100 min-h-screen">
+
+    <!-- Hero -->
+    <div class="relative py-20 text-white" style="@heroStyle">
+        <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+            <a href="@Url.Action("Index", "Programs")" class="inline-flex items-center gap-1 text-sm font-semibold text-white/95 hover:text-white mb-4 drop-shadow">
+                ← All programs
+            </a>
+            <h1 class="font-display text-4xl sm:text-5xl font-bold drop-shadow">@p.Name</h1>
+            @if (!string.IsNullOrEmpty(p.TagLine))
+            {
+                <p class="mt-3 text-xl text-white/95 max-w-3xl">@p.TagLine</p>
+            }
+            <div class="mt-6 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-bold border shadow-sm @DeadlinePillClass(p)">
+                ⏱ @DeadlineLabel(p)
+            </div>
+        </div>
+    </div>
+
+    <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left column: description + waiver preview -->
+            <div class="lg:col-span-2 space-y-6">
+                @if (!string.IsNullOrEmpty(p.Description))
+                {
+                    <section class="bg-white rounded-2xl shadow-md p-6 md:p-8">
+                        <div class="prose prose-slate max-w-none">
+                            @Html.Raw(Markdig.Markdown.ToHtml(p.Description))
+                        </div>
+                    </section>
+                }
+
+                <!-- Waiver preview (read-only) -->
+                @if (!string.IsNullOrEmpty(p.WaiverText))
+                {
+                    <section class="bg-white rounded-2xl shadow-md border-l-4 border-emerald-500 overflow-hidden">
+                        <header class="border-b border-gray-100 px-6 py-4 bg-emerald-50/40">
+                            <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span class="text-emerald-600">📄</span> Waiver preview
+                            </h2>
+                            <p class="text-xs text-gray-600 mt-0.5">You'll be asked to accept this when you enroll.</p>
+                        </header>
+                        <div class="p-6">
+                            <div class="prose prose-sm max-w-none text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200 max-h-64 overflow-y-auto">
+                                @Html.Raw(Markdig.Markdown.ToHtml(p.WaiverText))
+                            </div>
+                        </div>
+                    </section>
+                }
+            </div>
+
+            <!-- Right column: sticky enroll card -->
+            <div class="lg:col-span-1">
+                <div class="lg:sticky lg:top-6 space-y-4">
+
+                    <section class="bg-white rounded-2xl shadow-md border-l-4 border-indigo-500 overflow-hidden">
+                        <header class="border-b border-gray-100 px-6 py-4 bg-indigo-50/40">
+                            <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <span class="text-indigo-600">ⓘ</span> Program details
+                            </h2>
+                        </header>
+                        <dl class="p-6 text-sm text-gray-700 divide-y divide-gray-100">
+                            <div class="py-2.5">
+                                <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Location</dt>
+                                <dd class="mt-1 font-semibold text-gray-900">@p.LocationName</dd>
+                                <dd class="text-xs text-gray-600">@p.LocationAddress</dd>
+                            </div>
+                            <div class="py-2.5">
+                                <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Dates</dt>
+                                <dd class="mt-1 font-semibold text-gray-900">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</dd>
+                            </div>
+                            <div class="py-2.5">
+                                <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Meets</dt>
+                                <dd class="mt-1 font-semibold text-gray-900">@p.MeetingDays</dd>
+                                <dd class="text-xs text-gray-600">@p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
+                            </div>
+                            @if (!string.IsNullOrEmpty(p.GradeRange) || p.AgeMin > 0)
+                            {
+                                <div class="py-2.5">
+                                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Ages / Grades</dt>
+                                    <dd class="mt-1 font-semibold text-gray-900">
+                                        @(!string.IsNullOrEmpty(p.GradeRange) ? $"Grades {p.GradeRange}" : "")
+                                        @(p.AgeMin > 0 ? $"· ages {p.AgeMin}–{p.AgeMax}" : "")
+                                    </dd>
+                                </div>
+                            }
+                            <div class="py-2.5">
+                                <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Full price</dt>
+                                <dd class="mt-1 font-bold text-2xl text-gray-900">$@p.FullPrice.ToString("N2")</dd>
+                                @if (p.InstallmentsEnabled)
+                                {
+                                    <dd class="text-xs text-gray-600 mt-0.5">or @p.InstallmentCount installments of $@p.InstallmentAmount.ToString("N2")</dd>
+                                }
+                                @if (p.CashOptionEnabled)
+                                {
+                                    <dd class="text-xs text-gray-600 mt-0.5">cash / check accepted at the booth</dd>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(p.RefundPolicyText))
+                            {
+                                <div class="py-2.5">
+                                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Refund policy</dt>
+                                    <dd class="mt-1 text-xs text-gray-600 italic">@p.RefundPolicyText</dd>
+                                </div>
+                            }
+                        </dl>
+                    </section>
+
+                    <!-- Enroll CTA -->
+                    @if (canEnroll)
+                    {
+                        <a href="@Url.Action("Landing", "Join", new { slug = p.Slug })"
+                           class="block w-full text-center px-6 py-4 bg-secondary-500 text-white text-lg font-bold rounded-2xl shadow-lg shadow-secondary-500/30 hover:bg-secondary-600 hover:shadow-secondary-500/40 focus:outline-none focus:ring-4 focus:ring-secondary-500/30 transition-all">
+                            Sign up now →
+                        </a>
+                        <p class="text-xs text-center text-gray-500">Enroll online in a few minutes.</p>
+                    }
+                    else
+                    {
+                        <div class="w-full text-center px-6 py-4 bg-gray-200 text-gray-600 text-lg font-bold rounded-2xl">
+                            Enrollment closed
+                        </div>
+                        <a href="@Url.Action("Index", "Contact")" class="block text-center text-sm text-indigo-600 hover:text-indigo-800 font-semibold">
+                            Contact us about the next session →
+                        </a>
+                    }
+
+                    <!-- Contact info -->
+                    @if (!string.IsNullOrEmpty(p.ContactPhone) || !string.IsNullOrEmpty(p.ContactEmail))
+                    {
+                        <div class="text-xs text-center text-gray-500">
+                            Questions?
+                            @if (!string.IsNullOrEmpty(p.ContactPhone))
+                            {
+                                <a href="tel:@p.ContactPhone" class="text-indigo-600 font-semibold hover:underline">@p.ContactPhone</a>
+                            }
+                            @if (!string.IsNullOrEmpty(p.ContactPhone) && !string.IsNullOrEmpty(p.ContactEmail))
+                            {
+                                <span>·</span>
+                            }
+                            @if (!string.IsNullOrEmpty(p.ContactEmail))
+                            {
+                                <a href="mailto:@p.ContactEmail" class="text-indigo-600 font-semibold hover:underline">@p.ContactEmail</a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
