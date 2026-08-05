@@ -48,9 +48,20 @@ public sealed class ProgramFormViewModel
     [Display(Name = "Description (Markdown)")]
     public string Description { get; set; } = string.Empty;
 
-    [StringLength(240)]
-    [Display(Name = "Hero image path", Description = "e.g. /img/programs/dance-and-learn-spanish-after-school-program.jpeg")]
+    /// <summary>
+    /// Existing image path (edit mode) or path assigned by the controller after
+    /// a successful upload (create mode). Hidden from the form directly — Karen
+    /// interacts with <see cref="HeroImageUpload"/> and the current image preview.
+    /// </summary>
     public string? HeroImagePath { get; set; }
+
+    /// <summary>
+    /// Optional file upload from the parent-form multipart POST. Controller
+    /// validates + saves to <c>wwwroot/img/programs/{slug}.{ext}</c> and
+    /// populates <see cref="HeroImagePath"/> from the saved location.
+    /// </summary>
+    [Display(Name = "Hero image", Description = "JPG, PNG, or WebP. Optional — a colored gradient shows if you leave this blank.")]
+    public IFormFile? HeroImageUpload { get; set; }
 
     // ---------- Logistics ----------
 
@@ -70,9 +81,21 @@ public sealed class ProgramFormViewModel
     [Display(Name = "End date")]
     public DateTime EndDate { get; set; }
 
-    [Required, StringLength(80)]
-    [Display(Name = "Meeting days", Description = "Free-form: \"Tuesdays\" or \"Mondays & Wednesdays\".")]
+    /// <summary>
+    /// Derived from the seven weekday checkboxes below on submit; also displayed
+    /// back on edit if the stored value doesn't parse to a checkbox pattern.
+    /// Stored form: "Tuesdays" / "Mondays & Wednesdays" / "Mondays, Wednesdays & Fridays".
+    /// </summary>
+    [Display(Name = "Meeting days")]
     public string MeetingDays { get; set; } = string.Empty;
+
+    [Display(Name = "Sun")] public bool MeetingDaySun { get; set; }
+    [Display(Name = "Mon")] public bool MeetingDayMon { get; set; }
+    [Display(Name = "Tue")] public bool MeetingDayTue { get; set; }
+    [Display(Name = "Wed")] public bool MeetingDayWed { get; set; }
+    [Display(Name = "Thu")] public bool MeetingDayThu { get; set; }
+    [Display(Name = "Fri")] public bool MeetingDayFri { get; set; }
+    [Display(Name = "Sat")] public bool MeetingDaySat { get; set; }
 
     [Required, DataType(DataType.Time)]
     [Display(Name = "Start time")]
@@ -167,7 +190,7 @@ public sealed class ProgramFormViewModel
         target.LocationAddress = LocationAddress;
         target.StartDate = DateTime.SpecifyKind(StartDate, DateTimeKind.Utc);
         target.EndDate = DateTime.SpecifyKind(EndDate, DateTimeKind.Utc);
-        target.MeetingDays = MeetingDays;
+        target.MeetingDays = CompileMeetingDays();
         target.StartTime = StartTime;
         target.EndTime = EndTime;
         target.GradeRange = GradeRange ?? string.Empty;
@@ -189,38 +212,84 @@ public sealed class ProgramFormViewModel
         return target;
     }
 
-    public static ProgramFormViewModel FromEntity(EnrollmentProgram p) => new()
+    public static ProgramFormViewModel FromEntity(EnrollmentProgram p)
     {
-        Id = p.Id,
-        Slug = p.Slug,
-        Name = p.Name,
-        TagLine = p.TagLine,
-        Description = p.Description,
-        HeroImagePath = p.HeroImagePath,
-        LocationName = p.LocationName,
-        LocationAddress = p.LocationAddress,
-        StartDate = p.StartDate,
-        EndDate = p.EndDate,
-        MeetingDays = p.MeetingDays,
-        StartTime = p.StartTime,
-        EndTime = p.EndTime,
-        GradeRange = p.GradeRange,
-        AgeMin = p.AgeMin,
-        AgeMax = p.AgeMax,
-        FullPrice = p.FullPrice,
-        InstallmentsEnabled = p.InstallmentsEnabled,
-        InstallmentCount = p.InstallmentCount,
-        FinalInstallmentDueDate = p.FinalInstallmentDueDate,
-        CashOptionEnabled = p.CashOptionEnabled,
-        WaiverText = p.WaiverText,
-        RefundPolicyText = p.RefundPolicyText,
-        ContactPhone = p.ContactPhone,
-        ContactEmail = p.ContactEmail,
-        IsActive = p.IsActive,
-        IsListed = p.IsListed,
-        PricingLocked = !string.IsNullOrEmpty(p.StripeProductId),
-        StripeProductId = p.StripeProductId
-    };
+        var vm = new ProgramFormViewModel
+        {
+            Id = p.Id,
+            Slug = p.Slug,
+            Name = p.Name,
+            TagLine = p.TagLine,
+            Description = p.Description,
+            HeroImagePath = p.HeroImagePath,
+            LocationName = p.LocationName,
+            LocationAddress = p.LocationAddress,
+            StartDate = p.StartDate,
+            EndDate = p.EndDate,
+            MeetingDays = p.MeetingDays,
+            StartTime = p.StartTime,
+            EndTime = p.EndTime,
+            GradeRange = p.GradeRange,
+            AgeMin = p.AgeMin,
+            AgeMax = p.AgeMax,
+            FullPrice = p.FullPrice,
+            InstallmentsEnabled = p.InstallmentsEnabled,
+            InstallmentCount = p.InstallmentCount,
+            FinalInstallmentDueDate = p.FinalInstallmentDueDate,
+            CashOptionEnabled = p.CashOptionEnabled,
+            WaiverText = p.WaiverText,
+            RefundPolicyText = p.RefundPolicyText,
+            ContactPhone = p.ContactPhone,
+            ContactEmail = p.ContactEmail,
+            IsActive = p.IsActive,
+            IsListed = p.IsListed,
+            PricingLocked = !string.IsNullOrEmpty(p.StripeProductId),
+            StripeProductId = p.StripeProductId
+        };
+        vm.ApplyMeetingDaysFromString(p.MeetingDays);
+        return vm;
+    }
+
+    /// <summary>
+    /// Turns the seven day checkboxes into a display string like
+    /// "Tuesdays", "Mondays &amp; Wednesdays", or "Mondays, Wednesdays &amp; Fridays".
+    /// Falls back to whatever's in <see cref="MeetingDays"/> when no boxes are checked,
+    /// so admins editing legacy free-text records don't get it wiped.
+    /// </summary>
+    public string CompileMeetingDays()
+    {
+        var selected = new List<string>(7);
+        if (MeetingDaySun) selected.Add("Sundays");
+        if (MeetingDayMon) selected.Add("Mondays");
+        if (MeetingDayTue) selected.Add("Tuesdays");
+        if (MeetingDayWed) selected.Add("Wednesdays");
+        if (MeetingDayThu) selected.Add("Thursdays");
+        if (MeetingDayFri) selected.Add("Fridays");
+        if (MeetingDaySat) selected.Add("Saturdays");
+
+        if (selected.Count == 0) return MeetingDays ?? string.Empty;
+        if (selected.Count == 1) return selected[0];
+        if (selected.Count == 2) return $"{selected[0]} & {selected[1]}";
+        return string.Join(", ", selected.Take(selected.Count - 1)) + " & " + selected[^1];
+    }
+
+    /// <summary>
+    /// Best-effort parse of a stored MeetingDays string back into checkbox state
+    /// for edit mode. Looks for the substring "Mon", "Tue", etc. — matches both
+    /// "Mondays" and "Mon, Wed" style. Case-insensitive.
+    /// </summary>
+    public void ApplyMeetingDaysFromString(string? source)
+    {
+        if (string.IsNullOrWhiteSpace(source)) return;
+        var s = source;
+        MeetingDaySun = s.Contains("Sun", StringComparison.OrdinalIgnoreCase);
+        MeetingDayMon = s.Contains("Mon", StringComparison.OrdinalIgnoreCase);
+        MeetingDayTue = s.Contains("Tue", StringComparison.OrdinalIgnoreCase);
+        MeetingDayWed = s.Contains("Wed", StringComparison.OrdinalIgnoreCase);
+        MeetingDayThu = s.Contains("Thu", StringComparison.OrdinalIgnoreCase);
+        MeetingDayFri = s.Contains("Fri", StringComparison.OrdinalIgnoreCase);
+        MeetingDaySat = s.Contains("Sat", StringComparison.OrdinalIgnoreCase);
+    }
 }
 
 /// <summary>Detail view — shows program summary, QR code, join URL, enrollment stats.</summary>

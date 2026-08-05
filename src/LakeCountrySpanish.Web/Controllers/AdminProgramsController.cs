@@ -20,11 +20,20 @@ public class AdminProgramsController : Controller
 {
     private readonly IEnrollmentProgramService _programs;
     private readonly ApplicationDbContext _context;
+    private readonly IWebHostEnvironment _environment;
 
-    public AdminProgramsController(IEnrollmentProgramService programs, ApplicationDbContext context)
+    private static readonly HashSet<string> AllowedImageExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp" };
+    private const long MaxHeroImageBytes = 5 * 1024 * 1024; // 5 MB
+
+    public AdminProgramsController(
+        IEnrollmentProgramService programs,
+        ApplicationDbContext context,
+        IWebHostEnvironment environment)
     {
         _programs = programs;
         _context = context;
+        _environment = environment;
     }
 
     [HttpGet("")]
@@ -85,6 +94,12 @@ public class AdminProgramsController : Controller
     {
         if (!ModelState.IsValid) return View("Form", model);
 
+        if (!TryHandleHeroImageUpload(model, out var uploadError))
+        {
+            ModelState.AddModelError(nameof(model.HeroImageUpload), uploadError!);
+            return View("Form", model);
+        }
+
         try
         {
             var created = await _programs.CreateAsync(model.ToEntity(), ct);
@@ -144,6 +159,12 @@ public class AdminProgramsController : Controller
         if (id != model.Id) return BadRequest();
         if (!ModelState.IsValid) return View("Form", model);
 
+        if (!TryHandleHeroImageUpload(model, out var uploadError))
+        {
+            ModelState.AddModelError(nameof(model.HeroImageUpload), uploadError!);
+            return View("Form", model);
+        }
+
         try
         {
             var updated = await _programs.UpdateAsync(model.ToEntity(), ct);
@@ -185,6 +206,67 @@ public class AdminProgramsController : Controller
         var scheme = Request.Scheme;
         var host = Request.Host.ToString();
         return $"{scheme}://{host}/join/{slug}";
+    }
+
+    /// <summary>
+    /// Validates and persists a hero-image upload, setting <see cref="ProgramFormViewModel.HeroImagePath"/>
+    /// to the saved location. No-op when no file was selected — the existing HeroImagePath
+    /// (either from the edited entity or blank) is preserved. Files land at
+    /// <c>wwwroot/img/programs/{slug}.{ext}</c>, overwriting any prior upload for that slug.
+    /// </summary>
+    private bool TryHandleHeroImageUpload(ProgramFormViewModel model, out string? error)
+    {
+        error = null;
+        var upload = model.HeroImageUpload;
+        if (upload is null || upload.Length == 0) return true;
+
+        if (upload.Length > MaxHeroImageBytes)
+        {
+            error = $"Image is too large ({upload.Length / (1024 * 1024)} MB). Max 5 MB.";
+            return false;
+        }
+
+        var ext = Path.GetExtension(upload.FileName);
+        if (!AllowedImageExtensions.Contains(ext))
+        {
+            error = "Image must be a .jpg, .jpeg, .png, or .webp file.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Slug))
+        {
+            error = "Please fill in the URL slug before uploading a hero image — the filename is derived from it.";
+            return false;
+        }
+
+        // Normalize .jpeg → .jpg so /img/programs/foo.jpg is the canonical stored path.
+        var normalizedExt = ext.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ? ".jpg" : ext.ToLowerInvariant();
+        var relativePath = $"/img/programs/{model.Slug}{normalizedExt}";
+        var absoluteDir = Path.Combine(_environment.WebRootPath, "img", "programs");
+        var absolutePath = Path.Combine(absoluteDir, $"{model.Slug}{normalizedExt}");
+
+        Directory.CreateDirectory(absoluteDir);
+
+        // Remove any prior file for the same slug with a different extension to
+        // avoid orphaned images shadowing the current one.
+        foreach (var otherExt in AllowedImageExtensions)
+        {
+            var normalized = otherExt.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ? ".jpg" : otherExt.ToLowerInvariant();
+            if (normalized == normalizedExt) continue;
+            var prior = Path.Combine(absoluteDir, $"{model.Slug}{normalized}");
+            if (System.IO.File.Exists(prior))
+            {
+                try { System.IO.File.Delete(prior); } catch { /* best-effort cleanup */ }
+            }
+        }
+
+        using (var stream = System.IO.File.Create(absolutePath))
+        {
+            upload.CopyTo(stream);
+        }
+
+        model.HeroImagePath = relativePath;
+        return true;
     }
 
     /// <summary>
