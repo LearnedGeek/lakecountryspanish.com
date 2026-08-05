@@ -90,15 +90,21 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
         NormalizeSlug(program);
 
         // Copy the mutable metadata fields over — leave StripeProductId/PriceIds untouched.
+        // WARNING: any new mutable field on EnrollmentProgram must be added here too,
+        // otherwise it will save fine on Create but be silently dropped on every Edit.
+        // The bug is invisible from the outside (the flash says "Saved changes"), only
+        // surfacing when someone views the read side and asks "why didn't my change stick".
         existing.Slug = program.Slug;
         existing.Name = program.Name;
         existing.TagLine = program.TagLine;
         existing.Description = program.Description;
         existing.HeroImagePath = program.HeroImagePath;
+        existing.EventImagePath = program.EventImagePath;
         existing.LocationName = program.LocationName;
         existing.LocationAddress = program.LocationAddress;
         existing.StartDate = program.StartDate;
         existing.EndDate = program.EndDate;
+        existing.EnrollmentDeadline = program.EnrollmentDeadline;
         existing.MeetingDays = program.MeetingDays;
         existing.StartTime = program.StartTime;
         existing.EndTime = program.EndTime;
