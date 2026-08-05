@@ -246,6 +246,159 @@
     </div>
 </div>
 
+<!-- Our Programs carousel. Hardcoded slides for now — Karen edits copy /
+     adds slides directly here. Long-term this should render from the
+     EnrollmentProgram table (see #13, public program calendar). Vanilla
+     CSS/JS: transform-based track, auto-advance every 6s, dot nav,
+     pause on hover, keyboard-accessible dots. -->
+<div class="bg-white py-14 lg:py-16 border-b border-gray-100" id="our-programs">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <p class="text-xs sm:text-sm font-bold tracking-[0.2em] uppercase text-secondary-600 mb-3">
+                ★ What we offer
+            </p>
+            <h2 class="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Our Programs
+            </h2>
+            <p class="mt-3 text-gray-600 max-w-2xl mx-auto">
+                Each program blends real Spanish, real culture, and hands-on play. Slide through to see what we bring to schools, after-school programs, and community events.
+            </p>
+        </div>
+
+        <div class="relative" id="programs-carousel" aria-roledescription="carousel" aria-label="Lake Country Spanish program offerings">
+            <div class="overflow-hidden rounded-2xl">
+                <div class="programs-track flex transition-transform duration-700 ease-in-out will-change-transform">
+
+                    <!-- Slide 1: Dance & Learn Spanish -->
+                    <article class="programs-slide flex-shrink-0 w-full" aria-roledescription="slide" aria-label="Dance and Learn Spanish">
+                        <div class="grid md:grid-cols-2 gap-0 bg-white shadow-lg rounded-2xl overflow-hidden">
+                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[380px] relative bg-gray-100">
+                                <img src="~/img/programs/dance-and-learn-spanish-after-school-program.jpeg"
+                                     alt="Children dancing in a Dance and Learn Spanish after-school class"
+                                     class="absolute inset-0 w-full h-full object-cover"
+                                     loading="lazy" />
+                            </div>
+                            <div class="p-6 md:p-8 flex flex-col justify-center">
+                                <p class="text-xs font-bold tracking-[0.15em] uppercase text-teal-700 mb-2">After-school program · Grades K–6</p>
+                                <h3 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-3">Dance &amp; Learn Spanish</h3>
+                                <p class="text-gray-700 mb-4">
+                                    Move, sing, and celebrate Spanish through dance, music, and traditions from across the Spanish-speaking world. Each session pairs a new country with age-appropriate songs, movement, and a hands-on activity kids take home.
+                                </p>
+                                <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center text-sm font-semibold text-secondary-600 hover:text-secondary-700">
+                                    Bring this to your school →
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Slide 2: Bailamos y Aprendemos Español -->
+                    <article class="programs-slide flex-shrink-0 w-full" aria-roledescription="slide" aria-label="Bailamos y Aprendemos Español">
+                        <div class="grid md:grid-cols-2 gap-0 bg-white shadow-lg rounded-2xl overflow-hidden">
+                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[380px] relative bg-gray-100">
+                                <img src="~/img/programs/bailamos-y-aprendemos-espanol-after-school-program.jpeg"
+                                     alt="Children in a Bailamos y Aprendemos Español after-school class"
+                                     class="absolute inset-0 w-full h-full object-cover"
+                                     loading="lazy" />
+                            </div>
+                            <div class="p-6 md:p-8 flex flex-col justify-center">
+                                <p class="text-xs font-bold tracking-[0.15em] uppercase text-teal-700 mb-2">Programa después de la escuela · Grados K–6</p>
+                                <h3 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-3">Bailamos y Aprendemos Español</h3>
+                                <p class="text-gray-700 mb-4">
+                                    ¡A bailar y aprender! An after-school program built around movement, music, and immersive Spanish. Kids explore a new Spanish-speaking country each session with rhythm, songs, and cultural celebrations that make the language stick.
+                                </p>
+                                <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center text-sm font-semibold text-secondary-600 hover:text-secondary-700">
+                                    Bring this to your school →
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+
+            <!-- Prev / Next arrows (hidden on mobile — dots below are enough there) -->
+            <button type="button"
+                    class="programs-prev hidden md:flex absolute top-1/2 -left-4 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full bg-white shadow-md text-gray-700 hover:bg-gray-50 hover:text-gray-900 z-10"
+                    aria-label="Previous program">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button type="button"
+                    class="programs-next hidden md:flex absolute top-1/2 -right-4 -translate-y-1/2 h-10 w-10 items-center justify-center rounded-full bg-white shadow-md text-gray-700 hover:bg-gray-50 hover:text-gray-900 z-10"
+                    aria-label="Next program">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
+
+            <!-- Dot navigation -->
+            <div class="programs-dots flex justify-center gap-2 mt-6" role="tablist" aria-label="Program slides">
+                <button type="button" class="programs-dot h-2.5 w-2.5 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2" role="tab" aria-label="Show slide 1" data-index="0"></button>
+                <button type="button" class="programs-dot h-2.5 w-2.5 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2" role="tab" aria-label="Show slide 2" data-index="1"></button>
+            </div>
+        </div>
+
+        <p class="text-center mt-8 text-sm text-gray-500 italic">
+            More programs coming — foods of the Spanish-speaking countries, animals, and seasonal celebrations.
+        </p>
+    </div>
+</div>
+
+<style>
+    #programs-carousel .programs-dot.active {
+        background-color: #FF6F61;
+        transform: scale(1.25);
+    }
+</style>
+
+<script>
+    (function () {
+        const carousel = document.getElementById('programs-carousel');
+        if (!carousel) return;
+        const track = carousel.querySelector('.programs-track');
+        const slides = track.children;
+        const dots = carousel.querySelectorAll('.programs-dot');
+        const prevBtn = carousel.querySelector('.programs-prev');
+        const nextBtn = carousel.querySelector('.programs-next');
+        const advanceMs = 6000;
+        let current = 0;
+        let timer = null;
+
+        function go(i) {
+            current = (i + slides.length) % slides.length;
+            track.style.transform = 'translateX(-' + (current * 100) + '%)';
+            dots.forEach(function (d, k) {
+                d.classList.toggle('active', k === current);
+                d.setAttribute('aria-selected', k === current ? 'true' : 'false');
+            });
+        }
+
+        function next() { go(current + 1); }
+        function prev() { go(current - 1); }
+
+        function start() { stop(); timer = setInterval(next, advanceMs); }
+        function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+        dots.forEach(function (d, i) {
+            d.addEventListener('click', function () { go(i); start(); });
+        });
+        if (prevBtn) prevBtn.addEventListener('click', function () { prev(); start(); });
+        if (nextBtn) nextBtn.addEventListener('click', function () { next(); start(); });
+
+        carousel.addEventListener('mouseenter', stop);
+        carousel.addEventListener('mouseleave', start);
+        carousel.addEventListener('focusin', stop);
+        carousel.addEventListener('focusout', start);
+
+        // Respect reduced-motion preference: no auto-advance, but manual nav still works.
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        go(0);
+        if (!reducedMotion) start();
+    })();
+</script>
+
 @* Meet Karen & Cece named section removed 2026-05-30 per Karen's request —
    the home page should not call out individuals by name. A dedicated /Staff
    (or "Meet Our Teachers") page is the planned home for personalized bios,
