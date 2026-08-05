@@ -53,9 +53,22 @@ public class EnrollmentProgram
     /// <summary>
     /// Web-relative path to the program hero image, e.g.
     /// <c>/img/programs/dance-and-learn-spanish-after-school-program.jpeg</c>.
-    /// Rendered as the hero background on the landing page.
+    /// Used as the banner background on the /programs/{slug} details page and
+    /// the /join/{slug} enrollment page. Often a general/brand image that can
+    /// be reused across programs. Falls back to <see cref="EventImagePath"/>
+    /// when unset.
     /// </summary>
     public string? HeroImagePath { get; set; }
+
+    /// <summary>
+    /// Web-relative path to the program-specific event image (typically a
+    /// ChatGPT/AI-generated illustration Karen creates per offering). Shown as
+    /// the primary card visual on the /programs listing and inline in the
+    /// description column on /programs/{slug}. Distinct from
+    /// <see cref="HeroImagePath"/> so programs can share a generic hero while
+    /// still having differentiated card visuals. Optional.
+    /// </summary>
+    public string? EventImagePath { get; set; }
 
     // ---------------- Logistics ----------------
 

@@ -68,9 +68,12 @@
                         <a href="@Url.Action("Detail", "Programs", new { slug = p.Slug })"
                            class="group flex flex-col bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-200 hover:border-indigo-400 overflow-hidden transition-all hover:-translate-y-1">
                             <div class="aspect-[16/10] relative bg-gradient-to-br from-primary-500 to-secondary-500 overflow-hidden">
-                                @if (!string.IsNullOrEmpty(p.HeroImagePath))
+                                @{
+                                    var cardImage = p.EventImagePath ?? p.HeroImagePath;
+                                }
+                                @if (!string.IsNullOrEmpty(cardImage))
                                 {
-                                    <img src="@p.HeroImagePath" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                                    <img src="@cardImage" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                                 }
                                 <div class="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm @DeadlinePillClass(p)">
                                     ⏱ @DeadlineLabel(p)
@@ -140,9 +143,12 @@
                         <a href="@Url.Action("Detail", "Programs", new { slug = p.Slug })"
                            class="flex flex-col bg-white rounded-2xl shadow-sm border border-gray-200 hover:border-gray-400 hover:shadow-md overflow-hidden opacity-80 hover:opacity-100 transition-all">
                             <div class="aspect-[16/10] relative bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden">
-                                @if (!string.IsNullOrEmpty(p.HeroImagePath))
+                                @{
+                                    var closedCardImage = p.EventImagePath ?? p.HeroImagePath;
+                                }
+                                @if (!string.IsNullOrEmpty(closedCardImage))
                                 {
-                                    <img src="@p.HeroImagePath" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover grayscale" loading="lazy" />
+                                    <img src="@closedCardImage" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover grayscale" loading="lazy" />
                                 }
                                 <div class="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border bg-gray-200 text-gray-700 border-gray-300 shadow-sm">
                                     Enrollment closed
@@ -176,9 +182,12 @@
                         <a href="@Url.Action("Detail", "Programs", new { slug = p.Slug })"
                            class="bg-white rounded-xl shadow-sm border border-gray-200 hover:border-gray-400 hover:shadow-md overflow-hidden opacity-70 hover:opacity-100 transition-all">
                             <div class="aspect-[4/3] relative bg-gray-200 overflow-hidden">
-                                @if (!string.IsNullOrEmpty(p.HeroImagePath))
+                                @{
+                                    var pastCardImage = p.EventImagePath ?? p.HeroImagePath;
+                                }
+                                @if (!string.IsNullOrEmpty(pastCardImage))
                                 {
-                                    <img src="@p.HeroImagePath" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover grayscale" loading="lazy" />
+                                    <img src="@pastCardImage" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover grayscale" loading="lazy" />
                                 }
                             </div>
                             <div class="p-3">

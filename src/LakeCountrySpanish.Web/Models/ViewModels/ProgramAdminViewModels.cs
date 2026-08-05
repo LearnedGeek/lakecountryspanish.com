@@ -60,8 +60,19 @@ public sealed class ProgramFormViewModel
     /// validates + saves to <c>wwwroot/img/programs/{slug}.{ext}</c> and
     /// populates <see cref="HeroImagePath"/> from the saved location.
     /// </summary>
-    [Display(Name = "Hero image", Description = "JPG, PNG, or WebP. Optional — a colored gradient shows if you leave this blank.")]
+    [Display(Name = "Hero / banner image", Description = "JPG, PNG, or WebP. Optional — a colored gradient shows if you leave this blank. Used as the big banner at the top of the details and enrollment pages. May be a general brand image reused across programs.")]
     public IFormFile? HeroImageUpload { get; set; }
+
+    /// <summary>Existing event image path (edit mode) or path assigned after upload.</summary>
+    public string? EventImagePath { get; set; }
+
+    /// <summary>
+    /// Optional program-specific image (e.g. a ChatGPT illustration Karen
+    /// generates for this offering). Saved to
+    /// <c>wwwroot/img/programs/{slug}-event.{ext}</c>.
+    /// </summary>
+    [Display(Name = "Event image", Description = "JPG, PNG, or WebP. Optional. Used as the card visual on the /programs page and inline on the details page. This is the program-specific image (Karen's ChatGPT illustrations, event photos, etc.).")]
+    public IFormFile? EventImageUpload { get; set; }
 
     // ---------- Logistics ----------
 
@@ -195,6 +206,7 @@ public sealed class ProgramFormViewModel
         target.TagLine = TagLine ?? string.Empty;
         target.Description = Description ?? string.Empty;
         target.HeroImagePath = HeroImagePath;
+        target.EventImagePath = EventImagePath;
         target.LocationName = LocationName;
         target.LocationAddress = LocationAddress;
         target.StartDate = DateTime.SpecifyKind(StartDate, DateTimeKind.Utc);
@@ -234,6 +246,7 @@ public sealed class ProgramFormViewModel
             TagLine = p.TagLine,
             Description = p.Description,
             HeroImagePath = p.HeroImagePath,
+            EventImagePath = p.EventImagePath,
             LocationName = p.LocationName,
             LocationAddress = p.LocationAddress,
             StartDate = p.StartDate,

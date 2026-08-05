@@ -7,9 +7,16 @@
         ? $"{p.Name} — after-school Spanish program in {p.LocationName} with Lake Country Spanish."
         : p.TagLine;
 
-    var heroStyle = string.IsNullOrEmpty(p.HeroImagePath)
+    // Hero banner prefers the HeroImagePath (general brand image), falls back
+    // to the event image so unset-hero programs still get a visual.
+    var bannerImage = !string.IsNullOrEmpty(p.HeroImagePath) ? p.HeroImagePath : p.EventImagePath;
+    var heroStyle = string.IsNullOrEmpty(bannerImage)
         ? "background: linear-gradient(135deg, #4361ee 0%, #e85a42 100%);"
-        : $"background-image: linear-gradient(135deg, rgba(30,58,95,0.55), rgba(232,90,66,0.45)), url('{p.HeroImagePath}'); background-size: cover; background-position: center;";
+        : $"background-image: linear-gradient(135deg, rgba(30,58,95,0.55), rgba(232,90,66,0.45)), url('{bannerImage}'); background-size: cover; background-position: center;";
+
+    // Inline event image only when it's DIFFERENT from what we already showed
+    // in the banner — otherwise we'd duplicate the same photo twice on the page.
+    var showInlineEventImage = !string.IsNullOrEmpty(p.EventImagePath) && p.EventImagePath != bannerImage;
 
     int daysLeft = (int)Math.Ceiling((p.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
     bool canEnroll = !p.IsEnrollmentClosed && p.IsActive;
@@ -58,12 +65,22 @@
 
             <!-- Left column: description + waiver preview -->
             <div class="lg:col-span-2 space-y-6">
-                @if (!string.IsNullOrEmpty(p.Description))
+                @if (!string.IsNullOrEmpty(p.Description) || showInlineEventImage)
                 {
                     <section class="bg-white rounded-2xl shadow-md p-6 md:p-8">
-                        <div class="prose prose-slate max-w-none">
-                            @Html.Raw(Markdig.Markdown.ToHtml(p.Description))
-                        </div>
+                        @if (showInlineEventImage)
+                        {
+                            <figure class="mb-6 md:mb-0 md:float-right md:ml-6 md:w-64">
+                                <img src="@p.EventImagePath" alt="@p.Name" class="rounded-xl border border-gray-200 shadow-sm w-full h-auto" loading="lazy" />
+                            </figure>
+                        }
+                        @if (!string.IsNullOrEmpty(p.Description))
+                        {
+                            <div class="prose prose-slate max-w-none">
+                                @Html.Raw(Markdig.Markdown.ToHtml(p.Description))
+                            </div>
+                        }
+                        <div class="clear-both"></div>
                     </section>
                 }
 

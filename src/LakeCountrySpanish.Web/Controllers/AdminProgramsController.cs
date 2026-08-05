@@ -522,15 +522,37 @@ public class AdminProgramsController : Controller
     }
 
     /// <summary>
-    /// Validates and persists a hero-image upload, setting <see cref="ProgramFormViewModel.HeroImagePath"/>
-    /// to the saved location. No-op when no file was selected — the existing HeroImagePath
-    /// (either from the edited entity or blank) is preserved. Files land at
-    /// <c>wwwroot/img/programs/{slug}.{ext}</c>, overwriting any prior upload for that slug.
+    /// Validates and persists both the hero-image and event-image uploads (either
+    /// or both may be null / empty). Non-empty uploads are saved to
+    /// <c>wwwroot/img/programs/{slug}[-event].{ext}</c> and the corresponding
+    /// property on the view model is set to the web-relative path. Any prior
+    /// file for the same slot with a different extension is cleaned up.
     /// </summary>
     private bool TryHandleHeroImageUpload(ProgramFormViewModel model, out string? error)
     {
+        if (!TrySaveProgramImage(model.HeroImageUpload, model.Slug, suffix: "", out var heroPath, out error))
+            return false;
+        if (heroPath is not null) model.HeroImagePath = heroPath;
+
+        if (!TrySaveProgramImage(model.EventImageUpload, model.Slug, suffix: "-event", out var eventPath, out error))
+            return false;
+        if (eventPath is not null) model.EventImagePath = eventPath;
+
+        return true;
+    }
+
+    /// <summary>
+    /// Shared upload plumbing: validates the file, writes it to
+    /// <c>wwwroot/img/programs/{slug}{suffix}.{ext}</c>, cleans up prior
+    /// extensions for the same slot, and returns the web-relative path. No-op
+    /// (returns true, savedPath=null) when no file was selected — the caller
+    /// preserves whatever path was already on the model.
+    /// </summary>
+    private bool TrySaveProgramImage(IFormFile? upload, string slug, string suffix, out string? savedPath, out string? error)
+    {
+        savedPath = null;
         error = null;
-        var upload = model.HeroImageUpload;
+
         if (upload is null || upload.Length == 0) return true;
 
         if (upload.Length > MaxHeroImageBytes)
@@ -546,27 +568,28 @@ public class AdminProgramsController : Controller
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(model.Slug))
+        if (string.IsNullOrWhiteSpace(slug))
         {
-            error = "Please fill in the URL slug before uploading a hero image — the filename is derived from it.";
+            error = "Please fill in the URL slug before uploading an image — the filename is derived from it.";
             return false;
         }
 
         // Normalize .jpeg → .jpg so /img/programs/foo.jpg is the canonical stored path.
         var normalizedExt = ext.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ? ".jpg" : ext.ToLowerInvariant();
-        var relativePath = $"/img/programs/{model.Slug}{normalizedExt}";
+        var fileStem = $"{slug}{suffix}";
+        var relativePath = $"/img/programs/{fileStem}{normalizedExt}";
         var absoluteDir = Path.Combine(_environment.WebRootPath, "img", "programs");
-        var absolutePath = Path.Combine(absoluteDir, $"{model.Slug}{normalizedExt}");
+        var absolutePath = Path.Combine(absoluteDir, $"{fileStem}{normalizedExt}");
 
         Directory.CreateDirectory(absoluteDir);
 
-        // Remove any prior file for the same slug with a different extension to
-        // avoid orphaned images shadowing the current one.
+        // Remove any prior file for the same slot with a different extension so
+        // an orphan doesn't shadow the current image.
         foreach (var otherExt in AllowedImageExtensions)
         {
             var normalized = otherExt.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ? ".jpg" : otherExt.ToLowerInvariant();
             if (normalized == normalizedExt) continue;
-            var prior = Path.Combine(absoluteDir, $"{model.Slug}{normalized}");
+            var prior = Path.Combine(absoluteDir, $"{fileStem}{normalized}");
             if (System.IO.File.Exists(prior))
             {
                 try { System.IO.File.Delete(prior); } catch { /* best-effort cleanup */ }
@@ -578,7 +601,7 @@ public class AdminProgramsController : Controller
             upload.CopyTo(stream);
         }
 
-        model.HeroImagePath = relativePath;
+        savedPath = relativePath;
         return true;
     }
 
