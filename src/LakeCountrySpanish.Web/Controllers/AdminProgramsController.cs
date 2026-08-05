@@ -223,9 +223,11 @@ public class AdminProgramsController : Controller
 
     /// <summary>
     /// Composites the raw QR PNG onto a taller white canvas with program name +
-    /// location + shortened URL rendered below it in SkiaSharp. Falls back to the
-    /// original unlabeled PNG if no usable system font is available (the flyer QR
-    /// still works — parents just don't see the identifying text).
+    /// location + date range + URL rendered below it in SkiaSharp. The URL is
+    /// intentionally kept in the label because it's the only quick way to
+    /// distinguish a stg vs prod QR when Karen is holding a printed stack.
+    /// Falls back to the original unlabeled PNG if no usable system font is
+    /// available (the QR still scans — parents just don't see the identifying text).
     /// </summary>
     private static byte[] ComposeLabeledQr(byte[] qrPng, EnrollmentProgram program, string joinUrl)
     {
@@ -245,7 +247,8 @@ public class AdminProgramsController : Controller
         using (bodyTypeface)
         using (var titleFont = new SKFont(titleTypeface, 26f))
         using (var subtitleFont = new SKFont(bodyTypeface, 16f))
-        using (var urlFont = new SKFont(bodyTypeface, 14f))
+        using (var dateFont = new SKFont(bodyTypeface, 15f))
+        using (var urlFont = new SKFont(bodyTypeface, 13f))
         {
             const float sidePadding = 16f;
             const float topPadding = 16f;
@@ -254,11 +257,11 @@ public class AdminProgramsController : Controller
 
             var title = program.Name;
             var subtitle = string.IsNullOrEmpty(program.LocationName) ? program.MeetingDays : program.LocationName;
-            var url = joinUrl.Replace("https://", "").Replace("http://", "");
+            var dateLine = FormatDateRange(program.StartDate, program.EndDate);
+            var urlLine = joinUrl.Replace("https://", "").Replace("http://", "");
 
             var canvasWidth = qrBitmap.Width + (int)(sidePadding * 2);
-            // Height: top padding + QR + gap + 3 text lines + line gaps + bottom padding.
-            var textBlockHeight = titleFont.Size + lineGap + subtitleFont.Size + lineGap + urlFont.Size;
+            var textBlockHeight = titleFont.Size + lineGap + subtitleFont.Size + lineGap + dateFont.Size + lineGap + urlFont.Size;
             var canvasHeight = (int)(topPadding + qrBitmap.Height + gapAboveText + textBlockHeight + topPadding);
 
             var info = new SKImageInfo(canvasWidth, canvasHeight, SKColorType.Rgba8888, SKAlphaType.Premul);
@@ -272,6 +275,7 @@ public class AdminProgramsController : Controller
 
             using var titlePaint = new SKPaint { Color = SKColors.Black, IsAntialias = true };
             using var subtitlePaint = new SKPaint { Color = new SKColor(0x4b, 0x55, 0x63), IsAntialias = true };
+            using var datePaint = new SKPaint { Color = new SKColor(0x4b, 0x55, 0x63), IsAntialias = true };
             using var urlPaint = new SKPaint { Color = new SKColor(0x6b, 0x72, 0x80), IsAntialias = true };
 
             var centerX = canvasWidth / 2f;
@@ -280,13 +284,31 @@ public class AdminProgramsController : Controller
             DrawCenteredText(canvas, title, titleFont, titlePaint, centerX, textY, canvasWidth - sidePadding * 2);
             textY += lineGap + subtitleFont.Size;
             DrawCenteredText(canvas, subtitle, subtitleFont, subtitlePaint, centerX, textY, canvasWidth - sidePadding * 2);
+            textY += lineGap + dateFont.Size;
+            DrawCenteredText(canvas, dateLine, dateFont, datePaint, centerX, textY, canvasWidth - sidePadding * 2);
             textY += lineGap + urlFont.Size;
-            DrawCenteredText(canvas, url, urlFont, urlPaint, centerX, textY, canvasWidth - sidePadding * 2);
+            DrawCenteredText(canvas, urlLine, urlFont, urlPaint, centerX, textY, canvasWidth - sidePadding * 2);
 
             using var image = surface.Snapshot();
             using var encoded = image.Encode(SKEncodedImageFormat.Png, 100);
             return encoded.ToArray();
         }
+    }
+
+    /// <summary>
+    /// Human-friendly date range for the QR label. Collapses when start and end
+    /// share a year ("Aug 19 – Oct 14, 2026") and further when they share a month
+    /// ("Aug 5 – 12, 2026"). Renders a single date if start == end.
+    /// </summary>
+    private static string FormatDateRange(DateTime start, DateTime end)
+    {
+        if (start.Date == end.Date) return start.ToString("MMM d, yyyy");
+        if (start.Year == end.Year)
+        {
+            if (start.Month == end.Month) return $"{start:MMM d} – {end:d}, {end:yyyy}";
+            return $"{start:MMM d} – {end:MMM d, yyyy}";
+        }
+        return $"{start:MMM d, yyyy} – {end:MMM d, yyyy}";
     }
 
     /// <summary>
