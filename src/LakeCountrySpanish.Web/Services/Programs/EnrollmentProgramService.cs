@@ -89,42 +89,23 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
 
         NormalizeSlug(program);
 
-        // Copy the mutable metadata fields over — leave StripeProductId/PriceIds untouched.
-        // WARNING: any new mutable field on EnrollmentProgram must be added here too,
-        // otherwise it will save fine on Create but be silently dropped on every Edit.
-        // The bug is invisible from the outside (the flash says "Saved changes"), only
-        // surfacing when someone views the read side and asks "why didn't my change stick".
-        existing.Slug = program.Slug;
-        existing.Name = program.Name;
-        existing.TagLine = program.TagLine;
-        existing.Description = program.Description;
-        existing.HeroImagePath = program.HeroImagePath;
-        existing.EventImagePath = program.EventImagePath;
-        existing.LocationName = program.LocationName;
-        existing.LocationAddress = program.LocationAddress;
-        existing.StartDate = program.StartDate;
-        existing.EndDate = program.EndDate;
-        existing.EnrollmentDeadline = program.EnrollmentDeadline;
-        existing.MeetingDays = program.MeetingDays;
-        existing.StartTime = program.StartTime;
-        existing.EndTime = program.EndTime;
-        existing.GradeRange = program.GradeRange;
-        existing.AgeMin = program.AgeMin;
-        existing.AgeMax = program.AgeMax;
-        existing.InstallmentsEnabled = program.InstallmentsEnabled;
-        existing.FinalInstallmentDueDate = program.FinalInstallmentDueDate;
-        existing.CashOptionEnabled = program.CashOptionEnabled;
-        existing.WaiverText = program.WaiverText;
-        existing.RefundPolicyText = program.RefundPolicyText;
-        existing.ContactPhone = program.ContactPhone;
-        existing.ContactEmail = program.ContactEmail;
-        existing.IsActive = program.IsActive;
-        existing.IsListed = program.IsListed;
-        existing.UpdatedAt = DateTime.UtcNow;
+        // Preserve the system + Stripe fields the caller shouldn't touch —
+        // SetValues would otherwise wipe them because the form-bound program
+        // object has null / default values for these. Everything else on the
+        // entity flows through automatically, so adding a new mutable field
+        // needs no change here.
+        var stripeProductId = existing.StripeProductId;
+        var stripeFullPriceId = existing.StripeFullPriceId;
+        var stripeInstallmentPriceId = existing.StripeInstallmentPriceId;
+        var createdAt = existing.CreatedAt;
 
-        // Locked-but-passed-through so caller sees the true persisted values.
-        program.FullPrice = existing.FullPrice;
-        program.InstallmentCount = existing.InstallmentCount;
+        _context.Entry(existing).CurrentValues.SetValues(program);
+
+        existing.StripeProductId = stripeProductId;
+        existing.StripeFullPriceId = stripeFullPriceId;
+        existing.StripeInstallmentPriceId = stripeInstallmentPriceId;
+        existing.CreatedAt = createdAt;
+        existing.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync(ct);
         _logger.LogInformation("Updated EnrollmentProgram {ProgramId} ({Slug})", existing.Id, existing.Slug);
