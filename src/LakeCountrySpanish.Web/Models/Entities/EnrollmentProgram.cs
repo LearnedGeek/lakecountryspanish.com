@@ -162,10 +162,12 @@ public class EnrollmentProgram
     public bool IsActive { get; set; } = true;
 
     /// <summary>
-    /// Whether this Program appears on the (future) public /programs index.
-    /// Default false — Karen shares the direct <c>/join/{slug}</c> URL via QR code.
+    /// Whether this Program appears on the public /programs calendar. Default true —
+    /// most programs are meant to be discoverable so past + prospective parents
+    /// can find them. Karen can flip this off for the occasional private /
+    /// invite-only event.
     /// </summary>
-    public bool IsListed { get; set; } = false;
+    public bool IsListed { get; set; } = true;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

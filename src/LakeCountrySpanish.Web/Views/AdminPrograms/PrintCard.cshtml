@@ -1,0 +1,152 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.ProgramPrintCardViewModel
+@{
+    Layout = null;
+    var p = Model.Program;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>QR card – @p.Name</title>
+    <style>
+        :root {
+            --card-border: #1f2937;
+            --muted: #4b5563;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            color: #111827;
+            background: #f3f4f6;
+        }
+        .toolbar {
+            max-width: 720px;
+            margin: 0 auto 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .toolbar button {
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .toolbar button:hover { background: #4338ca; }
+        .card {
+            max-width: 720px;
+            margin: 0 auto;
+            background: white;
+            border: 2px solid var(--card-border);
+            border-radius: 8px;
+            padding: 32px;
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 28px;
+            align-items: center;
+        }
+        .qr {
+            width: 340px;
+            height: 340px;
+            display: block;
+        }
+        .label h1 {
+            font-size: 22px;
+            margin: 0 0 4px 0;
+            line-height: 1.2;
+        }
+        .label .tag {
+            font-size: 13px;
+            color: var(--muted);
+            margin: 0 0 16px 0;
+        }
+        .label dl {
+            margin: 0;
+            font-size: 14px;
+        }
+        .label dt {
+            font-weight: 600;
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-top: 10px;
+        }
+        .label dd {
+            margin: 2px 0 0 0;
+        }
+        .url {
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .url .u {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 13px;
+            color: #111827;
+            word-break: break-all;
+        }
+        .brand {
+            margin-top: 14px;
+            font-size: 11px;
+            color: var(--muted);
+        }
+        @@media print {
+            body { background: white; padding: 0; }
+            .toolbar { display: none; }
+            .card { border: 1.5px solid #000; box-shadow: none; }
+            @@page { margin: 0.5in; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <span>Print preview – use your browser's Print dialog (Ctrl/⌘ + P) to pick paper size.</span>
+        <button type="button" onclick="window.print()">Print</button>
+    </div>
+
+    <div class="card">
+        <img class="qr" src="@Model.QrImageUrl" alt="QR code for @p.Name" />
+        <div class="label">
+            <h1>@p.Name</h1>
+            @if (!string.IsNullOrEmpty(p.TagLine))
+            {
+                <p class="tag">@p.TagLine</p>
+            }
+            <dl>
+                <dt>Location</dt>
+                <dd>@p.LocationName<br /><span style="font-size:12px;color:var(--muted);">@p.LocationAddress</span></dd>
+
+                <dt>Dates</dt>
+                <dd>@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</dd>
+
+                <dt>Meets</dt>
+                <dd>@p.MeetingDays · @p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
+
+                @if (!string.IsNullOrEmpty(p.GradeRange) || p.AgeMin > 0)
+                {
+                    <dt>Ages / Grades</dt>
+                    <dd>@(!string.IsNullOrEmpty(p.GradeRange) ? p.GradeRange : $"ages {p.AgeMin}–{p.AgeMax}")</dd>
+                }
+            </dl>
+
+            <div class="url">
+                Scan the code, or visit:<br />
+                <span class="u">@Model.JoinUrl</span>
+            </div>
+
+            <div class="brand">Lake Country Spanish · @p.ContactPhone</div>
+        </div>
+    </div>
+</body>
+</html>

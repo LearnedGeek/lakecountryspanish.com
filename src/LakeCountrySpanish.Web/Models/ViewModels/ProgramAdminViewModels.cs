@@ -167,9 +167,9 @@ public sealed class ProgramFormViewModel
     [Display(Name = "Accepting enrollments")]
     public bool IsActive { get; set; } = true;
 
-    [Display(Name = "Show on public programs index",
-             Description = "Off by default — Karen shares the direct /join/{slug} URL via QR code.")]
-    public bool IsListed { get; set; } = false;
+    [Display(Name = "Show on public programs calendar",
+             Description = "On by default so past + prospective parents can discover it. Turn off for private / invite-only events.")]
+    public bool IsListed { get; set; } = true;
 
     // ---------- Read-only in edit mode ----------
 
@@ -294,6 +294,15 @@ public sealed class ProgramFormViewModel
         MeetingDayFri = s.Contains("Fri", StringComparison.OrdinalIgnoreCase);
         MeetingDaySat = s.Contains("Sat", StringComparison.OrdinalIgnoreCase);
     }
+}
+
+/// <summary>Printable QR card — QR + label with the info Karen needs to tell
+/// two printed cards apart at a booth (program name, dates, location, URL).</summary>
+public sealed class ProgramPrintCardViewModel
+{
+    public EnrollmentProgram Program { get; init; } = null!;
+    public string JoinUrl { get; init; } = string.Empty;
+    public string QrImageUrl { get; init; } = string.Empty;
 }
 
 /// <summary>Detail view — shows program summary, QR code, join URL, enrollment stats.</summary>

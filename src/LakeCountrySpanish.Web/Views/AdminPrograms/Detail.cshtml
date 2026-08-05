@@ -27,11 +27,11 @@
                     }
                     @if (p.IsListed)
                     {
-                        <span class="inline-flex px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-xs">Listed publicly</span>
+                        <span class="inline-flex px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-xs">On public calendar</span>
                     }
                     else
                     {
-                        <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs">Unlisted (QR only)</span>
+                        <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs">Private (QR only)</span>
                     }
                 </div>
             </div>
@@ -76,7 +76,11 @@
                     <img src="@Url.Action("Qr", new { id = p.Id })"
                          alt="QR code for @p.Name"
                          class="w-64 h-64 border border-gray-200 rounded" />
-                    <a href="@Url.Action("Qr", new { id = p.Id })" download class="text-xs text-indigo-600 hover:text-indigo-800">Download PNG</a>
+                    <div class="flex gap-3 text-xs">
+                        <a href="@Url.Action("PrintCard", new { id = p.Id })" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium">🖨 Print card</a>
+                        <a href="@Url.Action("Qr", new { id = p.Id })" download class="text-indigo-600 hover:text-indigo-800">Download PNG</a>
+                    </div>
+                    <p class="text-xs text-gray-500 text-center">Print card includes the QR + program name and dates so you can tell printed cards apart.</p>
                     <div class="w-full text-center">
                         <div class="text-xs text-gray-500 mb-1">Public URL</div>
                         <a href="@Model.JoinUrl" target="_blank" class="text-sm font-mono text-indigo-700 break-all hover:underline">@Model.JoinUrl</a>

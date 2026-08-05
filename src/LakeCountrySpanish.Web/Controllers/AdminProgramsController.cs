@@ -209,6 +209,28 @@ public class AdminProgramsController : Controller
         return File(png, "image/png", $"lcs-{program.Slug}-qr.png");
     }
 
+    /// <summary>
+    /// Printable QR card — the QR code plus a human-readable label (program name,
+    /// location, dates, meeting days, join URL) so Karen can print a stack of
+    /// cards for different booths and still tell them apart. Rendered as HTML
+    /// with a print stylesheet so Karen picks paper size / orientation from the
+    /// browser's Print dialog. No new server-side image compositing needed.
+    /// </summary>
+    [HttpGet("{id:int}/PrintCard")]
+    public async Task<IActionResult> PrintCard(int id, CancellationToken ct)
+    {
+        var program = await _programs.GetByIdAsync(id, ct);
+        if (program is null) return NotFound();
+
+        var vm = new ProgramPrintCardViewModel
+        {
+            Program = program,
+            JoinUrl = BuildJoinUrl(program.Slug),
+            QrImageUrl = Url.Action(nameof(Qr), new { id = program.Id })!
+        };
+        return View(vm);
+    }
+
     // ---------------- helpers ----------------
 
     private static bool AnyMeetingDayPicked(ProgramFormViewModel model) =>
