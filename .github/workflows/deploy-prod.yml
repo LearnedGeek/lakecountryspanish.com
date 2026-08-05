@@ -75,8 +75,9 @@ jobs:
           PG_USERNAME: lakecountryspanish
           SITE_NAME: "Lake Country Spanish"
           BASE_URL: "https://lakecountryspanish.com"
+          DATAPROTECTION_KEYS_DIR: "/var/lib/lakecountryspanish-data/keys"
         run: |
-          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME} ${BASE_URL}'
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME} ${BASE_URL} ${DATAPROTECTION_KEYS_DIR}'
           envsubst "$VARS" \
             < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
             > publish/appsettings.Production.json
@@ -108,10 +109,12 @@ jobs:
              ACTIVE=/var/www/lakecountryspanish
              PREV=/var/www/lakecountryspanish.prev
              UPLOADS=/var/lib/lakecountryspanish-data/img/programs
+             KEYS=/var/lib/lakecountryspanish-data/keys
              rm -rf "$STAGING"
              mkdir -p "$STAGING"
              cd "$STAGING"
              tar -xf -
+             install -d -o www-data -g www-data -m 700 "$KEYS"
              mkdir -p "$UPLOADS"
              if [ -d "$ACTIVE/wwwroot/img/programs" ] && [ ! -L "$ACTIVE/wwwroot/img/programs" ]; then
                rsync -a --ignore-existing "$ACTIVE/wwwroot/img/programs/" "$UPLOADS/"

@@ -148,8 +148,8 @@
 
 @section Scripts {
 <script>
-    const questionsJson = @Html.Raw(Model.QuestionsJson);
-    const answersJson = @Html.Raw(Model.AnswersJson);
+    const questionsJson = JSON.parse(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.QuestionsJson)));
+    const answersJson = JSON.parse(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AnswersJson)));
 
     document.addEventListener('DOMContentLoaded', function() {
         renderQuestions();

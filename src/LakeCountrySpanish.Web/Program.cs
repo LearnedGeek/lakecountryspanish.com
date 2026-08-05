@@ -1,3 +1,7 @@
+using System.Net;
+using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using LakeCountrySpanish.Web.Data;
@@ -52,6 +56,45 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+// Reverse-proxy awareness. Caddy terminates TLS and forwards to
+// localhost:5028/5029. Without ForwardedHeaders the app sees
+// Request.Scheme="http", which breaks Stripe redirect URLs, cookie
+// SecurePolicy, and logs the loopback IP instead of the real client.
+// Registered first in the pipeline (below, before anything that reads
+// scheme or IP).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+    options.KnownProxies.Add(IPAddress.Loopback);
+});
+
+// Cookie policy: require Secure + HttpOnly + SameSite=Lax. Depends on
+// ForwardedHeaders being active so Kestrel sees the request as HTTPS —
+// otherwise Secure=Always would prevent cookies from being set.
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.Secure = CookieSecurePolicy.Always;
+    options.HttpOnly = HttpOnlyPolicy.Always;
+});
+
+// DataProtection keys: persist to disk so auth cookies + antiforgery
+// tokens survive systemd restarts. Without this every deploy invalidates
+// every session and logs everyone out. In development the default
+// ephemeral store is fine — no config key set, no persistence, dev users
+// re-login on restart. The keys directory itself is created by the
+// deploy workflow at /var/lib/lakecountryspanish{-stg,}-data/keys with
+// www-data ownership.
+var dpKeysDir = builder.Configuration["DataProtection:KeysDirectory"];
+if (!string.IsNullOrWhiteSpace(dpKeysDir))
+{
+    builder.Services.AddDataProtection()
+        .PersistKeysToFileSystem(new DirectoryInfo(dpKeysDir))
+        .SetApplicationName("LakeCountrySpanish");
+}
+
 // Add services
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IClassSchedulingService, ClassSchedulingService>();
@@ -93,6 +136,11 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+// MUST be first middleware — everything downstream (HttpsRedirection,
+// cookies, logging) reads Request.Scheme + Connection.RemoteIpAddress
+// and needs the forwarded values, not the loopback view.
+app.UseForwardedHeaders();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -102,11 +150,31 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseCookiePolicy();
 
 app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Health check for Caddy active checks + external monitoring. Returns
+// 200 with JSON when the database is reachable, 503 otherwise. Kept
+// dependency-free (no HealthChecks NuGet package) — a single CanConnect
+// probe is sufficient for a small app.
+app.MapGet("/healthz", async (ApplicationDbContext db, CancellationToken ct) =>
+{
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync(ct);
+        return canConnect
+            ? Results.Ok(new { status = "healthy", database = "up" })
+            : Results.Json(new { status = "unhealthy", database = "down" }, statusCode: 503);
+    }
+    catch (Exception ex)
+    {
+        return Results.Json(new { status = "unhealthy", database = "error", message = ex.Message }, statusCode: 503);
+    }
+}).AllowAnonymous();
 
 app.MapControllerRoute(
     name: "areas",

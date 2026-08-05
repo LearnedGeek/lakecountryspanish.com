@@ -144,7 +144,7 @@
 
 @section Scripts {
 <script>
-    const questionsJson = @Html.Raw(Model.QuestionsJson);
+    const questionsJson = JSON.parse(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.QuestionsJson)));
     const answers = {};
     let startTime = Date.now();
     let timerInterval;

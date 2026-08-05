@@ -30,5 +30,8 @@
   },
   "Pixabay": {
     "ApiKey": "${PIXABAY_API_KEY}"
+  },
+  "DataProtection": {
+    "KeysDirectory": "${DATAPROTECTION_KEYS_DIR}"
   }
 }

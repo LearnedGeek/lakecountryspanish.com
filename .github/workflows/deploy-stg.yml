@@ -88,11 +88,12 @@ jobs:
           PG_USERNAME: lakecountryspanish_stg
           SITE_NAME: "Lake Country Spanish (stg)"
           BASE_URL: "https://stg.lakecountryspanish.com"
+          DATAPROTECTION_KEYS_DIR: "/var/lib/lakecountryspanish-stg-data/keys"
         run: |
           # Restrict envsubst to the explicit variable list so any other
           # ${...} pattern in the template is left literal — defensive
           # against future copy-paste mistakes.
-          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME} ${BASE_URL}'
+          VARS='${PG_PASSWORD} ${CLAUDE_API_KEY} ${PIXABAY_API_KEY} ${SMTP_PASSWORD} ${STRIPE_PUBLISHABLE_KEY} ${STRIPE_SECRET_KEY} ${STRIPE_WEBHOOK_SECRET} ${RECAPTCHA_SITE_KEY} ${RECAPTCHA_SECRET_KEY} ${SCHEDULED_TASKS_SECRET_KEY} ${PG_DATABASE} ${PG_USERNAME} ${SITE_NAME} ${BASE_URL} ${DATAPROTECTION_KEYS_DIR}'
           envsubst "$VARS" \
             < src/LakeCountrySpanish.Web/appsettings.Production.json.template \
             > publish/appsettings.Production.json
@@ -138,10 +139,15 @@ jobs:
              ACTIVE=/var/www/lakecountryspanish-stg
              PREV=/var/www/lakecountryspanish-stg.prev
              UPLOADS=/var/lib/lakecountryspanish-stg-data/img/programs
+             KEYS=/var/lib/lakecountryspanish-stg-data/keys
              rm -rf "$STAGING"
              mkdir -p "$STAGING"
              cd "$STAGING"
              tar -xf -
+             # DataProtection keys directory — must exist and be www-data
+             # owned so cookies + antiforgery tokens survive restarts.
+             # 0700 restricts read to www-data only (keys are secrets).
+             install -d -o www-data -g www-data -m 700 "$KEYS"
              # Ensure persistent uploads dir exists (idempotent) and rescue
              # any existing user uploads that live in the currently-active
              # wwwroot from prior deploys so they graduate to the persistent
