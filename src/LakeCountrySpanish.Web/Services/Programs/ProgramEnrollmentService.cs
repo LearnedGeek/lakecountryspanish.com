@@ -31,15 +31,18 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
 
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<ProgramEnrollmentService> _logger;
 
     public ProgramEnrollmentService(
         ApplicationDbContext context,
         IEmailService emailService,
+        IConfiguration configuration,
         ILogger<ProgramEnrollmentService> logger)
     {
         _context = context;
         _emailService = emailService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -414,11 +417,17 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
 
     // ---------------- Email helpers ----------------
 
+    // Brand colors match SmtpEmailService's palette so headers/gradients look
+    // native to the rest of the site's transactional email.
+    private const string BrandNavy = "#1E3A8A";
+    private const string BrandTeal = "#1E8189";
+
     /// <summary>
-    /// Sends the parent confirmation + Karen notification pair. Wraps both in
-    /// try/catch so an SMTP hiccup can't undo a successful enrollment / payment.
-    /// Karen's email comes from <see cref="EnrollmentProgram.ContactEmail"/> so a
-    /// per-program teacher (Cece for one, Karen for another) gets the right ping.
+    /// Sends the parent confirmation + teacher notification pair via the LCS
+    /// branded email shell. Both wrapped in try/catch so an SMTP hiccup can't
+    /// undo a successful enrollment / payment. The teacher email goes to
+    /// <see cref="EnrollmentProgram.ContactEmail"/> so a per-program teacher
+    /// (Cece for one, Karen for another) gets the right ping.
     /// </summary>
     private async Task SendEnrollmentEmailsSafeAsync(ProgramEnrollment enrollment, EnrollmentProgram program, CancellationToken ct)
     {
@@ -426,11 +435,15 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         {
             var parentSubject = $"You're enrolled in {program.Name} — Lake Country Spanish";
             var parentBody = BuildParentConfirmationBody(enrollment, program);
-            await _emailService.SendEmailAsync(
+            await _emailService.SendBrandedEmailAsync(
                 enrollment.ParentEmail,
                 $"{enrollment.ParentFirstName} {enrollment.ParentLastName}",
                 parentSubject,
-                parentBody);
+                headerTitle: $"You're enrolled — {program.Name}",
+                headerColorHex: BrandNavy,
+                bodyContentHtml: parentBody,
+                preheader: $"Confirmation + your submitted information + the waiver you accepted. Enrollment #{enrollment.Id}.",
+                emoji: "🎉");
         }
         catch (Exception ex)
         {
@@ -443,11 +456,15 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
             {
                 var teacherSubject = $"New enrollment: {enrollment.StudentFirstName} {enrollment.StudentLastName} — {program.Name}";
                 var teacherBody = BuildTeacherNotificationBody(enrollment, program);
-                await _emailService.SendEmailAsync(
+                await _emailService.SendBrandedEmailAsync(
                     program.ContactEmail,
                     program.LocationName,
                     teacherSubject,
-                    teacherBody);
+                    headerTitle: $"New enrollment — {program.Name}",
+                    headerColorHex: BrandTeal,
+                    bodyContentHtml: teacherBody,
+                    preheader: $"{enrollment.StudentFirstName} {enrollment.StudentLastName} · {enrollment.PaymentType}. Full details inside.",
+                    emoji: "📋");
             }
             catch (Exception ex)
             {
@@ -456,86 +473,215 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         }
     }
 
-    private static string BuildParentConfirmationBody(ProgramEnrollment e, EnrollmentProgram p)
+    /// <summary>
+    /// Full audit-trail confirmation the parent files away and can reference
+    /// if anything is later disputed: program details, everything they
+    /// submitted, the exact waiver text they accepted, and a stable
+    /// enrollment reference number.
+    /// </summary>
+    private string BuildParentConfirmationBody(ProgramEnrollment e, EnrollmentProgram p)
     {
         var enc = HtmlEncoder.Default;
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://lakecountryspanish.com";
+
         var paymentBlurb = e.PaymentType switch
         {
             ProgramPaymentType.FullOneTime => $"Payment received in full: <strong>${e.TotalAmountPaid:N2}</strong>.",
             ProgramPaymentType.TwoInstallment => $"First installment received: <strong>${e.TotalAmountPaid:N2}</strong>. Your second installment will be charged automatically in about 30 days.",
-            ProgramPaymentType.CashInHand => $"We'll collect <strong>${p.FullPrice:N2}</strong> from you at the booth. Bring cash or a check made out to Lake Country Spanish, LLC.",
-            _ => string.Empty
-        };
-
-        return $@"<div style=""font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #111827;"">
-    <h2 style=""color: #4f46e5;"">You're enrolled — {enc.Encode(p.Name)}</h2>
-    <p>Hi {enc.Encode(e.ParentFirstName)},</p>
-    <p>Thanks for enrolling <strong>{enc.Encode(e.StudentFirstName)} {enc.Encode(e.StudentLastName)}</strong> in <strong>{enc.Encode(p.Name)}</strong>. Here's what to remember:</p>
-
-    <table cellpadding=""8"" cellspacing=""0"" style=""border-collapse: collapse; margin: 16px 0; font-size: 14px;"">
-        <tr><td style=""color: #6b7280;"">Location</td><td>{enc.Encode(p.LocationName)}<br /><span style=""color:#6b7280; font-size: 12px;"">{enc.Encode(p.LocationAddress)}</span></td></tr>
-        <tr><td style=""color: #6b7280;"">Dates</td><td>{p.StartDate:MMM d} – {p.EndDate:MMM d, yyyy}</td></tr>
-        <tr><td style=""color: #6b7280;"">Meets</td><td>{enc.Encode(p.MeetingDays)} · {p.StartTime:h:mm tt} – {p.EndTime:h:mm tt}</td></tr>
-    </table>
-
-    <p>{paymentBlurb}</p>
-
-    <p style=""margin-top: 24px; font-size: 14px; color: #4b5563;"">
-        Questions? Reply to this email or call {enc.Encode(p.ContactPhone)}.
-    </p>
-
-    <p style=""margin-top: 24px; font-size: 12px; color: #9ca3af;"">
-        Lake Country Spanish, LLC · {enc.Encode(p.ContactEmail)}
-    </p>
-</div>";
-    }
-
-    private static string BuildTeacherNotificationBody(ProgramEnrollment e, EnrollmentProgram p)
-    {
-        var enc = HtmlEncoder.Default;
-        var paymentLine = e.PaymentType switch
-        {
-            ProgramPaymentType.FullOneTime => $"Paid in full: ${e.TotalAmountPaid:N2}",
-            ProgramPaymentType.TwoInstallment => $"Installment 1 of 2 received: ${e.TotalAmountPaid:N2} (auto-charge for installment 2 in ~30 days)",
-            ProgramPaymentType.CashInHand => $"Cash-in-hand — collect ${p.FullPrice:N2} at the booth. Mark cash confirmed in admin once received.",
+            ProgramPaymentType.CashInHand => $"We'll collect <strong>${p.FullPrice:N2}</strong> from you at the booth. Bring cash or a check made out to <strong>Lake Country Spanish, LLC</strong>.",
             _ => string.Empty
         };
 
         var medical = string.IsNullOrWhiteSpace(e.MedicalConcerns)
-            ? "<em style=\"color:#6b7280;\">None noted</em>"
+            ? "<em style=\"color:#9ca3af;\">None noted</em>"
             : enc.Encode(e.MedicalConcerns!);
 
-        return $@"<div style=""font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 20px; color: #111827;"">
-    <h2 style=""color: #4f46e5;"">New enrollment — {enc.Encode(p.Name)}</h2>
+        var address = string.IsNullOrWhiteSpace(e.ParentAddressLine1)
+            ? "<em style=\"color:#9ca3af;\">Not provided</em>"
+            : $"{enc.Encode(e.ParentAddressLine1)}<br />{enc.Encode(e.ParentCity)}, {enc.Encode(e.ParentState)} {enc.Encode(e.ParentZip)}";
 
-    <h3 style=""margin-bottom: 4px;"">Student</h3>
-    <table cellpadding=""6"" cellspacing=""0"" style=""border-collapse: collapse; font-size: 14px; margin-bottom: 16px;"">
-        <tr><td style=""color:#6b7280;"">Name</td><td><strong>{enc.Encode(e.StudentFirstName)} {enc.Encode(e.StudentLastName)}</strong></td></tr>
-        <tr><td style=""color:#6b7280;"">Grade</td><td>{enc.Encode(e.StudentGrade)}</td></tr>
-        <tr><td style=""color:#6b7280;"">Birthdate</td><td>{e.StudentBirthDate:MMM d, yyyy}</td></tr>
-        <tr><td style=""color:#6b7280; vertical-align:top;"">Medical</td><td>{medical}</td></tr>
-    </table>
+        var photoRelease = e.PhotoReleaseGrantedAt.HasValue
+            ? $"<strong>Granted</strong> on {e.PhotoReleaseGrantedAt.Value:MMM d, yyyy 'at' h:mm tt} UTC"
+            : "<em style=\"color:#9ca3af;\">Not granted</em>";
 
-    <h3 style=""margin-bottom: 4px;"">Parent / guardian</h3>
-    <table cellpadding=""6"" cellspacing=""0"" style=""border-collapse: collapse; font-size: 14px; margin-bottom: 16px;"">
-        <tr><td style=""color:#6b7280;"">Name</td><td>{enc.Encode(e.ParentFirstName)} {enc.Encode(e.ParentLastName)}</td></tr>
-        <tr><td style=""color:#6b7280;"">Email</td><td>{enc.Encode(e.ParentEmail)}</td></tr>
-        <tr><td style=""color:#6b7280;"">Phone</td><td>{enc.Encode(e.ParentPhone)}</td></tr>
-    </table>
+        var waiverHtml = string.IsNullOrWhiteSpace(p.WaiverText)
+            ? "<em style=\"color:#9ca3af;\">No waiver on file for this program.</em>"
+            : Markdig.Markdown.ToHtml(p.WaiverText);
 
-    <h3 style=""margin-bottom: 4px;"">Emergency contact</h3>
-    <table cellpadding=""6"" cellspacing=""0"" style=""border-collapse: collapse; font-size: 14px; margin-bottom: 16px;"">
-        <tr><td style=""color:#6b7280;"">Name</td><td>{enc.Encode(e.EmergencyName)} ({enc.Encode(e.EmergencyRelationship)})</td></tr>
-        <tr><td style=""color:#6b7280;"">Phone</td><td>{enc.Encode(e.EmergencyPhone)}</td></tr>
-    </table>
+        return $@"
+<p style=""margin: 0 0 16px 0; color: #374151; font-size: 15px; line-height: 1.6;"">Hi {enc.Encode(e.ParentFirstName)},</p>
 
-    <h3 style=""margin-bottom: 4px;"">Pickup authorization</h3>
-    <p style=""font-size: 14px; white-space: pre-wrap;"">{enc.Encode(e.PickupAuthorization)}</p>
+<p style=""margin: 0 0 16px 0; color: #374151; font-size: 15px; line-height: 1.6;"">
+    Thanks for enrolling <strong>{enc.Encode(e.StudentFirstName)} {enc.Encode(e.StudentLastName)}</strong> in
+    <strong>{enc.Encode(p.Name)}</strong>. This email is your receipt — keep it for your records.
+</p>
 
-    <p style=""margin-top: 20px; padding: 12px; background: #f3f4f6; border-radius: 6px; font-size: 14px;""><strong>Payment:</strong> {paymentLine}</p>
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Program details</h3>
+{BuildKvpTable(enc, new (string, string)[] {
+    ("Location", $"{enc.Encode(p.LocationName)}<br /><span style=\"color:#6b7280; font-size:12px;\">{enc.Encode(p.LocationAddress)}</span>"),
+    ("Dates", $"{p.StartDate:MMM d} &ndash; {p.EndDate:MMM d, yyyy}"),
+    ("Meets", $"{enc.Encode(p.MeetingDays)} &middot; {p.StartTime:h:mm tt} &ndash; {p.EndTime:h:mm tt}"),
+})}
 
-    <p style=""margin-top: 16px; font-size: 12px; color: #6b7280;"">Enrollment #{e.Id} · Enrolled {e.CreatedAt:yyyy-MM-dd HH:mm} UTC</p>
-</div>";
+<div style=""margin: 20px 0; padding: 14px 16px; background: #f0f9ff; border-left: 4px solid {BrandNavy}; border-radius: 6px; font-size: 15px; color: #1e3a8a;"">
+    {paymentBlurb}
+</div>
+
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Information you submitted</h3>
+<p style=""margin: 0 0 8px 0; color: #6b7280; font-size: 13px;"">
+    If anything below is wrong, please <a href=""mailto:{enc.Encode(p.ContactEmail)}"" style=""color: {BrandNavy}; font-weight: 600;"">reply to this email</a> or call
+    <a href=""tel:{enc.Encode(p.ContactPhone)}"" style=""color: {BrandNavy}; font-weight: 600;"">{enc.Encode(p.ContactPhone)}</a>.
+</p>
+
+<h4 style=""margin: 16px 0 6px 0; color: #374151; font-size: 14px;"">Student</h4>
+{BuildKvpTable(enc, new (string, string)[] {
+    ("Name", $"<strong>{enc.Encode(e.StudentFirstName)} {enc.Encode(e.StudentLastName)}</strong>"),
+    ("Grade", string.IsNullOrEmpty(e.StudentGrade) ? "&mdash;" : enc.Encode(e.StudentGrade)),
+    ("Birthdate", $"{e.StudentBirthDate:MMM d, yyyy}"),
+    ("Medical concerns", medical),
+    ("Notes", string.IsNullOrWhiteSpace(e.StudentNotes) ? "<em style=\"color:#9ca3af;\">None</em>" : enc.Encode(e.StudentNotes!)),
+})}
+
+<h4 style=""margin: 16px 0 6px 0; color: #374151; font-size: 14px;"">Parent / guardian</h4>
+{BuildKvpTable(enc, new (string, string)[] {
+    ("Name", $"{enc.Encode(e.ParentFirstName)} {enc.Encode(e.ParentLastName)}"),
+    ("Email", enc.Encode(e.ParentEmail)),
+    ("Phone", enc.Encode(e.ParentPhone)),
+    ("Address", address),
+})}
+
+<h4 style=""margin: 16px 0 6px 0; color: #374151; font-size: 14px;"">Emergency contact</h4>
+{BuildKvpTable(enc, new (string, string)[] {
+    ("Name", $"{enc.Encode(e.EmergencyName)} ({enc.Encode(e.EmergencyRelationship)})"),
+    ("Phone", enc.Encode(e.EmergencyPhone)),
+})}
+
+<h4 style=""margin: 16px 0 6px 0; color: #374151; font-size: 14px;"">Pickup authorization</h4>
+<div style=""padding: 12px 14px; background: #f9fafb; border-radius: 6px; font-size: 14px; color: #374151; white-space: pre-wrap;"">{enc.Encode(e.PickupAuthorization)}</div>
+
+<h4 style=""margin: 16px 0 6px 0; color: #374151; font-size: 14px;"">Photo / video release</h4>
+<p style=""margin: 0 0 8px 0; color: #374151; font-size: 14px;"">{photoRelease}</p>
+
+<h3 style=""margin: 28px 0 8px 0; color: #111827; font-size: 16px;"">Waiver you accepted</h3>
+<p style=""margin: 0 0 8px 0; color: #6b7280; font-size: 13px;"">
+    Accepted on <strong>{e.WaiverAcceptedAt:MMM d, yyyy 'at' h:mm tt} UTC</strong>.
+</p>
+<div style=""padding: 16px 18px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #374151; line-height: 1.6;"">
+    {waiverHtml}
+</div>
+
+<p style=""margin: 28px 0 8px 0; color: #6b7280; font-size: 12px;"">
+    Enrollment reference: <strong>#{e.Id}</strong> &middot; Enrolled {e.CreatedAt:yyyy-MM-dd HH:mm} UTC
+</p>
+<p style=""margin: 0; color: #9ca3af; font-size: 12px;"">
+    Lake Country Spanish, LLC &middot; <a href=""{baseUrl}"" style=""color: #6b7280;"">{baseUrl.Replace("https://", "").Replace("http://", "")}</a>
+</p>";
+    }
+
+    /// <summary>
+    /// Full-detail teacher notification with the same audit-trail content the
+    /// parent sees, plus a CTA link back to the admin roster for the program
+    /// so the teacher can take action (cash-confirm, contact the family, etc.)
+    /// in one click.
+    /// </summary>
+    private string BuildTeacherNotificationBody(ProgramEnrollment e, EnrollmentProgram p)
+    {
+        var enc = HtmlEncoder.Default;
+        var baseUrl = _configuration["AppSettings:BaseUrl"] ?? "https://lakecountryspanish.com";
+        var rosterUrl = $"{baseUrl}/Admin/Programs/{p.Id}/Enrollments";
+
+        var paymentLine = e.PaymentType switch
+        {
+            ProgramPaymentType.FullOneTime => $"Paid in full: <strong>${e.TotalAmountPaid:N2}</strong>",
+            ProgramPaymentType.TwoInstallment => $"Installment 1 of 2 received: <strong>${e.TotalAmountPaid:N2}</strong> (auto-charge for installment 2 in ~30 days)",
+            ProgramPaymentType.CashInHand => $"<strong>Cash-in-hand</strong> — collect ${p.FullPrice:N2} at the booth. Mark cash confirmed in admin once received.",
+            _ => string.Empty
+        };
+
+        var medical = string.IsNullOrWhiteSpace(e.MedicalConcerns)
+            ? "<em style=\"color:#9ca3af;\">None noted</em>"
+            : $"<span style=\"color: #b91c1c; font-weight: 600;\">{enc.Encode(e.MedicalConcerns!)}</span>";
+
+        var photoRelease = e.PhotoReleaseGrantedAt.HasValue
+            ? $"<strong>Granted</strong> on {e.PhotoReleaseGrantedAt.Value:MMM d, yyyy 'at' h:mm tt} UTC"
+            : "<em style=\"color:#9ca3af;\">Not granted</em>";
+
+        var waiverHtml = string.IsNullOrWhiteSpace(p.WaiverText)
+            ? "<em style=\"color:#9ca3af;\">No waiver on file for this program.</em>"
+            : Markdig.Markdown.ToHtml(p.WaiverText);
+
+        return $@"
+<p style=""margin: 0 0 16px 0; color: #374151; font-size: 15px; line-height: 1.6;"">
+    A new enrollment just landed for <strong>{enc.Encode(p.Name)}</strong>.
+</p>
+
+<div style=""margin: 20px 0; padding: 14px 16px; background: #ecfdf5; border-left: 4px solid #059669; border-radius: 6px; font-size: 15px; color: #065f46;"">
+    {paymentLine}
+</div>
+
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Student</h3>
+{BuildKvpTable(enc, new (string, string)[] {
+    ("Name", $"<strong>{enc.Encode(e.StudentFirstName)} {enc.Encode(e.StudentLastName)}</strong>"),
+    ("Grade", string.IsNullOrEmpty(e.StudentGrade) ? "&mdash;" : enc.Encode(e.StudentGrade)),
+    ("Birthdate", $"{e.StudentBirthDate:MMM d, yyyy}"),
+    ("Medical concerns", medical),
+    ("Notes", string.IsNullOrWhiteSpace(e.StudentNotes) ? "<em style=\"color:#9ca3af;\">None</em>" : enc.Encode(e.StudentNotes!)),
+})}
+
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Parent / guardian</h3>
+{BuildKvpTable(enc, new (string, string)[] {
+    ("Name", $"{enc.Encode(e.ParentFirstName)} {enc.Encode(e.ParentLastName)}"),
+    ("Email", $"<a href=\"mailto:{enc.Encode(e.ParentEmail)}\" style=\"color: {BrandNavy};\">{enc.Encode(e.ParentEmail)}</a>"),
+    ("Phone", $"<a href=\"tel:{enc.Encode(e.ParentPhone)}\" style=\"color: {BrandNavy};\">{enc.Encode(e.ParentPhone)}</a>"),
+})}
+
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Emergency contact</h3>
+{BuildKvpTable(enc, new (string, string)[] {
+    ("Name", $"{enc.Encode(e.EmergencyName)} ({enc.Encode(e.EmergencyRelationship)})"),
+    ("Phone", $"<a href=\"tel:{enc.Encode(e.EmergencyPhone)}\" style=\"color: {BrandNavy};\">{enc.Encode(e.EmergencyPhone)}</a>"),
+})}
+
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Pickup authorization</h3>
+<div style=""padding: 12px 14px; background: #f9fafb; border-radius: 6px; font-size: 14px; color: #374151; white-space: pre-wrap;"">{enc.Encode(e.PickupAuthorization)}</div>
+
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Photo / video release</h3>
+<p style=""margin: 0 0 16px 0; color: #374151; font-size: 14px;"">{photoRelease}</p>
+
+<h3 style=""margin: 24px 0 8px 0; color: #111827; font-size: 16px;"">Waiver they accepted</h3>
+<p style=""margin: 0 0 8px 0; color: #6b7280; font-size: 13px;"">
+    Accepted on <strong>{e.WaiverAcceptedAt:MMM d, yyyy 'at' h:mm tt} UTC</strong>.
+</p>
+<div style=""padding: 14px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; color: #4b5563; line-height: 1.6; max-height: 240px; overflow: auto;"">
+    {waiverHtml}
+</div>
+
+<table role=""presentation"" width=""100%"" cellspacing=""0"" cellpadding=""0"" border=""0"" style=""margin: 24px 0;"">
+    <tr>
+        <td align=""center"">
+            <a href=""{rosterUrl}"" style=""display: inline-block; background-color: {BrandTeal}; color: #ffffff; font-weight: 600; font-size: 15px; padding: 12px 28px; border-radius: 8px; text-decoration: none;"">View roster + take action</a>
+        </td>
+    </tr>
+</table>
+
+<p style=""margin: 0; color: #9ca3af; font-size: 12px;"">
+    Enrollment reference: <strong>#{e.Id}</strong> &middot; Received {e.CreatedAt:yyyy-MM-dd HH:mm} UTC
+</p>";
+    }
+
+    /// <summary>Renders a two-column key/value table with LCS's standard typography.</summary>
+    private static string BuildKvpTable(HtmlEncoder enc, (string label, string valueHtml)[] rows)
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.Append("<table cellpadding=\"6\" cellspacing=\"0\" style=\"border-collapse: collapse; width: 100%; font-size: 14px;\">");
+        foreach (var (label, valueHtml) in rows)
+        {
+            sb.Append("<tr>");
+            sb.Append($"<td style=\"color: #6b7280; vertical-align: top; padding: 4px 12px 4px 0; width: 130px; white-space: nowrap;\">{enc.Encode(label)}</td>");
+            sb.Append($"<td style=\"color: #111827; padding: 4px 0;\">{valueHtml}</td>");
+            sb.Append("</tr>");
+        }
+        sb.Append("</table>");
+        return sb.ToString();
     }
 
     private static bool TryReadEnrollmentId(IDictionary<string, string>? metadata, out int enrollmentId)

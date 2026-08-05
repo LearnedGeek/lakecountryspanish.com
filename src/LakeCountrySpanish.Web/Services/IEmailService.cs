@@ -5,6 +5,22 @@ namespace LakeCountrySpanish.Web.Services;
 public interface IEmailService
 {
     Task SendEmailAsync(string toEmail, string toName, string subject, string htmlBody);
+
+    /// <summary>
+    /// Wraps <paramref name="bodyContentHtml"/> in the LCS-branded shell (logo
+    /// header, gradient title band, white card, footer) and sends it. Any
+    /// caller composing transactional email should prefer this over
+    /// <see cref="SendEmailAsync"/> so the visual language stays consistent
+    /// across the whole site.
+    /// </summary>
+    /// <param name="headerTitle">Title text shown in the gradient band at the top of the card.</param>
+    /// <param name="headerColorHex">Base color for the gradient (e.g. "#1E3A8A" for navy).</param>
+    /// <param name="bodyContentHtml">Pre-composed HTML to drop inside the card body.</param>
+    /// <param name="preheader">Optional invisible summary line Gmail shows next to the subject.</param>
+    /// <param name="emoji">Optional emoji prefixed to the header title.</param>
+    Task SendBrandedEmailAsync(string toEmail, string toName, string subject,
+        string headerTitle, string headerColorHex, string bodyContentHtml,
+        string? preheader = null, string? emoji = null);
     Task SendClassScheduledAsync(string studentEmail, string studentName, DateTime classDateTime, string? classroomUrl);
     Task SendClassRescheduledAsync(string studentEmail, string studentName, DateTime oldDateTime, DateTime newDateTime, string? reason);
     Task SendClassCancelledAsync(string studentEmail, string studentName, DateTime classDateTime, string? reason);

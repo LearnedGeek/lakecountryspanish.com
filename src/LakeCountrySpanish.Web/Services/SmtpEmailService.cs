@@ -271,6 +271,15 @@ public class SmtpEmailService : IEmailService
 
     #endregion
 
+    /// <inheritdoc />
+    public Task SendBrandedEmailAsync(string toEmail, string toName, string subject,
+        string headerTitle, string headerColorHex, string bodyContentHtml,
+        string? preheader = null, string? emoji = null)
+    {
+        var html = BuildEmailTemplate(headerTitle, headerColorHex, bodyContentHtml, preheader, emoji);
+        return SendEmailAsync(toEmail, toName, subject, html);
+    }
+
     public async Task SendEmailAsync(string toEmail, string toName, string subject, string htmlBody)
     {
         var smtpHost = _configuration["EmailSettings:SmtpHost"];
