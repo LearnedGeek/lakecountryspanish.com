@@ -54,7 +54,7 @@
                                 <span>2 × $@p.InstallmentAmount.ToString("N2") · first paid today</span>
                                 break;
                             case LakeCountrySpanish.Web.Models.Entities.ProgramPaymentType.CashInHand:
-                                <span>$@p.FullPrice.ToString("N2") · pay Karen at the booth</span>
+                                <span>$@p.FullPrice.ToString("N2") · pay at the booth</span>
                                 break;
                         }
                     </dd>
@@ -73,9 +73,9 @@
                 }
                 @if (e.PaymentType == LakeCountrySpanish.Web.Models.Entities.ProgramPaymentType.CashInHand)
                 {
-                    <li>Please bring your payment ($@p.FullPrice.ToString("N2")) to Karen at the booth or arrange with her directly.</li>
+                    <li>Please bring your payment ($@p.FullPrice.ToString("N2")) to the booth — cash or a check made out to Lake Country Spanish, LLC.</li>
                 }
-                <li>Karen will reach out before the program starts (@p.StartDate.ToString("MMMM d")) with any final details.</li>
+                <li>We'll reach out before the program starts (@p.StartDate.ToString("MMMM d")) with any final details.</li>
                 <li>Questions in the meantime? Call @p.ContactPhone or email <a href="mailto:@p.ContactEmail" class="underline">@p.ContactEmail</a>.</li>
             </ul>
         </section>

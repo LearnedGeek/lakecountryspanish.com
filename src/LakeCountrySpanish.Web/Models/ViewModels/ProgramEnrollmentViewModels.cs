@@ -83,7 +83,7 @@ public sealed class ProgramEnrollmentFormViewModel
     public string? MedicalConcerns { get; set; }
 
     [StringLength(1000)]
-    [Display(Name = "Anything else Karen should know")]
+    [Display(Name = "Anything else we should know")]
     public string? StudentNotes { get; set; }
 
     // ---------------- Emergency ----------------
@@ -142,7 +142,7 @@ public sealed class ProgramEnrollmentThankYouViewModel
             "Both installments received — you're all set!",
 
         (ProgramPaymentType.CashInHand, _) =>
-            "Registration received — please pay Karen at the booth to confirm.",
+            "Registration received — please bring your payment to the booth to confirm.",
 
         _ => "Registration received. Your payment is still processing — you'll get an email once it clears."
     };
