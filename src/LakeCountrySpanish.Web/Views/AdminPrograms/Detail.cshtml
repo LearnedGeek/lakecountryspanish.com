@@ -4,110 +4,185 @@
     var p = Model.Program;
 }
 
-<div class="bg-gray-50 min-h-screen">
+<div class="bg-gray-100 min-h-screen">
     <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
 
-        <div class="flex items-start justify-between mb-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">@p.Name</h1>
-                <p class="text-sm text-gray-600 mt-1">@p.TagLine</p>
-                <div class="flex flex-wrap gap-2 mt-2">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+            <div class="flex-1 min-w-0">
+                <a href="@Url.Action("Index")" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 mb-2">
+                    ← All programs
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">@p.Name</h1>
+                @if (!string.IsNullOrEmpty(p.TagLine))
+                {
+                    <p class="text-base text-gray-600 mt-1">@p.TagLine</p>
+                }
+                <div class="flex flex-wrap gap-2 mt-3">
                     @if (p.IsActive)
                     {
-                        <span class="inline-flex px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs">Accepting enrollments</span>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold border border-green-200">
+                            <span class="h-2 w-2 rounded-full bg-green-500"></span>
+                            Accepting enrollments
+                        </span>
                     }
                     else
                     {
-                        <span class="inline-flex px-2 py-0.5 rounded-full bg-gray-200 text-gray-700 text-xs">Inactive</span>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 text-gray-700 text-xs font-semibold border border-gray-300">
+                            <span class="h-2 w-2 rounded-full bg-gray-500"></span>
+                            Inactive
+                        </span>
                     }
                     @if (p.IsListed)
                     {
-                        <span class="inline-flex px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-xs">On public calendar</span>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs font-semibold border border-indigo-200">
+                            🌐 On public calendar
+                        </span>
                     }
                     else
                     {
-                        <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs">Private (QR only)</span>
+                        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold border border-yellow-200">
+                            🔒 Private (QR only)
+                        </span>
                     }
                 </div>
             </div>
-            <div class="flex gap-2">
-                <a href="@Url.Action("Edit", new { id = p.Id })" class="px-3 py-2 bg-white border border-gray-300 text-sm rounded hover:bg-gray-50">Edit</a>
-                <a href="@Url.Action("Index")" class="text-sm text-indigo-600 hover:text-indigo-800 self-center">← All programs</a>
-            </div>
+            <a href="@Url.Action("Edit", new { id = p.Id })" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-indigo-500 text-indigo-700 text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Edit program
+            </a>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             <!-- Program summary -->
-            <div class="lg:col-span-2 bg-white rounded-lg shadow p-4">
-                <h2 class="text-xs font-semibold uppercase text-gray-500 tracking-wide mb-3">Program details</h2>
-                <dl class="text-sm text-gray-700 space-y-2">
-                    <div class="flex justify-between"><dt class="text-gray-500">Location</dt><dd class="text-right">@p.LocationName<br /><span class="text-xs text-gray-500">@p.LocationAddress</span></dd></div>
-                    <div class="flex justify-between"><dt class="text-gray-500">Dates</dt><dd>@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</dd></div>
-                    <div class="flex justify-between"><dt class="text-gray-500">Meets</dt><dd>@p.MeetingDays · @p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd></div>
-                    <div class="flex justify-between"><dt class="text-gray-500">Grades / Ages</dt><dd>@p.GradeRange · ages @p.AgeMin–@p.AgeMax</dd></div>
-                    <div class="flex justify-between border-t border-gray-100 pt-2"><dt class="text-gray-500">Full price</dt><dd class="font-semibold">$@p.FullPrice.ToString("N2")</dd></div>
+            <section class="lg:col-span-2 bg-white rounded-2xl shadow-md border-l-4 border-indigo-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-indigo-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-indigo-600">ⓘ</span> Program details
+                    </h2>
+                </header>
+                <dl class="p-6 text-sm text-gray-700 divide-y divide-gray-100">
+                    <div class="flex justify-between py-2.5">
+                        <dt class="font-semibold text-gray-500">Location</dt>
+                        <dd class="text-right font-medium text-gray-900">@p.LocationName<br /><span class="text-xs font-normal text-gray-500">@p.LocationAddress</span></dd>
+                    </div>
+                    <div class="flex justify-between py-2.5">
+                        <dt class="font-semibold text-gray-500">Dates</dt>
+                        <dd class="font-medium text-gray-900">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</dd>
+                    </div>
+                    <div class="flex justify-between py-2.5">
+                        <dt class="font-semibold text-gray-500">Meets</dt>
+                        <dd class="font-medium text-gray-900">@p.MeetingDays · @p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
+                    </div>
+                    <div class="flex justify-between py-2.5">
+                        <dt class="font-semibold text-gray-500">Grades / Ages</dt>
+                        <dd class="font-medium text-gray-900">@p.GradeRange · ages @p.AgeMin–@p.AgeMax</dd>
+                    </div>
+                    <div class="flex justify-between py-2.5">
+                        <dt class="font-semibold text-gray-500">Full price</dt>
+                        <dd class="font-bold text-lg text-gray-900">$@p.FullPrice.ToString("N2")</dd>
+                    </div>
                     @if (p.InstallmentsEnabled)
                     {
-                        <div class="flex justify-between"><dt class="text-gray-500">Installments</dt><dd>@p.InstallmentCount × $@p.InstallmentAmount.ToString("N2")</dd></div>
+                        <div class="flex justify-between py-2.5">
+                            <dt class="font-semibold text-gray-500">Installments</dt>
+                            <dd class="font-medium text-gray-900">@p.InstallmentCount × $@p.InstallmentAmount.ToString("N2")</dd>
+                        </div>
                         @if (p.FinalInstallmentDueDate.HasValue)
                         {
-                            <div class="flex justify-between"><dt class="text-gray-500">Final installment due</dt><dd>@p.FinalInstallmentDueDate.Value.ToString("MMM d, yyyy")</dd></div>
+                            <div class="flex justify-between py-2.5">
+                                <dt class="font-semibold text-gray-500">Final installment due</dt>
+                                <dd class="font-medium text-gray-900">@p.FinalInstallmentDueDate.Value.ToString("MMM d, yyyy")</dd>
+                            </div>
                         }
                     }
-                    <div class="flex justify-between"><dt class="text-gray-500">Cash-in-hand</dt><dd>@(p.CashOptionEnabled ? "Offered" : "Not offered")</dd></div>
-                    <div class="flex justify-between border-t border-gray-100 pt-2"><dt class="text-gray-500">Contact</dt><dd>@p.ContactPhone<br /><span class="text-xs">@p.ContactEmail</span></dd></div>
+                    <div class="flex justify-between py-2.5">
+                        <dt class="font-semibold text-gray-500">Cash-in-hand</dt>
+                        <dd class="font-medium text-gray-900">@(p.CashOptionEnabled ? "Offered" : "Not offered")</dd>
+                    </div>
+                    <div class="flex justify-between py-2.5">
+                        <dt class="font-semibold text-gray-500">Contact</dt>
+                        <dd class="text-right font-medium text-gray-900">@p.ContactPhone<br /><span class="text-xs font-normal text-gray-600">@p.ContactEmail</span></dd>
+                    </div>
                     @if (!string.IsNullOrEmpty(p.StripeProductId))
                     {
-                        <div class="flex justify-between border-t border-gray-100 pt-2"><dt class="text-gray-500">Stripe Product</dt><dd class="font-mono text-xs">@p.StripeProductId</dd></div>
+                        <div class="flex justify-between py-2.5">
+                            <dt class="font-semibold text-gray-500">Stripe Product</dt>
+                            <dd class="font-mono text-xs text-gray-500">@p.StripeProductId</dd>
+                        </div>
                     }
                 </dl>
-            </div>
+            </section>
 
             <!-- QR code + Join URL -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h2 class="text-xs font-semibold uppercase text-gray-500 tracking-wide mb-3">QR code + join URL</h2>
-                <div class="flex flex-col items-center gap-3">
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-teal-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-teal-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-teal-600">▦</span> QR + Join URL
+                    </h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Share this with parents.</p>
+                </header>
+                <div class="p-6 flex flex-col items-center gap-4">
                     <img src="@Url.Action("Qr", new { id = p.Id })"
                          alt="QR code for @p.Name"
-                         class="w-64 h-auto border border-gray-200 rounded" />
-                    <div class="flex gap-3 text-xs">
-                        <a href="@Url.Action("PrintCard", new { id = p.Id })" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium">🖨 Print card</a>
-                        <a href="@Url.Action("Qr", new { id = p.Id })" download class="text-indigo-600 hover:text-indigo-800">Download PNG</a>
+                         class="w-64 h-auto rounded-lg border-2 border-gray-200 shadow-sm" />
+
+                    <div class="grid grid-cols-2 gap-2 w-full">
+                        <a href="@Url.Action("PrintCard", new { id = p.Id })" target="_blank"
+                           class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-teal-600 text-white text-sm font-bold rounded-lg shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all">
+                            🖨 Print card
+                        </a>
+                        <a href="@Url.Action("Qr", new { id = p.Id })" download
+                           class="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border-2 border-teal-500 text-teal-700 text-sm font-bold rounded-lg hover:bg-teal-50 focus:outline-none focus:ring-4 focus:ring-teal-500/20 transition-all">
+                            ⬇ PNG
+                        </a>
                     </div>
-                    <p class="text-xs text-gray-500 text-center">Print card includes the QR + program name and dates so you can tell printed cards apart.</p>
-                    <div class="w-full text-center">
-                        <div class="text-xs text-gray-500 mb-1">Public URL</div>
-                        <a href="@Model.JoinUrl" target="_blank" class="text-sm font-mono text-indigo-700 break-all hover:underline">@Model.JoinUrl</a>
+                    <p class="text-xs text-gray-500 text-center leading-relaxed">
+                        <strong>Print card</strong> includes the QR + name + dates so you can tell printed cards apart.
+                    </p>
+
+                    <div class="w-full pt-4 border-t border-gray-100">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-1.5">Public URL</div>
+                        <a href="@Model.JoinUrl" target="_blank"
+                           class="block text-sm font-mono text-indigo-700 break-all hover:underline p-2 bg-gray-50 rounded-lg border border-gray-200">
+                            @Model.JoinUrl
+                        </a>
                     </div>
                 </div>
-            </div>
+            </section>
 
             <!-- Enrollment stats -->
-            <div class="lg:col-span-3 bg-white rounded-lg shadow p-4">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-xs font-semibold uppercase text-gray-500 tracking-wide">Enrollments</h2>
-                    <a href="@Url.Action("Enrollments", new { id = p.Id })" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">View roster + export CSV →</a>
+            <section class="lg:col-span-3 bg-white rounded-2xl shadow-md border-l-4 border-amber-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-amber-50/40 flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-amber-600">👥</span> Enrollments
+                    </h2>
+                    <a href="@Url.Action("Enrollments", new { id = p.Id })" class="inline-flex items-center gap-1 text-sm font-bold text-amber-700 hover:text-amber-800">
+                        View roster + export CSV →
+                    </a>
+                </header>
+                <div class="p-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 text-center border border-gray-200">
+                        <div class="text-4xl font-bold text-gray-900">@Model.EnrollmentCount</div>
+                        <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Total</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-xl p-4 text-center border border-green-200">
+                        <div class="text-4xl font-bold text-green-800">@Model.PaidCount</div>
+                        <div class="text-xs font-semibold text-green-800 uppercase tracking-wide mt-1">Paid</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-xl p-4 text-center border border-yellow-200">
+                        <div class="text-4xl font-bold text-yellow-800">@Model.PendingCount</div>
+                        <div class="text-xs font-semibold text-yellow-800 uppercase tracking-wide mt-1">Awaiting Stripe</div>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 text-center border border-blue-200">
+                        <div class="text-4xl font-bold text-blue-800">@Model.CashPendingCount</div>
+                        <div class="text-xs font-semibold text-blue-800 uppercase tracking-wide mt-1">Cash pending</div>
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div class="bg-gray-50 rounded p-3 text-center">
-                        <div class="text-2xl font-bold text-gray-900">@Model.EnrollmentCount</div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide">Total</div>
-                    </div>
-                    <div class="bg-green-50 rounded p-3 text-center">
-                        <div class="text-2xl font-bold text-green-800">@Model.PaidCount</div>
-                        <div class="text-xs text-green-700 uppercase tracking-wide">Paid</div>
-                    </div>
-                    <div class="bg-yellow-50 rounded p-3 text-center">
-                        <div class="text-2xl font-bold text-yellow-800">@Model.PendingCount</div>
-                        <div class="text-xs text-yellow-700 uppercase tracking-wide">Pending Stripe</div>
-                    </div>
-                    <div class="bg-blue-50 rounded p-3 text-center">
-                        <div class="text-2xl font-bold text-blue-800">@Model.CashPendingCount</div>
-                        <div class="text-xs text-blue-700 uppercase tracking-wide">Cash pending</div>
-                    </div>
-                </div>
-            </div>
+            </section>
 
         </div>
     </div>

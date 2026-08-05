@@ -10,132 +10,165 @@
     var pendingStripeCount = Model.Enrollments.Count(e => e.Status == ProgramEnrollmentStatus.PendingPayment);
 }
 
-<div class="bg-gray-50 min-h-screen">
-    <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+<div class="bg-gray-100 min-h-screen">
+    <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 
-        <div class="flex items-start justify-between mb-4">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Enrollments</h1>
+                <a href="@Url.Action("Detail", new { id = p.Id })" class="text-sm font-medium text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1 mb-2">
+                    ← Program detail
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">Enrollments</h1>
                 <p class="text-sm text-gray-600 mt-1">
-                    <a href="@Url.Action("Detail", new { id = p.Id })" class="text-indigo-600 hover:text-indigo-800">@p.Name</a>
-                    · @p.LocationName · @p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")
+                    <span class="font-semibold text-gray-800">@p.Name</span> · @p.LocationName · @p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")
                 </p>
             </div>
-            <div class="flex gap-2">
-                <a href="@Url.Action("EnrollmentsCsv", new { id = p.Id })"
-                   class="px-3 py-2 bg-white border border-gray-300 text-sm rounded hover:bg-gray-50">⬇ Export CSV</a>
-                <a href="@Url.Action("Detail", new { id = p.Id })" class="text-sm text-indigo-600 hover:text-indigo-800 self-center">← Program detail</a>
+            <a href="@Url.Action("EnrollmentsCsv", new { id = p.Id })"
+               class="inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-indigo-500 text-indigo-700 text-sm font-bold rounded-xl shadow-sm hover:bg-indigo-50 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export CSV
+            </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-5 text-center border border-gray-200 shadow-sm">
+                <div class="text-4xl font-bold text-gray-900">@totalCount</div>
+                <div class="text-xs font-semibold text-gray-600 uppercase tracking-wide mt-1">Total</div>
+            </div>
+            <div class="bg-gradient-to-br from-green-50 to-emerald-100 rounded-2xl p-5 text-center border border-green-200 shadow-sm">
+                <div class="text-4xl font-bold text-green-800">@paidCount</div>
+                <div class="text-xs font-semibold text-green-800 uppercase tracking-wide mt-1">Paid / installment</div>
+            </div>
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 text-center border border-blue-200 shadow-sm">
+                <div class="text-4xl font-bold text-blue-800">@cashPendingCount</div>
+                <div class="text-xs font-semibold text-blue-800 uppercase tracking-wide mt-1">Cash pending</div>
+            </div>
+            <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-5 text-center border border-yellow-200 shadow-sm">
+                <div class="text-4xl font-bold text-yellow-800">@pendingStripeCount</div>
+                <div class="text-xs font-semibold text-yellow-800 uppercase tracking-wide mt-1">Awaiting Stripe</div>
             </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-            <div class="bg-white rounded shadow p-3 text-center">
-                <div class="text-2xl font-bold text-gray-900">@totalCount</div>
-                <div class="text-xs text-gray-500 uppercase tracking-wide">Total</div>
-            </div>
-            <div class="bg-green-50 rounded shadow p-3 text-center">
-                <div class="text-2xl font-bold text-green-800">@paidCount</div>
-                <div class="text-xs text-green-700 uppercase tracking-wide">Paid / installment</div>
-            </div>
-            <div class="bg-blue-50 rounded shadow p-3 text-center">
-                <div class="text-2xl font-bold text-blue-800">@cashPendingCount</div>
-                <div class="text-xs text-blue-700 uppercase tracking-wide">Cash pending</div>
-            </div>
-            <div class="bg-yellow-50 rounded shadow p-3 text-center">
-                <div class="text-2xl font-bold text-yellow-800">@pendingStripeCount</div>
-                <div class="text-xs text-yellow-700 uppercase tracking-wide">Awaiting Stripe</div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow overflow-hidden">
+        <!-- Roster -->
+        <div class="bg-white rounded-2xl shadow-md overflow-hidden">
             @if (totalCount == 0)
             {
-                <div class="p-8 text-center text-sm text-gray-500">
-                    No enrollments yet. Share the <a href="@($"/join/{p.Slug}")" class="text-indigo-600 hover:text-indigo-800 font-mono">/join/@p.Slug</a> URL or QR code.
+                <div class="p-12 text-center">
+                    <div class="text-5xl mb-3">📇</div>
+                    <p class="text-lg font-bold text-gray-800">No enrollments yet</p>
+                    <p class="text-sm text-gray-600 mt-2">
+                        Share the join URL with parents:
+                        <a href="@($"/join/{p.Slug}")" class="text-indigo-600 hover:text-indigo-800 font-mono font-semibold">/join/@p.Slug</a>
+                    </p>
                 </div>
             }
             else
             {
                 <div class="overflow-x-auto">
                     <table class="min-w-full text-sm">
-                        <thead class="bg-gray-50 text-xs uppercase tracking-wide text-gray-600">
+                        <thead class="bg-gray-50 border-b-2 border-gray-200">
                             <tr>
-                                <th class="px-4 py-2 text-left">Enrolled</th>
-                                <th class="px-4 py-2 text-left">Student</th>
-                                <th class="px-4 py-2 text-left">Parent</th>
-                                <th class="px-4 py-2 text-left">Contact</th>
-                                <th class="px-4 py-2 text-left">Payment</th>
-                                <th class="px-4 py-2 text-left">Status</th>
-                                <th class="px-4 py-2 text-right">Amount</th>
-                                <th class="px-4 py-2 text-right">Actions</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">Enrolled</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">Student</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">Parent</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">Contact</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">Payment</th>
+                                <th class="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wide">Status</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wide">Amount</th>
+                                <th class="px-4 py-3 text-right text-xs font-bold text-gray-600 uppercase tracking-wide">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">
                             @foreach (var e in Model.Enrollments)
                             {
                                 var events = Model.AuditEventsByEnrollmentId.TryGetValue(e.Id, out var evs) ? evs : Array.Empty<ProgramEnrollmentAuditEvent>();
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
-                                        @e.CreatedAt.ToString("MMM d")<br /><span class="text-gray-400">@e.CreatedAt.ToString("h:mm tt")</span>
+                                <tr class="hover:bg-indigo-50/40 transition-colors">
+                                    <td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">
+                                        <div class="font-semibold text-gray-800">@e.CreatedAt.ToString("MMM d")</div>
+                                        <div class="text-gray-500">@e.CreatedAt.ToString("h:mm tt")</div>
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-gray-900">@e.StudentFirstName @e.StudentLastName</div>
-                                        <div class="text-xs text-gray-500">
+                                        <div class="font-bold text-gray-900">@e.StudentFirstName @e.StudentLastName</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">
                                             @(string.IsNullOrEmpty(e.StudentGrade) ? "" : $"Grade {e.StudentGrade} · ")
                                             b. @e.StudentBirthDate.ToString("MMM d, yyyy")
                                         </div>
                                         @if (!string.IsNullOrEmpty(e.MedicalConcerns))
                                         {
-                                            <div class="text-xs text-red-600 mt-1" title="@e.MedicalConcerns">⚠ Medical: @(e.MedicalConcerns.Length > 40 ? e.MedicalConcerns[..40] + "…" : e.MedicalConcerns)</div>
+                                            <div class="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-md bg-red-50 text-red-700 text-xs font-semibold border border-red-200" title="@e.MedicalConcerns">
+                                                ⚠ Medical: @(e.MedicalConcerns.Length > 40 ? e.MedicalConcerns[..40] + "…" : e.MedicalConcerns)
+                                            </div>
                                         }
                                     </td>
                                     <td class="px-4 py-3">
-                                        <div class="font-medium text-gray-900">@e.ParentFirstName @e.ParentLastName</div>
-                                        <div class="text-xs text-gray-500">Emergency: @e.EmergencyName (@e.EmergencyRelationship)</div>
+                                        <div class="font-semibold text-gray-900">@e.ParentFirstName @e.ParentLastName</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">Emergency: @e.EmergencyName (@e.EmergencyRelationship)</div>
                                     </td>
                                     <td class="px-4 py-3 text-xs">
-                                        <div><a href="mailto:@e.ParentEmail" class="text-indigo-600 hover:underline">@e.ParentEmail</a></div>
-                                        <div class="text-gray-600">@e.ParentPhone</div>
+                                        <a href="mailto:@e.ParentEmail" class="text-indigo-600 hover:underline font-medium">@e.ParentEmail</a>
+                                        <div class="text-gray-600 mt-0.5">@e.ParentPhone</div>
                                     </td>
-                                    <td class="px-4 py-3 text-xs">
+                                    <td class="px-4 py-3">
                                         @switch (e.PaymentType)
                                         {
                                             case ProgramPaymentType.FullOneTime:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">Full</span>
+                                                <span class="inline-flex px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold border border-gray-200">Full</span>
                                                 break;
                                             case ProgramPaymentType.TwoInstallment:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">Installment</span>
+                                                <span class="inline-flex px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800 text-xs font-semibold border border-purple-200">Installment</span>
                                                 break;
                                             case ProgramPaymentType.CashInHand:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Cash</span>
+                                                <span class="inline-flex px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold border border-blue-200">Cash</span>
                                                 break;
                                         }
                                     </td>
-                                    <td class="px-4 py-3 text-xs">
+                                    <td class="px-4 py-3">
                                         @switch (e.Status)
                                         {
                                             case ProgramEnrollmentStatus.FullyPaid:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-green-100 text-green-800">Paid</span>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-semibold border border-green-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                                    Paid
+                                                </span>
                                                 break;
                                             case ProgramEnrollmentStatus.FirstPaymentComplete:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Installment 1 of 2</span>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold border border-emerald-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                                                    Installment 1 of 2
+                                                </span>
                                                 break;
                                             case ProgramEnrollmentStatus.CashPending:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Cash pending</span>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-semibold border border-blue-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                                                    Cash pending
+                                                </span>
                                                 break;
                                             case ProgramEnrollmentStatus.PendingPayment:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800">Awaiting Stripe</span>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold border border-yellow-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
+                                                    Awaiting Stripe
+                                                </span>
                                                 break;
                                             case ProgramEnrollmentStatus.Cancelled:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-red-100 text-red-800">Cancelled</span>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 text-xs font-semibold border border-red-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                                    Cancelled
+                                                </span>
                                                 break;
                                             case ProgramEnrollmentStatus.Refunded:
-                                                <span class="inline-flex px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Refunded</span>
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-700 text-xs font-semibold border border-gray-300">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-gray-500"></span>
+                                                    Refunded
+                                                </span>
                                                 break;
                                         }
                                     </td>
                                     <td class="px-4 py-3 text-right whitespace-nowrap">
-                                        <div class="font-medium text-gray-900">$@e.TotalAmountPaid.ToString("N2")</div>
+                                        <div class="font-bold text-gray-900">$@e.TotalAmountPaid.ToString("N2")</div>
                                         @if (e.PaymentType == ProgramPaymentType.TwoInstallment && e.Status == ProgramEnrollmentStatus.FirstPaymentComplete)
                                         {
                                             <div class="text-xs text-gray-500">of $@p.FullPrice.ToString("N2")</div>
@@ -148,8 +181,8 @@
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit"
                                                         onclick="return confirm('Mark cash received from @e.ParentFirstName @e.ParentLastName?');"
-                                                        class="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 font-medium">
-                                                    Mark cash paid
+                                                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-700 font-bold focus:outline-none focus:ring-4 focus:ring-green-500/30 transition-all">
+                                                    ✓ Mark paid
                                                 </button>
                                             </form>
                                         }
@@ -160,8 +193,8 @@
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="reason" value="" />
                                                 <button type="submit"
-                                                        class="px-2 py-1 text-xs bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
-                                                    Undo
+                                                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-400 font-semibold focus:outline-none focus:ring-4 focus:ring-gray-500/20 transition-all">
+                                                    ↩ Undo
                                                 </button>
                                             </form>
                                         }
@@ -169,8 +202,8 @@
                                 </tr>
                                 @if (events.Count > 0)
                                 {
-                                    <tr class="bg-gray-50/60">
-                                        <td colspan="8" class="px-4 py-2">
+                                    <tr class="bg-gray-50">
+                                        <td colspan="8" class="px-4 py-2 border-b border-gray-100">
                                             <details class="text-xs text-gray-600">
                                                 @{
                                                     var mostRecent = events[^1];
@@ -184,17 +217,17 @@
                                                         _ => mostRecent.EventType.ToString()
                                                     };
                                                 }
-                                                <summary class="cursor-pointer select-none hover:text-gray-900">
-                                                    <span class="text-gray-500">Audit trail:</span>
-                                                    <span class="font-medium">@actionLabel</span>
-                                                    by <span class="font-medium">@mostRecent.ActorDisplayName</span>
+                                                <summary class="cursor-pointer select-none hover:text-gray-900 py-1">
+                                                    <span class="text-gray-500 font-semibold">📋 Audit trail:</span>
+                                                    <span class="font-semibold">@actionLabel</span>
+                                                    by <span class="font-semibold">@mostRecent.ActorDisplayName</span>
                                                     on @mostRecent.OccurredAt.ToLocalTime().ToString("MMM d, h:mm tt")
                                                     @if (events.Count > 1)
                                                     {
                                                         <span class="ml-2 text-gray-500">(+ @(events.Count - 1) earlier event@(events.Count > 2 ? "s" : ""))</span>
                                                     }
                                                 </summary>
-                                                <ol class="mt-2 pl-4 space-y-1 border-l-2 border-gray-200">
+                                                <ol class="mt-2 pl-4 space-y-1.5 border-l-2 border-gray-300">
                                                     @foreach (var ev in events.OrderByDescending(x => x.OccurredAt))
                                                     {
                                                         var evLabel = ev.EventType switch
@@ -207,20 +240,20 @@
                                                             _ => (ev.EventType.ToString(), "text-gray-700")
                                                         };
                                                         <li class="ml-2 pl-2">
-                                                            <span class="@evLabel.Item2 font-medium">@evLabel.Item1</span>
+                                                            <span class="@evLabel.Item2 font-bold">@evLabel.Item1</span>
                                                             <span class="text-gray-500">by</span>
-                                                            <span class="font-medium">@ev.ActorDisplayName</span>
+                                                            <span class="font-semibold">@ev.ActorDisplayName</span>
                                                             <span class="text-gray-500">on</span>
                                                             @ev.OccurredAt.ToLocalTime().ToString("MMM d, yyyy · h:mm:ss tt")
                                                             @if (ev.MonetaryDelta != 0)
                                                             {
-                                                                <span class="ml-1 @(ev.MonetaryDelta > 0 ? "text-green-700" : "text-red-700")">
+                                                                <span class="ml-1 font-semibold @(ev.MonetaryDelta > 0 ? "text-green-700" : "text-red-700")">
                                                                     (@(ev.MonetaryDelta > 0 ? "+" : "")@ev.MonetaryDelta.ToString("N2"))
                                                                 </span>
                                                             }
                                                             @if (!string.IsNullOrEmpty(ev.Details))
                                                             {
-                                                                <div class="text-gray-500 mt-0.5">@ev.Details</div>
+                                                                <div class="text-gray-500 mt-0.5 italic">@ev.Details</div>
                                                             }
                                                         </li>
                                                     }
