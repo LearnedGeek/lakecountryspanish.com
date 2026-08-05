@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using LakeCountrySpanish.Web.Models.Entities;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
 namespace LakeCountrySpanish.Web.Models.ViewModels;
 
@@ -12,6 +14,16 @@ public sealed class ProgramEnrollmentFormViewModel
     // Populated by the controller from the URL slug — parent doesn't fill it.
     public int ProgramId { get; set; }
     public string ProgramSlug { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Populated by the controller from the URL slug (both GET render and POST
+    /// re-render on validation failure). <see cref="BindNeverAttribute"/> keeps
+    /// the model binder from trying to bind form values to it, and
+    /// <see cref="ValidationNeverAttribute"/> opts out of ASP.NET Core's
+    /// implicit-required-for-non-nullable-reference-types rule that would
+    /// otherwise silently fail validation on every POST.
+    /// </summary>
+    [BindNever, ValidateNever]
     public EnrollmentProgram Program { get; set; } = null!;
 
     // ---------------- Parent ----------------
