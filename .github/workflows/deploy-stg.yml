@@ -152,9 +152,16 @@ jobs:
              fi
              # Seed the persistent dir with any git-tracked defaults the
              # deploy brings, without overwriting existing (potentially
-             # user-uploaded) files.
-             rsync -a --ignore-existing "$STAGING/wwwroot/img/programs/" "$UPLOADS/"
+             # user-uploaded) files. Guarded — the directory only exists
+             # in the publish output when there are git-tracked files
+             # under wwwroot/img/programs/.
+             if [ -d "$STAGING/wwwroot/img/programs" ]; then
+               rsync -a --ignore-existing "$STAGING/wwwroot/img/programs/" "$UPLOADS/"
+             fi
              # Replace the deployed folder with a symlink to persistent uploads.
+             # Ensure the parent dir exists (wwwroot/img may not be in the
+             # publish output when no other files live there).
+             mkdir -p "$STAGING/wwwroot/img"
              rm -rf "$STAGING/wwwroot/img/programs"
              ln -s "$UPLOADS" "$STAGING/wwwroot/img/programs"
              chown -R www-data:www-data "$UPLOADS"

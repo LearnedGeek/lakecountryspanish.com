@@ -116,7 +116,10 @@ jobs:
              if [ -d "$ACTIVE/wwwroot/img/programs" ] && [ ! -L "$ACTIVE/wwwroot/img/programs" ]; then
                rsync -a --ignore-existing "$ACTIVE/wwwroot/img/programs/" "$UPLOADS/"
              fi
-             rsync -a --ignore-existing "$STAGING/wwwroot/img/programs/" "$UPLOADS/"
+             if [ -d "$STAGING/wwwroot/img/programs" ]; then
+               rsync -a --ignore-existing "$STAGING/wwwroot/img/programs/" "$UPLOADS/"
+             fi
+             mkdir -p "$STAGING/wwwroot/img"
              rm -rf "$STAGING/wwwroot/img/programs"
              ln -s "$UPLOADS" "$STAGING/wwwroot/img/programs"
              chown -R www-data:www-data "$UPLOADS"
