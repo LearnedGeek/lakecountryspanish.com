@@ -105,4 +105,12 @@ public class ProgramEnrollment
 
     /// <summary>Karen's private notes on this enrollment (not shown to the parent).</summary>
     public string? AdminNotes { get; set; }
+
+    /// <summary>
+    /// Append-only audit trail of admin actions on this enrollment (cash
+    /// confirmations, reversals, refunds, notes). Structured so co-founders
+    /// have visibility into who did what and when — see
+    /// <see cref="ProgramEnrollmentAuditEvent"/>.
+    /// </summary>
+    public virtual ICollection<ProgramEnrollmentAuditEvent> AuditEvents { get; set; } = new List<ProgramEnrollmentAuditEvent>();
 }

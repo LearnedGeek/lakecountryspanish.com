@@ -238,7 +238,7 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         return true;
     }
 
-    public async Task<ProgramEnrollment> MarkCashConfirmedAsync(int enrollmentId, string adminUserId, CancellationToken ct = default)
+    public async Task<ProgramEnrollment> MarkCashConfirmedAsync(int enrollmentId, AdminActor actor, CancellationToken ct = default)
     {
         var enrollment = await _context.ProgramEnrollments
             .Include(e => e.Program)
@@ -251,15 +251,74 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         if (enrollment.Status == ProgramEnrollmentStatus.FullyPaid)
             return enrollment;  // idempotent
 
+        var amount = enrollment.Program.FullPrice;
         enrollment.Status = ProgramEnrollmentStatus.FullyPaid;
         enrollment.FirstPaymentAt ??= DateTime.UtcNow;
-        enrollment.TotalAmountPaid = enrollment.Program.FullPrice;
+        enrollment.TotalAmountPaid = amount;
         enrollment.UpdatedAt = DateTime.UtcNow;
-        enrollment.AdminNotes = $"{enrollment.AdminNotes}\n[{DateTime.UtcNow:u}] Cash confirmed by admin {adminUserId}".Trim();
+
+        _context.ProgramEnrollmentAuditEvents.Add(new ProgramEnrollmentAuditEvent
+        {
+            EnrollmentId = enrollment.Id,
+            OccurredAt = DateTime.UtcNow,
+            ActorUserId = actor.UserId,
+            ActorDisplayName = actor.DisplayName,
+            EventType = EnrollmentAuditEventType.CashConfirmed,
+            Details = $"Marked cash payment received (${amount:N2})",
+            MonetaryDelta = amount
+        });
 
         await _context.SaveChangesAsync(ct);
-        _logger.LogInformation("Enrollment {EnrollmentId} cash payment confirmed by {AdminUserId}", enrollmentId, adminUserId);
+        _logger.LogInformation("Enrollment {EnrollmentId} cash payment confirmed by {Actor}", enrollmentId, actor.DisplayName);
         return enrollment;
+    }
+
+    public async Task<ProgramEnrollment> UndoCashConfirmationAsync(int enrollmentId, AdminActor actor, string? reason, CancellationToken ct = default)
+    {
+        var enrollment = await _context.ProgramEnrollments
+            .Include(e => e.Program)
+            .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct)
+            ?? throw new InvalidOperationException($"Enrollment {enrollmentId} not found.");
+
+        if (enrollment.PaymentType != ProgramPaymentType.CashInHand)
+            throw new InvalidOperationException("Undo cash confirmation only applies to cash-in-hand enrollments.");
+
+        if (enrollment.Status != ProgramEnrollmentStatus.FullyPaid)
+            throw new InvalidOperationException("This enrollment is not marked as cash paid, so there's nothing to undo.");
+
+        var amount = enrollment.TotalAmountPaid;
+        enrollment.Status = ProgramEnrollmentStatus.CashPending;
+        enrollment.TotalAmountPaid = 0m;
+        // FirstPaymentAt kept as-is so we retain the original claim timestamp;
+        // the audit event captures the reversal separately.
+        enrollment.UpdatedAt = DateTime.UtcNow;
+
+        var details = string.IsNullOrWhiteSpace(reason)
+            ? $"Reversed cash confirmation (-${amount:N2})"
+            : $"Reversed cash confirmation (-${amount:N2}) — {reason.Trim()}";
+
+        _context.ProgramEnrollmentAuditEvents.Add(new ProgramEnrollmentAuditEvent
+        {
+            EnrollmentId = enrollment.Id,
+            OccurredAt = DateTime.UtcNow,
+            ActorUserId = actor.UserId,
+            ActorDisplayName = actor.DisplayName,
+            EventType = EnrollmentAuditEventType.CashConfirmationUndone,
+            Details = details,
+            MonetaryDelta = -amount
+        });
+
+        await _context.SaveChangesAsync(ct);
+        _logger.LogWarning("Enrollment {EnrollmentId} cash confirmation reversed by {Actor}: {Reason}", enrollmentId, actor.DisplayName, reason ?? "(no reason given)");
+        return enrollment;
+    }
+
+    public async Task<IReadOnlyList<ProgramEnrollmentAuditEvent>> GetAuditEventsAsync(int enrollmentId, CancellationToken ct = default)
+    {
+        return await _context.ProgramEnrollmentAuditEvents
+            .Where(e => e.EnrollmentId == enrollmentId)
+            .OrderBy(e => e.OccurredAt)
+            .ToListAsync(ct);
     }
 
     // ---------------- Stripe helpers ----------------

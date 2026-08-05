@@ -45,9 +45,35 @@ public interface IProgramEnrollmentService
 
     /// <summary>
     /// Admin action: mark a <see cref="ProgramPaymentType.CashInHand"/> enrollment
-    /// as paid once Karen has the cash/check in hand.
+    /// as paid once the cash / check is in hand. Writes an audit event capturing
+    /// the actor and timestamp so the co-founders can see who did what.
     /// </summary>
-    Task<ProgramEnrollment> MarkCashConfirmedAsync(int enrollmentId, string adminUserId, CancellationToken ct = default);
+    Task<ProgramEnrollment> MarkCashConfirmedAsync(int enrollmentId, AdminActor actor, CancellationToken ct = default);
+
+    /// <summary>
+    /// Admin action: reverse a prior cash confirmation (mistake, refunded, etc.).
+    /// Flips status back to CashPending, zeros TotalAmountPaid, writes an audit
+    /// event with the reason so the reversal is visible in the trail alongside
+    /// the original confirmation.
+    /// </summary>
+    Task<ProgramEnrollment> UndoCashConfirmationAsync(int enrollmentId, AdminActor actor, string? reason, CancellationToken ct = default);
+
+    /// <summary>
+    /// Full audit trail for one enrollment, oldest first. Used to render the
+    /// "who did what and when" view on the admin roster.
+    /// </summary>
+    Task<IReadOnlyList<ProgramEnrollmentAuditEvent>> GetAuditEventsAsync(int enrollmentId, CancellationToken ct = default);
+}
+
+/// <summary>
+/// Compact identity for an admin performing an audited action. Captures both
+/// the AspNetUsers.Id (for referential lookup) and a display label frozen at
+/// action time (so the audit trail reads correctly even if the user is later
+/// renamed or removed).
+/// </summary>
+public sealed record AdminActor(string? UserId, string DisplayName)
+{
+    public static AdminActor System { get; } = new(null, "system");
 }
 
 /// <summary>Everything the parent-facing form + waiver collects.</summary>

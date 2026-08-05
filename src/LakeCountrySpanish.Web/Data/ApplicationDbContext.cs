@@ -80,6 +80,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     // Program enrollment (unlisted /join/{slug} landing pages for open houses).
     public DbSet<EnrollmentProgram> Programs => Set<EnrollmentProgram>();
     public DbSet<ProgramEnrollment> ProgramEnrollments => Set<ProgramEnrollment>();
+    public DbSet<ProgramEnrollmentAuditEvent> ProgramEnrollmentAuditEvents => Set<ProgramEnrollmentAuditEvent>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -948,6 +949,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Same for subscription id (installment path).
             entity.HasIndex(e => e.StripeSubscriptionId)
                 .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
+        });
+
+        builder.Entity<ProgramEnrollmentAuditEvent>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Enrollment)
+                .WithMany(en => en.AuditEvents)
+                .HasForeignKey(e => e.EnrollmentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.ActorUserId).HasMaxLength(450);
+            entity.Property(e => e.ActorDisplayName).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Details).HasMaxLength(2000);
+            entity.Property(e => e.MonetaryDelta).HasColumnType("decimal(18,2)");
+
+            // Common read: full history for one enrollment, most recent first.
+            entity.HasIndex(e => new { e.EnrollmentId, e.OccurredAt });
         });
     }
 }

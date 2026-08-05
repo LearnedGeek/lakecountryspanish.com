@@ -321,4 +321,12 @@ public sealed class ProgramEnrollmentsRosterViewModel
 {
     public EnrollmentProgram Program { get; init; } = null!;
     public IReadOnlyList<ProgramEnrollment> Enrollments { get; init; } = Array.Empty<ProgramEnrollment>();
+
+    /// <summary>
+    /// Audit events grouped by enrollment id, oldest first. Populated for every
+    /// enrollment in the roster so the view can render the trail inline without
+    /// N+1 queries. Empty list for enrollments with no audited actions yet.
+    /// </summary>
+    public IReadOnlyDictionary<int, IReadOnlyList<ProgramEnrollmentAuditEvent>> AuditEventsByEnrollmentId { get; init; }
+        = new Dictionary<int, IReadOnlyList<ProgramEnrollmentAuditEvent>>();
 }

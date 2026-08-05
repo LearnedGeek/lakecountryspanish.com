@@ -73,6 +73,7 @@
                         <tbody class="divide-y divide-gray-100">
                             @foreach (var e in Model.Enrollments)
                             {
+                                var events = Model.AuditEventsByEnrollmentId.TryGetValue(e.Id, out var evs) ? evs : Array.Empty<ProgramEnrollmentAuditEvent>();
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
                                         @e.CreatedAt.ToString("MMM d")<br /><span class="text-gray-400">@e.CreatedAt.ToString("h:mm tt")</span>
@@ -152,8 +153,82 @@
                                                 </button>
                                             </form>
                                         }
+                                        else if (e.PaymentType == ProgramPaymentType.CashInHand && e.Status == ProgramEnrollmentStatus.FullyPaid)
+                                        {
+                                            <form method="post" action="@Url.Action("UndoCashConfirmation", new { id = p.Id, enrollmentId = e.Id })" class="inline"
+                                                  onsubmit="var r = prompt('Optional: reason for reversing the cash confirmation (mistake, refund, etc.)?'); if (r === null) return false; this.reason.value = r; return confirm('Reverse the cash confirmation for @e.ParentFirstName @e.ParentLastName? The prior action stays in the audit trail.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="reason" value="" />
+                                                <button type="submit"
+                                                        class="px-2 py-1 text-xs bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50">
+                                                    Undo
+                                                </button>
+                                            </form>
+                                        }
                                     </td>
                                 </tr>
+                                @if (events.Count > 0)
+                                {
+                                    <tr class="bg-gray-50/60">
+                                        <td colspan="8" class="px-4 py-2">
+                                            <details class="text-xs text-gray-600">
+                                                @{
+                                                    var mostRecent = events[^1];
+                                                    var actionLabel = mostRecent.EventType switch
+                                                    {
+                                                        EnrollmentAuditEventType.CashConfirmed => "Marked cash paid",
+                                                        EnrollmentAuditEventType.CashConfirmationUndone => "Reversed cash confirmation",
+                                                        EnrollmentAuditEventType.NoteAdded => "Added note",
+                                                        EnrollmentAuditEventType.Cancelled => "Cancelled enrollment",
+                                                        EnrollmentAuditEventType.Refunded => "Refunded",
+                                                        _ => mostRecent.EventType.ToString()
+                                                    };
+                                                }
+                                                <summary class="cursor-pointer select-none hover:text-gray-900">
+                                                    <span class="text-gray-500">Audit trail:</span>
+                                                    <span class="font-medium">@actionLabel</span>
+                                                    by <span class="font-medium">@mostRecent.ActorDisplayName</span>
+                                                    on @mostRecent.OccurredAt.ToLocalTime().ToString("MMM d, h:mm tt")
+                                                    @if (events.Count > 1)
+                                                    {
+                                                        <span class="ml-2 text-gray-500">(+ @(events.Count - 1) earlier event@(events.Count > 2 ? "s" : ""))</span>
+                                                    }
+                                                </summary>
+                                                <ol class="mt-2 pl-4 space-y-1 border-l-2 border-gray-200">
+                                                    @foreach (var ev in events.OrderByDescending(x => x.OccurredAt))
+                                                    {
+                                                        var evLabel = ev.EventType switch
+                                                        {
+                                                            EnrollmentAuditEventType.CashConfirmed => ("Marked cash paid", "text-green-700"),
+                                                            EnrollmentAuditEventType.CashConfirmationUndone => ("Reversed cash confirmation", "text-orange-700"),
+                                                            EnrollmentAuditEventType.NoteAdded => ("Added note", "text-gray-700"),
+                                                            EnrollmentAuditEventType.Cancelled => ("Cancelled enrollment", "text-red-700"),
+                                                            EnrollmentAuditEventType.Refunded => ("Refunded", "text-purple-700"),
+                                                            _ => (ev.EventType.ToString(), "text-gray-700")
+                                                        };
+                                                        <li class="ml-2 pl-2">
+                                                            <span class="@evLabel.Item2 font-medium">@evLabel.Item1</span>
+                                                            <span class="text-gray-500">by</span>
+                                                            <span class="font-medium">@ev.ActorDisplayName</span>
+                                                            <span class="text-gray-500">on</span>
+                                                            @ev.OccurredAt.ToLocalTime().ToString("MMM d, yyyy · h:mm:ss tt")
+                                                            @if (ev.MonetaryDelta != 0)
+                                                            {
+                                                                <span class="ml-1 @(ev.MonetaryDelta > 0 ? "text-green-700" : "text-red-700")">
+                                                                    (@(ev.MonetaryDelta > 0 ? "+" : "")@ev.MonetaryDelta.ToString("N2"))
+                                                                </span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(ev.Details))
+                                                            {
+                                                                <div class="text-gray-500 mt-0.5">@ev.Details</div>
+                                                            }
+                                                        </li>
+                                                    }
+                                                </ol>
+                                            </details>
+                                        </td>
+                                    </tr>
+                                }
                             }
                         </tbody>
                     </table>

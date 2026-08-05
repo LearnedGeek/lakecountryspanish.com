@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Models.ViewModels;
@@ -246,10 +247,23 @@ public class AdminProgramsController : Controller
             .OrderByDescending(e => e.CreatedAt)
             .ToListAsync(ct);
 
+        // Bulk-load every audit event for this program's enrollments in one round
+        // trip, then bucket by enrollment id — avoids an N+1 query as the roster grows.
+        var enrollmentIds = enrollments.Select(e => e.Id).ToList();
+        var auditEvents = await _context.ProgramEnrollmentAuditEvents
+            .Where(a => enrollmentIds.Contains(a.EnrollmentId))
+            .OrderBy(a => a.OccurredAt)
+            .ToListAsync(ct);
+
+        var auditByEnrollment = auditEvents
+            .GroupBy(a => a.EnrollmentId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<ProgramEnrollmentAuditEvent>)g.ToList());
+
         var vm = new ProgramEnrollmentsRosterViewModel
         {
             Program = program,
-            Enrollments = enrollments
+            Enrollments = enrollments,
+            AuditEventsByEnrollmentId = auditByEnrollment
         };
         return View(vm);
     }
@@ -305,15 +319,14 @@ public class AdminProgramsController : Controller
         return File(bytes, "text/csv", fileName);
     }
 
-    /// <summary>Mark a cash-in-hand enrollment as paid once Karen has the cash.</summary>
+    /// <summary>Mark a cash-in-hand enrollment as paid once the admin has the cash.</summary>
     [HttpPost("{id:int}/Enrollments/{enrollmentId:int}/ConfirmCash")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmCash(int id, int enrollmentId, CancellationToken ct)
     {
         try
         {
-            var adminId = User.Identity?.Name ?? "unknown";
-            var enrollment = await _enrollments.MarkCashConfirmedAsync(enrollmentId, adminId, ct);
+            var enrollment = await _enrollments.MarkCashConfirmedAsync(enrollmentId, CurrentActor(), ct);
             TempData["SuccessMessage"] = $"Marked cash received from {enrollment.ParentFirstName} {enrollment.ParentLastName} for {enrollment.StudentFirstName}.";
         }
         catch (InvalidOperationException ex)
@@ -323,7 +336,29 @@ public class AdminProgramsController : Controller
         return RedirectToAction(nameof(Enrollments), new { id });
     }
 
+    /// <summary>Reverse a prior cash confirmation — writes a countervailing audit event so the trail shows both actions.</summary>
+    [HttpPost("{id:int}/Enrollments/{enrollmentId:int}/UndoCashConfirmation")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UndoCashConfirmation(int id, int enrollmentId, string? reason, CancellationToken ct)
+    {
+        try
+        {
+            var enrollment = await _enrollments.UndoCashConfirmationAsync(enrollmentId, CurrentActor(), reason, ct);
+            TempData["SuccessMessage"] = $"Reversed cash confirmation for {enrollment.ParentFirstName} {enrollment.ParentLastName} — enrollment is back to cash-pending.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Enrollments), new { id });
+    }
+
     // ---------------- helpers ----------------
+
+    /// <summary>Constructs an <see cref="AdminActor"/> from the current ClaimsPrincipal for audit-event attribution.</summary>
+    private AdminActor CurrentActor() => new(
+        UserId: User.FindFirstValue(ClaimTypes.NameIdentifier),
+        DisplayName: User.Identity?.Name ?? "unknown");
 
     /// <summary>RFC 4180 CSV field escape — wraps in quotes if the field contains a comma, quote, or newline; doubles internal quotes.</summary>
     private static string CsvField(string value)
