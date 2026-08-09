@@ -1,7 +1,7 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.HomeViewModel
 @{
-    ViewData["Title"] = "Home";
-    ViewData["MetaDescription"] = "Spanish lessons in Lake Country Wisconsin with Karen and Cece, native Peruvian teachers. Serving Oconomowoc, Waukesha, Delafield, Hartland, Pewaukee & surrounding areas. Personalized online lessons with flexible scheduling.";
+    ViewData["Title"] = "Spanish Language & Cultural Enrichment";
+    ViewData["MetaDescription"] = "Engaging Spanish programs where children learn to communicate with confidence while discovering the cultures of the Spanish-speaking world. Serving Lake Country Wisconsin.";
 }
 
 <!-- Hero Section. Photographic-llama-on-right + headline-on-left layout from
@@ -22,7 +22,7 @@
                     <!-- Left column: text + CTAs (~50% on lg+) -->
                     <div class="sm:text-center md:mx-auto lg:col-span-6 lg:text-left">
                         <p class="text-xs sm:text-sm font-bold tracking-[0.2em] uppercase text-primary-700 mb-3">
-                            Real Spanish. Real culture. Real conversation.
+                            Language <span class="text-secondary-500">•</span> Culture <span class="text-secondary-500">•</span> Community
                         </p>
 
                         <h1 class="font-display text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl md:text-6xl leading-[1.05]">
@@ -30,8 +30,8 @@
                             <span class="block text-primary-600 italic">Explore the World.</span>
                         </h1>
                         <p class="mt-5 text-lg text-gray-700 sm:mx-auto sm:max-w-xl md:text-xl lg:mx-0">
-                            Every lesson is a new adventure through a Spanish-speaking country —
-                            its food, music, history, famous people, and traditions.
+                            Engaging Spanish programs where children learn to communicate with confidence
+                            while discovering the cultures of the Spanish-speaking world.
                         </p>
                         <p class="mt-2 text-sm text-gray-500 sm:mx-auto sm:max-w-xl lg:mx-0">
                             Serving Lake Country Wisconsin: Oconomowoc, Waukesha, Delafield, Hartland, Pewaukee, Brookfield &amp; beyond
@@ -39,13 +39,13 @@
 
                         <div class="mt-8 sm:flex sm:justify-center lg:justify-start gap-4">
                             <a asp-controller="Programs" asp-action="Index" class="flex w-full sm:w-auto items-center justify-center rounded-xl bg-secondary-500 px-8 py-4 text-base font-semibold text-white hover:bg-secondary-600 shadow-lg shadow-secondary-500/30 hover:shadow-secondary-500/40 transition-all hover:-translate-y-0.5">
-                                Our Programs
+                                Explore Our Programs
                                 <svg class="ml-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
                             </a>
                             <a asp-controller="Contact" asp-action="Index" asp-route-subject="school-inquiry" class="mt-4 sm:mt-0 flex w-full sm:w-auto items-center justify-center rounded-xl border-2 border-primary-600 px-8 py-4 text-base font-semibold text-primary-700 hover:bg-primary-50 transition">
-                                Bring LCS to Your School
+                                Bring Spanish to Your School
                             </a>
                         </div>
                     </div>
@@ -118,55 +118,52 @@
             </div>
         </div>
 
-        <div class="grid gap-8 grid-cols-2 lg:grid-cols-5">
+        <p class="text-center text-xs font-bold tracking-[0.2em] uppercase text-gray-500 mb-6">
+            Why parents choose us
+        </p>
+        <div class="grid gap-8 grid-cols-2 lg:grid-cols-4">
+            <!-- Communication First — anchor id preserved so the hero "Learn" pill still scrolls here -->
             <div id="aprende" class="text-center scroll-mt-24">
                 <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-secondary-100 text-secondary-600 mb-4">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                 </div>
-                <h3 class="font-bold text-gray-900 mb-2">Spanish Immersion</h3>
-                <p class="text-sm text-gray-600">Natural language acquisition through engaging, interactive experiences.</p>
+                <h3 class="font-bold text-gray-900 mb-2">Communication First</h3>
+                <p class="text-sm text-gray-600">Kids learn to speak Spanish with confidence — real conversation, not just vocabulary drills.</p>
             </div>
 
+            <!-- Culture in Every Lesson — anchor id preserved so the hero "Connect" pill scrolls here -->
             <div id="conecta" class="text-center scroll-mt-24">
                 <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-600 mb-4">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                     </svg>
                 </div>
-                <h3 class="font-bold text-gray-900 mb-2">Cultural Connection</h3>
-                <p class="text-sm text-gray-600">Celebrating Hispanic cultures and traditions in everything we do.</p>
+                <h3 class="font-bold text-gray-900 mb-2">Culture in Every Lesson</h3>
+                <p class="text-sm text-gray-600">Music, food, holidays, and traditions from across the Spanish-speaking world woven into every session.</p>
             </div>
 
-            <div id="respeta" class="text-center scroll-mt-24">
-                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-teal-100 text-teal-600 mb-4">
-                    <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                    </svg>
-                </div>
-                <h3 class="font-bold text-gray-900 mb-2">Community Focused</h3>
-                <p class="text-sm text-gray-600">Building confidence, curiosity, and a love for language together.</p>
-            </div>
-
+            <!-- Designed for Children — anchor id preserved so the hero "Explore" pill scrolls here -->
             <div id="explora" class="text-center scroll-mt-24">
                 <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-accent-100 text-accent-700 mb-4">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.6a8.983 8.983 0 013.361-6.867 8.21 8.21 0 003 2.48z M12 18a3.75 3.75 0 00.495-7.467 5.99 5.99 0 00-1.925 3.546 5.974 5.974 0 01-2.133-1A3.75 3.75 0 0012 18z" />
                     </svg>
                 </div>
-                <h3 class="font-bold text-gray-900 mb-2">Play-Based Learning</h3>
-                <p class="text-sm text-gray-600">Hands-on, age-appropriate activities that make learning joyful and meaningful.</p>
+                <h3 class="font-bold text-gray-900 mb-2">Designed for Children</h3>
+                <p class="text-sm text-gray-600">Play-based, hands-on activities built around how kids actually learn — movement, games, and stories.</p>
             </div>
 
-            <div class="text-center scroll-mt-24">
-                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-100 text-primary-700 mb-4">
+            <!-- Experienced Educators — anchor id preserved so the hero "Respect" pill scrolls here -->
+            <div id="respeta" class="text-center scroll-mt-24">
+                <div class="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-teal-100 text-teal-600 mb-4">
                     <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
                     </svg>
                 </div>
-                <h3 class="font-bold text-gray-900 mb-2">Partnered with Schools</h3>
-                <p class="text-sm text-gray-600">Bringing high-quality Spanish programs directly to your school.</p>
+                <h3 class="font-bold text-gray-900 mb-2">Experienced Educators</h3>
+                <p class="text-sm text-gray-600">Native Peruvian teachers with decades of combined classroom experience across ages and levels.</p>
             </div>
         </div>
     </div>
@@ -187,7 +184,7 @@
                 ✈ One country. One adventure. One lesson at a time.
             </p>
             <h2 class="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                Travel the Spanish-Speaking World <span class="italic text-primary-600">With Us!</span>
+                Discover the <span class="italic text-primary-600">Spanish-Speaking World</span>
             </h2>
         </div>
 
