@@ -15,8 +15,14 @@ namespace LakeCountrySpanish.Web.Controllers;
 /// Admin CRUD for <see cref="EnrollmentProgram"/>. Route-prefixed so the URLs
 /// read as <c>/Admin/Programs/*</c> (matching the visible admin taxonomy) even
 /// though the controller name is <c>AdminPrograms</c>.
+///
+/// Authorized for Admin OR Teacher — program creation is the co-founders'
+/// operational domain (Karen + Cece own their sessions), and requiring Mark
+/// to be a bottleneck for every new program doesn't scale. Other /Admin/*
+/// controllers (system config, students, dashboards) stay Admin-only. Same
+/// dual-role pattern <see cref="CurriculumController"/> uses.
 /// </summary>
-[Authorize(Roles = AppRoles.Admin)]
+[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Teacher}")]
 [Route("Admin/Programs")]
 public class AdminProgramsController : Controller
 {
