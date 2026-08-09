@@ -55,10 +55,23 @@ public class HomeController : Controller
             })
             .ToListAsync();
 
+        // Featured program: soonest listed + active program whose enrollment
+        // window is still open. Renders as the "Now Enrolling" hero strip
+        // right below the site hero. If none matches, the strip is hidden.
+        // Karen chooses what's featured by adjusting StartDate / IsListed —
+        // no separate "featured" toggle. First program to hit its deadline
+        // wins the spotlight.
+        var now = DateTime.UtcNow;
+        var featuredProgram = await _context.Programs
+            .Where(p => p.IsListed && p.IsActive)
+            .OrderBy(p => p.StartDate)
+            .FirstOrDefaultAsync(p => (p.EnrollmentDeadline ?? p.StartDate) > now);
+
         var viewModel = new HomeViewModel
         {
             SubscriptionTiers = tiers,
-            Testimonials = testimonials
+            Testimonials = testimonials,
+            FeaturedProgram = featuredProgram
         };
 
         return View(viewModel);

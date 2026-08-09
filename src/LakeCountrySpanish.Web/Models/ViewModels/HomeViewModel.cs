@@ -1,3 +1,5 @@
+using LakeCountrySpanish.Web.Models.Entities;
+
 namespace LakeCountrySpanish.Web.Models.ViewModels;
 
 /// <summary>
@@ -7,6 +9,15 @@ public class HomeViewModel
 {
     public IEnumerable<HomeSubscriptionTierViewModel> SubscriptionTiers { get; set; } = new List<HomeSubscriptionTierViewModel>();
     public IEnumerable<TestimonialDisplayViewModel> Testimonials { get; set; } = new List<TestimonialDisplayViewModel>();
+
+    /// <summary>
+    /// The soonest listed program with an open enrollment window — surfaced as
+    /// a "Now Enrolling" hero strip on the homepage. Null when no listed
+    /// program is currently accepting signups. Karen changes what's featured
+    /// by adjusting program start dates or the IsListed flag; no separate
+    /// "featured" admin toggle needed.
+    /// </summary>
+    public EnrollmentProgram? FeaturedProgram { get; set; }
 }
 
 /// <summary>

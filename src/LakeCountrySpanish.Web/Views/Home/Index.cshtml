@@ -78,6 +78,83 @@
     </div>
 </div>
 
+@if (Model.FeaturedProgram is not null)
+{
+    var fp = Model.FeaturedProgram;
+    var featuredImg = !string.IsNullOrEmpty(fp.EventImagePath) ? fp.EventImagePath : fp.HeroImagePath;
+    var deadlineDays = (int)Math.Ceiling((fp.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
+    var deadlineLabel = deadlineDays <= 0 ? "Enrollment closed"
+                     : deadlineDays == 1 ? "1 day left to enroll"
+                     : deadlineDays <= 14 ? $"{deadlineDays} days left to enroll"
+                     : $"Enroll by {fp.EffectiveEnrollmentDeadline:MMM d}";
+    var deadlinePill = deadlineDays <= 3 ? "bg-red-100 text-red-800 border-red-200"
+                     : deadlineDays <= 7 ? "bg-amber-100 text-amber-900 border-amber-300"
+                     : "bg-emerald-100 text-emerald-800 border-emerald-200";
+
+    <!-- Now Enrolling — spotlight for the soonest open program. Auto-hides
+         when there's no active enrollment window. Data-driven from
+         HomeController so Karen doesn't touch Razor to change which
+         program is featured. -->
+    <div class="bg-gradient-to-br from-secondary-50 via-white to-primary-50 border-b border-gray-100 py-10 lg:py-12">
+        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-center gap-3 mb-6">
+                <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-[0.15em] bg-secondary-500 text-white shadow-sm">
+                    <span class="h-2 w-2 rounded-full bg-white animate-pulse"></span>
+                    Now Enrolling
+                </span>
+            </div>
+
+            <a href="@Url.Action("Detail", "Programs", new { slug = fp.Slug })"
+               class="group grid md:grid-cols-2 gap-0 bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200 hover:border-secondary-400 transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl">
+                <div class="aspect-[4/3] md:aspect-auto md:min-h-[340px] relative bg-gradient-to-br from-primary-400 to-secondary-500 overflow-hidden">
+                    @if (!string.IsNullOrEmpty(featuredImg))
+                    {
+                        <img src="@featuredImg" alt="@fp.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    }
+                    <span class="absolute top-4 left-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm @deadlinePill">
+                        ⏱ @deadlineLabel
+                    </span>
+                </div>
+                <div class="p-6 md:p-8 flex flex-col justify-center">
+                    <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Featured Program · Grades @fp.GradeRange</p>
+                    <h2 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-2">@fp.Name</h2>
+                    @if (!string.IsNullOrEmpty(fp.TagLine))
+                    {
+                        <p class="text-sm text-gray-600 mb-4">@fp.TagLine</p>
+                    }
+                    <dl class="text-sm text-gray-700 space-y-1.5 mb-5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400">📍</span>
+                            <span class="font-medium">@fp.LocationName</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400">📅</span>
+                            <span>@fp.StartDate.ToString("MMM d") – @fp.EndDate.ToString("MMM d, yyyy") · @fp.MeetingDays</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400">🕐</span>
+                            <span>@fp.StartTime.ToString("h:mm tt") – @fp.EndTime.ToString("h:mm tt")</span>
+                        </div>
+                    </dl>
+                    <div class="flex items-end justify-between pt-4 border-t border-gray-100">
+                        <div>
+                            <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Full price</div>
+                            <div class="text-2xl font-bold text-gray-900">$@fp.FullPrice.ToString("N2")</div>
+                            @if (fp.InstallmentsEnabled)
+                            {
+                                <div class="text-xs text-gray-500 mt-0.5">or @fp.InstallmentCount × $@fp.InstallmentAmount.ToString("N2")</div>
+                            }
+                        </div>
+                        <span class="inline-flex items-center gap-1 px-5 py-2.5 bg-secondary-500 text-white text-sm font-bold rounded-lg shadow-md group-hover:bg-secondary-600 group-hover:shadow-lg transition-all">
+                            View program →
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+}
+
 <!-- More than a Language — a Cultural Journey. Classroom photo anchors the
      left, headline + intro on the right. Five feature tiles span the full
      width below. The four pillar anchors (#aprende #explora #respeta
@@ -395,13 +472,58 @@
     })();
 </script>
 
-@* Meet Karen & Cece named section removed 2026-05-30 per Karen's request —
-   the home page should not call out individuals by name. A dedicated /Staff
-   (or "Meet Our Teachers") page is the planned home for personalized bios,
-   photos, and quotes. The Peruvian-fluency claim that lived here is now
-   woven into the "More than a Language" intro above so we don't lose the
-   differentiator. Lola hola-bubble PNG also drops out of the page with
-   this section (still used in CTA + HIW step 4 + Rewards card). *@
+@* Meet Karen & Cece section was removed 2026-05-30 per Karen's earlier
+   request; re-added 2026-08-09 with Karen's approval after Cece's
+   feedback pass. Compact 2-column strip — photos + role + one-liner +
+   link to /Home/About. Trust signal before pricing. Full-length bios
+   stay on the About page. *@
+<div class="bg-white py-14 lg:py-16 border-b border-gray-100">
+    <div class="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10">
+            <p class="text-xs sm:text-sm font-bold tracking-[0.2em] uppercase text-primary-700 mb-3">
+                Two native Peruvian teachers
+            </p>
+            <h2 class="font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                Meet <span class="italic text-primary-600">Cece &amp; Karen</span>
+            </h2>
+        </div>
+
+        <div class="grid gap-6 md:grid-cols-2 max-w-4xl mx-auto">
+
+            <!-- Cece -->
+            <div class="flex gap-5 items-center bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-secondary-300 p-5 transition-all duration-200 ease-out hover:-translate-y-1">
+                <img src="~/img/classroom/cece-family.jpg"
+                     alt="Cece Kemnitzer, co-founder and Director of Curriculum"
+                     class="flex-shrink-0 h-24 w-24 rounded-full object-cover ring-2 ring-secondary-200 shadow-sm"
+                     loading="lazy" />
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-display text-xl font-bold text-gray-900">Cece Kemnitzer</h3>
+                    <p class="text-xs font-semibold text-secondary-700 uppercase tracking-wide mt-0.5">Director of Curriculum</p>
+                    <p class="text-sm text-gray-600 mt-2 leading-relaxed">Born in Lima, Peru; 15+ years teaching Spanish; designed the LCS curriculum around conversation, culture, and play.</p>
+                </div>
+            </div>
+
+            <!-- Karen -->
+            <div class="flex gap-5 items-center bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-primary-300 p-5 transition-all duration-200 ease-out hover:-translate-y-1">
+                <img src="~/img/classroom/karen-family.jpg"
+                     alt="Karen McArthey, co-founder and Director of Educational Programs"
+                     class="flex-shrink-0 h-24 w-24 rounded-full object-cover ring-2 ring-primary-200 shadow-sm"
+                     loading="lazy" />
+                <div class="flex-1 min-w-0">
+                    <h3 class="font-display text-xl font-bold text-gray-900">Karen McArthey</h3>
+                    <p class="text-xs font-semibold text-primary-700 uppercase tracking-wide mt-0.5">Director of Educational Programs</p>
+                    <p class="text-sm text-gray-600 mt-2 leading-relaxed">From Arequipa, Peru; 15 years teaching Spanish to thousands of students from kindergarten through adulthood.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-8">
+            <a asp-controller="Home" asp-action="About" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 hover:text-primary-900">
+                Read more about us →
+            </a>
+        </div>
+    </div>
+</div>
 
 <!-- Mini pom pom transition — echoes the nav garland in miniature, centered.
      Used sparingly between same-toned sections where a wave divider would be
