@@ -17,79 +17,64 @@
         .og-image {
             width: 1200px;
             height: 630px;
+            background: #1e3a5f;
+            padding: 22px;
+        }
+        .card {
             position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 26px;
             overflow: hidden;
+            display: grid;
+            grid-template-rows: 60% 40%;
             background: #1e3a5f;
         }
         .hero {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 1200px;
-            height: 400px;
             background-image: url('img/hero-classroom-dance.jpg');
             background-size: cover;
             background-position: center 30%;
         }
-        .logo {
-            position: absolute;
-            top: 24px;
-            left: 24px;
-            width: 96px;
-            height: 96px;
-            border-radius: 50%;
-            background: white url('img/llama-logo-painted.png') center/cover no-repeat;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-            border: 4px solid white;
-        }
         .banner {
-            position: absolute;
-            top: 400px;
-            left: 0;
-            width: 1200px;
-            height: 230px;
             background: #1e3a5f;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 40px 60px;
+            padding: 0 40px;
+            gap: 32px;
         }
-        .title {
-            font-size: 46px;
-            font-weight: 700;
-            line-height: 1.2;
-            text-align: center;
+        .logo {
+            flex-shrink: 0;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: white url('img/llama-logo-painted.png') center/cover no-repeat;
+            border: 5px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
-        .title .line1 { color: white; display: block; }
-        .title .line2 { color: #e85a42; display: block; }
-        .tagline {
-            margin-top: 12px;
-            color: #cbd5e1;
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-        .tagline .dot { color: #e85a42; margin: 0 10px; }
-        .url {
-            margin-top: 8px;
-            color: #9db4d6;
-            font-size: 22px;
-            font-weight: 700;
-        }
+        .text { flex: 1; }
+        .title { font-size: 42px; font-weight: 700; line-height: 1.15; }
+        .title .l1 { color: white; display: block; }
+        .title .l2 { color: #e85a42; display: block; }
+        .tagline { margin-top: 14px; color: #cbd5e1; font-size: 20px; font-weight: 700; }
+        .tagline .dot { color: #e85a42; margin: 0 8px; }
+        .url { margin-top: 10px; color: #9db4d6; font-size: 20px; font-weight: 700; }
     </style>
 </head>
 <body>
     <div class="og-image">
-        <div class="hero"></div>
-        <div class="logo" aria-label="Lake Country Spanish"></div>
-        <div class="banner">
-            <div class="title">
-                <span class="line1">Spanish Language &amp;</span>
-                <span class="line2">Cultural Enrichment</span>
+        <div class="card">
+            <div class="hero"></div>
+            <div class="banner">
+                <div class="logo" aria-label="Lake Country Spanish"></div>
+                <div class="text">
+                    <div class="title">
+                        <span class="l1">Spanish Language &amp;</span>
+                        <span class="l2">Cultural Enrichment</span>
+                    </div>
+                    <div class="tagline">Language <span class="dot">&bull;</span> Culture <span class="dot">&bull;</span> Community</div>
+                    <div class="url">lakecountryspanish.com</div>
+                </div>
             </div>
-            <div class="tagline">Language <span class="dot">&bull;</span> Culture <span class="dot">&bull;</span> Community</div>
-            <div class="url">lakecountryspanish.com</div>
         </div>
     </div>
 </body>
