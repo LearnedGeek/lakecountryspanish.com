@@ -3,125 +3,93 @@
 <head>
     <meta charset="utf-8">
     <title>OG Image Template - Lake Country Spanish</title>
+    <!--
+      Visual reference for the generated og-image.jpg. The actual image is
+      produced by the SkiaSharp generator at tmp/og-image/Program.cs (run
+      `dotnet run` in that folder, then copy the output over
+      wwwroot/img/og-image.jpg). This HTML mirrors the design so anyone
+      opening it in a browser can eyeball the layout without needing the
+      .NET tooling.
+    -->
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .og-image {
             width: 1200px;
             height: 630px;
-            background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 50%, #1e3a5f 100%);
-            display: flex;
-            align-items: center;
-            padding: 60px;
             position: relative;
             overflow: hidden;
+            background: #1e3a5f;
         }
-
-        /* Decorative background elements */
-        .og-image::before {
-            content: '';
+        .hero {
             position: absolute;
-            top: -100px;
-            right: -100px;
-            width: 400px;
+            top: 0;
+            left: 0;
+            width: 1200px;
             height: 400px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 50%;
+            background-image: url('img/hero-classroom-dance.jpg');
+            background-size: cover;
+            background-position: center 30%;
         }
-
-        .og-image::after {
-            content: '';
+        .logo {
             position: absolute;
-            bottom: -150px;
-            left: -150px;
-            width: 500px;
-            height: 500px;
-            background: rgba(255, 255, 255, 0.02);
+            top: 24px;
+            left: 24px;
+            width: 96px;
+            height: 96px;
             border-radius: 50%;
+            background: white url('img/llama-logo-painted.png') center/cover no-repeat;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+            border: 4px solid white;
         }
-
-        .logo-container {
-            flex-shrink: 0;
-            width: 400px;
-            height: 400px;
+        .banner {
+            position: absolute;
+            top: 400px;
+            left: 0;
+            width: 1200px;
+            height: 230px;
+            background: #1e3a5f;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            position: relative;
-            z-index: 1;
+            padding: 40px 60px;
         }
-
-        .logo-container img {
-            width: 380px;
-            height: 380px;
-            object-fit: contain;
-            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
-        }
-
-        .content {
-            flex: 1;
-            padding-left: 60px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .tagline {
-            color: #e85a42;
-            font-size: 24px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 20px;
-        }
-
         .title {
-            font-size: 72px;
+            font-size: 46px;
             font-weight: 700;
-            line-height: 1.1;
+            line-height: 1.2;
+            text-align: center;
         }
-
-        .title-line1 {
-            color: white;
-            display: block;
+        .title .line1 { color: white; display: block; }
+        .title .line2 { color: #e85a42; display: block; }
+        .tagline {
+            margin-top: 12px;
+            color: #cbd5e1;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
         }
-
-        .title-line2 {
-            color: #e85a42;
-            display: block;
-        }
-
-        .accent-line {
-            width: 80px;
-            height: 5px;
-            background: #e85a42;
-            margin-bottom: 30px;
-            border-radius: 3px;
+        .tagline .dot { color: #e85a42; margin: 0 10px; }
+        .url {
+            margin-top: 8px;
+            color: #9db4d6;
+            font-size: 22px;
+            font-weight: 700;
         }
     </style>
 </head>
 <body>
     <div class="og-image">
-        <div class="logo-container">
-            <img src="img/llama-logo-painted.png" alt="Lake Country Spanish Logo">
-        </div>
-        <div class="content">
-            <div class="tagline">Lake Country Spanish</div>
-            <div class="accent-line"></div>
-            <h1 class="title">
-                <span class="title-line1">Spanish Language &amp;</span>
-                <span class="title-line2">Cultural Enrichment</span>
-            </h1>
-            <div style="color:#cbd5e1; font-size:22px; font-weight:600; letter-spacing:1.5px; margin-top:22px;">
-                Language &nbsp;&bull;&nbsp; Culture &nbsp;&bull;&nbsp; Community
+        <div class="hero"></div>
+        <div class="logo" aria-label="Lake Country Spanish"></div>
+        <div class="banner">
+            <div class="title">
+                <span class="line1">Spanish Language &amp;</span>
+                <span class="line2">Cultural Enrichment</span>
             </div>
+            <div class="tagline">Language <span class="dot">&bull;</span> Culture <span class="dot">&bull;</span> Community</div>
+            <div class="url">lakecountryspanish.com</div>
         </div>
     </div>
 </body>
