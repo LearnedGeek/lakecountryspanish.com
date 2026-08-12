@@ -11,13 +11,32 @@ public class HomeViewModel
     public IEnumerable<TestimonialDisplayViewModel> Testimonials { get; set; } = new List<TestimonialDisplayViewModel>();
 
     /// <summary>
-    /// The soonest listed program with an open enrollment window — surfaced as
-    /// a "Now Enrolling" hero strip on the homepage. Null when no listed
-    /// program is currently accepting signups. Karen changes what's featured
-    /// by adjusting program start dates or the IsListed flag; no separate
-    /// "featured" admin toggle needed.
+    /// Distinct listed programs whose enrollment is currently open, one per
+    /// program Name. When Karen runs multiple instances of the same program
+    /// (e.g. "Bailamos" at six schools), each Name gets ONE tile; clicking
+    /// it takes the parent to /programs to pick the location that fits.
+    /// Empty when no listed program is accepting signups.
     /// </summary>
-    public EnrollmentProgram? FeaturedProgram { get; set; }
+    public IReadOnlyList<FeaturedProgramCard> FeaturedPrograms { get; set; } = Array.Empty<FeaturedProgramCard>();
+}
+
+/// <summary>
+/// Home-page "Now Enrolling" tile: one distinct program (by Name), with a
+/// count and summary of how many instances are currently enrolling.
+/// </summary>
+public class FeaturedProgramCard
+{
+    /// <summary>The soonest-starting instance of this program — used for image, dates, price display.</summary>
+    public EnrollmentProgram Representative { get; set; } = null!;
+
+    /// <summary>How many instances (rows) of this program name are currently enrolling.</summary>
+    public int InstanceCount { get; set; }
+
+    /// <summary>
+    /// Ready-to-display string: single location name when only one instance,
+    /// "N locations enrolling now" when multiple.
+    /// </summary>
+    public string LocationSummary { get; set; } = string.Empty;
 }
 
 /// <summary>

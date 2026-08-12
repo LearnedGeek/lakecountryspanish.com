@@ -91,79 +91,80 @@
     </div>
 </div>
 
-@if (Model.FeaturedProgram is not null)
+@if (Model.FeaturedPrograms.Count > 0)
 {
-    var fp = Model.FeaturedProgram;
-    var featuredImg = !string.IsNullOrEmpty(fp.EventImagePath) ? fp.EventImagePath : fp.HeroImagePath;
-    var deadlineDays = (int)Math.Ceiling((fp.EffectiveEnrollmentDeadline - DateTime.UtcNow).TotalDays);
-    var deadlineLabel = deadlineDays <= 0 ? "Enrollment closed"
-                     : deadlineDays == 1 ? "1 day left to enroll"
-                     : deadlineDays <= 14 ? $"{deadlineDays} days left to enroll"
-                     : $"Enroll by {fp.EffectiveEnrollmentDeadline:MMM d}";
-    var deadlinePill = deadlineDays <= 3 ? "bg-red-100 text-red-800 border-red-200"
-                     : deadlineDays <= 7 ? "bg-amber-100 text-amber-900 border-amber-300"
-                     : "bg-emerald-100 text-emerald-800 border-emerald-200";
-
-    <!-- Now Enrolling — spotlight for the soonest open program. Auto-hides
-         when there's no active enrollment window. Data-driven from
-         HomeController so Karen doesn't touch Razor to change which
-         program is featured. -->
+    <!-- Now Enrolling — distinct programs (by Name) currently open for
+         signup. Each tile links to /programs (NOT a specific /join/{slug})
+         so the parent picks their location from the disambiguation on the
+         programs page. Karen may run several instances of the same program
+         at different schools; this section deliberately shows ONE tile per
+         distinct name with an "N locations enrolling now" summary. Auto-
+         hides when nothing is open. -->
     <div class="bg-gradient-to-br from-secondary-50 via-white to-primary-50 border-b border-gray-100 py-10 lg:py-12">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-center gap-3 mb-6">
+            <div class="flex items-center justify-center gap-3 mb-8">
                 <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-[0.15em] bg-secondary-500 text-white shadow-sm">
                     <span class="h-2 w-2 rounded-full bg-white animate-pulse"></span>
                     Now Enrolling
                 </span>
             </div>
 
-            <a href="@Url.Action("Detail", "Programs", new { slug = fp.Slug })"
-               class="group grid md:grid-cols-2 gap-0 bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200 hover:border-secondary-400 transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-2xl">
-                <div class="aspect-[4/3] md:aspect-auto md:min-h-[340px] relative bg-gradient-to-br from-primary-400 to-secondary-500 overflow-hidden">
-                    @if (!string.IsNullOrEmpty(featuredImg))
-                    {
-                        <img src="@featuredImg" alt="@fp.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                    }
-                    <span class="absolute top-4 left-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm @deadlinePill">
-                        ⏱ @deadlineLabel
-                    </span>
-                </div>
-                <div class="p-6 md:p-8 flex flex-col justify-center">
-                    <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Featured Program · Grades @fp.GradeRange</p>
-                    <h2 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-2">@fp.Name</h2>
-                    @if (!string.IsNullOrEmpty(fp.TagLine))
-                    {
-                        <p class="text-sm text-gray-600 mb-4">@fp.TagLine</p>
-                    }
-                    <dl class="text-sm text-gray-700 space-y-1.5 mb-5">
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-400">📍</span>
-                            <span class="font-medium">@fp.LocationName</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-400">📅</span>
-                            <span>@fp.StartDate.ToString("MMM d") – @fp.EndDate.ToString("MMM d, yyyy") · @fp.MeetingDays</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-400">🕐</span>
-                            <span>@fp.StartTime.ToString("h:mm tt") – @fp.EndTime.ToString("h:mm tt")</span>
-                        </div>
-                    </dl>
-                    <div class="flex items-end justify-between pt-4 border-t border-gray-100">
-                        <div>
-                            <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide">Full price</div>
-                            <div class="text-2xl font-bold text-gray-900">$@fp.FullPrice.ToString("N2")</div>
-                            @if (fp.InstallmentsEnabled)
+            @{
+                var tileGridCols = Model.FeaturedPrograms.Count switch
+                {
+                    1 => "grid-cols-1 max-w-3xl mx-auto",
+                    2 => "grid-cols-1 md:grid-cols-2",
+                    _ => "grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
+                };
+            }
+            <div class="grid gap-6 @tileGridCols">
+                @foreach (var card in Model.FeaturedPrograms)
+                {
+                    var rep = card.Representative;
+                    var img = !string.IsNullOrEmpty(rep.EventImagePath) ? rep.EventImagePath : rep.HeroImagePath;
+                    <a href="@Url.Action("Index", "Programs")"
+                       class="group flex flex-col bg-white shadow-md hover:shadow-xl rounded-2xl overflow-hidden border border-gray-200 hover:border-secondary-400 transition-all duration-200 ease-out hover:-translate-y-1">
+                        <div class="aspect-[16/10] relative bg-gradient-to-br from-primary-400 to-secondary-500 overflow-hidden">
+                            @if (!string.IsNullOrEmpty(img))
                             {
-                                <div class="text-xs text-gray-500 mt-0.5">or @fp.InstallmentCount × $@fp.InstallmentAmount.ToString("N2")</div>
+                                <img src="@img" alt="@rep.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                            }
+                            @if (card.InstanceCount > 1)
+                            {
+                                <span class="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm bg-white/95 text-secondary-700 border-secondary-200">
+                                    @card.InstanceCount locations
+                                </span>
                             }
                         </div>
-                        <span class="inline-flex items-center gap-1 px-5 py-2.5 bg-secondary-500 text-white text-sm font-bold rounded-lg shadow-md group-hover:bg-secondary-600 group-hover:shadow-lg transition-all">
-                            View program →
-                        </span>
-                    </div>
-                </div>
-            </a>
+                        <div class="flex-1 flex flex-col p-5">
+                            <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Grades @rep.GradeRange</p>
+                            <h3 class="font-display text-xl font-bold text-gray-900 mb-2">@rep.Name</h3>
+                            <p class="text-sm text-gray-600 mb-4 flex items-center gap-1.5">
+                                <span class="text-gray-400">📍</span>
+                                <span class="font-medium">@card.LocationSummary</span>
+                            </p>
+                            <div class="mt-auto pt-3 border-t border-gray-100 flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs text-gray-500 uppercase font-semibold tracking-wide">From</div>
+                                    <div class="text-xl font-bold text-gray-900">$@rep.FullPrice.ToString("N2")</div>
+                                </div>
+                                <span class="inline-flex items-center gap-1 px-4 py-2 bg-secondary-500 text-white text-sm font-bold rounded-lg shadow-sm group-hover:bg-secondary-600 group-hover:shadow-md transition-all">
+                                    See details →
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+
+            @if (Model.FeaturedPrograms.Count > 3 || Model.FeaturedPrograms.Any(c => c.InstanceCount > 1))
+            {
+                <p class="text-center mt-8">
+                    <a href="@Url.Action("Index", "Programs")" class="inline-flex items-center gap-1 text-sm font-semibold text-primary-700 hover:text-primary-900">
+                        See all programs and locations →
+                    </a>
+                </p>
+            }
         </div>
     </div>
 }

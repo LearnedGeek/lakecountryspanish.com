@@ -94,6 +94,15 @@ public class EnrollmentProgram
     public DateTime? EnrollmentDeadline { get; set; }
 
     /// <summary>
+    /// Optional date enrollment opens. Nullable — when unset, enrollment is
+    /// available immediately (as long as the deadline hasn't passed). When
+    /// set to a future date, the program appears in the "Coming soon"
+    /// section on /programs with a "Opens {date}" pill and the enrollment
+    /// form hard-blocks any early attempts.
+    /// </summary>
+    public DateTime? EnrollmentStartsAt { get; set; }
+
+    /// <summary>
     /// Free-text schedule description shown to parents, e.g.
     /// "Tuesdays" or "Mondays &amp; Wednesdays". Written to match how Karen
     /// wants parents to read it, not a structured enum, so a multi-day program
@@ -162,6 +171,17 @@ public class EnrollmentProgram
 
     /// <summary>True once the enrollment window has closed (past deadline).</summary>
     public bool IsEnrollmentClosed => DateTime.UtcNow > EffectiveEnrollmentDeadline;
+
+    /// <summary>
+    /// True when <see cref="EnrollmentStartsAt"/> is set and still in the future.
+    /// Programs in this state show on /programs under a "Coming soon" section
+    /// and the enrollment form redirects any early attempts.
+    /// </summary>
+    public bool IsEnrollmentNotYetOpen =>
+        EnrollmentStartsAt.HasValue && EnrollmentStartsAt.Value > DateTime.UtcNow;
+
+    /// <summary>True when parents can enroll RIGHT NOW — window opened and hasn't closed.</summary>
+    public bool IsEnrollmentOpen => !IsEnrollmentNotYetOpen && !IsEnrollmentClosed;
 
     // ---------------- Stripe wiring (auto-populated on first Save) ----------------
 

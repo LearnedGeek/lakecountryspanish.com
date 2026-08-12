@@ -55,23 +55,40 @@ public class HomeController : Controller
             })
             .ToListAsync();
 
-        // Featured program: soonest listed + active program whose enrollment
-        // window is still open. Renders as the "Now Enrolling" hero strip
-        // right below the site hero. If none matches, the strip is hidden.
-        // Karen chooses what's featured by adjusting StartDate / IsListed —
-        // no separate "featured" toggle. First program to hit its deadline
-        // wins the spotlight.
+        // Now Enrolling: distinct programs (by Name) whose enrollment window is
+        // currently open. Karen may run multiple instances of the same program
+        // (e.g. six "Bailamos" at six different schools) — she doesn't want the
+        // homepage to point at one specific instance. Instead, each distinct
+        // program name gets one representative tile and all clicks go to
+        // /programs where the parent picks their location.
+        //
+        // Representative-per-name: the instance with the SOONEST StartDate wins.
+        // Distinct match is case-insensitive to survive minor typing variations.
         var now = DateTime.UtcNow;
-        var featuredProgram = await _context.Programs
+        var openPrograms = await _context.Programs
             .Where(p => p.IsListed && p.IsActive)
+            .Where(p => (p.EnrollmentStartsAt == null || p.EnrollmentStartsAt <= now))
+            .Where(p => (p.EnrollmentDeadline ?? p.StartDate) > now)
             .OrderBy(p => p.StartDate)
-            .FirstOrDefaultAsync(p => (p.EnrollmentDeadline ?? p.StartDate) > now);
+            .ToListAsync();
+
+        var featuredPrograms = openPrograms
+            .GroupBy(p => p.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g => new FeaturedProgramCard
+            {
+                Representative = g.First(),               // soonest StartDate wins (ordered above)
+                InstanceCount = g.Count(),
+                LocationSummary = g.Count() == 1
+                    ? g.First().LocationName
+                    : $"{g.Count()} locations enrolling now"
+            })
+            .ToList();
 
         var viewModel = new HomeViewModel
         {
             SubscriptionTiers = tiers,
             Testimonials = testimonials,
-            FeaturedProgram = featuredProgram
+            FeaturedPrograms = featuredPrograms
         };
 
         return View(viewModel);

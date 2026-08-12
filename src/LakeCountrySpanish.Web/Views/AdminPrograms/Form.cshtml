@@ -158,7 +158,12 @@
                         <label asp-for="EndDate" class="@labelClass"></label>
                         <input asp-for="EndDate" type="date" class="@fieldClass" />
                     </div>
-                    <div class="sm:col-span-2">
+                    <div>
+                        <label asp-for="EnrollmentStartsAt" class="@labelClass"></label>
+                        <input asp-for="EnrollmentStartsAt" type="date" class="@fieldClass" />
+                        <p class="@hintClass">Optional. When set to a future date, the program shows on /programs under "Coming soon" until this date. Leave blank to accept enrollments immediately.</p>
+                    </div>
+                    <div>
                         <label asp-for="EnrollmentDeadline" class="@labelClass"></label>
                         <input asp-for="EnrollmentDeadline" type="date" class="@fieldClass" />
                         <p class="@hintClass">Optional. When set, parents can't enroll after this date and the /programs card shows a countdown. Leave blank to keep enrollment open until the program starts.</p>

@@ -36,6 +36,15 @@ public class JoinController : Controller
         var program = await _programs.GetBySlugAsync(slug, ct);
         if (program is null || !program.IsActive) return NotFound();
 
+        // Hard-block enrollment before the start date (Karen may pre-list a
+        // program for parents to see, but only accept signups after a certain
+        // date — e.g. "opens Sep 1").
+        if (program.IsEnrollmentNotYetOpen)
+        {
+            TempData["InfoMessage"] = $"Enrollment for \"{program.Name}\" opens on {program.EnrollmentStartsAt!.Value:MMMM d, yyyy}. Check back then to sign up.";
+            return RedirectToAction("Detail", "Programs", new { slug = program.Slug });
+        }
+
         // Hard-block enrollment after the deadline (or after the program has
         // already started, if no explicit deadline was set). Redirects to the
         // public /programs listing so the parent lands somewhere useful
@@ -73,7 +82,13 @@ public class JoinController : Controller
         if (program is null || !program.IsActive) return NotFound();
 
         // Race-condition guard: someone might have loaded the form pre-deadline
-        // and submitted after. Same short-circuit as the GET action.
+        // (or pre-open) and submitted after or before. Same short-circuits as
+        // the GET action.
+        if (program.IsEnrollmentNotYetOpen)
+        {
+            TempData["InfoMessage"] = $"Enrollment for \"{program.Name}\" opens on {program.EnrollmentStartsAt!.Value:MMMM d, yyyy}. Try again then.";
+            return RedirectToAction("Detail", "Programs", new { slug = program.Slug });
+        }
         if (program.IsEnrollmentClosed)
         {
             TempData["InfoMessage"] = $"Enrollment for \"{program.Name}\" closed while you were filling out the form. Reach out via the contact form if you'd like to be notified about the next session.";

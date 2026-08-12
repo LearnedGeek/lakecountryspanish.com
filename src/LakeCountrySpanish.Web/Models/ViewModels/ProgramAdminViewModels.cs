@@ -93,6 +93,10 @@ public sealed class ProgramFormViewModel
     public DateTime EndDate { get; set; }
 
     [DataType(DataType.Date)]
+    [Display(Name = "Enrollment opens",
+             Description = "Optional. When set to a future date, the program appears on /programs under \"Coming soon\" until this date. Leave blank to accept enrollments immediately.")]
+    public DateTime? EnrollmentStartsAt { get; set; }
+
     [Display(Name = "Enrollment deadline",
              Description = "Optional. When set, parents can't enroll after this date. Leave blank to keep enrollment open until the program starts.")]
     public DateTime? EnrollmentDeadline { get; set; }
@@ -214,6 +218,9 @@ public sealed class ProgramFormViewModel
         target.EnrollmentDeadline = EnrollmentDeadline.HasValue
             ? DateTime.SpecifyKind(EnrollmentDeadline.Value, DateTimeKind.Utc)
             : null;
+        target.EnrollmentStartsAt = EnrollmentStartsAt.HasValue
+            ? DateTime.SpecifyKind(EnrollmentStartsAt.Value, DateTimeKind.Utc)
+            : null;
         target.MeetingDays = CompileMeetingDays();
         target.StartTime = StartTime;
         target.EndTime = EndTime;
@@ -252,6 +259,7 @@ public sealed class ProgramFormViewModel
             StartDate = p.StartDate,
             EndDate = p.EndDate,
             EnrollmentDeadline = p.EnrollmentDeadline,
+            EnrollmentStartsAt = p.EnrollmentStartsAt,
             MeetingDays = p.MeetingDays,
             StartTime = p.StartTime,
             EndTime = p.EndTime,

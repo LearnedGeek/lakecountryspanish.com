@@ -24,6 +24,16 @@
         if (days <= 7) return "bg-amber-100 text-amber-900 border-amber-300";
         return "bg-emerald-100 text-emerald-800 border-emerald-200";
     }
+
+    string ComingSoonLabel(EnrollmentProgram p)
+    {
+        if (!p.EnrollmentStartsAt.HasValue) return string.Empty;
+        var days = (int)Math.Ceiling((p.EnrollmentStartsAt.Value - DateTime.UtcNow).TotalDays);
+        if (days <= 0) return "Enrollment opens today";
+        if (days == 1) return "Opens tomorrow";
+        if (days <= 14) return $"Opens in {days} days";
+        return $"Opens {p.EnrollmentStartsAt.Value:MMM d}";
+    }
 }
 
 <div class="bg-gray-100 min-h-screen">
@@ -80,16 +90,20 @@
                                 </div>
                             </div>
                             <div class="flex-1 flex flex-col p-5">
+                                <!-- LOCATION-FIRST: Karen may run the same program at multiple
+                                     schools, so the location has to jump off the card as the
+                                     primary disambiguator. Colored chip, one line, bold. -->
+                                <div class="mb-3 inline-flex self-start items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-800 border-2 border-primary-200 text-sm font-bold group-hover:bg-primary-100 group-hover:border-primary-400 transition-colors">
+                                    <span aria-hidden="true">📍</span>
+                                    <span>@p.LocationName</span>
+                                </div>
+
                                 <h3 class="font-display text-xl font-bold text-gray-900 group-hover:text-indigo-700 mb-1">@p.Name</h3>
                                 @if (!string.IsNullOrEmpty(p.TagLine))
                                 {
                                     <p class="text-sm text-gray-600 mb-3">@p.TagLine</p>
                                 }
                                 <dl class="text-sm text-gray-700 space-y-1.5 mb-4">
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-gray-400">📍</span>
-                                        <span class="font-medium">@p.LocationName</span>
-                                    </div>
                                     <div class="flex items-center gap-2">
                                         <span class="text-gray-400">📅</span>
                                         <span>@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</span>
@@ -118,6 +132,66 @@
                                     <span class="inline-flex items-center gap-1 px-4 py-2 bg-secondary-500 text-white text-sm font-bold rounded-lg shadow-sm group-hover:bg-secondary-600 group-hover:shadow-md transition-all">
                                         Details →
                                     </span>
+                                </div>
+                            </div>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- Coming soon — enrollment hasn't opened yet -->
+        @if (Model.ComingSoon.Count > 0)
+        {
+            <section class="mb-12">
+                <div class="flex items-baseline justify-between mb-6">
+                    <h2 class="font-display text-2xl font-bold text-gray-900 flex items-center gap-3">
+                        <span class="h-3 w-3 rounded-full bg-amber-400"></span>
+                        Coming soon
+                    </h2>
+                    <span class="text-sm text-gray-500 font-medium">@Model.ComingSoon.Count program@(Model.ComingSoon.Count == 1 ? "" : "s")</span>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var p in Model.ComingSoon)
+                    {
+                        <a href="@Url.Action("Detail", "Programs", new { slug = p.Slug })"
+                           class="group flex flex-col bg-white rounded-2xl shadow-md hover:shadow-lg border border-gray-200 hover:border-amber-400 overflow-hidden transition-all duration-200 ease-out hover:-translate-y-1">
+                            <div class="aspect-[16/10] relative bg-gradient-to-br from-amber-300 to-amber-500 overflow-hidden">
+                                @{
+                                    var soonImage = p.EventImagePath ?? p.HeroImagePath;
+                                }
+                                @if (!string.IsNullOrEmpty(soonImage))
+                                {
+                                    <img src="@soonImage" alt="@p.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                                }
+                                <div class="absolute top-3 left-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm bg-amber-100 text-amber-900 border-amber-300">
+                                    🗓 @ComingSoonLabel(p)
+                                </div>
+                            </div>
+                            <div class="flex-1 flex flex-col p-5">
+                                <div class="mb-3 inline-flex self-start items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 text-amber-900 border-2 border-amber-200 text-sm font-bold group-hover:bg-amber-100 group-hover:border-amber-400 transition-colors">
+                                    <span aria-hidden="true">📍</span>
+                                    <span>@p.LocationName</span>
+                                </div>
+                                <h3 class="font-display text-xl font-bold text-gray-900 mb-1">@p.Name</h3>
+                                @if (!string.IsNullOrEmpty(p.TagLine))
+                                {
+                                    <p class="text-sm text-gray-600 mb-3">@p.TagLine</p>
+                                }
+                                <dl class="text-sm text-gray-700 space-y-1.5 mb-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-400">📅</span>
+                                        <span>@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-gray-400">🕐</span>
+                                        <span>@p.MeetingDays · @p.StartTime.ToString("h:mm tt")–@p.EndTime.ToString("h:mm tt")</span>
+                                    </div>
+                                </dl>
+                                <div class="mt-auto pt-4 border-t border-gray-100">
+                                    <p class="text-xs text-gray-500">
+                                        <span class="font-semibold text-amber-800">Come back @p.EnrollmentStartsAt!.Value.ToString("MMM d")</span> to sign up, or view details now.
+                                    </p>
                                 </div>
                             </div>
                         </a>
@@ -155,8 +229,12 @@
                                 </div>
                             </div>
                             <div class="flex-1 flex flex-col p-5">
+                                <div class="mb-3 inline-flex self-start items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 border-2 border-gray-200 text-sm font-bold">
+                                    <span aria-hidden="true">📍</span>
+                                    <span>@p.LocationName</span>
+                                </div>
                                 <h3 class="font-display text-lg font-bold text-gray-800 mb-1">@p.Name</h3>
-                                <p class="text-sm text-gray-600">@p.LocationName · @p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</p>
+                                <p class="text-sm text-gray-600">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</p>
                                 <p class="text-xs text-gray-500 mt-3">Interested in the next session? Contact us from the details page.</p>
                             </div>
                         </a>

@@ -35,13 +35,15 @@ public class ProgramsController : Controller
         var listed = all.Where(p => p.IsListed).OrderBy(p => p.StartDate).ToList();
 
         var now = DateTime.UtcNow;
-        var enrollmentOpen = listed.Where(p => !p.IsEnrollmentClosed).ToList();
+        var enrollmentOpen = listed.Where(p => p.IsEnrollmentOpen).ToList();
+        var comingSoon = listed.Where(p => p.IsEnrollmentNotYetOpen).ToList();
         var closedButUpcoming = listed.Where(p => p.IsEnrollmentClosed && p.EndDate >= now).ToList();
         var past = listed.Where(p => p.EndDate < now).OrderByDescending(p => p.EndDate).ToList();
 
         var vm = new ProgramsCalendarViewModel
         {
             EnrollmentOpen = enrollmentOpen,
+            ComingSoon = comingSoon,
             ClosedButUpcoming = closedButUpcoming,
             Past = past
         };
