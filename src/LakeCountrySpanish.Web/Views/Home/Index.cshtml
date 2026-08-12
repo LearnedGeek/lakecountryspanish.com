@@ -104,7 +104,10 @@
     <div class="bg-gradient-to-br from-secondary-50 via-white to-primary-50 border-b border-gray-100 py-10 lg:py-12">
         <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-center gap-3 mb-8">
-                <span class="enrolling-pill inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-[0.15em] bg-secondary-500 text-white shadow-sm">
+                <!-- Emerald pill to match the "Enrolling now" indicator on /programs
+                     (green = go). Also breaks up the coral stack on the hero
+                     (Explore Our Programs button + See details CTA below). -->
+                <span class="enrolling-pill inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-[0.15em] bg-emerald-500 text-white shadow-sm">
                     <span class="h-2 w-2 rounded-full bg-white animate-pulse"></span>
                     Now Enrolling
                 </span>
@@ -465,13 +468,13 @@
         transform: scale(1.25);
     }
 
-    /* Gentle coral halo on the Now Enrolling pill — draws the eye without
-       full opacity flicker. Halo expands + fades once per cycle. Disabled
-       under prefers-reduced-motion. */
+    /* Gentle emerald halo on the Now Enrolling pill — draws the eye without
+       full opacity flicker. Halo expands + fades once per cycle. Emerald to
+       match the pill (green = go). Disabled under prefers-reduced-motion. */
     @@keyframes enrolling-pill-halo {
-        0%   { box-shadow: 0 0 0 0 rgba(255, 111, 97, 0.55); }
-        70%  { box-shadow: 0 0 0 10px rgba(255, 111, 97, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 111, 97, 0); }
+        0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
+        70%  { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
     .enrolling-pill {
         animation: enrolling-pill-halo 2.4s ease-out infinite;
