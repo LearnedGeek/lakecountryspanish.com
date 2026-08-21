@@ -79,7 +79,11 @@
                     </div>
                     <div class="flex justify-between py-2.5">
                         <dt class="font-semibold text-gray-500">Grades / Ages</dt>
-                        <dd class="font-medium text-gray-900">@p.GradeRange · ages @p.AgeMin–@p.AgeMax</dd>
+                        @{
+                            var detailHasGrades = !string.IsNullOrEmpty(p.GradeRange);
+                            var detailHasAges = p.AgeMin > 0;
+                        }
+                        <dd class="font-medium text-gray-900">@(detailHasGrades ? p.GradeRange : "")@(detailHasGrades && detailHasAges ? " · " : "")@(detailHasAges ? $"ages {p.AgeMin}–{p.AgeMax}" : "")@(!detailHasGrades && !detailHasAges ? "No restriction" : "")</dd>
                     </div>
                     <div class="flex justify-between py-2.5">
                         <dt class="font-semibold text-gray-500">Full price</dt>

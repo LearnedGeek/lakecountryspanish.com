@@ -32,7 +32,14 @@
                 <p class="mt-3 text-lg text-white/95">@p.TagLine</p>
             }
             <div class="mt-5 flex flex-wrap justify-center gap-2 text-sm">
-                <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">Grades @p.GradeRange · ages @p.AgeMin–@p.AgeMax</span>
+                @{
+                    var hasGrades = !string.IsNullOrEmpty(p.GradeRange);
+                    var hasAges = p.AgeMin > 0;
+                }
+                @if (hasGrades || hasAges)
+                {
+                    <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@(hasGrades ? $"Grades {p.GradeRange}" : "")@(hasGrades && hasAges ? " · " : "")@(hasAges ? $"ages {p.AgeMin}–{p.AgeMax}" : "")</span>
+                }
                 <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@p.MeetingDays · @p.StartTime.ToString("h:mm tt")–@p.EndTime.ToString("h:mm tt")</span>
                 <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</span>
             </div>

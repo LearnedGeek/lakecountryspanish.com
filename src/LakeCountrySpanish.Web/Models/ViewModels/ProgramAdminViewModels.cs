@@ -130,14 +130,16 @@ public sealed class ProgramFormViewModel
     public TimeOnly EndTime { get; set; }
 
     [StringLength(20)]
-    [Display(Name = "Grade range", Description = "Free-form: \"3-6\" or \"K-2\".")]
-    public string GradeRange { get; set; } = string.Empty;
+    [Display(Name = "Grade range", Description = "Free-form: \"3-6\", \"K-2\", or leave blank for adult / no-restriction programs.")]
+    public string? GradeRange { get; set; }
 
-    [Range(3, 18)]
-    [Display(Name = "Min age")]
+    // 0 = "no restriction" (e.g. adult programs Karen doesn't want to gate by age).
+    // Display views hide the "· ages X–Y" text when AgeMin is 0.
+    [Range(0, 120)]
+    [Display(Name = "Min age", Description = "Enter 0 to indicate no age restriction (e.g. adult programs).")]
     public int AgeMin { get; set; }
 
-    [Range(3, 18)]
+    [Range(0, 120)]
     [Display(Name = "Max age")]
     public int AgeMax { get; set; }
 

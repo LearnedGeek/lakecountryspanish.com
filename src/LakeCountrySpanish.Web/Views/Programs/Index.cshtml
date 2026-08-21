@@ -112,11 +112,15 @@
                                         <span class="text-gray-400">🕐</span>
                                         <span>@p.MeetingDays · @p.StartTime.ToString("h:mm tt")–@p.EndTime.ToString("h:mm tt")</span>
                                     </div>
-                                    @if (!string.IsNullOrEmpty(p.GradeRange))
+                                    @{
+                                        var idxHasGrades = !string.IsNullOrEmpty(p.GradeRange);
+                                        var idxHasAges = p.AgeMin > 0;
+                                    }
+                                    @if (idxHasGrades || idxHasAges)
                                     {
                                         <div class="flex items-center gap-2">
                                             <span class="text-gray-400">🎒</span>
-                                            <span>Grades @p.GradeRange · ages @p.AgeMin–@p.AgeMax</span>
+                                            <span>@(idxHasGrades ? $"Grades {p.GradeRange}" : "")@(idxHasGrades && idxHasAges ? " · " : "")@(idxHasAges ? $"ages {p.AgeMin}–{p.AgeMax}" : "")</span>
                                         </div>
                                     }
                                 </dl>
