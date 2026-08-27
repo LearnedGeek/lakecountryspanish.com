@@ -40,9 +40,43 @@ public class ProgramsController : Controller
         var closedButUpcoming = listed.Where(p => p.IsEnrollmentClosed && p.EndDate >= now).ToList();
         var past = listed.Where(p => p.EndDate < now).OrderByDescending(p => p.EndDate).ToList();
 
+        // Group by program name (case-insensitive) so Karen's multiple-location
+        // runs of the same program render as one card with a location roster.
+        // Within each group, sessions ordered by soonest StartDate.
+        var openGroups = enrollmentOpen
+            .GroupBy(p => p.Name.Trim(), StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var sessions = g.OrderBy(p => p.StartDate).ToList();
+                return new EnrollmentOpenGroup
+                {
+                    Representative = sessions.First(),
+                    Sessions = sessions,
+                    MinPrice = sessions.Min(s => s.FullPrice),
+                    MaxPrice = sessions.Max(s => s.FullPrice)
+                };
+            })
+            .OrderBy(g => g.Representative.StartDate)
+            .ToList();
+
+        // Aggregate marketing stats for the banner above the grouped cards.
+        var openStats = new EnrollmentOpenStats
+        {
+            SessionCount = enrollmentOpen.Count,
+            DistinctProgramCount = openGroups.Count,
+            DistinctLocationCount = enrollmentOpen
+                .Select(p => p.LocationName.Trim())
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count(),
+            SoonestStart = enrollmentOpen.Count > 0 ? enrollmentOpen.Min(p => p.StartDate) : null,
+            LatestEnd = enrollmentOpen.Count > 0 ? enrollmentOpen.Max(p => p.EndDate) : null
+        };
+
         var vm = new ProgramsCalendarViewModel
         {
-            EnrollmentOpen = enrollmentOpen,
+            OpenStats = openStats,
+            EnrollmentOpenGroups = openGroups,
             ComingSoon = comingSoon,
             ClosedButUpcoming = closedButUpcoming,
             Past = past
