@@ -166,21 +166,27 @@
                                 <ul class="divide-y divide-gray-200">
                                     @foreach (var s in group.Sessions)
                                     {
-                                        // Per-session grade + age surfaced here so a parent
-                                        // can filter to "the one my kid qualifies for"
-                                        // without having to open each Details page. Sessions
-                                        // under the same program name may still legitimately
-                                        // differ in age/grade (Karen's St Matthew's has a
-                                        // K-2 session and a 3-6 session), and even when
-                                        // sessions are meant to be identical this catches
-                                        // typos before parents get confused.
-                                        var sHasGrades = !string.IsNullOrEmpty(s.GradeRange);
-                                        var sHasAges = s.AgeMin > 0;
+                                        // One consolidated details line: day · time · date range · age (or grade
+                                        // as fallback). We prefer ages because grades imply "school kids only"
+                                        // and Karen's future offerings include adults — ages is the more
+                                        // future-proof filter. Grade shown only when the row has no age.
+                                        string? qualifier = null;
+                                        if (s.AgeMin > 0)
+                                        {
+                                            qualifier = $"ages {s.AgeMin}–{s.AgeMax}";
+                                        }
+                                        else if (!string.IsNullOrEmpty(s.GradeRange))
+                                        {
+                                            qualifier = $"Grades {s.GradeRange}";
+                                        }
                                         <li>
                                             <a href="@Url.Action("Detail", "Programs", new { slug = s.Slug })"
                                                class="block py-3 hover:bg-white/80 rounded-lg -mx-2 px-2 transition-colors group">
-                                                <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                                                    <div class="flex-1 min-w-0">
+                                                <!-- grid so the right cluster (price, deadline, details) doesn't
+                                                     compete for horizontal space with the location text and force
+                                                     awkward wraps. Left side gets whatever space remains. -->
+                                                <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1 items-center">
+                                                    <div class="min-w-0">
                                                         <div class="inline-flex items-center gap-1.5 text-sm sm:text-base font-bold text-primary-800">
                                                             <span aria-hidden="true">📍</span>
                                                             <span class="group-hover:text-indigo-700 transition-colors">@s.LocationName</span>
@@ -189,21 +195,19 @@
                                                             @s.MeetingDays · @s.StartTime.ToString("h:mm tt")–@s.EndTime.ToString("h:mm tt")
                                                             <span class="text-gray-400">·</span>
                                                             @s.StartDate.ToString("MMM d") – @s.EndDate.ToString("MMM d, yyyy")
+                                                            @if (qualifier is not null)
+                                                            {
+                                                                <span class="text-gray-400">·</span>
+                                                                <span class="font-medium text-gray-700">@qualifier</span>
+                                                            }
                                                         </div>
-                                                        @if (sHasGrades || sHasAges)
-                                                        {
-                                                            <div class="text-xs sm:text-sm text-gray-700 mt-0.5 sm:ml-6">
-                                                                <span class="text-gray-400" aria-hidden="true">🎒</span>
-                                                                <span class="font-medium">@(sHasGrades ? $"Grades {s.GradeRange}" : "")@(sHasGrades && sHasAges ? " · " : "")@(sHasAges ? $"ages {s.AgeMin}–{s.AgeMax}" : "")</span>
-                                                            </div>
-                                                        }
                                                     </div>
                                                     <div class="flex items-center gap-2 flex-shrink-0">
                                                         <span class="text-sm font-bold text-gray-900">$@s.FullPrice.ToString("N0")</span>
                                                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold border @DeadlinePillClass(s)">
                                                             @DeadlineLabel(s)
                                                         </span>
-                                                        <span class="text-sm font-bold text-secondary-600 group-hover:text-secondary-700">Details →</span>
+                                                        <span class="text-sm font-bold text-secondary-600 group-hover:text-secondary-700 hidden sm:inline">Details →</span>
                                                     </div>
                                                 </div>
                                             </a>

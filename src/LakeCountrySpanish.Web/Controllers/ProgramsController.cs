@@ -47,13 +47,23 @@ public class ProgramsController : Controller
             .GroupBy(p => p.Name.Trim(), StringComparer.OrdinalIgnoreCase)
             .Select(g =>
             {
-                var sessions = g.OrderBy(p => p.StartDate).ToList();
+                // Sort sessions by location first, then start time — parents
+                // pick the school their kid attends first, then filter by
+                // time-of-day. Representative is still the soonest-starting
+                // session (drives shared header defaults) regardless of
+                // display sort order.
+                var displaySessions = g
+                    .OrderBy(p => p.LocationName, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(p => p.StartTime)
+                    .ThenBy(p => p.StartDate)
+                    .ToList();
+                var soonest = g.OrderBy(p => p.StartDate).First();
                 return new EnrollmentOpenGroup
                 {
-                    Representative = sessions.First(),
-                    Sessions = sessions,
-                    MinPrice = sessions.Min(s => s.FullPrice),
-                    MaxPrice = sessions.Max(s => s.FullPrice)
+                    Representative = soonest,
+                    Sessions = displaySessions,
+                    MinPrice = displaySessions.Min(s => s.FullPrice),
+                    MaxPrice = displaySessions.Max(s => s.FullPrice)
                 };
             })
             .OrderBy(g => g.Representative.StartDate)
