@@ -166,6 +166,16 @@
                                 <ul class="divide-y divide-gray-200">
                                     @foreach (var s in group.Sessions)
                                     {
+                                        // Per-session grade + age surfaced here so a parent
+                                        // can filter to "the one my kid qualifies for"
+                                        // without having to open each Details page. Sessions
+                                        // under the same program name may still legitimately
+                                        // differ in age/grade (Karen's St Matthew's has a
+                                        // K-2 session and a 3-6 session), and even when
+                                        // sessions are meant to be identical this catches
+                                        // typos before parents get confused.
+                                        var sHasGrades = !string.IsNullOrEmpty(s.GradeRange);
+                                        var sHasAges = s.AgeMin > 0;
                                         <li>
                                             <a href="@Url.Action("Detail", "Programs", new { slug = s.Slug })"
                                                class="block py-3 hover:bg-white/80 rounded-lg -mx-2 px-2 transition-colors group">
@@ -180,6 +190,13 @@
                                                             <span class="text-gray-400">·</span>
                                                             @s.StartDate.ToString("MMM d") – @s.EndDate.ToString("MMM d, yyyy")
                                                         </div>
+                                                        @if (sHasGrades || sHasAges)
+                                                        {
+                                                            <div class="text-xs sm:text-sm text-gray-700 mt-0.5 sm:ml-6">
+                                                                <span class="text-gray-400" aria-hidden="true">🎒</span>
+                                                                <span class="font-medium">@(sHasGrades ? $"Grades {s.GradeRange}" : "")@(sHasGrades && sHasAges ? " · " : "")@(sHasAges ? $"ages {s.AgeMin}–{s.AgeMax}" : "")</span>
+                                                            </div>
+                                                        }
                                                     </div>
                                                     <div class="flex items-center gap-2 flex-shrink-0">
                                                         <span class="text-sm font-bold text-gray-900">$@s.FullPrice.ToString("N0")</span>
