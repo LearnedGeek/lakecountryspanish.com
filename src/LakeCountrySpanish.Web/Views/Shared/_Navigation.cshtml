@@ -19,18 +19,43 @@
                         <a asp-controller="Contact" asp-action="Index" class="text-white hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Contact</a>
                         @if (SignInManager.IsSignedIn(User))
                         {
-                            @if (User.IsInRole("Admin"))
+                            @if (User.IsInRole("Admin") || User.IsInRole("Teacher"))
                             {
-                                <a asp-controller="Admin" asp-action="Dashboard" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Admin Dashboard</a>
-                                <a asp-controller="Curriculum" asp-action="Lessons" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Curriculum</a>
-                                <a asp-controller="AdminPrograms" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Manage Programs</a>
-                                <a asp-controller="Media" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Media</a>
-                            }
-                            else if (User.IsInRole("Teacher"))
-                            {
-                                <a asp-controller="Teacher" asp-action="Dashboard" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Teacher Dashboard</a>
-                                <a asp-controller="Curriculum" asp-action="Lessons" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Curriculum</a>
-                                <a asp-controller="AdminPrograms" asp-action="Index" class="text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition">Manage Programs</a>
+                                // Admin/Teacher tools collapsed into a single dropdown — the
+                                // 4 (Admin) or 3 (Teacher) items previously listed inline
+                                // pushed the nav past the site name at typical desktop
+                                // widths. Dropdown keeps top-level nav compact regardless
+                                // of role.
+                                var isAdminRole = User.IsInRole("Admin");
+                                <div class="relative">
+                                    <button type="button"
+                                            id="role-menu-toggle"
+                                            class="inline-flex items-center gap-1 text-secondary-300 hover:text-secondary-200 hover:bg-primary-700 rounded-md px-3 py-2 text-sm font-medium transition"
+                                            aria-haspopup="true"
+                                            aria-expanded="false">
+                                        @(isAdminRole ? "Admin" : "Teacher")
+                                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                            <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.06l3.71-3.83a.75.75 0 111.08 1.04l-4.25 4.4a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                    <div id="role-menu"
+                                         class="hidden absolute left-0 mt-2 w-56 rounded-lg shadow-lg bg-white ring-1 ring-black/5 z-40 py-1"
+                                         role="menu">
+                                        @if (isAdminRole)
+                                        {
+                                            <a asp-controller="Admin" asp-action="Dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Admin Dashboard</a>
+                                            <a asp-controller="Curriculum" asp-action="Lessons" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Curriculum</a>
+                                            <a asp-controller="AdminPrograms" asp-action="Index" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Manage Programs</a>
+                                            <a asp-controller="Media" asp-action="Index" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Media</a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="Teacher" asp-action="Dashboard" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Teacher Dashboard</a>
+                                            <a asp-controller="Curriculum" asp-action="Lessons" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Curriculum</a>
+                                            <a asp-controller="AdminPrograms" asp-action="Index" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900" role="menuitem">Manage Programs</a>
+                                        }
+                                    </div>
+                                </div>
                             }
                             else
                             {
@@ -92,6 +117,36 @@
             }
         </div>
     </div>
+
+    <!-- Role dropdown (Admin/Teacher) toggle. Vanilla JS matching the rest of
+         the site's interaction patterns. Click outside or Esc to close. -->
+    <script>
+        (function () {
+            const toggle = document.getElementById('role-menu-toggle');
+            const menu = document.getElementById('role-menu');
+            if (!toggle || !menu) return;
+
+            function close() {
+                menu.classList.add('hidden');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+            function open() {
+                menu.classList.remove('hidden');
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+
+            toggle.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (menu.classList.contains('hidden')) open(); else close();
+            });
+            document.addEventListener('click', function (e) {
+                if (!menu.contains(e.target) && !toggle.contains(e.target)) close();
+            });
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') close();
+            });
+        })();
+    </script>
 
     <!-- Mobile menu -->
     <div class="md:hidden hidden" id="mobile-menu">
