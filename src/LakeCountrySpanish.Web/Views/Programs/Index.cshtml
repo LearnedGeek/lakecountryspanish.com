@@ -122,9 +122,14 @@
                         var groupHasAges = rep.AgeMin > 0;
 
                         <div class="flex flex-col bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden transition-all">
-                            <!-- Header: image + program name + shared attributes -->
+                            <!-- Header: image + program name + shared attributes. Image
+                                 container is intentionally taller (min-h-[300px]) with
+                                 tight padding so the poster reads as a proper card visual
+                                 rather than a thumbnail, per Karen's "more color" feedback.
+                                 Text column stays 3/5 width and just grows vertically to
+                                 match the image column via the grid. -->
                             <div class="grid grid-cols-1 sm:grid-cols-5 gap-0">
-                                <div class="sm:col-span-2 bg-white flex items-center justify-center p-3 sm:p-4 sm:min-h-[220px]">
+                                <div class="sm:col-span-2 bg-white flex items-center justify-center p-2 sm:min-h-[300px]">
                                     @if (!string.IsNullOrEmpty(groupImage))
                                     {
                                         <img src="@groupImage" alt="@rep.Name" class="max-w-full max-h-full object-contain" loading="lazy" />
@@ -176,7 +181,7 @@
                                             @if (!string.IsNullOrEmpty(schoolImage))
                                             {
                                                 <img src="@schoolImage" alt="" aria-hidden="true"
-                                                     class="flex-shrink-0 h-14 w-14 sm:h-16 sm:w-16 rounded-lg object-contain bg-white border border-gray-200 shadow-sm p-1" />
+                                                     class="flex-shrink-0 h-20 w-20 sm:h-24 sm:w-24 rounded-lg object-contain bg-white border border-gray-200 shadow-sm p-1" />
                                             }
                                             <div class="flex-1 min-w-0">
                                                 <div class="text-base sm:text-lg font-bold text-primary-800 flex items-center gap-1.5">
