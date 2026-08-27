@@ -33,12 +33,15 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
     public Task<EnrollmentProgram?> GetByIdAsync(int id, CancellationToken ct = default) =>
         _context.Programs.FirstOrDefaultAsync(p => p.Id == id, ct);
 
-    public async Task<EnrollmentProgram> CreateAsync(EnrollmentProgram program, CancellationToken ct = default)
+    public async Task<EnrollmentProgram> CreateAsync(EnrollmentProgram program, CancellationToken ct = default, bool provisionStripe = true)
     {
-        // Basic invariants — the admin form should have caught these already,
-        // but service-layer defence in depth is cheap.
         NormalizeSlug(program);
-        if (program.FullPrice <= 0)
+
+        // FullPrice must be sane whenever we're provisioning Stripe (Stripe
+        // Prices need a positive unit amount). For a pure draft save, allow 0
+        // as "not yet decided" — publish path will validate before flipping
+        // active.
+        if (provisionStripe && program.FullPrice <= 0)
             throw new InvalidOperationException("FullPrice must be positive.");
         if (program.InstallmentCount < 2)
             program.InstallmentCount = 2;
@@ -48,6 +51,12 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
 
         _context.Programs.Add(program);
         await _context.SaveChangesAsync(ct);
+
+        if (!provisionStripe)
+        {
+            _logger.LogInformation("Created draft EnrollmentProgram {ProgramId} ({Slug}) — no Stripe provisioning yet.", program.Id, program.Slug);
+            return program;
+        }
 
         try
         {
@@ -150,6 +159,110 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
         _context.Programs.Remove(program);
         await _context.SaveChangesAsync(ct);
         _logger.LogInformation("Deleted EnrollmentProgram {ProgramId} ({Slug})", program.Id, program.Slug);
+    }
+
+    public async Task<EnrollmentProgram> PublishAsync(int programId, CancellationToken ct = default)
+    {
+        var program = await _context.Programs.FirstOrDefaultAsync(p => p.Id == programId, ct)
+            ?? throw new InvalidOperationException($"Program {programId} not found.");
+
+        // Defence in depth — the ViewModel's Validate() runs first at the
+        // controller layer, but re-check the pricing invariant here so any
+        // future callers of this method can't accidentally publish a $0 program.
+        if (program.FullPrice <= 0)
+            throw new InvalidOperationException("Full price must be positive before publishing.");
+        if (program.InstallmentCount < 2)
+            program.InstallmentCount = 2;
+
+        // Idempotent: if Stripe is already wired (a previously-published
+        // program being re-activated after IsActive was toggled off), skip
+        // provisioning and just flip active.
+        if (string.IsNullOrEmpty(program.StripeProductId))
+        {
+            try
+            {
+                await ProvisionStripeAsync(program, ct);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Stripe provisioning failed while publishing Program {ProgramId} ({Slug}); leaving as draft.", program.Id, program.Slug);
+                throw new InvalidOperationException("Stripe provisioning failed: " + ex.Message, ex);
+            }
+        }
+
+        program.IsActive = true;
+        program.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+        _logger.LogInformation("Published EnrollmentProgram {ProgramId} ({Slug}) — Stripe product {ProductId}", program.Id, program.Slug, program.StripeProductId);
+        return program;
+    }
+
+    public async Task<EnrollmentProgram> DuplicateAsync(int sourceProgramId, CancellationToken ct = default)
+    {
+        var source = await _context.Programs.AsNoTracking().FirstOrDefaultAsync(p => p.Id == sourceProgramId, ct)
+            ?? throw new InvalidOperationException($"Program {sourceProgramId} not found.");
+
+        var newSlug = await FindAvailableSlugAsync($"{source.Slug}-copy", ct);
+
+        var copy = new EnrollmentProgram
+        {
+            // Everything content-level copies over
+            Slug = newSlug,
+            Name = source.Name,
+            TagLine = source.TagLine,
+            Description = source.Description,
+            HeroImagePath = source.HeroImagePath,
+            EventImagePath = source.EventImagePath,
+            LocationName = source.LocationName,
+            LocationAddress = source.LocationAddress,
+            StartDate = source.StartDate,
+            EndDate = source.EndDate,
+            EnrollmentStartsAt = source.EnrollmentStartsAt,
+            EnrollmentDeadline = source.EnrollmentDeadline,
+            MeetingDays = source.MeetingDays,
+            StartTime = source.StartTime,
+            EndTime = source.EndTime,
+            GradeRange = source.GradeRange,
+            AgeMin = source.AgeMin,
+            AgeMax = source.AgeMax,
+            FullPrice = source.FullPrice,
+            InstallmentsEnabled = source.InstallmentsEnabled,
+            InstallmentCount = source.InstallmentCount,
+            FinalInstallmentDueDate = source.FinalInstallmentDueDate,
+            CashOptionEnabled = source.CashOptionEnabled,
+            WaiverText = source.WaiverText,
+            RefundPolicyText = source.RefundPolicyText,
+            ContactPhone = source.ContactPhone,
+            ContactEmail = source.ContactEmail,
+
+            // Draft posture — Karen tweaks then publishes
+            IsActive = false,
+            IsListed = false,
+
+            // Stripe IDs deliberately null — publish path provisions fresh ones
+            // so the copy owns its own Stripe Product and can't accidentally
+            // credit enrollments to the source or archive the source on delete.
+            StripeProductId = null,
+            StripeFullPriceId = null,
+            StripeInstallmentPriceId = null,
+        };
+
+        // Create as draft (no Stripe provisioning yet).
+        return await CreateAsync(copy, ct, provisionStripe: false);
+    }
+
+    private async Task<string> FindAvailableSlugAsync(string baseSlug, CancellationToken ct)
+    {
+        // Try the base first (`bailamos-copy`), then `-copy-2`, `-copy-3`, ...
+        // Bounded to avoid an infinite loop on pathological data.
+        var candidate = baseSlug;
+        for (var i = 2; i < 100; i++)
+        {
+            var exists = await _context.Programs.AnyAsync(p => p.Slug == candidate, ct);
+            if (!exists) return candidate;
+            candidate = $"{baseSlug}-{i}";
+        }
+        throw new InvalidOperationException($"Could not find an unused slug based on '{baseSlug}' after 100 attempts.");
     }
 
     // ---------------- Stripe provisioning ----------------

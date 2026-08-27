@@ -1,7 +1,6 @@
 @model IReadOnlyList<LakeCountrySpanish.Web.Models.ViewModels.ProgramListItemViewModel>
 @{
     ViewData["Title"] = "Enrollment Programs";
-    var includeInactive = (bool)(ViewBag.IncludeInactive ?? false);
 }
 
 <div class="bg-gray-100 min-h-screen">
@@ -22,13 +21,10 @@
             </a>
         </div>
 
-        <!-- Toggle: show inactive -->
-        <div class="mb-4">
-            <a href="@Url.Action("Index", new { includeInactive = !includeInactive })"
-               class="inline-flex items-center gap-2 text-sm font-semibold px-3 py-1.5 rounded-lg border-2 @(includeInactive ? "border-gray-400 bg-white text-gray-700" : "border-gray-300 bg-gray-50 text-gray-500") hover:border-gray-500 hover:bg-white transition-colors">
-                @(includeInactive ? "✓ Showing inactive too" : "○ Show inactive too")
-            </a>
-        </div>
+        @* The old "show inactive too" toggle was removed 2026-08-26 — drafts
+           (IsActive=false) are always visible in the admin list now that they're
+           a first-class state, distinguished by the Draft badge in the Status
+           column instead of hidden behind a filter. *@
 
         @if (Model.Count == 0)
         {
@@ -59,15 +55,24 @@
                         <tbody class="divide-y divide-gray-100">
                             @foreach (var p in Model)
                             {
-                                <tr class="hover:bg-indigo-50/40 transition-colors">
+                                // Draft rows also show placeholder dashes for fields Karen
+                                // may not have filled in yet (dates/location default to
+                                // MinValue / empty on the entity for drafts).
+                                var displayName = string.IsNullOrEmpty(p.Name) ? "(untitled draft)" : p.Name;
+                                var displayLocation = string.IsNullOrEmpty(p.LocationName) ? "—" : p.LocationName;
+                                var displayDates = p.StartDate == DateTime.MinValue
+                                    ? "—"
+                                    : $"{p.StartDate:MMM d} – {p.EndDate:MMM d, yyyy}";
+                                var displayPrice = p.FullPrice > 0 ? $"${p.FullPrice:N2}" : "—";
+                                <tr class="hover:bg-indigo-50/40 transition-colors @(!p.IsActive ? "bg-amber-50/30" : "")">
                                     <td class="px-6 py-4">
-                                        <a href="@Url.Action("Detail", new { id = p.Id })" class="text-base font-bold text-indigo-700 hover:text-indigo-900">@p.Name</a>
+                                        <a href="@Url.Action("Detail", new { id = p.Id })" class="text-base font-bold text-indigo-700 hover:text-indigo-900">@displayName</a>
                                         <div class="text-xs text-gray-500 font-mono mt-0.5">/join/@p.Slug</div>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">@p.LocationName</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">@displayLocation</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">@displayDates</td>
                                     <td class="px-6 py-4 text-right">
-                                        <span class="text-sm font-bold text-gray-900">$@p.FullPrice.ToString("N2")</span>
+                                        <span class="text-sm font-bold text-gray-900">@displayPrice</span>
                                     </td>
                                     <td class="px-6 py-4 text-right">
                                         <a href="@Url.Action("Enrollments", new { id = p.Id })" class="inline-flex items-center gap-1 hover:underline" title="View roster">
@@ -81,17 +86,17 @@
                                             {
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-semibold border border-green-200">
                                                     <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
-                                                    Active
+                                                    Live
                                                 </span>
                                             }
                                             else
                                             {
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-200 text-gray-700 text-xs font-semibold border border-gray-300">
-                                                    <span class="h-1.5 w-1.5 rounded-full bg-gray-500"></span>
-                                                    Inactive
+                                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200">
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                                                    Draft
                                                 </span>
                                             }
-                                            @if (p.IsListed)
+                                            @if (p.IsListed && p.IsActive)
                                             {
                                                 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 text-xs font-semibold border border-indigo-200">
                                                     Listed

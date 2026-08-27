@@ -270,7 +270,13 @@
                                class="@fieldClass"
                                readonly="@Model.PricingLocked" />
                         <p class="@hintClass">
-                            Per-installment amount: <span class="font-semibold text-gray-800">$@((Model.InstallmentCount > 0 ? Math.Round(Model.FullPrice / Model.InstallmentCount, 2) : Model.FullPrice).ToString("N2"))</span>
+                            @{
+                                var pricePreview = Model.FullPrice ?? 0m;
+                                var perInstallment = Model.InstallmentCount > 0
+                                    ? Math.Round(pricePreview / Model.InstallmentCount, 2)
+                                    : pricePreview;
+                            }
+                            Per-installment amount: <span class="font-semibold text-gray-800">$@perInstallment.ToString("N2")</span>
                         </p>
                     </div>
                     <div>
@@ -343,17 +349,45 @@
                 </div>
             </section>
 
+            @{
+                // A program is "already published" if it's marked active AND
+                // Stripe is wired — that's when we skip the draft/publish split
+                // and just show a single Save changes button (edits to a live
+                // program always stay published).
+                var alreadyPublished = Model.IsEdit && Model.IsActive && !string.IsNullOrEmpty(Model.StripeProductId);
+            }
+
             <!-- Actions -->
-            <div class="flex items-center justify-between gap-4 pt-2 pb-8">
-                <a href="@(Model.IsEdit ? Url.Action("Detail", new { id = Model.Id }) : Url.Action("Index"))" class="text-sm font-semibold text-gray-600 hover:text-gray-900">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 pb-8">
+                <a href="@(Model.IsEdit ? Url.Action("Detail", new { id = Model.Id }) : Url.Action("Index"))" class="text-sm font-semibold text-gray-600 hover:text-gray-900 sm:self-center">
                     ← Cancel
                 </a>
-                <button type="submit" class="inline-flex items-center gap-2 px-8 py-3.5 bg-indigo-600 text-white text-base font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:shadow-indigo-500/40 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all">
-                    @(Model.IsEdit ? "Save changes" : "Create program")
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                </button>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    @if (alreadyPublished)
+                    {
+                        <button type="submit" name="action" value="publish"
+                                class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-indigo-600 text-white text-base font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:shadow-indigo-500/40 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all">
+                            Save changes
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" name="action" value="draft"
+                                class="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white border-2 border-gray-300 text-gray-700 text-base font-bold rounded-xl shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-4 focus:ring-gray-300/20 transition-all">
+                            Save draft
+                        </button>
+                        <button type="submit" name="action" value="publish"
+                                class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-indigo-600 text-white text-base font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:shadow-indigo-500/40 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all">
+                            Save &amp; Publish
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </button>
+                    }
+                </div>
             </div>
         </form>
     </div>

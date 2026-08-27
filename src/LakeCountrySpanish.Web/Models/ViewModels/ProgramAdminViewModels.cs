@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using LakeCountrySpanish.Web.Models.Entities;
 
 namespace LakeCountrySpanish.Web.Models.ViewModels;
@@ -21,13 +22,32 @@ public sealed class ProgramListItemViewModel
 }
 
 /// <summary>
-/// Combined create/edit form model. Validation attributes are enforced by MVC
-/// model binding; additional service-level guards live in
-/// <see cref="Services.Programs.EnrollmentProgramService"/>.
+/// Combined create/edit form model. Two save modes:
+/// <list type="bullet">
+///   <item><b>Draft</b> — <see cref="PublishOnSave"/> = false. Model binder still
+///   validates content when present (Range, StringLength, EmailAddress, etc.)
+///   but skipping-fields-entirely is allowed so Karen can save partial progress.</item>
+///   <item><b>Publish</b> — <see cref="PublishOnSave"/> = true. Adds "required to
+///   publish" errors via <see cref="IValidatableObject.Validate"/>, provisions
+///   Stripe on the service side, and flips <see cref="IsActive"/> true.</item>
+/// </list>
+/// The <see cref="Slug"/> stays required in both modes because we need it to
+/// route back to the edit page. Everything else that a public-facing enrollment
+/// would need is allowed to be blank in draft mode.
 /// </summary>
-public sealed class ProgramFormViewModel
+public sealed class ProgramFormViewModel : IValidatableObject
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Set by the controller from the form's submit button (Save draft vs
+    /// Save &amp; Publish). Drives <see cref="Validate"/> to add the strict
+    /// "required to publish" errors only when the admin means to go live.
+    /// Never bound directly from form input to avoid a client shipping
+    /// publish=true and bypassing intent.
+    /// </summary>
+    [BindNever]
+    public bool PublishOnSave { get; set; }
 
     // ---------- Basics ----------
 
@@ -37,16 +57,18 @@ public sealed class ProgramFormViewModel
     [Display(Name = "URL slug", Description = "Used in the /join/{slug} URL. Lowercase, hyphens allowed.")]
     public string Slug { get; set; } = string.Empty;
 
-    [Required, StringLength(160, MinimumLength = 4)]
+    // Name is required to publish but not to save a draft (Karen may be
+    // sketching several programs in parallel and hasn't settled on names).
+    [StringLength(160, MinimumLength = 2)]
     [Display(Name = "Program name")]
-    public string Name { get; set; } = string.Empty;
+    public string? Name { get; set; }
 
     [StringLength(200)]
     [Display(Name = "Tagline")]
-    public string TagLine { get; set; } = string.Empty;
+    public string? TagLine { get; set; }
 
     [Display(Name = "Description (Markdown)")]
-    public string Description { get; set; } = string.Empty;
+    public string? Description { get; set; }
 
     /// <summary>
     /// Existing image path (edit mode) or path assigned by the controller after
@@ -76,21 +98,24 @@ public sealed class ProgramFormViewModel
 
     // ---------- Logistics ----------
 
-    [Required, StringLength(120)]
+    [StringLength(120)]
     [Display(Name = "Location name")]
-    public string LocationName { get; set; } = string.Empty;
+    public string? LocationName { get; set; }
 
-    [Required, StringLength(240)]
+    [StringLength(240)]
     [Display(Name = "Location address")]
-    public string LocationAddress { get; set; } = string.Empty;
+    public string? LocationAddress { get; set; }
 
-    [Required, DataType(DataType.Date)]
+    // Dates/times are nullable so Karen can save a draft without them. On
+    // publish, Validate() requires all four (StartDate, EndDate, StartTime,
+    // EndTime) to be set and coherent.
+    [DataType(DataType.Date)]
     [Display(Name = "Start date")]
-    public DateTime StartDate { get; set; }
+    public DateTime? StartDate { get; set; }
 
-    [Required, DataType(DataType.Date)]
+    [DataType(DataType.Date)]
     [Display(Name = "End date")]
-    public DateTime EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     [DataType(DataType.Date)]
     [Display(Name = "Enrollment opens",
@@ -121,13 +146,13 @@ public sealed class ProgramFormViewModel
     [Display(Name = "Fri")] public bool MeetingDayFri { get; set; }
     [Display(Name = "Sat")] public bool MeetingDaySat { get; set; }
 
-    [Required, DataType(DataType.Time)]
+    [DataType(DataType.Time)]
     [Display(Name = "Start time")]
-    public TimeOnly StartTime { get; set; }
+    public TimeOnly? StartTime { get; set; }
 
-    [Required, DataType(DataType.Time)]
+    [DataType(DataType.Time)]
     [Display(Name = "End time")]
-    public TimeOnly EndTime { get; set; }
+    public TimeOnly? EndTime { get; set; }
 
     [StringLength(20)]
     [Display(Name = "Grade range", Description = "Free-form: \"3-6\", \"K-2\", or leave blank for adult / no-restriction programs.")]
@@ -145,10 +170,13 @@ public sealed class ProgramFormViewModel
 
     // ---------- Pricing ----------
 
-    [Required, Range(1, 10000)]
+    // Nullable so Karen can save a draft without pricing decided; still
+    // validated for a sane range whenever a value IS present (i.e. content
+    // validation still runs, we just don't require the field to exist).
+    [Range(1, 10000)]
     [DataType(DataType.Currency)]
     [Display(Name = "Full price")]
-    public decimal FullPrice { get; set; }
+    public decimal? FullPrice { get; set; }
 
     [Display(Name = "Offer installment plan")]
     public bool InstallmentsEnabled { get; set; } = true;
@@ -168,26 +196,28 @@ public sealed class ProgramFormViewModel
 
     // ---------- Legal / contact ----------
 
-    [Required]
     [Display(Name = "Waiver text (Markdown)")]
-    public string WaiverText { get; set; } = string.Empty;
+    public string? WaiverText { get; set; }
 
     [StringLength(400)]
     [Display(Name = "Refund policy")]
-    public string RefundPolicyText { get; set; } = string.Empty;
+    public string? RefundPolicyText { get; set; }
 
-    [Required, StringLength(20)]
+    [StringLength(20)]
     [Display(Name = "Contact phone")]
-    public string ContactPhone { get; set; } = string.Empty;
+    public string? ContactPhone { get; set; }
 
-    [Required, EmailAddress, StringLength(120)]
+    [EmailAddress, StringLength(120)]
     [Display(Name = "Contact email")]
-    public string ContactEmail { get; set; } = string.Empty;
+    public string? ContactEmail { get; set; }
 
     // ---------- Status ----------
 
+    // Defaults to false so a bare-hands Create starts as a draft. Publish
+    // flips it via the Save & Publish button (or the Publish action on
+    // Detail). Karen can also toggle this manually in the form.
     [Display(Name = "Accepting enrollments")]
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
 
     [Display(Name = "Show on public programs calendar",
              Description = "On by default so past + prospective parents can discover it. Turn off for private / invite-only events.")]
@@ -203,20 +233,65 @@ public sealed class ProgramFormViewModel
     public bool IsEdit => Id > 0;
     public string PageTitle => IsEdit ? "Edit program" : "New program";
 
+    /// <summary>
+    /// Publish-time strict validation. Only runs when <see cref="PublishOnSave"/>
+    /// is true — draft saves skip these checks so Karen can save partial work.
+    /// Field-level content validation (Range, StringLength, EmailAddress, etc.)
+    /// runs regardless via data annotations.
+    /// </summary>
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (!PublishOnSave) yield break;
+
+        if (string.IsNullOrWhiteSpace(Name))
+            yield return new ValidationResult("Program name is required to publish.", new[] { nameof(Name) });
+        if (string.IsNullOrWhiteSpace(LocationName))
+            yield return new ValidationResult("Location name is required to publish.", new[] { nameof(LocationName) });
+        if (string.IsNullOrWhiteSpace(LocationAddress))
+            yield return new ValidationResult("Location address is required to publish.", new[] { nameof(LocationAddress) });
+        if (!StartDate.HasValue)
+            yield return new ValidationResult("Start date is required to publish.", new[] { nameof(StartDate) });
+        if (!EndDate.HasValue)
+            yield return new ValidationResult("End date is required to publish.", new[] { nameof(EndDate) });
+        if (StartDate.HasValue && EndDate.HasValue && EndDate.Value < StartDate.Value)
+            yield return new ValidationResult("End date must be after start date.", new[] { nameof(EndDate) });
+        if (!StartTime.HasValue)
+            yield return new ValidationResult("Start time is required to publish.", new[] { nameof(StartTime) });
+        if (!EndTime.HasValue)
+            yield return new ValidationResult("End time is required to publish.", new[] { nameof(EndTime) });
+        if (!FullPrice.HasValue || FullPrice.Value <= 0)
+            yield return new ValidationResult("Full price is required to publish (must be positive).", new[] { nameof(FullPrice) });
+        if (string.IsNullOrWhiteSpace(WaiverText))
+            yield return new ValidationResult("Waiver text is required to publish.", new[] { nameof(WaiverText) });
+        if (string.IsNullOrWhiteSpace(ContactPhone))
+            yield return new ValidationResult("Contact phone is required to publish.", new[] { nameof(ContactPhone) });
+        if (string.IsNullOrWhiteSpace(ContactEmail))
+            yield return new ValidationResult("Contact email is required to publish.", new[] { nameof(ContactEmail) });
+    }
+
     public EnrollmentProgram ToEntity(EnrollmentProgram? existing = null)
     {
         var target = existing ?? new EnrollmentProgram();
         target.Id = Id;
         target.Slug = Slug;
-        target.Name = Name;
+        // Fields that admit blanks in draft mode default to empty string on the
+        // entity (which stays non-nullable to keep the public read paths simple).
+        target.Name = Name ?? string.Empty;
         target.TagLine = TagLine ?? string.Empty;
         target.Description = Description ?? string.Empty;
         target.HeroImagePath = HeroImagePath;
         target.EventImagePath = EventImagePath;
-        target.LocationName = LocationName;
-        target.LocationAddress = LocationAddress;
-        target.StartDate = DateTime.SpecifyKind(StartDate, DateTimeKind.Utc);
-        target.EndDate = DateTime.SpecifyKind(EndDate, DateTimeKind.Utc);
+        target.LocationName = LocationName ?? string.Empty;
+        target.LocationAddress = LocationAddress ?? string.Empty;
+        // Value-typed fields (dates/times/price) fall back to sentinel default
+        // when not set on a draft — public views never see these because drafts
+        // are IsActive=false and filtered out of every public query.
+        target.StartDate = StartDate.HasValue
+            ? DateTime.SpecifyKind(StartDate.Value, DateTimeKind.Utc)
+            : DateTime.MinValue;
+        target.EndDate = EndDate.HasValue
+            ? DateTime.SpecifyKind(EndDate.Value, DateTimeKind.Utc)
+            : DateTime.MinValue;
         target.EnrollmentDeadline = EnrollmentDeadline.HasValue
             ? DateTime.SpecifyKind(EnrollmentDeadline.Value, DateTimeKind.Utc)
             : null;
@@ -224,12 +299,12 @@ public sealed class ProgramFormViewModel
             ? DateTime.SpecifyKind(EnrollmentStartsAt.Value, DateTimeKind.Utc)
             : null;
         target.MeetingDays = CompileMeetingDays();
-        target.StartTime = StartTime;
-        target.EndTime = EndTime;
+        target.StartTime = StartTime ?? default;
+        target.EndTime = EndTime ?? default;
         target.GradeRange = GradeRange ?? string.Empty;
         target.AgeMin = AgeMin;
         target.AgeMax = AgeMax;
-        target.FullPrice = FullPrice;
+        target.FullPrice = FullPrice ?? 0m;
         target.InstallmentsEnabled = InstallmentsEnabled;
         target.InstallmentCount = InstallmentCount;
         target.FinalInstallmentDueDate = FinalInstallmentDueDate.HasValue
@@ -238,8 +313,8 @@ public sealed class ProgramFormViewModel
         target.CashOptionEnabled = CashOptionEnabled;
         target.WaiverText = WaiverText ?? string.Empty;
         target.RefundPolicyText = RefundPolicyText ?? string.Empty;
-        target.ContactPhone = ContactPhone;
-        target.ContactEmail = ContactEmail;
+        target.ContactPhone = ContactPhone ?? string.Empty;
+        target.ContactEmail = ContactEmail ?? string.Empty;
         target.IsActive = IsActive;
         target.IsListed = IsListed;
         return target;
@@ -247,36 +322,38 @@ public sealed class ProgramFormViewModel
 
     public static ProgramFormViewModel FromEntity(EnrollmentProgram p)
     {
+        // Roundtrip sentinel defaults back to null so the form doesn't render
+        // MinValue / 0 as if the admin actually typed them for a draft.
         var vm = new ProgramFormViewModel
         {
             Id = p.Id,
             Slug = p.Slug,
-            Name = p.Name,
-            TagLine = p.TagLine,
-            Description = p.Description,
+            Name = string.IsNullOrEmpty(p.Name) ? null : p.Name,
+            TagLine = string.IsNullOrEmpty(p.TagLine) ? null : p.TagLine,
+            Description = string.IsNullOrEmpty(p.Description) ? null : p.Description,
             HeroImagePath = p.HeroImagePath,
             EventImagePath = p.EventImagePath,
-            LocationName = p.LocationName,
-            LocationAddress = p.LocationAddress,
-            StartDate = p.StartDate,
-            EndDate = p.EndDate,
+            LocationName = string.IsNullOrEmpty(p.LocationName) ? null : p.LocationName,
+            LocationAddress = string.IsNullOrEmpty(p.LocationAddress) ? null : p.LocationAddress,
+            StartDate = p.StartDate == DateTime.MinValue ? null : p.StartDate,
+            EndDate = p.EndDate == DateTime.MinValue ? null : p.EndDate,
             EnrollmentDeadline = p.EnrollmentDeadline,
             EnrollmentStartsAt = p.EnrollmentStartsAt,
             MeetingDays = p.MeetingDays,
-            StartTime = p.StartTime,
-            EndTime = p.EndTime,
+            StartTime = p.StartTime == default ? null : p.StartTime,
+            EndTime = p.EndTime == default ? null : p.EndTime,
             GradeRange = p.GradeRange,
             AgeMin = p.AgeMin,
             AgeMax = p.AgeMax,
-            FullPrice = p.FullPrice,
+            FullPrice = p.FullPrice == 0m ? null : p.FullPrice,
             InstallmentsEnabled = p.InstallmentsEnabled,
             InstallmentCount = p.InstallmentCount,
             FinalInstallmentDueDate = p.FinalInstallmentDueDate,
             CashOptionEnabled = p.CashOptionEnabled,
-            WaiverText = p.WaiverText,
-            RefundPolicyText = p.RefundPolicyText,
-            ContactPhone = p.ContactPhone,
-            ContactEmail = p.ContactEmail,
+            WaiverText = string.IsNullOrEmpty(p.WaiverText) ? null : p.WaiverText,
+            RefundPolicyText = string.IsNullOrEmpty(p.RefundPolicyText) ? null : p.RefundPolicyText,
+            ContactPhone = string.IsNullOrEmpty(p.ContactPhone) ? null : p.ContactPhone,
+            ContactEmail = string.IsNullOrEmpty(p.ContactEmail) ? null : p.ContactEmail,
             IsActive = p.IsActive,
             IsListed = p.IsListed,
             PricingLocked = !string.IsNullOrEmpty(p.StripeProductId),

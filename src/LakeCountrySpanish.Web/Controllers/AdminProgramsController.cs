@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
@@ -48,9 +49,11 @@ public class AdminProgramsController : Controller
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> Index(bool includeInactive = false)
+    public async Task<IActionResult> Index()
     {
-        // Include inactive here so the toggle checkbox actually surfaces them.
+        // Always include drafts (IsActive=false) — Karen needs to see her
+        // in-progress work in the admin list. The public-facing views already
+        // filter drafts out via their own IsActive checks.
         var programs = await _programs.ListAllAsync(includeInactive: true);
         var counts = await _context.ProgramEnrollments
             .GroupBy(e => new { e.ProgramId, e.Status })
@@ -58,7 +61,6 @@ public class AdminProgramsController : Controller
             .ToListAsync();
 
         var items = programs
-            .Where(p => includeInactive || p.IsActive)
             .Select(p => new ProgramListItemViewModel
             {
                 Id = p.Id,
@@ -78,7 +80,6 @@ public class AdminProgramsController : Controller
             })
             .ToList();
 
-        ViewBag.IncludeInactive = includeInactive;
         return View(items);
     }
 
@@ -99,14 +100,33 @@ public class AdminProgramsController : Controller
         GradeRange = "3-6"
     });
 
+    /// <summary>
+    /// New-program POST. The form submits an <c>action</c> field ("draft" or
+    /// "publish") from whichever button Karen clicked. Draft mode skips Stripe
+    /// provisioning and the publish-time required-field checks; publish mode
+    /// runs the full validation + provisions Stripe.
+    /// </summary>
     [HttpPost("Create")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(ProgramFormViewModel model, CancellationToken ct)
+    public async Task<IActionResult> Create(ProgramFormViewModel model, string? action, CancellationToken ct)
     {
-        if (!AnyMeetingDayPicked(model))
+        // Trust the server-controlled flag, not the client — that's why
+        // PublishOnSave is [BindNever] on the model.
+        var publish = string.Equals(action, "publish", StringComparison.OrdinalIgnoreCase);
+        model.PublishOnSave = publish;
+
+        // Meeting-day check is publish-only. Draft can save with none picked.
+        if (publish && !AnyMeetingDayPicked(model))
         {
             ModelState.AddModelError(nameof(model.MeetingDaySun), "Please pick at least one meeting day.");
         }
+
+        // Re-run validation with PublishOnSave set so Validate() adds the
+        // right errors for the current mode. ModelState was populated on
+        // model binding when PublishOnSave was still false, so we need to
+        // clear and re-validate to pick up the mode-sensitive rules.
+        ModelState.Clear();
+        TryValidateModel(model);
 
         if (!ModelState.IsValid) return View("Form", model);
 
@@ -118,8 +138,15 @@ public class AdminProgramsController : Controller
 
         try
         {
-            var created = await _programs.CreateAsync(model.ToEntity(), ct);
-            TempData["SuccessMessage"] = $"Created “{created.Name}”. Grab the QR code below and share the /join/{created.Slug} URL.";
+            var entity = model.ToEntity();
+            // Force IsActive based on save mode; the checkbox on the form is
+            // still there for edits of published programs, but on Create the
+            // save mode is the source of truth.
+            entity.IsActive = publish;
+            var created = await _programs.CreateAsync(entity, ct, provisionStripe: publish);
+            TempData["SuccessMessage"] = publish
+                ? $"Published “{created.Name}”. Grab the QR code below and share the /join/{created.Slug} URL."
+                : $"Saved draft “{(string.IsNullOrEmpty(created.Name) ? created.Slug : created.Name)}”. It's not visible to parents until you publish.";
             return RedirectToAction(nameof(Detail), new { id = created.Id });
         }
         catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true)
@@ -168,15 +195,35 @@ public class AdminProgramsController : Controller
         return View("Form", ProgramFormViewModel.FromEntity(program));
     }
 
+    /// <summary>
+    /// Edit POST. Same "draft vs publish" split as Create — button dispatch
+    /// on the <c>action</c> form field. Editing an already-published program
+    /// bypasses draft mode (there's no going back to draft implicitly), but
+    /// a draft can be either saved as another draft or published from here.
+    /// </summary>
     [HttpPost("{id:int}/Edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ProgramFormViewModel model, CancellationToken ct)
+    public async Task<IActionResult> Edit(int id, ProgramFormViewModel model, string? action, CancellationToken ct)
     {
         if (id != model.Id) return BadRequest();
-        if (!AnyMeetingDayPicked(model))
+
+        var existing = await _programs.GetByIdAsync(id, ct);
+        if (existing is null) return NotFound();
+
+        // A program is "publish-mode" if it was already live OR the admin
+        // clicked Save & Publish. Draft edits only apply to programs that
+        // are currently drafts and the admin clicked Save draft.
+        var wasPublished = existing.IsActive && !string.IsNullOrEmpty(existing.StripeProductId);
+        var publish = wasPublished || string.Equals(action, "publish", StringComparison.OrdinalIgnoreCase);
+        model.PublishOnSave = publish;
+
+        if (publish && !AnyMeetingDayPicked(model))
         {
             ModelState.AddModelError(nameof(model.MeetingDaySun), "Please pick at least one meeting day.");
         }
+
+        ModelState.Clear();
+        TryValidateModel(model);
 
         if (!ModelState.IsValid) return View("Form", model);
 
@@ -188,8 +235,22 @@ public class AdminProgramsController : Controller
 
         try
         {
-            var updated = await _programs.UpdateAsync(model.ToEntity(), ct);
-            TempData["SuccessMessage"] = $"Saved changes to “{updated.Name}”.";
+            var entity = model.ToEntity();
+            entity.IsActive = publish;
+            var updated = await _programs.UpdateAsync(entity, ct);
+
+            // If this Edit is the transition from draft → published, we also
+            // need to provision Stripe. UpdateAsync deliberately doesn't do
+            // that; PublishAsync is the dedicated path.
+            var justPublished = publish && !wasPublished;
+            if (justPublished)
+            {
+                updated = await _programs.PublishAsync(updated.Id, ct);
+            }
+
+            TempData["SuccessMessage"] = justPublished
+                ? $"Published “{updated.Name}”. It's now live at /join/{updated.Slug}."
+                : $"Saved changes to “{(string.IsNullOrEmpty(updated.Name) ? updated.Slug : updated.Name)}”.";
             return RedirectToAction(nameof(Detail), new { id = updated.Id });
         }
         catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true)
@@ -202,6 +263,69 @@ public class AdminProgramsController : Controller
             ModelState.AddModelError(string.Empty, ex.Message);
             model.PricingLocked = true;
             return View("Form", model);
+        }
+    }
+
+    /// <summary>
+    /// Publishes a draft directly from the Detail page (no form edit needed
+    /// if the data is already complete). Runs publish-time validation by
+    /// round-tripping through the ViewModel's Validate rules.
+    /// </summary>
+    [HttpPost("{id:int}/Publish")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Publish(int id, CancellationToken ct)
+    {
+        var program = await _programs.GetByIdAsync(id, ct);
+        if (program is null) return NotFound();
+
+        // Reuse the ViewModel's publish rules so the same "required to publish"
+        // constraints apply whether Karen clicks Publish here or Save & Publish
+        // from the form.
+        var vm = ProgramFormViewModel.FromEntity(program);
+        vm.PublishOnSave = true;
+        var validation = vm.Validate(new ValidationContext(vm)).ToList();
+        if (validation.Any())
+        {
+            TempData["ErrorMessage"] = "Can't publish yet — missing required fields: "
+                + string.Join("; ", validation.Select(v => v.ErrorMessage));
+            return RedirectToAction(nameof(Edit), new { id });
+        }
+
+        try
+        {
+            var published = await _programs.PublishAsync(id, ct);
+            TempData["SuccessMessage"] = $"Published “{published.Name}”. It's now live at /join/{published.Slug}.";
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+    }
+
+    /// <summary>
+    /// Creates a draft copy of an existing program with an auto-suffixed slug.
+    /// Redirects to the Edit page of the copy so Karen can adjust details
+    /// before publishing.
+    /// </summary>
+    [HttpPost("{id:int}/Duplicate")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Duplicate(int id, CancellationToken ct)
+    {
+        var source = await _programs.GetByIdAsync(id, ct);
+        if (source is null) return NotFound();
+
+        try
+        {
+            var copy = await _programs.DuplicateAsync(id, ct);
+            TempData["SuccessMessage"] = $"Created draft copy of “{source.Name}”. Adjust details, then Save & Publish when ready.";
+            return RedirectToAction(nameof(Edit), new { id = copy.Id });
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Detail), new { id });
         }
     }
 
