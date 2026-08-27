@@ -34,4 +34,13 @@ public interface IEnrollmentProgramService
     /// name, description, dates, waiver, contact info, active/listed flags.
     /// </summary>
     Task<EnrollmentProgram> UpdateAsync(EnrollmentProgram program, CancellationToken ct = default);
+
+    /// <summary>
+    /// Hard-deletes a program if it has zero enrollments. Best-effort archives
+    /// the Stripe Product on the way out. Throws
+    /// <see cref="InvalidOperationException"/> if any enrollments exist — the
+    /// caller should surface the message to the user and suggest archiving
+    /// (unchecking IsActive + IsListed) instead.
+    /// </summary>
+    Task DeleteAsync(int programId, CancellationToken ct = default);
 }

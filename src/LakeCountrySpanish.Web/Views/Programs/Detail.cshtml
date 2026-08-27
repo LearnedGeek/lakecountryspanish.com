@@ -68,22 +68,32 @@
                 @if (!string.IsNullOrEmpty(p.Description) || showInlineEventImage)
                 {
                     <section class="bg-white rounded-2xl shadow-md p-6 md:p-8">
-                        @if (showInlineEventImage)
-                        {
-                            <figure class="mb-6 md:mb-0 md:float-right md:ml-6 md:w-64">
-                                <button type="button" class="event-image-trigger group block w-full text-left" data-src="@p.EventImagePath" data-alt="@p.Name" aria-label="Open larger image">
-                                    <img src="@p.EventImagePath" alt="@p.Name" class="rounded-xl border border-gray-200 shadow-sm w-full h-auto transition-all duration-200 ease-out group-hover:shadow-xl group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:brightness-95" loading="lazy" />
-                                    <figcaption class="mt-2 text-xs text-gray-500 text-center group-hover:text-gray-700 transition-colors">Click to enlarge</figcaption>
-                                </button>
-                            </figure>
+                        @{
+                            // Layout picks itself based on what's present. When BOTH
+                            // description and event image exist, a 3-col md grid gives
+                            // the description real weight (2/3) beside the poster (1/3)
+                            // — the prior md:float-right layout made short descriptions
+                            // read as an afterthought next to the image.
+                            var hasBoth = showInlineEventImage && !string.IsNullOrEmpty(p.Description);
+                            var containerClass = hasBoth ? "grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-start" : "";
                         }
-                        @if (!string.IsNullOrEmpty(p.Description))
-                        {
-                            <div class="prose prose-slate max-w-none">
-                                @Html.Raw(Markdig.Markdown.ToHtml(p.Description))
-                            </div>
-                        }
-                        <div class="clear-both"></div>
+                        <div class="@containerClass">
+                            @if (!string.IsNullOrEmpty(p.Description))
+                            {
+                                <div class="@(hasBoth ? "md:col-span-2" : "") prose prose-lg prose-slate max-w-none">
+                                    @Html.Raw(Markdig.Markdown.ToHtml(p.Description))
+                                </div>
+                            }
+                            @if (showInlineEventImage)
+                            {
+                                <figure class="@(hasBoth ? "md:col-span-1" : "mx-auto max-w-md")">
+                                    <button type="button" class="event-image-trigger group block w-full text-left" data-src="@p.EventImagePath" data-alt="@p.Name" aria-label="Open larger image">
+                                        <img src="@p.EventImagePath" alt="@p.Name" class="rounded-xl border border-gray-200 shadow-sm w-full h-auto transition-all duration-200 ease-out group-hover:shadow-xl group-hover:-translate-y-1 group-hover:scale-[1.02] group-hover:brightness-95" loading="lazy" />
+                                        <figcaption class="mt-2 text-xs text-gray-500 text-center group-hover:text-gray-700 transition-colors">Click to enlarge</figcaption>
+                                    </button>
+                                </figure>
+                            }
+                        </div>
                     </section>
                 }
 

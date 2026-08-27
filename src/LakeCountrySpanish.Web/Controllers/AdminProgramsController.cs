@@ -206,6 +206,32 @@ public class AdminProgramsController : Controller
     }
 
     /// <summary>
+    /// Hard-delete a program. Service enforces the "no delete once someone
+    /// enrolled" rule; if that trips we surface the friendly error back to
+    /// Detail so Karen sees the archive-instead suggestion.
+    /// </summary>
+    [HttpPost("{id:int}/Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct)
+    {
+        var program = await _programs.GetByIdAsync(id, ct);
+        if (program is null) return NotFound();
+
+        var name = program.Name;
+        try
+        {
+            await _programs.DeleteAsync(id, ct);
+            TempData["SuccessMessage"] = $"Deleted \"{name}\".";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+            return RedirectToAction(nameof(Detail), new { id });
+        }
+    }
+
+    /// <summary>
     /// PNG QR code encoding the public /join/{slug} URL, with an identifying label
     /// composited below (program name + location + short URL). The label baked into
     /// the image itself matters when Karen prints a stack of QRs and hands them off

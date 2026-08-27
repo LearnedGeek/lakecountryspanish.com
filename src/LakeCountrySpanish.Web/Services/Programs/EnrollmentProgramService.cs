@@ -112,6 +112,46 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
         return existing;
     }
 
+    public async Task DeleteAsync(int programId, CancellationToken ct = default)
+    {
+        var program = await _context.Programs.FirstOrDefaultAsync(p => p.Id == programId, ct)
+            ?? throw new InvalidOperationException($"Program {programId} not found.");
+
+        // Enforce the "no delete once anyone signed up" rule at the service layer
+        // so both admin form clicks and any future API path get the same guard.
+        var enrollmentCount = await _context.ProgramEnrollments.CountAsync(e => e.ProgramId == programId, ct);
+        if (enrollmentCount > 0)
+        {
+            throw new InvalidOperationException(
+                $"Cannot delete \"{program.Name}\" — it has {enrollmentCount} enrollment(s). Archive it instead by editing the program and unchecking Active + Listed.");
+        }
+
+        // Archive (not delete) the Stripe Product. Stripe products with a
+        // pricing history can only be archived, and even fresh ones we prefer
+        // to archive so ids stay resolvable in reporting. Best-effort — a
+        // Stripe outage shouldn't block Karen from cleaning up her admin list.
+        if (!string.IsNullOrEmpty(program.StripeProductId))
+        {
+            try
+            {
+                var productSvc = new ProductService();
+                await productSvc.UpdateAsync(
+                    program.StripeProductId,
+                    new ProductUpdateOptions { Active = false },
+                    cancellationToken: ct);
+                _logger.LogInformation("Archived Stripe product {ProductId} for deleted program {ProgramId} ({Slug})", program.StripeProductId, program.Id, program.Slug);
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogWarning(ex, "Could not archive Stripe product {ProductId} for deleted program {ProgramId} — continuing with DB delete anyway.", program.StripeProductId, program.Id);
+            }
+        }
+
+        _context.Programs.Remove(program);
+        await _context.SaveChangesAsync(ct);
+        _logger.LogInformation("Deleted EnrollmentProgram {ProgramId} ({Slug})", program.Id, program.Slug);
+    }
+
     // ---------------- Stripe provisioning ----------------
 
     /// <summary>
