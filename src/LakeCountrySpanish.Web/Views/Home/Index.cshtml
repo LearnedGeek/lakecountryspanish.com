@@ -123,20 +123,41 @@
                             <article class="enrolling-slide flex-shrink-0 w-full" aria-roledescription="slide" aria-label="@rep.Name">
                                 <a href="@Url.Action("Index", "Programs")"
                                    class="group grid md:grid-cols-2 gap-0 bg-white shadow-md hover:shadow-xl border border-gray-200 hover:border-secondary-400 rounded-2xl overflow-hidden transition-all duration-200 ease-out">
-                                    <div class="aspect-[4/3] md:aspect-auto md:min-h-[340px] relative bg-gradient-to-br from-primary-400 to-secondary-500 overflow-hidden">
+                                    <!-- Poster-friendly image container: object-contain (not
+                                         cover) so Karen's tall promotional posters show fully
+                                         without cropping off the bottom (contact info, class
+                                         schedule, etc.). White bg makes the letterbox look
+                                         intentional against colorful poster backgrounds. -->
+                                    <div class="aspect-[4/3] md:aspect-auto md:min-h-[380px] relative bg-white overflow-hidden flex items-center justify-center p-3 md:p-4">
                                         @if (!string.IsNullOrEmpty(img))
                                         {
-                                            <img src="@img" alt="@rep.Name" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                                            <img src="@img" alt="@rep.Name" class="max-w-full max-h-full object-contain group-hover:scale-[1.02] transition-transform duration-500" loading="lazy" />
                                         }
                                         @if (card.InstanceCount > 1)
                                         {
-                                            <span class="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm bg-white/95 text-secondary-700 border-secondary-200">
+                                            <span class="absolute top-4 right-4 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border shadow-sm bg-white/95 text-secondary-700 border-secondary-200 z-10">
                                                 @card.InstanceCount locations
                                             </span>
                                         }
                                     </div>
                                     <div class="p-6 md:p-8 flex flex-col justify-center">
-                                        <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Grades @rep.GradeRange</p>
+                                        @{
+                                            // Only render "Grades X" when Karen typed something
+                                            // meaningful. A literal "0" happens when Karen types
+                                            // it out of habit for adult / no-restriction programs
+                                            // — treat that as empty so the tile doesn't say
+                                            // "GRADES 0" for a beginner adult class.
+                                            var gradesTrimmed = rep.GradeRange?.Trim();
+                                            var hasGrades = !string.IsNullOrEmpty(gradesTrimmed) && gradesTrimmed != "0";
+                                        }
+                                        @if (hasGrades)
+                                        {
+                                            <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Grades @gradesTrimmed</p>
+                                        }
+                                        else if (rep.AgeMin > 0)
+                                        {
+                                            <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Ages @rep.AgeMin–@rep.AgeMax</p>
+                                        }
                                         <h3 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-2">@rep.Name</h3>
                                         <p class="text-sm text-gray-600 mb-5 flex items-center gap-1.5">
                                             <span class="text-gray-400">📍</span>
@@ -369,10 +390,13 @@
                     <!-- Dance & Learn Spanish — English-branded after-school program -->
                     <article class="offerings-slide flex-shrink-0 w-full" aria-roledescription="slide" aria-label="Dance and Learn Spanish">
                         <div class="grid md:grid-cols-2 gap-0 bg-white shadow-lg rounded-2xl overflow-hidden">
-                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[360px] relative bg-gray-100">
+                            <!-- object-contain + flex-center + white bg so the promotional
+                                 poster shows completely (COUNTRIES WE'LL EXPLORE row at the
+                                 bottom was getting clipped by object-cover). -->
+                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[380px] bg-white flex items-center justify-center p-3 md:p-4">
                                 <img src="~/img/programs/dance-and-learn-spanish-after-school-program.jpeg"
                                      alt="Children dancing in a Dance and Learn Spanish after-school class"
-                                     class="absolute inset-0 w-full h-full object-cover"
+                                     class="max-w-full max-h-full object-contain"
                                      loading="lazy" />
                             </div>
                             <div class="p-6 md:p-8 flex flex-col justify-center">
@@ -397,10 +421,11 @@
                     <!-- Bailamos y Aprendemos Español — Spanish-branded after-school program -->
                     <article class="offerings-slide flex-shrink-0 w-full" aria-roledescription="slide" aria-label="Bailamos y Aprendemos Español">
                         <div class="grid md:grid-cols-2 gap-0 bg-white shadow-lg rounded-2xl overflow-hidden">
-                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[360px] relative bg-gray-100">
+                            <!-- object-contain so the promotional poster shows completely. -->
+                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[380px] bg-white flex items-center justify-center p-3 md:p-4">
                                 <img src="~/img/programs/bailamos-y-aprendemos-espanol-after-school-program.jpeg"
                                      alt="Children in a Bailamos y Aprendemos Español after-school class"
-                                     class="absolute inset-0 w-full h-full object-cover"
+                                     class="max-w-full max-h-full object-contain"
                                      loading="lazy" />
                             </div>
                             <div class="p-6 md:p-8 flex flex-col justify-center">
