@@ -387,66 +387,11 @@
                         </div>
                     </article>
 
-                    <!-- Dance & Learn Spanish — English-branded after-school program -->
-                    <article class="offerings-slide flex-shrink-0 w-full" aria-roledescription="slide" aria-label="Dance and Learn Spanish">
-                        <div class="grid md:grid-cols-2 gap-0 bg-white shadow-lg rounded-2xl overflow-hidden">
-                            <!-- object-contain + flex-center + white bg so the promotional
-                                 poster shows completely (COUNTRIES WE'LL EXPLORE row at the
-                                 bottom was getting clipped by object-cover). -->
-                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[380px] bg-white flex items-center justify-center p-3 md:p-4">
-                                <img src="~/img/programs/dance-and-learn-spanish-after-school-program.jpeg"
-                                     alt="Children dancing in a Dance and Learn Spanish after-school class"
-                                     class="max-w-full max-h-full object-contain"
-                                     loading="lazy" />
-                            </div>
-                            <div class="p-6 md:p-8 flex flex-col justify-center">
-                                <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">After-school program · Grades K–6</p>
-                                <h3 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-3">Dance &amp; Learn Spanish</h3>
-                                <p class="text-gray-700 mb-4">
-                                    Move, sing, and celebrate Spanish through dance, music, and traditions from across the Spanish-speaking world. Each session pairs a new country with age-appropriate songs and a hands-on activity kids take home.
-                                </p>
-                                <div class="flex flex-wrap gap-3 items-center text-sm">
-                                    <a href="@Url.Action("Index", "Programs")" class="inline-flex items-center font-semibold text-secondary-600 hover:text-secondary-700">
-                                        See upcoming sessions →
-                                    </a>
-                                    <span class="text-gray-300">·</span>
-                                    <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center font-semibold text-primary-600 hover:text-primary-700">
-                                        Bring it to your school
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-
-                    <!-- Bailamos y Aprendemos Español — Spanish-branded after-school program -->
-                    <article class="offerings-slide flex-shrink-0 w-full" aria-roledescription="slide" aria-label="Bailamos y Aprendemos Español">
-                        <div class="grid md:grid-cols-2 gap-0 bg-white shadow-lg rounded-2xl overflow-hidden">
-                            <!-- object-contain so the promotional poster shows completely. -->
-                            <div class="aspect-[4/3] md:aspect-auto md:min-h-[380px] bg-white flex items-center justify-center p-3 md:p-4">
-                                <img src="~/img/programs/bailamos-y-aprendemos-espanol-after-school-program.jpeg"
-                                     alt="Children in a Bailamos y Aprendemos Español after-school class"
-                                     class="max-w-full max-h-full object-contain"
-                                     loading="lazy" />
-                            </div>
-                            <div class="p-6 md:p-8 flex flex-col justify-center">
-                                <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Programa después de la escuela · Grados K–6</p>
-                                <h3 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-3">Bailamos y Aprendemos Español</h3>
-                                <p class="text-gray-700 mb-4">
-                                    ¡A bailar y aprender! An after-school program built around movement, music, and immersive Spanish. Kids explore a new Spanish-speaking country each session with rhythm, songs, and cultural celebrations that make the language stick.
-                                </p>
-                                <div class="flex flex-wrap gap-3 items-center text-sm">
-                                    <a href="@Url.Action("Index", "Programs")" class="inline-flex items-center font-semibold text-secondary-600 hover:text-secondary-700">
-                                        See upcoming sessions →
-                                    </a>
-                                    <span class="text-gray-300">·</span>
-                                    <a href="@Url.Action("Index", "Contact", new { subject = "school-inquiry" })" class="inline-flex items-center font-semibold text-primary-600 hover:text-primary-700">
-                                        Bring it to your school
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-
+                    @* Program-specific slides (Dance & Learn Spanish, Bailamos)
+                       were removed 2026-08-26 per Karen — they duplicated content
+                       that now lives in the Now Enrolling carousel above. This
+                       carousel now sticks to its original purpose: showcasing
+                       Spanish-speaking countries. *@
                 </div>
             </div>
 
@@ -472,8 +417,6 @@
                 <button type="button" class="offerings-dot h-2.5 w-2.5 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2" role="tab" aria-label="Show Mexico" data-index="1"></button>
                 <button type="button" class="offerings-dot h-2.5 w-2.5 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2" role="tab" aria-label="Show Costa Rica" data-index="2"></button>
                 <button type="button" class="offerings-dot h-2.5 w-2.5 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2" role="tab" aria-label="Show Spain" data-index="3"></button>
-                <button type="button" class="offerings-dot h-2.5 w-2.5 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2" role="tab" aria-label="Show Dance and Learn Spanish" data-index="4"></button>
-                <button type="button" class="offerings-dot h-2.5 w-2.5 rounded-full bg-gray-300 hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2" role="tab" aria-label="Show Bailamos y Aprendemos Español" data-index="5"></button>
             </div>
         </div>
 
