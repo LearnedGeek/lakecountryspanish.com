@@ -141,13 +141,22 @@
                                 <dd class="mt-1 font-semibold text-gray-900">@p.MeetingDays</dd>
                                 <dd class="text-xs text-gray-600">@p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
                             </div>
-                            @if (!string.IsNullOrEmpty(p.GradeRange) || p.AgeMin > 0)
+                            @{
+                                // Karen types "0" as a sentinel for "no grade
+                                // restriction" (adult / open programs). Show "All"
+                                // in that case rather than literally rendering "0".
+                                var gradeTrimmed = p.GradeRange?.Trim();
+                                var gradeIsPlaceholder = string.IsNullOrEmpty(gradeTrimmed) || gradeTrimmed == "0";
+                                var showAges = p.AgeMin > 0;
+                                var showBlock = showAges || !gradeIsPlaceholder || !string.IsNullOrEmpty(p.GradeRange);
+                                var gradeLabel = gradeIsPlaceholder ? "All" : gradeTrimmed;
+                            }
+                            @if (showBlock)
                             {
                                 <div class="py-2.5">
-                                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Ages / Grades</dt>
+                                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Grades / Ages</dt>
                                     <dd class="mt-1 font-semibold text-gray-900">
-                                        @(!string.IsNullOrEmpty(p.GradeRange) ? $"Grades {p.GradeRange}" : "")
-                                        @(p.AgeMin > 0 ? $"· ages {p.AgeMin}–{p.AgeMax}" : "")
+                                        Grades: @gradeLabel@(showAges ? $" · ages {p.AgeMin}–{p.AgeMax}" : "")
                                     </dd>
                                 </div>
                             }
