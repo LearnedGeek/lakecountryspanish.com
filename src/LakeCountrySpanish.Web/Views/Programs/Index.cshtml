@@ -196,17 +196,30 @@
                                         <ul class="divide-y divide-gray-200 px-5 sm:px-6 pb-2">
                                             @foreach (var s in schoolSessions)
                                             {
-                                                // Ages preferred over grades (Karen has adult programs;
-                                                // grades imply school-age kids only). Nothing shown when
-                                                // neither is set.
+                                                // Show grades AND ages together for kid programs —
+                                                // parents index by grade first ("is this for my 4th
+                                                // grader?") and Karen has taken 2 phone calls from
+                                                // parents who couldn't find their kid's program on
+                                                // this listing because only ages showed. Karen's "0"
+                                                // grade placeholder (adult / no-restriction programs)
+                                                // still gets skipped so Rocky Point stays "ages 18–99"
+                                                // without a weird "Grades 0" injection.
                                                 string? qualifier = null;
-                                                if (s.AgeMin > 0)
+                                                var gradeTrimmed = s.GradeRange?.Trim();
+                                                var hasMeaningfulGrade = !string.IsNullOrEmpty(gradeTrimmed) && gradeTrimmed != "0";
+                                                var hasAges = s.AgeMin > 0;
+
+                                                if (hasMeaningfulGrade && hasAges)
+                                                {
+                                                    qualifier = $"Grades {gradeTrimmed} · ages {s.AgeMin}–{s.AgeMax}";
+                                                }
+                                                else if (hasMeaningfulGrade)
+                                                {
+                                                    qualifier = $"Grades {gradeTrimmed}";
+                                                }
+                                                else if (hasAges)
                                                 {
                                                     qualifier = $"ages {s.AgeMin}–{s.AgeMax}";
-                                                }
-                                                else if (!string.IsNullOrEmpty(s.GradeRange))
-                                                {
-                                                    qualifier = $"Grades {s.GradeRange}";
                                                 }
                                                 <li>
                                                     <a href="@Url.Action("Detail", "Programs", new { slug = s.Slug })"
