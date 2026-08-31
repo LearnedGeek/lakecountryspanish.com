@@ -33,12 +33,16 @@
             }
             <div class="mt-5 flex flex-wrap justify-center gap-2 text-sm">
                 @{
-                    var hasGrades = !string.IsNullOrEmpty(p.GradeRange);
+                    // Skip Karen's "0" placeholder (which means "no grade restriction",
+                    // typically an adult program) — otherwise the pill reads literally
+                    // "Grades 0" which is meaningless to parents.
+                    var gradeTrimmed = p.GradeRange?.Trim();
+                    var hasMeaningfulGrade = !string.IsNullOrEmpty(gradeTrimmed) && gradeTrimmed != "0";
                     var hasAges = p.AgeMin > 0;
                 }
-                @if (hasGrades || hasAges)
+                @if (hasMeaningfulGrade || hasAges)
                 {
-                    <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@(hasGrades ? $"Grades {p.GradeRange}" : "")@(hasGrades && hasAges ? " · " : "")@(hasAges ? $"ages {p.AgeMin}–{p.AgeMax}" : "")</span>
+                    <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@(hasMeaningfulGrade ? $"Grades {gradeTrimmed}" : "")@(hasMeaningfulGrade && hasAges ? " · " : "")@(hasAges ? $"ages {p.AgeMin}–{p.AgeMax}" : "")</span>
                 }
                 <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@p.MeetingDays · @p.StartTime.ToString("h:mm tt")–@p.EndTime.ToString("h:mm tt")</span>
                 <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</span>
@@ -96,11 +100,19 @@
                 </div>
             }
 
-            <!-- Parent -->
+            @{
+                // Same server-authoritative flag the ViewModel uses; drives conditional
+                // rendering of the parent-child-only sections (Student + Pickup) and
+                // relabels "About you (parent)" → "About you" for the adult flow.
+                var isAdult = Model.IsAdultProgram;
+            }
+
+            <!-- Parent (or self, for adult programs) -->
             <section class="bg-white rounded-2xl shadow-md border-l-4 border-indigo-500 overflow-hidden">
                 <header class="border-b border-gray-100 px-6 py-4 bg-indigo-50/40">
                     <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <span class="text-indigo-600">①</span> About you (the parent or guardian)
+                        <span class="text-indigo-600">①</span>
+                        @(isAdult ? "About you" : "About you (the parent or guardian)")
                     </h2>
                 </header>
                 <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -145,73 +157,106 @@
                 </div>
             </section>
 
-            <!-- Student -->
-            <section class="bg-white rounded-2xl shadow-md border-l-4 border-teal-500 overflow-hidden">
-                <header class="border-b border-gray-100 px-6 py-4 bg-teal-50/40">
-                    <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <span class="text-teal-600">②</span> About your child
-                    </h2>
-                </header>
-                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                        <label asp-for="StudentFirstName" class="@labelClass"></label>
-                        <input asp-for="StudentFirstName" class="@fieldClass" />
-                        <span asp-validation-for="StudentFirstName" class="@errorClass"></span>
+            @if (!isAdult)
+            {
+                <!-- Student — kid programs only. Adult programs skip this entirely
+                     since the enrollee IS the student; controller mirrors the parent
+                     name fields into student name on save. -->
+                <section class="bg-white rounded-2xl shadow-md border-l-4 border-teal-500 overflow-hidden">
+                    <header class="border-b border-gray-100 px-6 py-4 bg-teal-50/40">
+                        <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span class="text-teal-600">②</span> About your child
+                        </h2>
+                    </header>
+                    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="StudentFirstName" class="@labelClass"></label>
+                            <input asp-for="StudentFirstName" class="@fieldClass" />
+                            <span asp-validation-for="StudentFirstName" class="@errorClass"></span>
+                        </div>
+                        <div>
+                            <label asp-for="StudentLastName" class="@labelClass"></label>
+                            <input asp-for="StudentLastName" class="@fieldClass" />
+                            <span asp-validation-for="StudentLastName" class="@errorClass"></span>
+                        </div>
+                        <div>
+                            <label asp-for="StudentGrade" class="@labelClass"></label>
+                            <input asp-for="StudentGrade" placeholder="e.g. 3, 4, 5, 6" class="@fieldClass" />
+                        </div>
+                        <div>
+                            <label asp-for="StudentBirthDate" class="@labelClass"></label>
+                            <input asp-for="StudentBirthDate" type="date" class="@fieldClass" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label asp-for="MedicalConcerns" class="@labelClass"></label>
+                            <textarea asp-for="MedicalConcerns" rows="2" placeholder="Allergies, medications, conditions we should know about — or leave blank."
+                                      class="@textareaClass"></textarea>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label asp-for="StudentNotes" class="@labelClass"></label>
+                            <textarea asp-for="StudentNotes" rows="2" placeholder="Anything else we should know about your child."
+                                      class="@textareaClass"></textarea>
+                        </div>
                     </div>
-                    <div>
-                        <label asp-for="StudentLastName" class="@labelClass"></label>
-                        <input asp-for="StudentLastName" class="@fieldClass" />
-                        <span asp-validation-for="StudentLastName" class="@errorClass"></span>
-                    </div>
-                    <div>
-                        <label asp-for="StudentGrade" class="@labelClass"></label>
-                        <input asp-for="StudentGrade" placeholder="e.g. 3, 4, 5, 6" class="@fieldClass" />
-                    </div>
-                    <div>
-                        <label asp-for="StudentBirthDate" class="@labelClass"></label>
-                        <input asp-for="StudentBirthDate" type="date" class="@fieldClass" />
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label asp-for="MedicalConcerns" class="@labelClass"></label>
-                        <textarea asp-for="MedicalConcerns" rows="2" placeholder="Allergies, medications, conditions we should know about — or leave blank."
-                                  class="@textareaClass"></textarea>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label asp-for="StudentNotes" class="@labelClass"></label>
-                        <textarea asp-for="StudentNotes" rows="2" placeholder="Anything else we should know about your child."
-                                  class="@textareaClass"></textarea>
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Emergency + pickup -->
-            <section class="bg-white rounded-2xl shadow-md border-l-4 border-amber-500 overflow-hidden">
-                <header class="border-b border-gray-100 px-6 py-4 bg-amber-50/40">
-                    <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <span class="text-amber-600">③</span> Emergency contact &amp; pickup
-                    </h2>
-                </header>
-                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                        <label asp-for="EmergencyName" class="@labelClass"></label>
-                        <input asp-for="EmergencyName" class="@fieldClass" />
+                <!-- Emergency + pickup — kid programs only. Adult programs skip
+                     both. If we later want emergency contact as optional info for
+                     adults, we can add it back as its own opt-in section. -->
+                <section class="bg-white rounded-2xl shadow-md border-l-4 border-amber-500 overflow-hidden">
+                    <header class="border-b border-gray-100 px-6 py-4 bg-amber-50/40">
+                        <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span class="text-amber-600">③</span> Emergency contact &amp; pickup
+                        </h2>
+                    </header>
+                    <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <label asp-for="EmergencyName" class="@labelClass"></label>
+                            <input asp-for="EmergencyName" class="@fieldClass" />
+                        </div>
+                        <div>
+                            <label asp-for="EmergencyPhone" class="@labelClass"></label>
+                            <input asp-for="EmergencyPhone" type="tel" class="@fieldClass" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label asp-for="EmergencyRelationship" class="@labelClass"></label>
+                            <input asp-for="EmergencyRelationship" placeholder="e.g. grandmother, aunt, family friend" class="@fieldClass" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label asp-for="PickupAuthorization" class="@labelClass"></label>
+                            <textarea asp-for="PickupAuthorization" rows="3" placeholder="e.g.&#10;Jane Doe (mom)&#10;John Doe (dad)&#10;Sarah Smith (grandmother)"
+                                      class="@textareaClass"></textarea>
+                            <p class="@hintClass">Who is allowed to pick up your child from class? Include their relationship.</p>
+                        </div>
                     </div>
-                    <div>
-                        <label asp-for="EmergencyPhone" class="@labelClass"></label>
-                        <input asp-for="EmergencyPhone" type="tel" class="@fieldClass" />
+                </section>
+            }
+            else
+            {
+                <!-- Adult programs: single optional "anything we should know" field
+                     (medical concerns / dietary / access needs) in place of the whole
+                     student + emergency + pickup block. Kept opt-in so casual signups
+                     don't need to fill anything extra. -->
+                <section class="bg-white rounded-2xl shadow-md border-l-4 border-teal-500 overflow-hidden">
+                    <header class="border-b border-gray-100 px-6 py-4 bg-teal-50/40">
+                        <h2 class="font-display text-lg font-bold text-gray-900 flex items-center gap-2">
+                            <span class="text-teal-600">②</span> Anything we should know? <span class="text-xs font-normal text-gray-500">(optional)</span>
+                        </h2>
+                    </header>
+                    <div class="p-6 grid grid-cols-1 gap-5">
+                        <div>
+                            <label asp-for="MedicalConcerns" class="@labelClass">Health / accessibility notes</label>
+                            <textarea asp-for="MedicalConcerns" rows="2" placeholder="Allergies, medications, mobility needs, or anything else we should be aware of — or leave blank."
+                                      class="@textareaClass"></textarea>
+                        </div>
+                        <div>
+                            <label asp-for="StudentNotes" class="@labelClass">Anything else</label>
+                            <textarea asp-for="StudentNotes" rows="2" placeholder="Your Spanish background, learning goals, or anything else — or leave blank."
+                                      class="@textareaClass"></textarea>
+                        </div>
                     </div>
-                    <div class="sm:col-span-2">
-                        <label asp-for="EmergencyRelationship" class="@labelClass"></label>
-                        <input asp-for="EmergencyRelationship" placeholder="e.g. grandmother, aunt, family friend" class="@fieldClass" />
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label asp-for="PickupAuthorization" class="@labelClass"></label>
-                        <textarea asp-for="PickupAuthorization" rows="3" placeholder="e.g.&#10;Jane Doe (mom)&#10;John Doe (dad)&#10;Sarah Smith (grandmother)"
-                                  class="@textareaClass"></textarea>
-                        <p class="@hintClass">Who is allowed to pick up your child from class? Include their relationship.</p>
-                    </div>
-                </div>
-            </section>
+                </section>
+            }
 
             <!-- Payment choice -->
             <section class="bg-white rounded-2xl shadow-md border-l-4 border-rose-500 overflow-hidden">
@@ -294,9 +339,18 @@
                         <div class="flex-1">
                             <div class="text-sm font-semibold text-gray-900">Photo/video release <span class="text-xs font-normal text-gray-500">(optional)</span></div>
                             <div class="text-xs text-gray-600 mt-0.5">
-                                I grant Lake Country Spanish permission to photograph or video my child during
-                                program activities for use on the website, social media, or promotional materials.
-                                You can leave this unchecked and still enroll.
+                                @if (isAdult)
+                                {
+                                    <text>I grant Lake Country Spanish permission to photograph or video me during
+                                    program activities for use on the website, social media, or promotional materials.
+                                    You can leave this unchecked and still enroll.</text>
+                                }
+                                else
+                                {
+                                    <text>I grant Lake Country Spanish permission to photograph or video my child during
+                                    program activities for use on the website, social media, or promotional materials.
+                                    You can leave this unchecked and still enroll.</text>
+                                }
                             </div>
                         </div>
                     </label>

@@ -66,6 +66,11 @@ public class JoinController : Controller
             ProgramSlug = program.Slug,
             Program = program,
             ParentState = "WI",
+            // Adult programs skip the parent-child fields. Karen's convention:
+            // AgeMin >= 18 flags an adult program. If she adds a mixed-audience
+            // program in the future, we'd want an explicit IsAdultProgram flag
+            // on the entity instead of inferring from age.
+            IsAdultProgram = program.AgeMin >= 18,
             PaymentType = program.InstallmentsEnabled
                 ? ProgramPaymentType.FullOneTime  // default to full even when installments offered
                 : ProgramPaymentType.FullOneTime
@@ -99,8 +104,24 @@ public class JoinController : Controller
         model.ProgramId = program.Id;
         model.ProgramSlug = program.Slug;
         model.Program = program;
+        model.IsAdultProgram = program.AgeMin >= 18;
+
+        // Re-run validation with the server-set IsAdultProgram flag in place
+        // so Validate() applies the right rules for the mode. Model binding
+        // happened before we could set IsAdultProgram; clear + re-validate.
+        ModelState.Clear();
+        TryValidateModel(model);
 
         if (!ModelState.IsValid) return View("Landing", model);
+
+        // For adult programs the enrollee IS the student. Mirror parent name
+        // into student name so downstream code (emails, admin views) that
+        // reads StudentFirstName/LastName still has something to render.
+        if (model.IsAdultProgram)
+        {
+            model.StudentFirstName = model.ParentFirstName;
+            model.StudentLastName = model.ParentLastName;
+        }
 
         var submission = new EnrollmentSubmission
         {
@@ -114,16 +135,16 @@ public class JoinController : Controller
             ParentCity = model.ParentCity,
             ParentState = model.ParentState,
             ParentZip = model.ParentZip,
-            StudentFirstName = model.StudentFirstName,
-            StudentLastName = model.StudentLastName,
-            StudentGrade = model.StudentGrade,
-            StudentBirthDate = model.StudentBirthDate,
+            StudentFirstName = model.StudentFirstName ?? string.Empty,
+            StudentLastName = model.StudentLastName ?? string.Empty,
+            StudentGrade = model.StudentGrade ?? string.Empty,
+            StudentBirthDate = model.StudentBirthDate ?? default,
             MedicalConcerns = model.MedicalConcerns,
             StudentNotes = model.StudentNotes,
-            EmergencyName = model.EmergencyName,
-            EmergencyPhone = model.EmergencyPhone,
-            EmergencyRelationship = model.EmergencyRelationship,
-            PickupAuthorization = model.PickupAuthorization,
+            EmergencyName = model.EmergencyName ?? string.Empty,
+            EmergencyPhone = model.EmergencyPhone ?? string.Empty,
+            EmergencyRelationship = model.EmergencyRelationship ?? string.Empty,
+            PickupAuthorization = model.PickupAuthorization ?? string.Empty,
             WaiverAccepted = model.WaiverAccepted,
             PhotoReleaseGranted = model.PhotoReleaseGranted,
             BaseUrl = $"{Request.Scheme}://{Request.Host}"

@@ -7,9 +7,14 @@ namespace LakeCountrySpanish.Web.Models.ViewModels;
 
 /// <summary>
 /// The parent-facing enrollment form model. Bound from the POST /join/{slug}
-/// submission; validation attributes enforce required fields.
+/// submission. Content validation (StringLength, EmailAddress, etc.) is
+/// enforced by model-binding data annotations; presence of Student /
+/// Emergency / Pickup fields is enforced conditionally via
+/// <see cref="IValidatableObject.Validate"/> — required for kid programs
+/// (the parent-child flow), skipped for adult programs where the enrollee
+/// IS the student and there's no pickup/emergency-contact model.
 /// </summary>
-public sealed class ProgramEnrollmentFormViewModel
+public sealed class ProgramEnrollmentFormViewModel : IValidatableObject
 {
     // Populated by the controller from the URL slug — parent doesn't fill it.
     public int ProgramId { get; set; }
@@ -26,14 +31,24 @@ public sealed class ProgramEnrollmentFormViewModel
     [BindNever, ValidateNever]
     public EnrollmentProgram Program { get; set; } = null!;
 
-    // ---------------- Parent ----------------
+    /// <summary>
+    /// Server-set flag (never bound from client input to avoid a hostile
+    /// client bypassing student-required validation by lying about the
+    /// program). Controller sets from <c>Program.AgeMin &gt;= 18</c>. Drives
+    /// both the conditional validation in <see cref="Validate"/> and the
+    /// view's conditional rendering of Student / Pickup / Emergency sections.
+    /// </summary>
+    [BindNever]
+    public bool IsAdultProgram { get; set; }
+
+    // ---------------- Parent (or self, for adult programs) ----------------
 
     [Required, StringLength(80)]
-    [Display(Name = "Parent first name")]
+    [Display(Name = "First name")]
     public string ParentFirstName { get; set; } = string.Empty;
 
     [Required, StringLength(80)]
-    [Display(Name = "Parent last name")]
+    [Display(Name = "Last name")]
     public string ParentLastName { get; set; } = string.Empty;
 
     [Required, EmailAddress, StringLength(200)]
@@ -61,22 +76,26 @@ public sealed class ProgramEnrollmentFormViewModel
     public string ParentZip { get; set; } = string.Empty;
 
     // ---------------- Student ----------------
+    // Nullable + no [Required]. Presence is enforced in Validate() only for
+    // kid programs. For adult programs, the controller auto-fills these
+    // from the Parent fields on save so the DB row stays consistent (emails
+    // and admin views read StudentFirstName/LastName).
 
-    [Required, StringLength(80)]
+    [StringLength(80)]
     [Display(Name = "Student first name")]
-    public string StudentFirstName { get; set; } = string.Empty;
+    public string? StudentFirstName { get; set; }
 
-    [Required, StringLength(80)]
+    [StringLength(80)]
     [Display(Name = "Student last name")]
-    public string StudentLastName { get; set; } = string.Empty;
+    public string? StudentLastName { get; set; }
 
-    [Required, StringLength(20)]
+    [StringLength(20)]
     [Display(Name = "Grade")]
-    public string StudentGrade { get; set; } = string.Empty;
+    public string? StudentGrade { get; set; }
 
-    [Required, DataType(DataType.Date)]
+    [DataType(DataType.Date)]
     [Display(Name = "Date of birth")]
-    public DateOnly StudentBirthDate { get; set; }
+    public DateOnly? StudentBirthDate { get; set; }
 
     [StringLength(1000)]
     [Display(Name = "Medical concerns (allergies, medications, conditions, sensory)")]
@@ -87,25 +106,27 @@ public sealed class ProgramEnrollmentFormViewModel
     public string? StudentNotes { get; set; }
 
     // ---------------- Emergency ----------------
+    // Required for kid programs only.
 
-    [Required, StringLength(160)]
+    [StringLength(160)]
     [Display(Name = "Emergency contact name")]
-    public string EmergencyName { get; set; } = string.Empty;
+    public string? EmergencyName { get; set; }
 
-    [Required, StringLength(20)]
+    [StringLength(20)]
     [Display(Name = "Emergency contact phone")]
-    public string EmergencyPhone { get; set; } = string.Empty;
+    public string? EmergencyPhone { get; set; }
 
-    [Required, StringLength(60)]
+    [StringLength(60)]
     [Display(Name = "Relationship to student")]
-    public string EmergencyRelationship { get; set; } = string.Empty;
+    public string? EmergencyRelationship { get; set; }
 
     // ---------------- Pickup ----------------
+    // Required for kid programs only; hidden entirely for adults.
 
-    [Required, StringLength(500)]
+    [StringLength(500)]
     [Display(Name = "Authorized pickup names",
              Description = "Who is allowed to pick up your child? One per line or comma-separated. Include their relationship (parent, grandparent, aunt, etc).")]
-    public string PickupAuthorization { get; set; } = string.Empty;
+    public string? PickupAuthorization { get; set; }
 
     // ---------------- Payment ----------------
 
@@ -119,8 +140,38 @@ public sealed class ProgramEnrollmentFormViewModel
     [Display(Name = "I have read and accept the waiver")]
     public bool WaiverAccepted { get; set; }
 
+    // Label swapped at view-time based on IsAdultProgram — parent sees
+    // "my child" wording, adult sees "me" wording. Both send the same bool.
     [Display(Name = "I grant Lake Country Spanish permission to photograph or video my child during the program")]
     public bool PhotoReleaseGranted { get; set; }
+
+    /// <summary>
+    /// Presence-check conditional on <see cref="IsAdultProgram"/>. Content
+    /// validation (StringLength, EmailAddress) still runs regardless via the
+    /// data annotations — this only enforces that fields are non-empty when
+    /// the program is a kid program.
+    /// </summary>
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (IsAdultProgram) yield break;
+
+        if (string.IsNullOrWhiteSpace(StudentFirstName))
+            yield return new ValidationResult("Student first name is required.", new[] { nameof(StudentFirstName) });
+        if (string.IsNullOrWhiteSpace(StudentLastName))
+            yield return new ValidationResult("Student last name is required.", new[] { nameof(StudentLastName) });
+        if (string.IsNullOrWhiteSpace(StudentGrade))
+            yield return new ValidationResult("Grade is required.", new[] { nameof(StudentGrade) });
+        if (!StudentBirthDate.HasValue)
+            yield return new ValidationResult("Date of birth is required.", new[] { nameof(StudentBirthDate) });
+        if (string.IsNullOrWhiteSpace(EmergencyName))
+            yield return new ValidationResult("Emergency contact name is required.", new[] { nameof(EmergencyName) });
+        if (string.IsNullOrWhiteSpace(EmergencyPhone))
+            yield return new ValidationResult("Emergency contact phone is required.", new[] { nameof(EmergencyPhone) });
+        if (string.IsNullOrWhiteSpace(EmergencyRelationship))
+            yield return new ValidationResult("Relationship to student is required.", new[] { nameof(EmergencyRelationship) });
+        if (string.IsNullOrWhiteSpace(PickupAuthorization))
+            yield return new ValidationResult("Authorized pickup names is required.", new[] { nameof(PickupAuthorization) });
+    }
 }
 
 /// <summary>Thank-you page after a successful enrollment (any payment path).</summary>
