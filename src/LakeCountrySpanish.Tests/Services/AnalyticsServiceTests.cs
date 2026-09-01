@@ -84,7 +84,12 @@ public class AnalyticsServiceTests : IDisposable
         {
             StudentId = student.Id,
             TimeSlotId = timeSlot.Id,
-            ClassDateTime = DateTime.UtcNow.AddDays(-3),
+            // 1 hour ago rather than 3 days ago — a fixed-offset in-the-past
+            // date crosses the month boundary in early September / early any
+            // month, which used to fail this "classes this month" assertion
+            // on Sept 1. 1 hour is always the same day, so always the same
+            // month regardless of when CI runs.
+            ClassDateTime = DateTime.UtcNow.AddHours(-1),
             Status = ClassStatus.Completed,
             PaymentStatus = PaymentStatus.Paid
         });
