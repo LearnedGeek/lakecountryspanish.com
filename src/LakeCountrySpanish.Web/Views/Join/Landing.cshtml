@@ -39,10 +39,28 @@
                     var gradeTrimmed = p.GradeRange?.Trim();
                     var hasMeaningfulGrade = !string.IsNullOrEmpty(gradeTrimmed) && gradeTrimmed != "0";
                     var hasAges = p.AgeMin > 0;
+                    var isAdultPill = p.AgeMin >= 18;
+
+                    // Adult programs get a friendlier "Adults · Ages 18+" label
+                    // instead of the raw "ages 18–99" range (per Cece's Aug 27 ask).
+                    // We use "18+" when AgeMax is Karen's 99 no-upper-limit sentinel,
+                    // and the explicit range otherwise ("Ages 18–25" if she ever runs
+                    // a young-adults class).
+                    string? agesText = null;
+                    if (isAdultPill)
+                    {
+                        agesText = p.AgeMax >= 99
+                            ? $"Adults · Ages {p.AgeMin}+"
+                            : $"Adults · Ages {p.AgeMin}–{p.AgeMax}";
+                    }
+                    else if (hasAges)
+                    {
+                        agesText = $"ages {p.AgeMin}–{p.AgeMax}";
+                    }
                 }
-                @if (hasMeaningfulGrade || hasAges)
+                @if (hasMeaningfulGrade || agesText is not null)
                 {
-                    <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@(hasMeaningfulGrade ? $"Grades {gradeTrimmed}" : "")@(hasMeaningfulGrade && hasAges ? " · " : "")@(hasAges ? $"ages {p.AgeMin}–{p.AgeMax}" : "")</span>
+                    <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@(hasMeaningfulGrade ? $"Grades {gradeTrimmed}" : "")@(hasMeaningfulGrade && agesText is not null ? " · " : "")@agesText</span>
                 }
                 <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@p.MeetingDays · @p.StartTime.ToString("h:mm tt")–@p.EndTime.ToString("h:mm tt")</span>
                 <span class="bg-white/95 text-gray-900 px-3 py-1 rounded-full font-semibold shadow-sm">@p.StartDate.ToString("MMM d") – @p.EndDate.ToString("MMM d, yyyy")</span>
