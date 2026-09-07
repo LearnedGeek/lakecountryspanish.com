@@ -107,6 +107,18 @@ public class ProgramEnrollment
     public string? AdminNotes { get; set; }
 
     /// <summary>
+    /// Timestamp when the admin (program's ContactEmail) was notified about
+    /// this enrollment via the digest background service. Null = pending
+    /// notification, will be picked up on the next digest tick (~90 sec).
+    /// Non-null = already included in a digest, don't re-notify.
+    ///
+    /// Added 2026-09-06 as part of the anti-abuse response: the inline
+    /// per-enrollment admin email was replaced with a batched digest so a
+    /// scripted attack can't flood Karen's inbox one message at a time.
+    /// </summary>
+    public DateTime? AdminNotifiedAt { get; set; }
+
+    /// <summary>
     /// Append-only audit trail of admin actions on this enrollment (cash
     /// confirmations, reversals, refunds, notes). Structured so co-founders
     /// have visibility into who did what and when — see

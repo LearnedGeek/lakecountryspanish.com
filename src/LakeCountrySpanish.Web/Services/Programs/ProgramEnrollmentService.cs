@@ -423,11 +423,13 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
     private const string BrandTeal = "#1E8189";
 
     /// <summary>
-    /// Sends the parent confirmation + teacher notification pair via the LCS
-    /// branded email shell. Both wrapped in try/catch so an SMTP hiccup can't
-    /// undo a successful enrollment / payment. The teacher email goes to
-    /// <see cref="EnrollmentProgram.ContactEmail"/> so a per-program teacher
-    /// (Cece for one, Karen for another) gets the right ping.
+    /// Sends the parent confirmation immediately. The teacher/admin
+    /// notification is DELIBERATELY not sent here — see
+    /// <see cref="AdminEnrollmentDigestBackgroundService"/>. Admin
+    /// notifications are batched into a ~90-second digest so a scripted
+    /// abuse burst can't flood the admin inbox one message at a time.
+    /// The parent email stays inline because it's one email to one
+    /// recipient (the enrollee) — no flood surface.
     /// </summary>
     private async Task SendEnrollmentEmailsSafeAsync(ProgramEnrollment enrollment, EnrollmentProgram program, CancellationToken ct)
     {
@@ -448,28 +450,6 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send parent enrollment confirmation for enrollment {EnrollmentId}", enrollment.Id);
-        }
-
-        if (!string.IsNullOrWhiteSpace(program.ContactEmail))
-        {
-            try
-            {
-                var teacherSubject = $"New enrollment: {enrollment.StudentFirstName} {enrollment.StudentLastName} — {program.Name}";
-                var teacherBody = BuildTeacherNotificationBody(enrollment, program);
-                await _emailService.SendBrandedEmailAsync(
-                    program.ContactEmail,
-                    program.LocationName,
-                    teacherSubject,
-                    headerTitle: $"New enrollment — {program.Name}",
-                    headerColorHex: BrandTeal,
-                    bodyContentHtml: teacherBody,
-                    preheader: $"{enrollment.StudentFirstName} {enrollment.StudentLastName} · {enrollment.PaymentType}. Full details inside.",
-                    emoji: "📋");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send teacher enrollment notification for enrollment {EnrollmentId}", enrollment.Id);
-            }
         }
     }
 

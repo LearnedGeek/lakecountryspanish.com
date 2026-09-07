@@ -129,6 +129,11 @@ builder.Services.AddScoped<DocxLessonParser>();
 
 builder.Services.AddScoped<INotificationScheduler, NotificationScheduler>();
 builder.Services.AddHostedService<NotificationBackgroundService>();
+
+// Batches per-enrollment admin notifications on a ~90s cadence so a
+// scripted abuse burst can't flood the admin inbox one message at a time.
+// See AdminEnrollmentDigestBackgroundService for the full rationale.
+builder.Services.AddHostedService<LakeCountrySpanish.Web.Services.Programs.AdminEnrollmentDigestBackgroundService>();
 builder.Services.AddHttpClient();
 
 // Add MVC
