@@ -1,15 +1,12 @@
 @model IReadOnlyList<LakeCountrySpanish.Web.Models.Entities.GradeBand>
 @{
     // Shared chip picker for the Program form and the Binder upload form.
-    // Renders a <fieldset> with one <button> per band and a paired hidden
-    // <input name="SelectedGradeBands"> — disabled inputs don't post, so
-    // toggling `disabled` on the hidden input is how the picker excludes
-    // unselected bands from the form submit.
-    //
-    // Behavior is wired by /js/grade-band-picker.js (included via the
-    // scripts section of the parent view). Both surfaces bind to the same
-    // model property name ("SelectedGradeBands") so the JS is agnostic to
-    // which form contains it.
+    // Renders one button per grade band and a paired hidden field posting
+    // the same SelectedGradeBands name. Disabled inputs don't post, so
+    // toggling the hidden field's disabled attribute is how the picker
+    // excludes unselected bands from the form submit. Behavior is wired
+    // by /js/grade-band-picker.js, included via the parent view's
+    // scripts section.
     var selected = Model ?? Array.Empty<LakeCountrySpanish.Web.Models.Entities.GradeBand>();
     var allBands = new[] {
         (LakeCountrySpanish.Web.Models.Entities.GradeBand.K4, "K4"),
