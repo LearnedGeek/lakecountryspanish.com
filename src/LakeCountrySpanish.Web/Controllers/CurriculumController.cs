@@ -71,6 +71,7 @@ public class CurriculumController : Controller
     // -------- Docx upload pipeline --------
 
     [HttpGet("Curriculum/Upload")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> Upload()
     {
         var units = await GetUnitOptionsAsync();
@@ -83,6 +84,7 @@ public class CurriculumController : Controller
     }
 
     [HttpPost("Curriculum/Upload")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
     [RequestSizeLimit(20 * 1024 * 1024)]
     public async Task<IActionResult> Upload(CurriculumUploadViewModel model, CancellationToken ct)
@@ -419,6 +421,7 @@ public class CurriculumController : Controller
     /// back to draft so it stays in the admin list but 404s from public view.
     /// </summary>
     [HttpPost("Curriculum/Lessons/{id:int}/Toggle")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleActive(int id, string? returnTo, CancellationToken ct)
     {
@@ -442,6 +445,7 @@ public class CurriculumController : Controller
     // -------- Power-user mode: metadata-only Create + block editor on Edit --------
 
     [HttpGet("Curriculum/Lessons/Create")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> CreateDay()
     {
         var units = await GetUnitOptionsAsync();
@@ -459,6 +463,7 @@ public class CurriculumController : Controller
     }
 
     [HttpPost("Curriculum/Lessons/Create")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateDay(CurriculumDayFormViewModel model)
     {
@@ -479,6 +484,7 @@ public class CurriculumController : Controller
     }
 
     [HttpGet("Curriculum/Lessons/Edit/{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> EditDay(int id)
     {
         var day = await _days.GetAsync(id);
@@ -504,6 +510,7 @@ public class CurriculumController : Controller
     }
 
     [HttpPost("Curriculum/Lessons/Edit/{id:int}")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditDay(int id, CurriculumDayFormViewModel model)
     {
@@ -535,6 +542,7 @@ public class CurriculumController : Controller
     /// HTML fragment for the preview pane. No DB write.
     /// </summary>
     [HttpPost("Curriculum/Lessons/Preview")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
     public IActionResult PreviewDay([FromForm] string markdown)
     {
@@ -586,6 +594,7 @@ public class CurriculumController : Controller
     }
 
     [HttpGet("Curriculum/Lessons/{dayId:int}/Blocks/{blockId}/Edit")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> EditBlock(int dayId, string blockId)
     {
         var day = await _days.GetAsync(dayId);
@@ -598,6 +607,7 @@ public class CurriculumController : Controller
 
     /// <summary>Appends a new block of the requested kind. Returns the rendered item fragment.</summary>
     [HttpPost("Curriculum/Lessons/{dayId:int}/Blocks")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddBlock(int dayId, [FromForm] string kind)
     {
@@ -625,6 +635,7 @@ public class CurriculumController : Controller
     /// existing block's runtime type.
     /// </summary>
     [HttpPost("Curriculum/Lessons/{dayId:int}/Blocks/{blockId}")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveBlock(int dayId, string blockId, [FromForm] IFormCollection form)
     {
@@ -651,6 +662,7 @@ public class CurriculumController : Controller
     }
 
     [HttpDelete("Curriculum/Lessons/{dayId:int}/Blocks/{blockId}")]
+    [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> DeleteBlock(int dayId, string blockId)
     {
         var day = await _days.GetAsync(dayId);

@@ -474,11 +474,36 @@ public class AdminController : Controller
     private static bool IsAssignableRole(string role) =>
         role == AppRoles.Admin || role == AppRoles.Teacher;
 
+    // Audit trail for role changes. Logs even when nothing actually
+    // changed (no-op saves still carry an actor + subject) so a future
+    // grep can distinguish "no delta" from "delta but missing log".
+    // The partial flag distinguishes a clean commit from a partial
+    // apply where the second Identity op failed midway.
+    private void LogRoleReconciliation(
+        ApplicationUser user, IReadOnlyList<string> added, IReadOnlyList<string> removed,
+        string? actorId, bool partial)
+    {
+        if (added.Count == 0 && removed.Count == 0 && !partial) return;
+        _logger.LogInformation(
+            "Role reconciliation ({Outcome}): user {UserId} ({Email}) — added [{Added}], removed [{Removed}] by admin {ActorId}",
+            partial ? "partial" : "complete",
+            user.Id, user.Email,
+            string.Join(",", added), string.Join(",", removed), actorId);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> EditTeacher(EditTeacherViewModel model)
     {
+        // Populate IsSelf up-front so an invalid-ModelState return
+        // preserves the disabled-Admin-checkbox UI state — otherwise a
+        // retry after e.g. a bad-email validation error would render
+        // the self-admin's Admin checkbox as togglable and the POST
+        // guard becomes the only safety net.
+        model.IsSelf = !string.IsNullOrEmpty(model.Id) &&
+            string.Equals(_userManager.GetUserId(User), model.Id, StringComparison.Ordinal);
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -496,7 +521,6 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        model.IsSelf = string.Equals(_userManager.GetUserId(User), user.Id, StringComparison.Ordinal);
         var desiredRoles = (model.SelectedRoles ?? new()).Where(IsAssignableRole).Distinct().ToHashSet();
 
         // Self-demotion guard: an admin editing their own account can't
@@ -553,37 +577,71 @@ public class AdminController : Controller
             var toAdd = desiredRoles.Except(currentRoles, StringComparer.Ordinal).ToList();
             var toRemove = currentRoles.Where(IsAssignableRole).Except(desiredRoles, StringComparer.Ordinal).ToList();
 
+            // Track what actually landed so a failure on the second op
+            // still audits the first op's success. Without this, an
+            // AddToRoles-success + RemoveFromRoles-failure returns
+            // silently and the audit trail misses a real change.
+            var appliedAdded = new List<string>();
+            var appliedRemoved = new List<string>();
+            var actorId = _userManager.GetUserId(User);
+
             if (toAdd.Count > 0)
             {
                 var addResult = await _userManager.AddToRolesAsync(user, toAdd);
-                if (!addResult.Succeeded)
+                if (addResult.Succeeded)
+                {
+                    appliedAdded.AddRange(toAdd);
+                }
+                else
                 {
                     foreach (var error in addResult.Errors)
                     {
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
+                    LogRoleReconciliation(user, appliedAdded, appliedRemoved, actorId, partial: true);
                     return View(model);
                 }
             }
             if (toRemove.Count > 0)
             {
                 var removeResult = await _userManager.RemoveFromRolesAsync(user, toRemove);
-                if (!removeResult.Succeeded)
+                if (removeResult.Succeeded)
+                {
+                    appliedRemoved.AddRange(toRemove);
+                }
+                else
                 {
                     foreach (var error in removeResult.Errors)
                     {
                         ModelState.AddModelError(string.Empty, error.Description);
                     }
+                    LogRoleReconciliation(user, appliedAdded, appliedRemoved, actorId, partial: true);
                     return View(model);
                 }
             }
 
-            if (toAdd.Count > 0 || toRemove.Count > 0)
+            LogRoleReconciliation(user, appliedAdded, appliedRemoved, actorId, partial: false);
+
+            // Invalidate the user's existing cookies if any role changed.
+            // Without this, a user demoted from Admin keeps the Admin
+            // claims in their in-flight cookie until it expires — the
+            // DB says "no Admin" but the auth pipeline hasn't reread the
+            // roles yet. UpdateSecurityStampAsync bumps a value the
+            // cookie validator compares on each request, so the next
+            // hit forces re-authentication with the current role set.
+            if (appliedAdded.Count > 0 || appliedRemoved.Count > 0)
             {
-                var actorId = _userManager.GetUserId(User);
-                _logger.LogInformation(
-                    "Role reconciliation: user {UserId} ({Email}) — added [{Added}], removed [{Removed}] by admin {ActorId}",
-                    user.Id, user.Email, string.Join(",", toAdd), string.Join(",", toRemove), actorId);
+                var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+                if (!stampResult.Succeeded)
+                {
+                    // Log loudly but don't fail the response — the role
+                    // change itself landed. Next cookie refresh will
+                    // still apply the new roles; worst case is a delayed
+                    // revocation until the cookie expires naturally.
+                    _logger.LogError(
+                        "Security stamp update failed for user {UserId} after role change: {Errors}",
+                        user.Id, string.Join("; ", stampResult.Errors.Select(e => e.Description)));
+                }
             }
 
             TempData["SuccessMessage"] = "Teacher updated successfully.";
