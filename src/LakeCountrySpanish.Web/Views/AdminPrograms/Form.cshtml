@@ -33,6 +33,30 @@
             <input type="hidden" asp-for="HeroImagePath" />
             <input type="hidden" asp-for="EventImagePath" />
 
+            @if (Model.IsEdit && Model.AudienceNeedsReview)
+            {
+                // Explains WHY the program is flagged — the migration parser
+                // couldn't confidently classify it and wants an explicit save
+                // to confirm the current selection is correct.
+                <div class="rounded-xl border-2 border-amber-300 bg-amber-50 p-4 shadow-sm">
+                    <div class="flex items-start gap-2">
+                        <span class="text-amber-700 text-lg leading-none mt-0.5" aria-hidden="true">⚠</span>
+                        <div class="flex-1 text-sm text-amber-900">
+                            <div class="font-bold mb-1">This program is flagged for audience review</div>
+                            <p class="mb-1">
+                                The 2026-09-13 migration converted your old free-form grade value
+                                @if (!string.IsNullOrWhiteSpace(Model.GradeRange))
+                                {
+                                    <text>(<code class="px-1.5 py-0.5 bg-white/70 border border-amber-200 rounded text-amber-900">@Model.GradeRange</code>)</text>
+                                }
+                                into a best-effort audience selection but wasn't 100% sure it was right.
+                            </p>
+                            <p>Confirm the audience picker below matches what you want, then click <strong>Save changes</strong> to clear the flag.</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
             @if (!ViewData.ModelState.IsValid)
             {
                 <div class="rounded-xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">

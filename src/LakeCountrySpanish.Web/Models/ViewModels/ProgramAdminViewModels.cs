@@ -261,6 +261,16 @@ public sealed class ProgramFormViewModel : IValidatableObject
 
     public string? StripeProductId { get; set; }
 
+    /// <summary>
+    /// Server-set (never bound from client input). True when the data-conversion
+    /// migration couldn't confidently classify this program's audience.
+    /// Drives the amber banner at the top of the Edit form so Karen sees the
+    /// original GradeRange value and understands why we're asking her to
+    /// confirm. Cleared automatically on save via ToEntity.
+    /// </summary>
+    [BindNever]
+    public bool AudienceNeedsReview { get; set; }
+
     public bool IsEdit => Id > 0;
     public string PageTitle => IsEdit ? "Edit program" : "New program";
 
@@ -410,7 +420,8 @@ public sealed class ProgramFormViewModel : IValidatableObject
             IsActive = p.IsActive,
             IsListed = p.IsListed,
             PricingLocked = !string.IsNullOrEmpty(p.StripeProductId),
-            StripeProductId = p.StripeProductId
+            StripeProductId = p.StripeProductId,
+            AudienceNeedsReview = p.AudienceNeedsReview
         };
         vm.ApplyMeetingDaysFromString(p.MeetingDays);
         return vm;

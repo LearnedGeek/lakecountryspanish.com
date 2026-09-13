@@ -16,6 +16,10 @@ public static class ProgramAudienceDisplay
     /// meaningful grade label (Adult, All, or Grades with an empty band
     /// list). Callers combining grade + age handle both parts and the
     /// separator themselves.
+    ///
+    /// Kindergarten bands are always spelled out (K4 / K5) — never
+    /// collapsed to "K" — because "K" is ambiguous between K4 and K5 and
+    /// gets worse if K3 is ever added to the enum.
     /// </summary>
     public static string? GradeLabel(AudienceType audience, IEnumerable<GradeBand> bands)
     {
@@ -24,27 +28,17 @@ public static class ProgramAudienceDisplay
         var ordered = bands.Distinct().OrderBy(b => (int)b).ToList();
         if (ordered.Count == 0) return null;
 
-        // If the whole span is filled, use the compact "K–8" shortcut.
-        if (ordered.Count == 10) return "Grades K–8";
+        // Full span shortcut.
+        if (ordered.Count == 10) return "Grades K4–8";
 
-        // Single band → "Grades K" or "Grades 3" (no range formatting).
         if (ordered.Count == 1) return $"Grades {FormatBand(ordered[0])}";
 
-        // Contiguous set → "Grades X–Y" with smart K handling. If both
-        // endpoints format to the same string (e.g. K4 + K5 both collapse
-        // to "K"), the "range" is really just one label — show it once
-        // rather than "K–K".
         if (IsContiguous(ordered))
         {
-            var firstLabel = FormatBand(ordered[0]);
-            var lastLabel = FormatBand(ordered[^1]);
-            return firstLabel == lastLabel
-                ? $"Grades {firstLabel}"
-                : $"Grades {firstLabel}–{lastLabel}";
+            return $"Grades {FormatBand(ordered[0])}–{FormatBand(ordered[^1])}";
         }
 
-        // Non-contiguous → "Grades X, Y, Z" (deduped so K4 + K5 doesn't print "K, K").
-        return "Grades " + string.Join(", ", ordered.Select(FormatBand).Distinct());
+        return "Grades " + string.Join(", ", ordered.Select(FormatBand));
     }
 
     /// <summary>
@@ -127,14 +121,14 @@ public static class ProgramAudienceDisplay
     }
 
     /// <summary>
-    /// Formats a single grade band for display. K4/K5 collapse to "K" when
-    /// they appear as a range endpoint next to elementary grades, and are
-    /// spelled out only when they stand alone.
+    /// Formats a single grade band for display. K4 and K5 are always spelled
+    /// out — never collapsed to "K" — because K3 in the future would make
+    /// bare "K" too ambiguous.
     /// </summary>
     private static string FormatBand(GradeBand band) => band switch
     {
-        GradeBand.K4 => "K",
-        GradeBand.K5 => "K",
+        GradeBand.K4 => "K4",
+        GradeBand.K5 => "K5",
         GradeBand.Grade1 => "1",
         GradeBand.Grade2 => "2",
         GradeBand.Grade3 => "3",
