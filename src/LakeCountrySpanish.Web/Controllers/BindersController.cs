@@ -89,16 +89,34 @@ public class BindersController : Controller
         if (doc is null) return NotFound();
 
         var absolutePath = _documents.GetAbsolutePath(doc);
-        if (!System.IO.File.Exists(absolutePath))
+
+        // Open the FileStream up-front rather than returning PhysicalFile
+        // (which defers open until result execution). Without this, a
+        // concurrent admin replace can commit the new DB row and delete
+        // the old PDF between the Exists() check and result execution,
+        // 500ing the teacher's already-in-flight download. FileStreamResult
+        // holds the handle so the OS keeps the file alive for us even
+        // after the on-disk name is unlinked.
+        FileStream stream;
+        try
         {
-            _logger.LogWarning("Binder download requested for missing file — id {Id}, path {Path}", id, absolutePath);
+            stream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete);
+        }
+        catch (FileNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Binder download requested for missing file — id {Id}, path {Path}", id, absolutePath);
+            return NotFound();
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Binder download requested for missing directory — id {Id}, path {Path}", id, absolutePath);
             return NotFound();
         }
 
         var downloadName = string.IsNullOrWhiteSpace(doc.OriginalFileName)
             ? Path.GetFileName(doc.FilePath)
             : doc.OriginalFileName;
-        return PhysicalFile(absolutePath, "application/pdf", downloadName);
+        return File(stream, "application/pdf", downloadName);
     }
 
     [HttpGet("Upload")]

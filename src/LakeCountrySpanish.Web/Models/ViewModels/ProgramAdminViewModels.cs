@@ -196,6 +196,13 @@ public sealed class ProgramFormViewModel : IValidatableObject
     /// See issue #20.
     /// </summary>
     [StringLength(80)]
+    // Same slug shape enforced by BinderUploadViewModel — otherwise an
+    // admin could save "Los Bichos y Palabras" on a Program and later
+    // find that no binder can be uploaded for it, because the binder
+    // form's stricter regex rejects the free-form family string. Keeping
+    // the two ends aligned prevents that silent-drift class of bug.
+    [RegularExpression(@"^[a-z][a-z0-9-]{0,79}$",
+        ErrorMessage = "Use lowercase letters, digits, and hyphens (starting with a letter), e.g. \"bailamos\".")]
     [Display(Name = "Curriculum family", Description = "Pick an existing family or type a new one (e.g. \"bailamos\", \"beginner-spanish\"). Programs that share a family share their teacher binder.")]
     public string? CurriculumFamily { get; set; }
 

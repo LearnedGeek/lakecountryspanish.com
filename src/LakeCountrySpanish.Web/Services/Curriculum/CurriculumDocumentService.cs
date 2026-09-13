@@ -97,7 +97,12 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
         }
 
         var storageRoot = ResolveStorageRoot();
-        var familyDir = Path.Combine(storageRoot, normalizedFamily);
+        // Path.Join (not Path.Combine): normalizedFamily is validated by
+        // FamilySlugPattern above, so it CAN'T be rooted, but Path.Join
+        // never reinterprets a segment as absolute in the first place —
+        // makes the invariant obvious to the analyzer and any future
+        // maintainer who tweaks the slug pattern.
+        var familyDir = Path.Join(storageRoot, normalizedFamily);
         Directory.CreateDirectory(familyDir);
 
         // Filename: {doctype}-{yyyyMMddHHmmss}-{8-char-hex}.pdf under the
@@ -126,38 +131,75 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
             await fileStream.CopyToAsync(fs, ct);
         }
 
-        // Replace-in-place semantics: existing (family, docType) row is
-        // mutated; a fresh combination gets a new row. Prior path (if
-        // any) is resolved defensively so a legacy row with a rooted
-        // FilePath doesn't turn cleanup into "follow the pointer".
-        var existing = await _context.CurriculumDocuments
-            .Include(d => d.GradeBands)
-            .FirstOrDefaultAsync(d => d.CurriculumFamily == normalizedFamily && d.DocumentType == documentType, ct);
-
-        var priorAbsolutePath = existing is null ? null : TryResolveWithinRoot(existing.FilePath);
         var resolvedTitle = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(originalFileName) : title.Trim();
-        var doc = existing ?? _context.CurriculumDocuments.Add(new CurriculumDocument
-        {
-            CurriculumFamily = normalizedFamily,
-            DocumentType = documentType,
-            UploadedAt = DateTime.UtcNow
-        }).Entity;
-
-        doc.Title = resolvedTitle;
-        doc.FilePath = relativePath;
-        doc.OriginalFileName = originalFileName;
-        doc.FileSizeBytes = fileSizeBytes;
-        doc.UploadedById = uploadedById;
-        if (existing is not null) doc.UpdatedAt = DateTime.UtcNow;
-        ReplaceGradeBands(doc, gradeBands);
-
-        await _context.SaveChangesAsync(ct);
+        var (doc, priorAbsolutePath) = await UpsertDocumentRowAsync(
+            normalizedFamily, documentType, gradeBands,
+            resolvedTitle, relativePath, originalFileName, fileSizeBytes, uploadedById, ct);
         TryDeletePriorFile(priorAbsolutePath, absolutePath);
-
-        _logger.LogInformation(
-            "Uploaded curriculum document {Id} ({Family}/{DocType}) — {Bytes} bytes",
-            doc.Id, doc.CurriculumFamily, doc.DocumentType, doc.FileSizeBytes);
         return doc;
+    }
+
+    // Replace-in-place semantics for the (family, docType) row, with a
+    // single retry on unique-index collision. The race: two admins upload
+    // for the same NEW (family, docType) concurrently; both queries miss
+    // the existing row, both try to Add, one wins the unique index and
+    // the loser's SaveChanges throws DbUpdateException. Rather than 500
+    // that loser, re-query for the winner's row and apply this call's
+    // metadata on top — "last writer wins" for concurrent Uploads of the
+    // same slot, which matches the intent of Karen's real workflow.
+    private async Task<(CurriculumDocument Doc, string? PriorAbsolutePath)> UpsertDocumentRowAsync(
+        string normalizedFamily,
+        CurriculumDocumentType documentType,
+        IReadOnlyList<GradeBand> gradeBands,
+        string resolvedTitle,
+        string relativePath,
+        string originalFileName,
+        long fileSizeBytes,
+        string uploadedById,
+        CancellationToken ct)
+    {
+        for (var attempt = 0; attempt < 2; attempt++)
+        {
+            var existing = await _context.CurriculumDocuments
+                .Include(d => d.GradeBands)
+                .FirstOrDefaultAsync(d => d.CurriculumFamily == normalizedFamily && d.DocumentType == documentType, ct);
+
+            var priorAbsolutePath = existing is null ? null : TryResolveWithinRoot(existing.FilePath);
+            var doc = existing ?? _context.CurriculumDocuments.Add(new CurriculumDocument
+            {
+                CurriculumFamily = normalizedFamily,
+                DocumentType = documentType,
+                UploadedAt = DateTime.UtcNow
+            }).Entity;
+
+            doc.Title = resolvedTitle;
+            doc.FilePath = relativePath;
+            doc.OriginalFileName = originalFileName;
+            doc.FileSizeBytes = fileSizeBytes;
+            doc.UploadedById = uploadedById;
+            if (existing is not null) doc.UpdatedAt = DateTime.UtcNow;
+            ReplaceGradeBands(doc, gradeBands);
+
+            try
+            {
+                await _context.SaveChangesAsync(ct);
+                _logger.LogInformation(
+                    "Uploaded curriculum document {Id} ({Family}/{DocType}) — {Bytes} bytes",
+                    doc.Id, doc.CurriculumFamily, doc.DocumentType, doc.FileSizeBytes);
+                return (doc, priorAbsolutePath);
+            }
+            catch (DbUpdateException) when (attempt == 0 && existing is null)
+            {
+                // Lost the unique-index race. Detach our doomed insert so
+                // the retry re-queries and updates the winner's row.
+                _context.Entry(doc).State = EntityState.Detached;
+                foreach (var band in doc.GradeBands.ToList())
+                {
+                    _context.Entry(band).State = EntityState.Detached;
+                }
+            }
+        }
+        throw new InvalidOperationException("Curriculum document upsert failed after retry.");
     }
 
     private static void ReplaceGradeBands(CurriculumDocument doc, IReadOnlyList<GradeBand> gradeBands)
@@ -233,7 +275,9 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
         string full;
         try
         {
-            full = Path.GetFullPath(Path.Combine(storageRoot, relativePath));
+            // Path.Join never treats the second segment as absolute even
+            // if it slips through the guard above — Path.Combine would.
+            full = Path.GetFullPath(Path.Join(storageRoot, relativePath));
         }
         catch (Exception ex) when (ex is ArgumentException or PathTooLongException or NotSupportedException)
         {
@@ -268,7 +312,7 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
                     "Point it at a persistent volume (e.g. /var/lib/{app-slug}-data/binders) — " +
                     "the release directory is rotated on every deploy and will silently drop binders.");
             }
-            configured = Path.Combine(_environment.ContentRootPath, "UploadedBinders");
+            configured = Path.Join(_environment.ContentRootPath, "UploadedBinders");
         }
 
         Directory.CreateDirectory(configured);
