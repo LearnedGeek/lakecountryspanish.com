@@ -278,12 +278,6 @@
                             </div>
                         </div>
 
-                        @if (Model.IsEdit && !string.IsNullOrWhiteSpace(Model.GradeRange))
-                        {
-                            <p class="mt-3 text-xs text-gray-500 italic">
-                                Legacy grade range on this program: <code class="px-1.5 py-0.5 bg-gray-100 rounded text-gray-700">@Model.GradeRange</code>. Kept for reference — audience label now comes from the selection above.
-                            </p>
-                        }
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 sm:col-span-2">
