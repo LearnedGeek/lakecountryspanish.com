@@ -54,6 +54,54 @@
                         <p class="mt-1 text-sm text-gray-500">Leave blank to keep the current password.</p>
                         <span asp-validation-for="NewPassword" class="text-red-500 text-sm"></span>
                     </div>
+
+                    <fieldset class="border-t border-gray-200 pt-6">
+                        <legend class="text-sm font-semibold text-gray-800 mb-1">Roles</legend>
+                        <p class="text-xs text-gray-500 mb-3">
+                            <strong>Admin</strong> unlocks curriculum authoring, binder upload, and program management.
+                            <strong>Teacher</strong> grants read access to curriculum + binders and the teacher dashboard.
+                            Every staff account needs at least one.
+                        </p>
+                        @{
+                            var adminChecked = Model.SelectedRoles.Contains(LakeCountrySpanish.Web.AppRoles.Admin);
+                            var teacherChecked = Model.SelectedRoles.Contains(LakeCountrySpanish.Web.AppRoles.Teacher);
+                            var adminDisabled = Model.IsSelf && adminChecked;
+                        }
+                        <div class="space-y-2">
+                            <label class="flex items-start gap-3 p-3 rounded-lg border-2 @(adminDisabled ? "border-gray-200 bg-gray-50" : "border-gray-200 bg-white hover:bg-gray-50") cursor-pointer transition-colors">
+                                <input type="checkbox" name="SelectedRoles" value="@LakeCountrySpanish.Web.AppRoles.Admin"
+                                       class="mt-0.5 h-5 w-5 rounded border-2 border-gray-300 text-primary-600 focus:ring-4 focus:ring-primary-500/15"
+                                       @(adminChecked ? "checked" : "")
+                                       @(adminDisabled ? "disabled" : "") />
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-900">Admin</div>
+                                    <div class="text-xs text-gray-600">
+                                        Full write access — curriculum authoring, binder upload, manage programs, manage other users' roles.
+                                    </div>
+                                    @if (adminDisabled)
+                                    {
+                                        <div class="text-xs font-semibold text-amber-700 mt-1">You can't remove your own Admin role. Ask another admin to change it.</div>
+                                        <!-- Disabled checkboxes don't post, so re-post the current
+                                             value via a hidden input to keep the reconcile delta clean. -->
+                                        <input type="hidden" name="SelectedRoles" value="@LakeCountrySpanish.Web.AppRoles.Admin" />
+                                    }
+                                </div>
+                            </label>
+
+                            <label class="flex items-start gap-3 p-3 rounded-lg border-2 border-gray-200 bg-white hover:bg-gray-50 cursor-pointer transition-colors">
+                                <input type="checkbox" name="SelectedRoles" value="@LakeCountrySpanish.Web.AppRoles.Teacher"
+                                       class="mt-0.5 h-5 w-5 rounded border-2 border-gray-300 text-primary-600 focus:ring-4 focus:ring-primary-500/15"
+                                       @(teacherChecked ? "checked" : "") />
+                                <div>
+                                    <div class="text-sm font-semibold text-gray-900">Teacher</div>
+                                    <div class="text-xs text-gray-600">
+                                        Read access to curriculum + binders, plus the teacher dashboard. Cannot upload binders or edit lessons.
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                        <span asp-validation-for="SelectedRoles" class="text-red-500 text-sm mt-2 block"></span>
+                    </fieldset>
                 </div>
 
                 <div class="mt-8">

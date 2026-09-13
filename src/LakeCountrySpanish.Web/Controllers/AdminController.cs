@@ -445,8 +445,12 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        // Make sure this user is actually a Teacher
-        if (!await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+        // Any staff account (Teacher or Admin) can be edited from here.
+        // Loosening from the original Teacher-only guard so an admin can
+        // reach Karen's or Cece's row from the Teachers list (they hold
+        // both roles) and toggle Admin on/off without a separate surface.
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        if (!currentRoles.Contains(AppRoles.Teacher) && !currentRoles.Contains(AppRoles.Admin))
         {
             return NotFound();
         }
@@ -457,9 +461,18 @@ public class AdminController : Controller
             Email = user.Email ?? string.Empty,
             FirstName = user.FirstName,
             LastName = user.LastName,
-            IsActive = user.IsActive
+            IsActive = user.IsActive,
+            SelectedRoles = currentRoles.Where(IsAssignableRole).ToList(),
+            IsSelf = string.Equals(_userManager.GetUserId(User), user.Id, StringComparison.Ordinal)
         });
     }
+
+    // The Admin + Teacher pair is what the role-assignment checkboxes on
+    // the EditTeacher form manage. Student is deliberately excluded from
+    // this surface — it's a customer-facing role owned by the enrollment
+    // path, not something an admin toggles on a staff account.
+    private static bool IsAssignableRole(string role) =>
+        role == AppRoles.Admin || role == AppRoles.Teacher;
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -477,9 +490,35 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        if (!await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        if (!currentRoles.Contains(AppRoles.Teacher) && !currentRoles.Contains(AppRoles.Admin))
         {
             return NotFound();
+        }
+
+        model.IsSelf = string.Equals(_userManager.GetUserId(User), user.Id, StringComparison.Ordinal);
+        var desiredRoles = (model.SelectedRoles ?? new()).Where(IsAssignableRole).Distinct().ToHashSet();
+
+        // Self-demotion guard: an admin editing their own account can't
+        // drop the Admin role — that would kick them out mid-request and
+        // require another admin to restore access. Karen and Cece are
+        // both admins right now so recovery is possible, but the guard is
+        // a cheap safety net worth keeping.
+        if (model.IsSelf && currentRoles.Contains(AppRoles.Admin) && !desiredRoles.Contains(AppRoles.Admin))
+        {
+            ModelState.AddModelError(nameof(model.SelectedRoles),
+                "You can't remove your own Admin role. Ask another admin to change it.");
+            return View(model);
+        }
+
+        // Every staff account needs at least one role that grants login
+        // to the admin/teacher surfaces — otherwise saving would strand
+        // the user in a nav-less state. Require at least one of the two.
+        if (desiredRoles.Count == 0)
+        {
+            ModelState.AddModelError(nameof(model.SelectedRoles),
+                "Pick at least one role (Admin or Teacher).");
+            return View(model);
         }
 
         user.Email = model.Email;
@@ -506,6 +545,47 @@ public class AdminController : Controller
 
         if (result.Succeeded)
         {
+            // Reconcile role assignments AFTER the profile update lands
+            // so a bad role-payload can't strand a half-saved profile.
+            // Delta-only writes: AddToRolesAsync + RemoveFromRolesAsync
+            // are Identity's canonical shape and are individually
+            // idempotent.
+            var toAdd = desiredRoles.Except(currentRoles, StringComparer.Ordinal).ToList();
+            var toRemove = currentRoles.Where(IsAssignableRole).Except(desiredRoles, StringComparer.Ordinal).ToList();
+
+            if (toAdd.Count > 0)
+            {
+                var addResult = await _userManager.AddToRolesAsync(user, toAdd);
+                if (!addResult.Succeeded)
+                {
+                    foreach (var error in addResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    return View(model);
+                }
+            }
+            if (toRemove.Count > 0)
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, toRemove);
+                if (!removeResult.Succeeded)
+                {
+                    foreach (var error in removeResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    return View(model);
+                }
+            }
+
+            if (toAdd.Count > 0 || toRemove.Count > 0)
+            {
+                var actorId = _userManager.GetUserId(User);
+                _logger.LogInformation(
+                    "Role reconciliation: user {UserId} ({Email}) — added [{Added}], removed [{Removed}] by admin {ActorId}",
+                    user.Id, user.Email, string.Join(",", toAdd), string.Join(",", toRemove), actorId);
+            }
+
             TempData["SuccessMessage"] = "Teacher updated successfully.";
             return RedirectToAction(nameof(Teachers));
         }
