@@ -2,7 +2,8 @@
 @using System.Security.Claims
 @{
     ViewData["Title"] = "Teacher Binders";
-    var isAdmin = User.IsInRole(LakeCountrySpanish.Web.AppRoles.Admin);
+    var canAuthor = User.IsInRole(LakeCountrySpanish.Web.AppRoles.Admin)
+                 || User.IsInRole(LakeCountrySpanish.Web.AppRoles.Author);
 }
 
 <div class="bg-gray-100 min-h-screen">
@@ -15,7 +16,7 @@
                     Curriculum documents grouped by program family. Every program that shares a family shares the same binder.
                 </p>
             </div>
-            @if (isAdmin)
+            @if (canAuthor)
             {
                 <a href="@Url.Action("Upload")"
                    class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white text-base font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all">
@@ -34,7 +35,7 @@
             </div>
         }
 
-        @if (isAdmin && Model.FamiliesWithoutBinders.Count > 0)
+        @if (canAuthor && Model.FamiliesWithoutBinders.Count > 0)
         {
             <div class="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 shadow-sm">
                 <div class="flex items-start gap-2">
@@ -60,7 +61,7 @@
             <div class="bg-white rounded-2xl shadow-md border-2 border-dashed border-gray-300 p-12 text-center">
                 <div class="text-5xl mb-3">📄</div>
                 <p class="text-lg font-bold text-gray-800">No binders uploaded yet</p>
-                @if (isAdmin)
+                @if (canAuthor)
                 {
                     <p class="text-sm text-gray-600 mt-2">
                         Attach a curriculum family to a program via <a asp-controller="AdminPrograms" asp-action="Index" class="text-indigo-700 underline hover:no-underline">Manage Programs</a>, then upload a PDF here.
@@ -84,7 +85,7 @@
                                 <span class="text-xs font-semibold text-gray-500">@group.ProgramCount program@(group.ProgramCount == 1 ? "" : "s") using this family</span>
                             </h2>
                         </div>
-                        @if (isAdmin)
+                        @if (canAuthor)
                         {
                             <a asp-action="Upload" asp-route-family="@group.CurriculumFamily" class="text-sm font-semibold text-indigo-700 hover:text-indigo-900">
                                 + Add / replace
@@ -118,7 +119,7 @@
                                        class="inline-flex items-center gap-1 px-4 py-2 bg-indigo-600 text-white text-sm font-bold rounded-lg shadow-sm hover:bg-indigo-700">
                                         ⬇ Download
                                     </a>
-                                    @if (isAdmin)
+                                    @if (canAuthor)
                                     {
                                         <a asp-action="Upload" asp-route-family="@doc.CurriculumFamily" asp-route-docType="@doc.DocumentType"
                                            class="inline-flex items-center gap-1 px-3 py-2 bg-white border-2 border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-50">

@@ -1,7 +1,8 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.CurriculumDayReviewViewModel
 @{
     ViewData["Title"] = $"Review — {Model.Title}";
-    var isAdmin = User.IsInRole(LakeCountrySpanish.Web.AppRoles.Admin);
+    var canAuthor = User.IsInRole(LakeCountrySpanish.Web.AppRoles.Admin)
+                 || User.IsInRole(LakeCountrySpanish.Web.AppRoles.Author);
 }
 <link rel="stylesheet" href="~/themes/@(Model.ThemeName)/@(Model.ThemeName).css" />
 
@@ -67,7 +68,7 @@
                     }
 
                     <div class="space-y-2 pt-2 border-t border-gray-100">
-                        @if (isAdmin)
+                        @if (canAuthor)
                         {
                             <form asp-action="ToggleActive" asp-route-id="@Model.DayId" method="post">
                                 @Html.AntiForgeryToken()
@@ -88,7 +89,7 @@
                             Print / Save as PDF
                         </a>
 
-                        @if (isAdmin)
+                        @if (canAuthor)
                         {
                             <a href="@Url.Action("Upload")"
                                class="block w-full text-center px-4 py-2 bg-white border border-gray-300 rounded hover:bg-gray-50 text-sm text-gray-700">

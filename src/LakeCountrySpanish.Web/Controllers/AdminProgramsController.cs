@@ -17,13 +17,15 @@ namespace LakeCountrySpanish.Web.Controllers;
 /// read as <c>/Admin/Programs/*</c> (matching the visible admin taxonomy) even
 /// though the controller name is <c>AdminPrograms</c>.
 ///
-/// Authorized for Admin OR Teacher — program creation is the co-founders'
-/// operational domain (Karen + Cece own their sessions), and requiring Mark
-/// to be a bottleneck for every new program doesn't scale. Other /Admin/*
-/// controllers (system config, students, dashboards) stay Admin-only. Same
-/// dual-role pattern <see cref="CurriculumController"/> uses.
+/// Authorized for Admin OR Author. The co-founders (Karen + Cece) own their
+/// programs end-to-end — create/edit, enrollment roster, CSV export with
+/// parent contact + medical info, and cash-payment confirmation at the booth.
+/// All of that is Author-scoped so sub teachers (Teacher-only) don't have
+/// access to sensitive enrollment / payment data they don't need. Teacher
+/// was the previous authorization here — tightened to Author to close
+/// that data-leak vector (see PR #28).
 /// </summary>
-[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Teacher}")]
+[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Author}")]
 [Route("Admin/Programs")]
 public class AdminProgramsController : Controller
 {
