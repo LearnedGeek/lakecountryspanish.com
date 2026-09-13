@@ -13,11 +13,12 @@ namespace LakeCountrySpanish.Web.Controllers;
 
 /// <summary>
 /// Teacher-facing binder / curriculum-document surface at
-/// <c>/Curriculum/Binders</c>. View + download are open to Admin +
-/// Teacher; upload + delete are Admin-only (Karen + Cece own the
-/// binder content). See issue #20.
+/// <c>/Curriculum/Binders</c>. View + download are open to any staff
+/// role (Admin, Author, Teacher); upload / replace / delete are gated
+/// to Admin + Author (Karen + Cece own the binder content). See
+/// issue #20.
 /// </summary>
-[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Teacher}")]
+[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Author},{AppRoles.Teacher}")]
 [Route("Curriculum/Binders")]
 public class BindersController : Controller
 {

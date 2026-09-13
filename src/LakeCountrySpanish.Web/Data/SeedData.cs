@@ -28,7 +28,13 @@ public static class SeedData
             }
         }
 
-        // Create admin user if not exists
+        // Create the seed admin account if it doesn't exist. The account
+        // is the environment's bootstrap Admin — used by whoever owns
+        // the platform (Mark in prod). Named "Site Admin" rather than a
+        // person so the identity documents itself as the seed account,
+        // not a personal user. On existing environments this branch is
+        // a no-op — the FindByEmailAsync short-circuits before any
+        // profile fields are read.
         var adminEmail = "admin@lakecountryspanish.com";
         var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
@@ -38,7 +44,7 @@ public static class SeedData
             {
                 UserName = adminEmail,
                 Email = adminEmail,
-                FirstName = "Karen",
+                FirstName = "Site",
                 LastName = "Admin",
                 EmailConfirmed = true,
                 IsActive = true,

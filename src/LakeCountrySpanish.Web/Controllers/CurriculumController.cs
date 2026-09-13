@@ -11,7 +11,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LakeCountrySpanish.Web.Controllers;
 
-[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Teacher}")]
+// Class-level lets any staff role in — Admin, Author, or Teacher. The
+// per-action [Authorize(Roles = "Admin,Author")] overrides below gate
+// the write paths. Author is included here so an Author-only account
+// (rare but semantically valid) can still hit the read pages.
+[Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Author},{AppRoles.Teacher}")]
 public class CurriculumController : Controller
 {
     private readonly IDocumentRenderingService _renderer;
