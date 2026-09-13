@@ -37,8 +37,10 @@
             @band.Item2
         </button>
         <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
+               id="grade-band-hidden-@((int)band.Item1)"
                class="grade-hidden-input"
                data-band-value="@((int)band.Item1)"
+               aria-label="Selected grade band @band.Item2"
                disabled="@(!isSelected ? "disabled" : null)" />
     }
 </div>

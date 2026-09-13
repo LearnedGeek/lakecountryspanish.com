@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using LakeCountrySpanish.Web.Models.ViewModels;
@@ -136,7 +137,11 @@ public class BindersController : Controller
     // multipart boundaries, antiforgery token, form fields, and a
     // long PDF filename. Kept as tight as possible over the file cap to
     // reject oversized bodies at the pipeline instead of the ViewModel.
+    // Sonar's S5693 default threshold (8 MB) is far below what a teacher
+    // binder PDF requires; the limit is deliberate and Admin-only.
     [RequestSizeLimit(26 * 1024 * 1024)]
+    [SuppressMessage("Minor Code Smell", "S5693:Make sure the content length limit is safe",
+        Justification = "Admin-only upload of teacher binder PDFs (up to 25 MB); size cap is deliberate.")]
     public async Task<IActionResult> Upload(BinderUploadViewModel model, CancellationToken ct)
     {
         model.ExistingCurriculumFamilies = await _programs.GetDistinctCurriculumFamiliesAsync(ct);
@@ -164,10 +169,9 @@ public class BindersController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Fresh upload OR replace with a new file. The IValidatableObject
-        // pass guarantees Upload is non-null here (Fresh: Upload required;
-        // Replace-with-no-file: handled by the early branch above), but
-        // the compiler can't see across that so we assert explicitly.
+        // Fresh upload or replace with a new file. IValidatableObject
+        // already guarantees Upload is non-null on this path, but the
+        // compiler can't see across that pass so we assert explicitly.
         if (model.Upload is null)
         {
             ModelState.AddModelError(nameof(model.Upload), "Please select a PDF to upload.");

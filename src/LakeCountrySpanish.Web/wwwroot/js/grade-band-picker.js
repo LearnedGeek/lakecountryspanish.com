@@ -37,7 +37,7 @@
 
         chips.forEach(function (chip) {
             chip.addEventListener('click', function () {
-                const value = parseInt(chip.dataset.bandValue, 10);
+                const value = Number.parseInt(chip.dataset.bandValue, 10);
                 const currentlySelected = chip.dataset.bandSelected === 'true';
 
                 if (pendingStart === null) {
@@ -53,7 +53,7 @@
                 const lo = Math.min(pendingStart, value);
                 const hi = Math.max(pendingStart, value);
                 chips.forEach(function (c) {
-                    const v = parseInt(c.dataset.bandValue, 10);
+                    const v = Number.parseInt(c.dataset.bandValue, 10);
                     if (v >= lo && v <= hi) setChip(c, true);
                 });
                 pendingStart = null;
