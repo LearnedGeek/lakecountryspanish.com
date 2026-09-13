@@ -445,8 +445,12 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        // Make sure this user is actually a Teacher
-        if (!await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+        // Any staff account (Teacher or Admin) can be edited from here.
+        // Loosening from the original Teacher-only guard so an admin can
+        // reach Karen's or Cece's row from the Teachers list (they hold
+        // both roles) and toggle Admin on/off without a separate surface.
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        if (!currentRoles.Contains(AppRoles.Teacher) && !currentRoles.Contains(AppRoles.Admin))
         {
             return NotFound();
         }
@@ -457,8 +461,34 @@ public class AdminController : Controller
             Email = user.Email ?? string.Empty,
             FirstName = user.FirstName,
             LastName = user.LastName,
-            IsActive = user.IsActive
+            IsActive = user.IsActive,
+            SelectedRoles = currentRoles.Where(IsAssignableRole).ToList(),
+            IsSelf = string.Equals(_userManager.GetUserId(User), user.Id, StringComparison.Ordinal)
         });
+    }
+
+    // The Admin + Teacher pair is what the role-assignment checkboxes on
+    // the EditTeacher form manage. Student is deliberately excluded from
+    // this surface — it's a customer-facing role owned by the enrollment
+    // path, not something an admin toggles on a staff account.
+    private static bool IsAssignableRole(string role) =>
+        role == AppRoles.Admin || role == AppRoles.Teacher;
+
+    // Audit trail for role changes. Logs even when nothing actually
+    // changed (no-op saves still carry an actor + subject) so a future
+    // grep can distinguish "no delta" from "delta but missing log".
+    // The partial flag distinguishes a clean commit from a partial
+    // apply where the second Identity op failed midway.
+    private void LogRoleReconciliation(
+        ApplicationUser user, IReadOnlyList<string> added, IReadOnlyList<string> removed,
+        string? actorId, bool partial)
+    {
+        if (added.Count == 0 && removed.Count == 0 && !partial) return;
+        _logger.LogInformation(
+            "Role reconciliation ({Outcome}): user {UserId} ({Email}) — added [{Added}], removed [{Removed}] by admin {ActorId}",
+            partial ? "partial" : "complete",
+            user.Id, user.Email,
+            string.Join(",", added), string.Join(",", removed), actorId);
     }
 
     [HttpPost]
@@ -466,6 +496,14 @@ public class AdminController : Controller
     [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> EditTeacher(EditTeacherViewModel model)
     {
+        // Populate IsSelf up-front so an invalid-ModelState return
+        // preserves the disabled-Admin-checkbox UI state — otherwise a
+        // retry after e.g. a bad-email validation error would render
+        // the self-admin's Admin checkbox as togglable and the POST
+        // guard becomes the only safety net.
+        model.IsSelf = !string.IsNullOrEmpty(model.Id) &&
+            string.Equals(_userManager.GetUserId(User), model.Id, StringComparison.Ordinal);
+
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -477,9 +515,34 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        if (!await _userManager.IsInRoleAsync(user, AppRoles.Teacher))
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        if (!currentRoles.Contains(AppRoles.Teacher) && !currentRoles.Contains(AppRoles.Admin))
         {
             return NotFound();
+        }
+
+        var desiredRoles = (model.SelectedRoles ?? new()).Where(IsAssignableRole).Distinct().ToHashSet();
+
+        // Self-demotion guard: an admin editing their own account can't
+        // drop the Admin role — that would kick them out mid-request and
+        // require another admin to restore access. Karen and Cece are
+        // both admins right now so recovery is possible, but the guard is
+        // a cheap safety net worth keeping.
+        if (model.IsSelf && currentRoles.Contains(AppRoles.Admin) && !desiredRoles.Contains(AppRoles.Admin))
+        {
+            ModelState.AddModelError(nameof(model.SelectedRoles),
+                "You can't remove your own Admin role. Ask another admin to change it.");
+            return View(model);
+        }
+
+        // Every staff account needs at least one role that grants login
+        // to the admin/teacher surfaces — otherwise saving would strand
+        // the user in a nav-less state. Require at least one of the two.
+        if (desiredRoles.Count == 0)
+        {
+            ModelState.AddModelError(nameof(model.SelectedRoles),
+                "Pick at least one role (Admin or Teacher).");
+            return View(model);
         }
 
         user.Email = model.Email;
@@ -506,6 +569,81 @@ public class AdminController : Controller
 
         if (result.Succeeded)
         {
+            // Reconcile role assignments AFTER the profile update lands
+            // so a bad role-payload can't strand a half-saved profile.
+            // Delta-only writes: AddToRolesAsync + RemoveFromRolesAsync
+            // are Identity's canonical shape and are individually
+            // idempotent.
+            var toAdd = desiredRoles.Except(currentRoles, StringComparer.Ordinal).ToList();
+            var toRemove = currentRoles.Where(IsAssignableRole).Except(desiredRoles, StringComparer.Ordinal).ToList();
+
+            // Track what actually landed so a failure on the second op
+            // still audits the first op's success. Without this, an
+            // AddToRoles-success + RemoveFromRoles-failure returns
+            // silently and the audit trail misses a real change.
+            var appliedAdded = new List<string>();
+            var appliedRemoved = new List<string>();
+            var actorId = _userManager.GetUserId(User);
+
+            if (toAdd.Count > 0)
+            {
+                var addResult = await _userManager.AddToRolesAsync(user, toAdd);
+                if (addResult.Succeeded)
+                {
+                    appliedAdded.AddRange(toAdd);
+                }
+                else
+                {
+                    foreach (var error in addResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    LogRoleReconciliation(user, appliedAdded, appliedRemoved, actorId, partial: true);
+                    return View(model);
+                }
+            }
+            if (toRemove.Count > 0)
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, toRemove);
+                if (removeResult.Succeeded)
+                {
+                    appliedRemoved.AddRange(toRemove);
+                }
+                else
+                {
+                    foreach (var error in removeResult.Errors)
+                    {
+                        ModelState.AddModelError(string.Empty, error.Description);
+                    }
+                    LogRoleReconciliation(user, appliedAdded, appliedRemoved, actorId, partial: true);
+                    return View(model);
+                }
+            }
+
+            LogRoleReconciliation(user, appliedAdded, appliedRemoved, actorId, partial: false);
+
+            // Invalidate the user's existing cookies if any role changed.
+            // Without this, a user demoted from Admin keeps the Admin
+            // claims in their in-flight cookie until it expires — the
+            // DB says "no Admin" but the auth pipeline hasn't reread the
+            // roles yet. UpdateSecurityStampAsync bumps a value the
+            // cookie validator compares on each request, so the next
+            // hit forces re-authentication with the current role set.
+            if (appliedAdded.Count > 0 || appliedRemoved.Count > 0)
+            {
+                var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+                if (!stampResult.Succeeded)
+                {
+                    // Log loudly but don't fail the response — the role
+                    // change itself landed. Next cookie refresh will
+                    // still apply the new roles; worst case is a delayed
+                    // revocation until the cookie expires naturally.
+                    _logger.LogError(
+                        "Security stamp update failed for user {UserId} after role change: {Errors}",
+                        user.Id, string.Join("; ", stampResult.Errors.Select(e => e.Description)));
+                }
+            }
+
             TempData["SuccessMessage"] = "Teacher updated successfully.";
             return RedirectToAction(nameof(Teachers));
         }

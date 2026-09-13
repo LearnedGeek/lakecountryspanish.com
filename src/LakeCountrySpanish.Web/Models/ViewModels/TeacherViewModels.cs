@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace LakeCountrySpanish.Web.Models.ViewModels;
 
@@ -60,6 +61,25 @@ public class EditTeacherViewModel
     [DataType(DataType.Password)]
     [Display(Name = "New Password (leave blank to keep current)")]
     public string? NewPassword { get; set; }
+
+    /// <summary>
+    /// Roles the admin has checked for this user. Reconciled against the
+    /// user's current Identity role set on POST: any role in this list
+    /// that isn't currently assigned is added; any role currently assigned
+    /// that isn't in this list is removed. Bound from checkboxes on the
+    /// edit form; only the admin-visible section produces values.
+    /// </summary>
+    [Display(Name = "Roles")]
+    public List<string> SelectedRoles { get; set; } = new();
+
+    /// <summary>
+    /// True when the admin is editing their own account. The role
+    /// checkbox section grays out the Admin checkbox and blocks a POST
+    /// that would remove the Admin role from the current user — cheap
+    /// guard against locking oneself out.
+    /// </summary>
+    [BindNever]
+    public bool IsSelf { get; set; }
 }
 
 public class TeacherListViewModel

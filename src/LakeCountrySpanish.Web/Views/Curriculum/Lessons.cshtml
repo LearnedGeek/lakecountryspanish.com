@@ -1,6 +1,7 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.CurriculumDayListViewModel
 @{
     ViewData["Title"] = "Curriculum";
+    var isAdmin = User.IsInRole(LakeCountrySpanish.Web.AppRoles.Admin);
 }
 
 <div class="bg-gray-50 min-h-screen">
@@ -11,29 +12,35 @@
                 <h1 class="text-2xl font-bold text-gray-900">Curriculum</h1>
                 <p class="text-sm text-gray-600 mt-1">@Model.Days.Count lesson@(Model.Days.Count == 1 ? "" : "s") authored.</p>
             </div>
-            <div class="flex gap-2 flex-wrap">
-                <a href="@Url.Action("Upload")" class="inline-flex items-center px-4 py-2 bg-secondary-500 text-white rounded-md hover:bg-secondary-600 font-medium text-sm">Upload .docx</a>
-                <a href="@Url.Action("CreateDay")" class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md hover:bg-gray-50 text-sm">+ New (manual)</a>
-            </div>
+            @if (isAdmin)
+            {
+                <div class="flex gap-2 flex-wrap">
+                    <a href="@Url.Action("Upload")" class="inline-flex items-center px-4 py-2 bg-secondary-500 text-white rounded-md hover:bg-secondary-600 font-medium text-sm">Upload .docx</a>
+                    <a href="@Url.Action("CreateDay")" class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md hover:bg-gray-50 text-sm">+ New (manual)</a>
+                </div>
+            }
         </div>
 
-        <div class="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-            <p class="text-sm font-semibold text-gray-900 mb-1">Authoring a new lesson?</p>
-            <p class="text-sm text-gray-600 mb-3">
-                Download the LCS lesson template (Word), fill it in, then upload it above.
-                The sample is a fully-completed lesson you can open side-by-side as a reference.
-            </p>
-            <div class="flex gap-2 flex-wrap">
-                <a href="/curriculum/lesson-template.docx" download
-                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded text-sm font-medium hover:bg-indigo-100">
-                    📄 Download blank template
-                </a>
-                <a href="/curriculum/sample-la-familia.docx" download
-                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded text-sm hover:bg-gray-50">
-                    📄 Download sample (La Familia)
-                </a>
+        @if (isAdmin)
+        {
+            <div class="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <p class="text-sm font-semibold text-gray-900 mb-1">Authoring a new lesson?</p>
+                <p class="text-sm text-gray-600 mb-3">
+                    Download the LCS lesson template (Word), fill it in, then upload it above.
+                    The sample is a fully-completed lesson you can open side-by-side as a reference.
+                </p>
+                <div class="flex gap-2 flex-wrap">
+                    <a href="/curriculum/lesson-template.docx" download
+                       class="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded text-sm font-medium hover:bg-indigo-100">
+                        📄 Download blank template
+                    </a>
+                    <a href="/curriculum/sample-la-familia.docx" download
+                       class="inline-flex items-center gap-1 px-3 py-1.5 bg-white text-gray-700 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                        📄 Download sample (La Familia)
+                    </a>
+                </div>
             </div>
-        </div>
+        }
 
         @if (TempData["SuccessMessage"] is string ok)
         {
@@ -103,20 +110,34 @@
                                 <td class="px-4 py-2 text-sm text-gray-600">@d.Theme</td>
                                 <td class="px-4 py-2 text-sm text-gray-600">@d.EstimatedDurationMinutes</td>
                                 <td class="px-4 py-2 text-sm">
-                                    <form asp-action="ToggleActive" asp-route-id="@d.Id" method="post" class="inline-flex items-center gap-2">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="returnTo" value="list" />
+                                    @if (isAdmin)
+                                    {
+                                        <form asp-action="ToggleActive" asp-route-id="@d.Id" method="post" class="inline-flex items-center gap-2">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="returnTo" value="list" />
+                                            @if (d.IsActive)
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                                                <button type="submit" class="text-xs text-gray-500 hover:text-yellow-700 underline" title="Move back to draft">Deactivate</button>
+                                            }
+                                            else
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Draft</span>
+                                                <button type="submit" class="text-xs text-gray-500 hover:text-green-700 underline" title="Approve &amp; activate">Activate</button>
+                                            }
+                                        </form>
+                                    }
+                                    else
+                                    {
                                         @if (d.IsActive)
                                         {
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
-                                            <button type="submit" class="text-xs text-gray-500 hover:text-yellow-700 underline" title="Move back to draft">Deactivate</button>
                                         }
                                         else
                                         {
                                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Draft</span>
-                                            <button type="submit" class="text-xs text-gray-500 hover:text-green-700 underline" title="Approve &amp; activate">Activate</button>
                                         }
-                                    </form>
+                                    }
                                 </td>
                                 <td class="px-4 py-2 text-xs text-gray-500">@((d.LastModifiedAt ?? d.CreatedAt).ToString("MMM d, yyyy"))</td>
                                 <td class="px-4 py-2 text-sm text-right">
