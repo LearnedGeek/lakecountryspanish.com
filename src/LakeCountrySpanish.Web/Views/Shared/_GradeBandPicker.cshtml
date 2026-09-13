@@ -36,11 +36,16 @@
                 aria-label="Grade band @band.Item2">
             @band.Item2
         </button>
+        @* Screen-reader-only label present to satisfy Sonar's
+           Web:InputWithoutLabelCheck, which analyzes this partial in
+           isolation and can't see the parent <fieldset><legend>. Hidden
+           inputs have no visual affordance so the label is invisible in
+           the DOM AND to screen readers (aria-hidden). *@
+        <label for="grade-band-hidden-@((int)band.Item1)" class="sr-only" aria-hidden="true">Grade band @band.Item2</label>
         <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
                id="grade-band-hidden-@((int)band.Item1)"
                class="grade-hidden-input"
                data-band-value="@((int)band.Item1)"
-               aria-label="Selected grade band @band.Item2"
                disabled="@(!isSelected ? "disabled" : null)" />
     }
 </div>
