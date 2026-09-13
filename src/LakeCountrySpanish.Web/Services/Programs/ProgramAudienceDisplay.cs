@@ -27,17 +27,24 @@ public static class ProgramAudienceDisplay
         // If the whole span is filled, use the compact "K–8" shortcut.
         if (ordered.Count == 10) return "Grades K–8";
 
-        // Contiguous set → "Grades X–Y" with smart K handling.
-        // Non-contiguous → "Grades X, Y, Z".
-        var contiguous = IsContiguous(ordered);
-        if (contiguous)
+        // Single band → "Grades K" or "Grades 3" (no range formatting).
+        if (ordered.Count == 1) return $"Grades {FormatBand(ordered[0])}";
+
+        // Contiguous set → "Grades X–Y" with smart K handling. If both
+        // endpoints format to the same string (e.g. K4 + K5 both collapse
+        // to "K"), the "range" is really just one label — show it once
+        // rather than "K–K".
+        if (IsContiguous(ordered))
         {
-            var first = ordered[0];
-            var last = ordered[^1];
-            return $"Grades {FormatBand(first)}–{FormatBand(last)}";
+            var firstLabel = FormatBand(ordered[0]);
+            var lastLabel = FormatBand(ordered[^1]);
+            return firstLabel == lastLabel
+                ? $"Grades {firstLabel}"
+                : $"Grades {firstLabel}–{lastLabel}";
         }
 
-        return "Grades " + string.Join(", ", ordered.Select(FormatBand));
+        // Non-contiguous → "Grades X, Y, Z" (deduped so K4 + K5 doesn't print "K, K").
+        return "Grades " + string.Join(", ", ordered.Select(FormatBand).Distinct());
     }
 
     /// <summary>
