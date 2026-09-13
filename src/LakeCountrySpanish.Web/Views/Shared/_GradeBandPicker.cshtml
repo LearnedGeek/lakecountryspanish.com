@@ -1,0 +1,48 @@
+@model IReadOnlyList<LakeCountrySpanish.Web.Models.Entities.GradeBand>
+@{
+    // Shared chip picker for the Program form and the Binder upload form.
+    // Renders one button per grade band and a paired hidden field posting
+    // the same SelectedGradeBands name. Disabled inputs don't post, so
+    // toggling the hidden field's disabled attribute is how the picker
+    // excludes unselected bands from the form submit. Behavior is wired
+    // by /js/grade-band-picker.js, included via the parent view's
+    // scripts section.
+    var selected = Model ?? Array.Empty<LakeCountrySpanish.Web.Models.Entities.GradeBand>();
+    var allBands = new[] {
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.K4, "K4"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.K5, "K5"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade1, "1st"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade2, "2nd"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade3, "3rd"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade4, "4th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade5, "5th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade6, "6th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade7, "7th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade8, "8th"),
+    };
+}
+<div id="grade-band-chips" class="flex flex-wrap gap-2">
+    @foreach (var band in allBands)
+    {
+        var isSelected = selected.Contains(band.Item1);
+        <button type="button"
+                class="grade-chip inline-flex items-center px-3 py-1.5 rounded-full border-2 text-sm font-semibold transition-colors @(isSelected ? "border-indigo-500 bg-indigo-100 text-indigo-800" : "border-gray-300 bg-white text-gray-700 hover:border-gray-400")"
+                data-band-value="@((int)band.Item1)"
+                data-band-selected="@(isSelected ? "true" : "false")"
+                aria-pressed="@(isSelected ? "true" : "false")"
+                aria-label="Grade band @band.Item2">
+            @band.Item2
+        </button>
+        @* Screen-reader-only label present to satisfy Sonar's
+           Web:InputWithoutLabelCheck, which analyzes this partial in
+           isolation and can't see the parent <fieldset><legend>. Hidden
+           inputs have no visual affordance so the label is invisible in
+           the DOM AND to screen readers (aria-hidden). *@
+        <label for="grade-band-hidden-@((int)band.Item1)" class="sr-only" aria-hidden="true">Grade band @band.Item2</label>
+        <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
+               id="grade-band-hidden-@((int)band.Item1)"
+               class="grade-hidden-input"
+               data-band-value="@((int)band.Item1)"
+               disabled="@(!isSelected ? "disabled" : null)" />
+    }
+</div>

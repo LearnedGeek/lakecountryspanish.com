@@ -189,6 +189,30 @@ public sealed class ProgramFormViewModel : IValidatableObject
     [Display(Name = "Legacy grade range (read-only)")]
     public string? GradeRange { get; set; }
 
+    /// <summary>
+    /// Canonical curriculum family — links this program to shared teacher
+    /// binders / lesson documents. Admin picks from a creatable dropdown
+    /// (existing values + "type new"). Convention: lowercase-hyphenated.
+    /// See issue #20.
+    /// </summary>
+    [StringLength(80)]
+    // Same slug shape enforced by BinderUploadViewModel — otherwise an
+    // admin could save "Los Bichos y Palabras" on a Program and later
+    // find that no binder can be uploaded for it, because the binder
+    // form's stricter regex rejects the free-form family string. Keeping
+    // the two ends aligned prevents that silent-drift class of bug.
+    [RegularExpression(@"^[a-z][a-z0-9-]{0,79}$",
+        ErrorMessage = "Use lowercase letters, digits, and hyphens (starting with a letter), e.g. \"bailamos\".")]
+    [Display(Name = "Curriculum family", Description = "Pick an existing family or type a new one (e.g. \"bailamos\", \"beginner-spanish\"). Programs that share a family share their teacher binder.")]
+    public string? CurriculumFamily { get; set; }
+
+    /// <summary>
+    /// Existing curriculum family values across all programs, for the
+    /// creatable dropdown. Populated by the controller from the service.
+    /// </summary>
+    [BindNever]
+    public IReadOnlyList<string> ExistingCurriculumFamilies { get; set; } = Array.Empty<string>();
+
     // 0 = "no restriction" (e.g. adult programs Karen doesn't want to gate by age).
     // Display views hide the "· ages X–Y" text when AgeMin is 0.
     [Range(0, 120)]
@@ -363,6 +387,12 @@ public sealed class ProgramFormViewModel : IValidatableObject
 
         // Legacy field kept in DB but no longer written from the form.
         target.GradeRange = GradeRange ?? string.Empty;
+
+        // Normalize curriculum family — lowercase, trim, empty→null so the
+        // index doesn't fill with distinct-but-equivalent variants.
+        var familyNormalized = CurriculumFamily?.Trim().ToLowerInvariant();
+        target.CurriculumFamily = string.IsNullOrEmpty(familyNormalized) ? null : familyNormalized;
+
         target.AgeMin = AgeMin;
         target.AgeMax = AgeMax;
         target.FullPrice = FullPrice ?? 0m;
@@ -406,6 +436,7 @@ public sealed class ProgramFormViewModel : IValidatableObject
             AudienceType = p.AudienceType,
             SelectedGradeBands = p.GradeBands.Select(g => g.GradeBand).OrderBy(b => (int)b).ToList(),
             GradeRange = p.GradeRange,
+            CurriculumFamily = p.CurriculumFamily,
             AgeMin = p.AgeMin,
             AgeMax = p.AgeMax,
             FullPrice = p.FullPrice == 0m ? null : p.FullPrice,

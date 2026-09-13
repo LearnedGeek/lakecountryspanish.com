@@ -247,6 +247,10 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
             StartTime = source.StartTime,
             EndTime = source.EndTime,
             GradeRange = source.GradeRange,
+            // Preserve the binder linkage (issue #20) — without this the
+            // duplicated program lands with no CurriculumFamily and Karen
+            // has to re-pick it before the shared binder shows up.
+            CurriculumFamily = source.CurriculumFamily,
             AgeMin = source.AgeMin,
             AgeMax = source.AgeMax,
             FullPrice = source.FullPrice,
@@ -273,6 +277,17 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
 
         // Create as draft (no Stripe provisioning yet).
         return await CreateAsync(copy, ct, provisionStripe: false);
+    }
+
+    public async Task<IReadOnlyList<string>> GetDistinctCurriculumFamiliesAsync(CancellationToken ct = default)
+    {
+        return await _context.Programs
+            .AsNoTracking()
+            .Where(p => p.CurriculumFamily != null && p.CurriculumFamily != string.Empty)
+            .Select(p => p.CurriculumFamily!)
+            .Distinct()
+            .OrderBy(f => f)
+            .ToListAsync(ct);
     }
 
     private async Task<string> FindAvailableSlugAsync(string baseSlug, CancellationToken ct)
