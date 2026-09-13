@@ -275,6 +275,17 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
         return await CreateAsync(copy, ct, provisionStripe: false);
     }
 
+    public async Task<IReadOnlyList<string>> GetDistinctCurriculumFamiliesAsync(CancellationToken ct = default)
+    {
+        return await _context.Programs
+            .AsNoTracking()
+            .Where(p => p.CurriculumFamily != null && p.CurriculumFamily != string.Empty)
+            .Select(p => p.CurriculumFamily!)
+            .Distinct()
+            .OrderBy(f => f)
+            .ToListAsync(ct);
+    }
+
     private async Task<string> FindAvailableSlugAsync(string baseSlug, CancellationToken ct)
     {
         // Try the base first (`bailamos-copy`), then `-copy-2`, `-copy-3`, ...

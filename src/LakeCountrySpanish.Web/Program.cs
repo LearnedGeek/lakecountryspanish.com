@@ -124,6 +124,7 @@ builder.Services.AddScoped<IImageSourceAdapter, PixabayImageSourceAdapter>();
 
 // Curriculum authoring services.
 builder.Services.AddScoped<ICurriculumDayService, CurriculumDayService>();
+builder.Services.AddScoped<ICurriculumDocumentService, CurriculumDocumentService>();
 builder.Services.AddSingleton<IBlockCompiler, BlockCompiler>();
 builder.Services.AddScoped<DocxLessonParser>();
 

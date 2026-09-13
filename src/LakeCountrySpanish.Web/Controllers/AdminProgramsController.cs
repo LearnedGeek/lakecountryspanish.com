@@ -85,21 +85,49 @@ public class AdminProgramsController : Controller
     }
 
     [HttpGet("Create")]
-    public IActionResult Create() => View("Form", new ProgramFormViewModel
+    public async Task<IActionResult> Create(CancellationToken ct)
     {
-        StartDate = DateTime.UtcNow.Date.AddDays(14),
-        EndDate = DateTime.UtcNow.Date.AddDays(14 + 56),   // 8-week default
-        StartTime = new TimeOnly(15, 30),
-        EndTime = new TimeOnly(16, 30),
-        ContactPhone = "262-490-0304",
-        ContactEmail = "info@lakecountryspanish.com",
-        WaiverText = DefaultWaiverText,
-        RefundPolicyText = "No refunds beyond the first week of the program.",
-        InstallmentCount = 2,
-        AgeMin = 8,
-        AgeMax = 12,
-        GradeRange = "3-6"
-    });
+        var vm = new ProgramFormViewModel
+        {
+            StartDate = DateTime.UtcNow.Date.AddDays(14),
+            EndDate = DateTime.UtcNow.Date.AddDays(14 + 56),   // 8-week default
+            StartTime = new TimeOnly(15, 30),
+            EndTime = new TimeOnly(16, 30),
+            ContactPhone = "262-490-0304",
+            ContactEmail = "info@lakecountryspanish.com",
+            WaiverText = DefaultWaiverText,
+            RefundPolicyText = "No refunds beyond the first week of the program.",
+            InstallmentCount = 2,
+            AgeMin = 8,
+            AgeMax = 12,
+            GradeRange = "3-6"
+        };
+        vm.ExistingCurriculumFamilies = await _programs.GetDistinctCurriculumFamiliesAsync(ct);
+        return View("Form", vm);
+    }
+
+    /// <summary>
+    /// Populates the ViewModel with data the form needs but the client
+    /// shouldn't be trusted to bind (existing curriculum families).
+    /// Called before every View("Form", ...) return so the dropdown is
+    /// populated on validation failures too.
+    /// </summary>
+    private async Task PopulateFormLookupsAsync(ProgramFormViewModel model, CancellationToken ct)
+    {
+        model.ExistingCurriculumFamilies = await _programs.GetDistinctCurriculumFamiliesAsync(ct);
+    }
+
+    /// <summary>
+    /// Renders the Form view after populating the server-owned lookup
+    /// collections. Callers use this instead of <c>View("Form", model)</c>
+    /// on any POST error branch so the creatable-dropdown source stays
+    /// consistent with the DB.
+    /// </summary>
+    private async Task<IActionResult> RenderFormAsync(ProgramFormViewModel model, CancellationToken ct)
+    {
+        await PopulateFormLookupsAsync(model, ct);
+        return View("Form", model);
+    }
 
     /// <summary>
     /// New-program POST. The form submits an <c>action</c> field ("draft" or
@@ -129,12 +157,12 @@ public class AdminProgramsController : Controller
         ModelState.Clear();
         TryValidateModel(model);
 
-        if (!ModelState.IsValid) return View("Form", model);
+        if (!ModelState.IsValid) return await RenderFormAsync(model, ct);
 
         if (!TryHandleHeroImageUpload(model, out var uploadError))
         {
             ModelState.AddModelError(nameof(model.HeroImageUpload), uploadError!);
-            return View("Form", model);
+            return await RenderFormAsync(model, ct);
         }
 
         try
@@ -153,12 +181,12 @@ public class AdminProgramsController : Controller
         catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true)
         {
             ModelState.AddModelError(nameof(model.Slug), $"The slug “{model.Slug}” is already used by another program.");
-            return View("Form", model);
+            return await RenderFormAsync(model, ct);
         }
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
-            return View("Form", model);
+            return await RenderFormAsync(model, ct);
         }
     }
 
@@ -193,7 +221,9 @@ public class AdminProgramsController : Controller
     {
         var program = await _programs.GetByIdAsync(id, ct);
         if (program is null) return NotFound();
-        return View("Form", ProgramFormViewModel.FromEntity(program));
+        var vm = ProgramFormViewModel.FromEntity(program);
+        await PopulateFormLookupsAsync(vm, ct);
+        return View("Form", vm);
     }
 
     /// <summary>
@@ -226,12 +256,12 @@ public class AdminProgramsController : Controller
         ModelState.Clear();
         TryValidateModel(model);
 
-        if (!ModelState.IsValid) return View("Form", model);
+        if (!ModelState.IsValid) return await RenderFormAsync(model, ct);
 
         if (!TryHandleHeroImageUpload(model, out var uploadError))
         {
             ModelState.AddModelError(nameof(model.HeroImageUpload), uploadError!);
-            return View("Form", model);
+            return await RenderFormAsync(model, ct);
         }
 
         try
@@ -262,13 +292,13 @@ public class AdminProgramsController : Controller
         catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) == true)
         {
             ModelState.AddModelError(nameof(model.Slug), $"The slug “{model.Slug}” is already used by another program.");
-            return View("Form", model);
+            return await RenderFormAsync(model, ct);
         }
         catch (InvalidOperationException ex)
         {
             ModelState.AddModelError(string.Empty, ex.Message);
             model.PricingLocked = true;
-            return View("Form", model);
+            return await RenderFormAsync(model, ct);
         }
     }
 

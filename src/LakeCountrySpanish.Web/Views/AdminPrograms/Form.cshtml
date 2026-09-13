@@ -109,6 +109,27 @@
                         <input asp-for="TagLine" class="@fieldClass" placeholder="An After-School Spanish Enrichment Program" />
                     </div>
                     <div class="sm:col-span-2">
+                        <label asp-for="CurriculumFamily" class="@labelClass"></label>
+                        <!-- Creatable combobox — the <input> is the source of
+                             truth (name="CurriculumFamily") and the <datalist>
+                             provides autocomplete suggestions from existing
+                             values. Karen either picks one (types + tab) or
+                             types a brand-new value. Kept dependency-free —
+                             no Select2 or Choices.js needed. -->
+                        <input asp-for="CurriculumFamily"
+                               list="curriculum-family-options"
+                               class="@fieldClass font-mono"
+                               placeholder="bailamos"
+                               autocomplete="off" />
+                        <datalist id="curriculum-family-options">
+                            @foreach (var family in Model.ExistingCurriculumFamilies)
+                            {
+                                <option value="@family"></option>
+                            }
+                        </datalist>
+                        <p class="@hintClass">Programs sharing this value share the same teacher binder. Lowercase-hyphenated by convention.</p>
+                    </div>
+                    <div class="sm:col-span-2">
                         <label asp-for="Description" class="@labelClass"></label>
                         <textarea asp-for="Description" rows="4" class="@textareaClass font-mono"></textarea>
                         <p class="@hintClass">Markdown supported.</p>

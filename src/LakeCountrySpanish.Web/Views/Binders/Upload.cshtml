@@ -1,0 +1,276 @@
+@model LakeCountrySpanish.Web.Models.ViewModels.BinderUploadViewModel
+@{
+    ViewData["Title"] = Model.IsReplace ? "Replace binder" : "Upload binder";
+
+    // Same visual language as the Program form so Karen & Cece don't get
+    // whiplash between the two admin surfaces.
+    var fieldClass = "block w-full rounded-lg border-2 border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm placeholder-gray-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 disabled:bg-gray-50 disabled:text-gray-500";
+    var labelClass = "block text-sm font-semibold text-gray-800 mb-1.5";
+    var hintClass  = "mt-1.5 text-xs text-gray-500";
+    var errorClass = "mt-1 text-xs font-medium text-red-600";
+}
+
+<div class="bg-gray-100 min-h-screen">
+    <div class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">@ViewData["Title"]</h1>
+                <p class="text-sm text-gray-600 mt-1">
+                    @if (Model.IsReplace)
+                    {
+                        <text>Replace the current PDF, or leave the file blank to just update the title / grade bands.</text>
+                    }
+                    else
+                    {
+                        <text>Attach a PDF binder to a curriculum family. Every program that uses that family will share this binder.</text>
+                    }
+                </p>
+            </div>
+            <a href="@Url.Action("Index")" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">← All binders</a>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="mb-6 rounded-xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">
+                <div class="flex items-start gap-2">
+                    <span class="text-red-600 text-lg leading-none mt-0.5">⚠</span>
+                    <div class="flex-1">
+                        <div class="text-sm font-bold text-red-800 mb-1">Please fix the following before saving:</div>
+                        <ul class="list-disc list-inside text-sm text-red-700 space-y-0.5">
+                            @foreach (var entry in ViewData.ModelState)
+                            {
+                                foreach (var err in entry.Value.Errors)
+                                {
+                                    <li>
+                                        @if (!string.IsNullOrEmpty(entry.Key))
+                                        {
+                                            <span class="font-semibold">@entry.Key:</span>
+                                        }
+                                        @(string.IsNullOrEmpty(err.ErrorMessage) ? "Invalid value" : err.ErrorMessage)
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.IsReplace && Model.Existing is not null)
+        {
+            var sizeKb = (Model.Existing.FileSizeBytes + 1023) / 1024;
+            var updated = Model.Existing.UpdatedAt ?? Model.Existing.UploadedAt;
+            <div class="mb-6 rounded-xl border-2 border-indigo-200 bg-indigo-50/60 p-4 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl leading-none mt-0.5" aria-hidden="true">📄</span>
+                    <div class="flex-1 text-sm text-indigo-900">
+                        <div class="font-bold mb-1">Currently on file for @Model.Existing.CurriculumFamily</div>
+                        <div class="font-mono text-xs text-indigo-800/80 truncate">@Model.Existing.OriginalFileName</div>
+                        <div class="text-xs text-indigo-800/80 mt-1">
+                            @(sizeKb < 1024 ? $"{sizeKb} KB" : $"{sizeKb / 1024.0:F1} MB") · Updated @updated.ToString("MMM d, yyyy")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="IsReplace" />
+
+            <!-- What / where -->
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-indigo-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-indigo-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-indigo-600">①</span> What binder is this?
+                    </h2>
+                    <p class="text-xs text-gray-600 mt-0.5">Pick or type the curriculum family this binder covers.</p>
+                </header>
+                <div class="p-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="sm:col-span-2">
+                        <label asp-for="CurriculumFamily" class="@labelClass"></label>
+                        <input asp-for="CurriculumFamily"
+                               list="curriculum-family-options"
+                               class="@fieldClass font-mono"
+                               placeholder="bailamos"
+                               autocomplete="off"
+                               readonly="@Model.IsReplace" />
+                        <datalist id="curriculum-family-options">
+                            @foreach (var family in Model.ExistingCurriculumFamilies)
+                            {
+                                <option value="@family"></option>
+                            }
+                        </datalist>
+                        <p class="@hintClass">
+                            @if (Model.IsReplace)
+                            {
+                                <text>Family is locked when replacing an existing binder — start a fresh upload from the list page to change it.</text>
+                            }
+                            else
+                            {
+                                <text>Match one of the values you set on the Programs form. Lowercase-hyphenated by convention.</text>
+                            }
+                        </p>
+                        <span asp-validation-for="CurriculumFamily" class="@errorClass"></span>
+                    </div>
+
+                    <div>
+                        <label asp-for="DocumentType" class="@labelClass"></label>
+                        <select asp-for="DocumentType" class="@fieldClass" disabled="@Model.IsReplace">
+                            @foreach (var t in Enum.GetValues<LakeCountrySpanish.Web.Models.Entities.CurriculumDocumentType>())
+                            {
+                                <option value="@((int)t)" selected="@(Model.DocumentType == t)">@t</option>
+                            }
+                        </select>
+                        @if (Model.IsReplace)
+                        {
+                            <input type="hidden" asp-for="DocumentType" />
+                        }
+                        <p class="@hintClass">Teacher binder is the standard artifact. More types may be added later.</p>
+                    </div>
+
+                    <div>
+                        <label asp-for="Title" class="@labelClass"></label>
+                        <input asp-for="Title" class="@fieldClass" placeholder="Bailamos K4-K5 Teacher Binder" />
+                        <span asp-validation-for="Title" class="@errorClass"></span>
+                    </div>
+
+                    <!-- Grade bands — same widget pattern as the Program form
+                         so admins don't have to relearn the interaction. -->
+                    <div class="sm:col-span-2">
+                        <label class="@labelClass">Grade bands this binder covers</label>
+                        <div class="text-xs text-gray-600 mb-2">
+                            Click a grade to toggle it, or click a start then an end to fill a range (K4-2nd, 3rd-6th, etc).
+                        </div>
+                        <div id="grade-band-chips" class="flex flex-wrap gap-2">
+                            @{
+                                var allBands = new[] {
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.K4, "K4"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.K5, "K5"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade1, "1st"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade2, "2nd"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade3, "3rd"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade4, "4th"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade5, "5th"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade6, "6th"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade7, "7th"),
+                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade8, "8th"),
+                                };
+                            }
+                            @foreach (var band in allBands)
+                            {
+                                var isSelected = Model.SelectedGradeBands.Contains(band.Item1);
+                                <button type="button"
+                                        class="grade-chip inline-flex items-center px-3 py-1.5 rounded-full border-2 text-sm font-semibold transition-colors @(isSelected ? "border-indigo-500 bg-indigo-100 text-indigo-800" : "border-gray-300 bg-white text-gray-700 hover:border-gray-400")"
+                                        data-band-value="@((int)band.Item1)"
+                                        data-band-selected="@(isSelected ? "true" : "false")">
+                                    @band.Item2
+                                </button>
+                                <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
+                                       class="grade-hidden-input"
+                                       data-band-value="@((int)band.Item1)"
+                                       disabled="@(!isSelected ? "disabled" : null)" />
+                            }
+                        </div>
+                        <span asp-validation-for="SelectedGradeBands" class="@errorClass"></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- File -->
+            <section class="bg-white rounded-2xl shadow-md border-l-4 border-teal-500 overflow-hidden">
+                <header class="border-b border-gray-100 px-6 py-4 bg-teal-50/40">
+                    <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span class="text-teal-600">②</span> PDF file
+                    </h2>
+                    <p class="text-xs text-gray-600 mt-0.5">
+                        @if (Model.IsReplace)
+                        {
+                            <text>Optional — skip to keep the current PDF and only update the title / grade bands.</text>
+                        }
+                        else
+                        {
+                            <text>Required. Max 25 MB.</text>
+                        }
+                    </p>
+                </header>
+                <div class="p-6">
+                    <label asp-for="Upload" class="@labelClass"></label>
+                    <input asp-for="Upload" type="file" accept=".pdf"
+                           class="block w-full rounded-lg border-2 border-dashed border-gray-300 bg-white px-3 py-3 text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 cursor-pointer" />
+                    <p class="@hintClass">PDF only. Max 25 MB. Uploads replace any prior file for this family + document type.</p>
+                    <span asp-validation-for="Upload" class="@errorClass"></span>
+                </div>
+            </section>
+
+            <!-- Actions -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 pb-8">
+                <a href="@Url.Action("Index")" class="text-sm font-semibold text-gray-600 hover:text-gray-900 sm:self-center">
+                    ← Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-indigo-600 text-white text-base font-bold rounded-xl shadow-lg shadow-indigo-500/30 hover:bg-indigo-700 hover:shadow-indigo-500/40 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all">
+                    @(Model.IsReplace ? "Save changes" : "Upload binder")
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+    // Same two-click range-fill widget as the Program form. Kept inline
+    // rather than extracted into a partial because the two forms have
+    // slightly different chip containers and it's <60 lines.
+    (function () {
+        const chipContainer = document.getElementById('grade-band-chips');
+        if (!chipContainer) return;
+
+        function setChip(el, selected) {
+            el.dataset.bandSelected = selected ? 'true' : 'false';
+            if (selected) {
+                el.classList.add('border-indigo-500', 'bg-indigo-100', 'text-indigo-800');
+                el.classList.remove('border-gray-300', 'bg-white', 'text-gray-700', 'hover:border-gray-400');
+            } else {
+                el.classList.remove('border-indigo-500', 'bg-indigo-100', 'text-indigo-800');
+                el.classList.add('border-gray-300', 'bg-white', 'text-gray-700', 'hover:border-gray-400');
+            }
+            const hidden = document.querySelector('.grade-hidden-input[data-band-value="' + el.dataset.bandValue + '"]');
+            if (hidden) hidden.disabled = !selected;
+        }
+
+        let pendingStart = null;
+        const chips = Array.from(chipContainer.querySelectorAll('.grade-chip'));
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                const value = parseInt(chip.dataset.bandValue, 10);
+                const currentlySelected = chip.dataset.bandSelected === 'true';
+
+                if (pendingStart === null) {
+                    if (currentlySelected) {
+                        setChip(chip, false);
+                    } else {
+                        setChip(chip, true);
+                        pendingStart = value;
+                    }
+                    return;
+                }
+
+                const lo = Math.min(pendingStart, value);
+                const hi = Math.max(pendingStart, value);
+                chips.forEach(function (c) {
+                    const v = parseInt(c.dataset.bandValue, 10);
+                    if (v >= lo && v <= hi) setChip(c, true);
+                });
+                pendingStart = null;
+            });
+        });
+    })();
+    </script>
+}

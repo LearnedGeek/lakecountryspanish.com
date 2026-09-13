@@ -63,4 +63,11 @@ public interface IEnrollmentProgramService
     /// Returns the new draft so the caller can redirect to its edit page.
     /// </summary>
     Task<EnrollmentProgram> DuplicateAsync(int sourceProgramId, CancellationToken ct = default);
+
+    /// <summary>
+    /// Distinct non-null / non-empty <see cref="EnrollmentProgram.CurriculumFamily"/>
+    /// values across all programs. Powers the creatable-dropdown on the
+    /// admin form so Karen can pick from the existing set or type a new one.
+    /// </summary>
+    Task<IReadOnlyList<string>> GetDistinctCurriculumFamiliesAsync(CancellationToken ct = default);
 }

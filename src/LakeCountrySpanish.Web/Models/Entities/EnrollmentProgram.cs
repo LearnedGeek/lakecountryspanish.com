@@ -142,6 +142,17 @@ public class EnrollmentProgram
     /// </summary>
     public string GradeRange { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Canonical curriculum family identifier — links this program to the
+    /// shared <see cref="CurriculumDocument"/> set (teacher binders, etc.)
+    /// via string match. Karen picks from a dropdown of existing values on
+    /// the admin form or types a new one; convention is lowercase-hyphenated
+    /// ("bailamos", "beginner-spanish"). Nullable so pre-#20 programs and
+    /// standalone one-offs (community events, testing) can skip it.
+    /// See issue #20.
+    /// </summary>
+    public string? CurriculumFamily { get; set; }
+
     /// <summary>Minimum eligible age.</summary>
     public int AgeMin { get; set; }
 

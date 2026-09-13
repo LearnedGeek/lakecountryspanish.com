@@ -82,6 +82,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<ProgramGradeBand> ProgramGradeBands => Set<ProgramGradeBand>();
     public DbSet<ProgramEnrollment> ProgramEnrollments => Set<ProgramEnrollment>();
     public DbSet<ProgramEnrollmentAuditEvent> ProgramEnrollmentAuditEvents => Set<ProgramEnrollmentAuditEvent>();
+    public DbSet<CurriculumDocument> CurriculumDocuments => Set<CurriculumDocument>();
+    public DbSet<CurriculumDocumentGradeBand> CurriculumDocumentGradeBands => Set<CurriculumDocumentGradeBand>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -925,6 +927,45 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // A program shouldn't have the same grade band twice.
             entity.HasIndex(e => new { e.ProgramId, e.GradeBand }).IsUnique();
+        });
+
+        // === CurriculumDocument + join table (issue #20) ===
+
+        builder.Entity<CurriculumDocument>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.CurriculumFamily).HasMaxLength(80).IsRequired();
+            entity.Property(e => e.Title).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.FilePath).HasMaxLength(400).IsRequired();
+            entity.Property(e => e.OriginalFileName).HasMaxLength(240);
+            entity.Property(e => e.UploadedById).HasMaxLength(450);
+
+            // One document per (Family, DocumentType) — replace-in-place
+            // semantics. If Karen wants a second Bailamos teacher binder
+            // she can only overwrite the current one.
+            entity.HasIndex(e => new { e.CurriculumFamily, e.DocumentType }).IsUnique();
+        });
+
+        builder.Entity<CurriculumDocumentGradeBand>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Document)
+                .WithMany(d => d.GradeBands)
+                .HasForeignKey(e => e.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(e => new { e.DocumentId, e.GradeBand }).IsUnique();
+        });
+
+        // === EnrollmentProgram.CurriculumFamily index (issue #20) ===
+        // Small nudge for queries that look up programs by family (the
+        // future "which programs use this binder?" case).
+        builder.Entity<EnrollmentProgram>(entity =>
+        {
+            entity.Property(e => e.CurriculumFamily).HasMaxLength(80);
+            entity.HasIndex(e => e.CurriculumFamily);
         });
 
         builder.Entity<ProgramEnrollment>(entity =>
