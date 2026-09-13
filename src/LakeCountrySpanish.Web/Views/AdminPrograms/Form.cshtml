@@ -243,11 +243,11 @@
                          picks specific bands with two-click range fill. -->
                     <div class="sm:col-span-2">
                         <label class="@labelClass">Who is this for?</label>
-                        <div class="flex flex-wrap gap-2 mb-3" role="radiogroup" aria-label="Audience type">
+                        <div class="flex flex-wrap gap-2 mb-2" role="radiogroup" aria-label="Audience type">
                             @foreach (var audience in new[] {
-                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.Grades, "Grades"),
-                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.Adult,  "Adults"),
-                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.All,    "All ages")
+                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.Grades, "By grade",   "Grade-based kid program (K4–8)"),
+                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.All,    "By age",     "Kid program without a specific grade — ages define who fits"),
+                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.Adult,  "Adults 18+", "Adult program")
                             })
                             {
                                 var selected = Model.AudienceType == audience.Item1;
@@ -256,13 +256,29 @@
                                            class="peer sr-only audience-radio"
                                            data-audience="@audience.Item1"
                                            checked="@(selected ? "checked" : null)" />
-                                    <span class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-colors
+                                    <span title="@audience.Item3"
+                                          class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-colors
                                                  border-gray-300 bg-white text-gray-700
                                                  peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-800
                                                  peer-focus:ring-4 peer-focus:ring-indigo-500/20">
                                         @audience.Item2
                                     </span>
                                 </label>
+                            }
+                        </div>
+
+                        <div class="mb-3 text-xs text-gray-600">
+                            @switch (Model.AudienceType)
+                            {
+                                case LakeCountrySpanish.Web.Models.Entities.AudienceType.Grades:
+                                    <text>Pick the grade band(s) below. Age Min/Max is optional context for parents.</text>
+                                    break;
+                                case LakeCountrySpanish.Web.Models.Entities.AudienceType.All:
+                                    <text>For kid programs where a specific grade doesn't apply (preschool age, mixed groups). Set Age Min/Max below to define who fits.</text>
+                                    break;
+                                case LakeCountrySpanish.Web.Models.Entities.AudienceType.Adult:
+                                    <text>For 18+ adult programs. Set Age Min/Max below (leave Max at 99 for "no upper limit").</text>
+                                    break;
                             }
                         </div>
 
