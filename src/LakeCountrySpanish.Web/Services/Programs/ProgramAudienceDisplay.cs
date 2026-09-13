@@ -54,8 +54,6 @@ public static class ProgramAudienceDisplay
     /// </summary>
     public static string? AgeLabel(AudienceType audience, int ageMin, int ageMax)
     {
-        if (audience == AudienceType.All) return null;
-
         if (audience == AudienceType.Adult)
         {
             return ageMax >= 99
@@ -63,7 +61,10 @@ public static class ProgramAudienceDisplay
                 : $"Ages {ageMin}–{ageMax}";
         }
 
-        // Grades path: show only when both ends are meaningful.
+        // Grades / All: show only when both ends are meaningful. This lets
+        // an "All" program still say "Ages 4–8" when ages are actually set
+        // (kid program with no formal grade concept — e.g. a preschool-age
+        // class where grade doesn't apply).
         if (ageMin <= 0 || ageMax <= 0) return null;
         return $"ages {ageMin}–{ageMax}";
     }
@@ -85,7 +86,11 @@ public static class ProgramAudienceDisplay
                 break;
 
             case AudienceType.All:
-                parts.Add("All ages");
+                // "All" with a concrete age range → show the ages (kid program
+                // with no formal grade concept). "All" with no age range →
+                // truly unrestricted, show "All ages" as the marketing label.
+                var allAge = AgeLabel(audience, ageMin, ageMax);
+                parts.Add(allAge ?? "All ages");
                 break;
 
             case AudienceType.Grades:
