@@ -1,7 +1,8 @@
 @model LakeCountrySpanish.Web.Models.ViewModels.CurriculumDayListViewModel
 @{
     ViewData["Title"] = "Curriculum";
-    var isAdmin = User.IsInRole(LakeCountrySpanish.Web.AppRoles.Admin);
+    var canAuthor = User.IsInRole(LakeCountrySpanish.Web.AppRoles.Admin)
+                 || User.IsInRole(LakeCountrySpanish.Web.AppRoles.Author);
 }
 
 <div class="bg-gray-50 min-h-screen">
@@ -12,7 +13,7 @@
                 <h1 class="text-2xl font-bold text-gray-900">Curriculum</h1>
                 <p class="text-sm text-gray-600 mt-1">@Model.Days.Count lesson@(Model.Days.Count == 1 ? "" : "s") authored.</p>
             </div>
-            @if (isAdmin)
+            @if (canAuthor)
             {
                 <div class="flex gap-2 flex-wrap">
                     <a href="@Url.Action("Upload")" class="inline-flex items-center px-4 py-2 bg-secondary-500 text-white rounded-md hover:bg-secondary-600 font-medium text-sm">Upload .docx</a>
@@ -21,7 +22,7 @@
             }
         </div>
 
-        @if (isAdmin)
+        @if (canAuthor)
         {
             <div class="mb-6 p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
                 <p class="text-sm font-semibold text-gray-900 mb-1">Authoring a new lesson?</p>
@@ -110,7 +111,7 @@
                                 <td class="px-4 py-2 text-sm text-gray-600">@d.Theme</td>
                                 <td class="px-4 py-2 text-sm text-gray-600">@d.EstimatedDurationMinutes</td>
                                 <td class="px-4 py-2 text-sm">
-                                    @if (isAdmin)
+                                    @if (canAuthor)
                                     {
                                         <form asp-action="ToggleActive" asp-route-id="@d.Id" method="post" class="inline-flex items-center gap-2">
                                             @Html.AntiForgeryToken()

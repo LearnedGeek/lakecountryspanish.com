@@ -120,7 +120,7 @@ public class BindersController : Controller
     }
 
     [HttpGet("Upload")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Author}")]
     public async Task<IActionResult> Upload(string? family, CurriculumDocumentType docType = CurriculumDocumentType.TeacherBinder, CancellationToken ct = default)
     {
         var vm = new BinderUploadViewModel
@@ -149,7 +149,7 @@ public class BindersController : Controller
     }
 
     [HttpPost("Upload")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Author}")]
     [ValidateAntiForgeryToken]
     // 26 MB = 25 MB max file (enforced in ViewModel) + 1 MB headroom for
     // multipart boundaries, antiforgery token, form fields, and a
@@ -230,7 +230,7 @@ public class BindersController : Controller
     }
 
     [HttpPost("{id:int}/Delete")]
-    [Authorize(Roles = AppRoles.Admin)]
+    [Authorize(Roles = $"{AppRoles.Admin},{AppRoles.Author}")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {

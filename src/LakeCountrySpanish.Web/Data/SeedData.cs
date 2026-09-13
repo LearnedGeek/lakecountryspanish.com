@@ -15,8 +15,11 @@ public static class SeedData
         // Apply any pending migrations (this also creates the database if it doesn't exist)
         await context.Database.MigrateAsync();
 
-        // Create roles
-        string[] roles = { AppRoles.Admin, AppRoles.Student, AppRoles.Teacher };
+        // Create roles. Author is layered between Teacher (read-only)
+        // and Admin (full power) so the co-founders can write curriculum
+        // + upload binders + manage programs without touching Stripe,
+        // student scheduling, or user administration. See AppRoles.cs.
+        string[] roles = { AppRoles.Admin, AppRoles.Author, AppRoles.Student, AppRoles.Teacher };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))

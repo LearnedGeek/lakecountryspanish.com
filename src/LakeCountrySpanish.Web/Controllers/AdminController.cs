@@ -445,12 +445,13 @@ public class AdminController : Controller
             return NotFound();
         }
 
-        // Any staff account (Teacher or Admin) can be edited from here.
-        // Loosening from the original Teacher-only guard so an admin can
-        // reach Karen's or Cece's row from the Teachers list (they hold
-        // both roles) and toggle Admin on/off without a separate surface.
+        // Any staff account can be edited from here. The staff-role
+        // check accepts any of Admin / Author / Teacher so a user
+        // demoted below Teacher (via role-checkbox reconciliation) is
+        // still bookmark-reachable, and so a hypothetical Author-only
+        // account (no Teacher) can still be edited.
         var currentRoles = await _userManager.GetRolesAsync(user);
-        if (!currentRoles.Contains(AppRoles.Teacher) && !currentRoles.Contains(AppRoles.Admin))
+        if (!currentRoles.Any(IsAssignableRole))
         {
             return NotFound();
         }
@@ -467,12 +468,13 @@ public class AdminController : Controller
         });
     }
 
-    // The Admin + Teacher pair is what the role-assignment checkboxes on
-    // the EditTeacher form manage. Student is deliberately excluded from
-    // this surface — it's a customer-facing role owned by the enrollment
-    // path, not something an admin toggles on a staff account.
+    // The staff role trio (Admin, Author, Teacher) is what the role-
+    // assignment checkboxes on the EditTeacher form manage. Student is
+    // deliberately excluded — it's a customer-facing role owned by the
+    // enrollment path, not something an admin toggles on a staff
+    // account.
     private static bool IsAssignableRole(string role) =>
-        role == AppRoles.Admin || role == AppRoles.Teacher;
+        role == AppRoles.Admin || role == AppRoles.Author || role == AppRoles.Teacher;
 
     // Audit trail for role changes. Logs even when nothing actually
     // changed (no-op saves still carry an actor + subject) so a future
@@ -516,7 +518,7 @@ public class AdminController : Controller
         }
 
         var currentRoles = await _userManager.GetRolesAsync(user);
-        if (!currentRoles.Contains(AppRoles.Teacher) && !currentRoles.Contains(AppRoles.Admin))
+        if (!currentRoles.Any(IsAssignableRole))
         {
             return NotFound();
         }
@@ -541,7 +543,7 @@ public class AdminController : Controller
         if (desiredRoles.Count == 0)
         {
             ModelState.AddModelError(nameof(model.SelectedRoles),
-                "Pick at least one role (Admin or Teacher).");
+                "Pick at least one role (Admin, Author, or Teacher).");
             return View(model);
         }
 
