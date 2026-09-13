@@ -30,32 +30,9 @@
             <a href="@Url.Action("Index")" class="text-sm font-medium text-indigo-600 hover:text-indigo-800">← All binders</a>
         </div>
 
-        @if (!ViewData.ModelState.IsValid)
-        {
-            <div class="mb-6 rounded-xl border-2 border-red-300 bg-red-50 p-4 shadow-sm">
-                <div class="flex items-start gap-2">
-                    <span class="text-red-600 text-lg leading-none mt-0.5">⚠</span>
-                    <div class="flex-1">
-                        <div class="text-sm font-bold text-red-800 mb-1">Please fix the following before saving:</div>
-                        <ul class="list-disc list-inside text-sm text-red-700 space-y-0.5">
-                            @foreach (var entry in ViewData.ModelState)
-                            {
-                                foreach (var err in entry.Value.Errors)
-                                {
-                                    <li>
-                                        @if (!string.IsNullOrEmpty(entry.Key))
-                                        {
-                                            <span class="font-semibold">@entry.Key:</span>
-                                        }
-                                        @(string.IsNullOrEmpty(err.ErrorMessage) ? "Invalid value" : err.ErrorMessage)
-                                    </li>
-                                }
-                            }
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        }
+        <div class="mb-6">
+            <partial name="_ValidationErrorBanner" />
+        </div>
 
         @if (Model.IsReplace && Model.Existing is not null)
         {
@@ -138,50 +115,14 @@
 
                     <!-- Grade bands — same widget pattern as the Program form
                          so admins don't have to relearn the interaction. -->
-                    <div class="sm:col-span-2">
-                        <!-- The chip picker isn't a single form control, so a
-                             plain <label> would fail S6853 (label without a
-                             control). Present it as a labeled group instead:
-                             the visible heading becomes an aria-labelledby
-                             target for the chip container's role="group". -->
-                        <div id="grade-band-picker-label" class="@labelClass">Grade bands this binder covers</div>
+                    <fieldset class="sm:col-span-2">
+                        <legend class="@labelClass">Grade bands this binder covers</legend>
                         <div class="text-xs text-gray-600 mb-2">
                             Click a grade to toggle it, or click a start then an end to fill a range (K4-2nd, 3rd-6th, etc).
                         </div>
-                        <div id="grade-band-chips" role="group" aria-labelledby="grade-band-picker-label" class="flex flex-wrap gap-2">
-                            @{
-                                var allBands = new[] {
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.K4, "K4"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.K5, "K5"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade1, "1st"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade2, "2nd"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade3, "3rd"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade4, "4th"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade5, "5th"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade6, "6th"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade7, "7th"),
-                                    (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade8, "8th"),
-                                };
-                            }
-                            @foreach (var band in allBands)
-                            {
-                                var isSelected = Model.SelectedGradeBands.Contains(band.Item1);
-                                <button type="button"
-                                        class="grade-chip inline-flex items-center px-3 py-1.5 rounded-full border-2 text-sm font-semibold transition-colors @(isSelected ? "border-indigo-500 bg-indigo-100 text-indigo-800" : "border-gray-300 bg-white text-gray-700 hover:border-gray-400")"
-                                        data-band-value="@((int)band.Item1)"
-                                        data-band-selected="@(isSelected ? "true" : "false")"
-                                        aria-pressed="@(isSelected ? "true" : "false")"
-                                        aria-label="Grade band @band.Item2">
-                                    @band.Item2
-                                </button>
-                                <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
-                                       class="grade-hidden-input"
-                                       data-band-value="@((int)band.Item1)"
-                                       disabled="@(!isSelected ? "disabled" : null)" />
-                            }
-                        </div>
+                        <partial name="_GradeBandPicker" model="Model.SelectedGradeBands" />
                         <span asp-validation-for="SelectedGradeBands" class="@errorClass"></span>
-                    </div>
+                    </fieldset>
                 </div>
             </section>
 
@@ -230,55 +171,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-
-    <script>
-    // Same two-click range-fill widget as the Program form. Kept inline
-    // rather than extracted into a partial because the two forms have
-    // slightly different chip containers and it's <60 lines.
-    (function () {
-        const chipContainer = document.getElementById('grade-band-chips');
-        if (!chipContainer) return;
-
-        function setChip(el, selected) {
-            el.dataset.bandSelected = selected ? 'true' : 'false';
-            el.setAttribute('aria-pressed', selected ? 'true' : 'false');
-            if (selected) {
-                el.classList.add('border-indigo-500', 'bg-indigo-100', 'text-indigo-800');
-                el.classList.remove('border-gray-300', 'bg-white', 'text-gray-700', 'hover:border-gray-400');
-            } else {
-                el.classList.remove('border-indigo-500', 'bg-indigo-100', 'text-indigo-800');
-                el.classList.add('border-gray-300', 'bg-white', 'text-gray-700', 'hover:border-gray-400');
-            }
-            const hidden = document.querySelector('.grade-hidden-input[data-band-value="' + el.dataset.bandValue + '"]');
-            if (hidden) hidden.disabled = !selected;
-        }
-
-        let pendingStart = null;
-        const chips = Array.from(chipContainer.querySelectorAll('.grade-chip'));
-        chips.forEach(function (chip) {
-            chip.addEventListener('click', function () {
-                const value = parseInt(chip.dataset.bandValue, 10);
-                const currentlySelected = chip.dataset.bandSelected === 'true';
-
-                if (pendingStart === null) {
-                    if (currentlySelected) {
-                        setChip(chip, false);
-                    } else {
-                        setChip(chip, true);
-                        pendingStart = value;
-                    }
-                    return;
-                }
-
-                const lo = Math.min(pendingStart, value);
-                const hi = Math.max(pendingStart, value);
-                chips.forEach(function (c) {
-                    const v = parseInt(c.dataset.bandValue, 10);
-                    if (v >= lo && v <= hi) setChip(c, true);
-                });
-                pendingStart = null;
-            });
-        });
-    })();
-    </script>
+    <script src="~/js/grade-band-picker.js" asp-append-version="true"></script>
 }

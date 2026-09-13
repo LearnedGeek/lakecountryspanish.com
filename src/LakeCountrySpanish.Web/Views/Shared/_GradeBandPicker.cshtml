@@ -1,0 +1,44 @@
+@model IReadOnlyList<LakeCountrySpanish.Web.Models.Entities.GradeBand>
+@{
+    // Shared chip picker for the Program form and the Binder upload form.
+    // Renders a <fieldset> with one <button> per band and a paired hidden
+    // <input name="SelectedGradeBands"> — disabled inputs don't post, so
+    // toggling `disabled` on the hidden input is how the picker excludes
+    // unselected bands from the form submit.
+    //
+    // Behavior is wired by /js/grade-band-picker.js (included via the
+    // scripts section of the parent view). Both surfaces bind to the same
+    // model property name ("SelectedGradeBands") so the JS is agnostic to
+    // which form contains it.
+    var selected = Model ?? Array.Empty<LakeCountrySpanish.Web.Models.Entities.GradeBand>();
+    var allBands = new[] {
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.K4, "K4"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.K5, "K5"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade1, "1st"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade2, "2nd"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade3, "3rd"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade4, "4th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade5, "5th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade6, "6th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade7, "7th"),
+        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade8, "8th"),
+    };
+}
+<div id="grade-band-chips" class="flex flex-wrap gap-2">
+    @foreach (var band in allBands)
+    {
+        var isSelected = selected.Contains(band.Item1);
+        <button type="button"
+                class="grade-chip inline-flex items-center px-3 py-1.5 rounded-full border-2 text-sm font-semibold transition-colors @(isSelected ? "border-indigo-500 bg-indigo-100 text-indigo-800" : "border-gray-300 bg-white text-gray-700 hover:border-gray-400")"
+                data-band-value="@((int)band.Item1)"
+                data-band-selected="@(isSelected ? "true" : "false")"
+                aria-pressed="@(isSelected ? "true" : "false")"
+                aria-label="Grade band @band.Item2">
+            @band.Item2
+        </button>
+        <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
+               class="grade-hidden-input"
+               data-band-value="@((int)band.Item1)"
+               disabled="@(!isSelected ? "disabled" : null)" />
+    }
+</div>

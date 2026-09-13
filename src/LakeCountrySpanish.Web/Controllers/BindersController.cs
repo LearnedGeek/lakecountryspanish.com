@@ -132,7 +132,11 @@ public class BindersController : Controller
     [HttpPost("Upload")]
     [Authorize(Roles = AppRoles.Admin)]
     [ValidateAntiForgeryToken]
-    [RequestSizeLimit(30 * 1024 * 1024)] // 30 MB request cap; ViewModel enforces 25 MB per file
+    // 26 MB = 25 MB max file (enforced in ViewModel) + 1 MB headroom for
+    // multipart boundaries, antiforgery token, form fields, and a
+    // long PDF filename. Kept as tight as possible over the file cap to
+    // reject oversized bodies at the pipeline instead of the ViewModel.
+    [RequestSizeLimit(26 * 1024 * 1024)]
     public async Task<IActionResult> Upload(BinderUploadViewModel model, CancellationToken ct)
     {
         model.ExistingCurriculumFamilies = await _programs.GetDistinctCurriculumFamiliesAsync(ct);
@@ -148,7 +152,7 @@ public class BindersController : Controller
                 .FirstOrDefaultAsync(d => d.CurriculumFamily == normalizedFamily && d.DocumentType == model.DocumentType, ct);
             if (existing is null) return NotFound();
 
-            existing.Title = string.IsNullOrWhiteSpace(model.Title) ? existing.Title : model.Title!.Trim();
+            existing.Title = string.IsNullOrWhiteSpace(model.Title) ? existing.Title : model.Title.Trim();
             existing.GradeBands.Clear();
             foreach (var band in model.SelectedGradeBands.Distinct())
             {
@@ -179,7 +183,7 @@ public class BindersController : Controller
         // these fields and Karen's real filenames are well under either cap.
         var safeTitle = string.IsNullOrWhiteSpace(model.Title)
             ? Path.GetFileNameWithoutExtension(upload.FileName)
-            : model.Title!.Trim();
+            : model.Title.Trim();
         if (safeTitle.Length > 200) safeTitle = safeTitle[..200];
         var safeOriginalName = upload.FileName;
         if (safeOriginalName.Length > 240) safeOriginalName = safeOriginalName[..240];

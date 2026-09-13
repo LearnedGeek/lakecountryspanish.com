@@ -26,7 +26,7 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
     // ViewModel layer (BinderUploadViewModel.Validate) and here as a
     // defence-in-depth check before any Path.Combine.
     private static readonly Regex FamilySlugPattern =
-        new(@"^[a-z][a-z0-9-]{0,79}$", RegexOptions.Compiled);
+        new(@"^[a-z][a-z0-9-]{0,79}$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
     public CurriculumDocumentService(
         ApplicationDbContext context,
@@ -126,65 +126,33 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
             await fileStream.CopyToAsync(fs, ct);
         }
 
-        // Look up existing (family, docType) — replace-in-place semantics.
+        // Replace-in-place semantics: existing (family, docType) row is
+        // mutated; a fresh combination gets a new row. Prior path (if
+        // any) is resolved defensively so a legacy row with a rooted
+        // FilePath doesn't turn cleanup into "follow the pointer".
         var existing = await _context.CurriculumDocuments
             .Include(d => d.GradeBands)
             .FirstOrDefaultAsync(d => d.CurriculumFamily == normalizedFamily && d.DocumentType == documentType, ct);
 
-        CurriculumDocument doc;
-        string? priorAbsolutePath = null;
-        if (existing is not null)
+        var priorAbsolutePath = existing is null ? null : TryResolveWithinRoot(existing.FilePath);
+        var resolvedTitle = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(originalFileName) : title.Trim();
+        var doc = existing ?? _context.CurriculumDocuments.Add(new CurriculumDocument
         {
-            // Resolve prior path defensively — if a legacy row somehow held
-            // a rooted or escaping FilePath we log-and-skip the cleanup
-            // rather than following it. The new DB row will still point at
-            // the freshly-written file.
-            priorAbsolutePath = TryResolveWithinRoot(existing.FilePath);
-            existing.FilePath = relativePath;
-            existing.Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(originalFileName) : title.Trim();
-            existing.OriginalFileName = originalFileName;
-            existing.FileSizeBytes = fileSizeBytes;
-            existing.UpdatedAt = DateTime.UtcNow;
-            existing.UploadedById = uploadedById;
-            existing.GradeBands.Clear();
-            foreach (var band in gradeBands.Distinct())
-            {
-                existing.GradeBands.Add(new CurriculumDocumentGradeBand { GradeBand = band });
-            }
-            doc = existing;
-        }
-        else
-        {
-            doc = new CurriculumDocument
-            {
-                CurriculumFamily = normalizedFamily,
-                DocumentType = documentType,
-                Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(originalFileName) : title.Trim(),
-                FilePath = relativePath,
-                OriginalFileName = originalFileName,
-                FileSizeBytes = fileSizeBytes,
-                UploadedAt = DateTime.UtcNow,
-                UploadedById = uploadedById
-            };
-            foreach (var band in gradeBands.Distinct())
-            {
-                doc.GradeBands.Add(new CurriculumDocumentGradeBand { GradeBand = band });
-            }
-            _context.CurriculumDocuments.Add(doc);
-        }
+            CurriculumFamily = normalizedFamily,
+            DocumentType = documentType,
+            UploadedAt = DateTime.UtcNow
+        }).Entity;
+
+        doc.Title = resolvedTitle;
+        doc.FilePath = relativePath;
+        doc.OriginalFileName = originalFileName;
+        doc.FileSizeBytes = fileSizeBytes;
+        doc.UploadedById = uploadedById;
+        if (existing is not null) doc.UpdatedAt = DateTime.UtcNow;
+        ReplaceGradeBands(doc, gradeBands);
 
         await _context.SaveChangesAsync(ct);
-
-        // Prior file cleanup after DB commit — if this fails we've orphaned
-        // it, but the current row + file are consistent. Best-effort;
-        // catch only the specific filesystem exceptions that File.Delete
-        // is documented to throw so unexpected exceptions still surface.
-        if (priorAbsolutePath is not null && File.Exists(priorAbsolutePath) && priorAbsolutePath != absolutePath)
-        {
-            try { File.Delete(priorAbsolutePath); }
-            catch (IOException ex) { _logger.LogWarning(ex, "Failed to delete prior binder file {Path}", priorAbsolutePath); }
-            catch (UnauthorizedAccessException ex) { _logger.LogWarning(ex, "Failed to delete prior binder file {Path}", priorAbsolutePath); }
-        }
+        TryDeletePriorFile(priorAbsolutePath, absolutePath);
 
         _logger.LogInformation(
             "Uploaded curriculum document {Id} ({Family}/{DocType}) — {Bytes} bytes",
@@ -192,26 +160,43 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
         return doc;
     }
 
+    private static void ReplaceGradeBands(CurriculumDocument doc, IReadOnlyList<GradeBand> gradeBands)
+    {
+        doc.GradeBands.Clear();
+        foreach (var band in gradeBands.Distinct())
+        {
+            doc.GradeBands.Add(new CurriculumDocumentGradeBand { GradeBand = band });
+        }
+    }
+
+    // Best-effort cleanup: if the prior path resolved outside the root
+    // it is null here and this is a no-op. IOException +
+    // UnauthorizedAccessException are the only expected outcomes; other
+    // exception types surface so unexpected failures aren't swallowed.
+    private void TryDeletePriorFile(string? priorAbsolutePath, string currentAbsolutePath)
+    {
+        if (priorAbsolutePath is null || priorAbsolutePath == currentAbsolutePath) return;
+        if (!File.Exists(priorAbsolutePath)) return;
+        try { File.Delete(priorAbsolutePath); }
+        catch (IOException ex) { _logger.LogWarning(ex, "Failed to delete prior binder file {Path}", priorAbsolutePath); }
+        catch (UnauthorizedAccessException ex) { _logger.LogWarning(ex, "Failed to delete prior binder file {Path}", priorAbsolutePath); }
+    }
+
     public async Task DeleteAsync(int id, CancellationToken ct = default)
     {
         var doc = await _context.CurriculumDocuments.FirstOrDefaultAsync(d => d.Id == id, ct);
         if (doc is null) return;
 
-        // Same defensive resolve — never trust a stored FilePath enough to
-        // let File.Delete follow it outside the storage root.
+        // Defensive resolve so a legacy row with a rooted / escaping
+        // FilePath doesn't turn File.Delete into "follow the pointer".
         var absolutePath = TryResolveWithinRoot(doc.FilePath);
 
         _context.CurriculumDocuments.Remove(doc);
         await _context.SaveChangesAsync(ct);
 
-        // Delete file after row is gone so a partial failure leaves an
-        // orphan file rather than a live row pointing at a missing file.
-        if (absolutePath is not null && File.Exists(absolutePath))
-        {
-            try { File.Delete(absolutePath); }
-            catch (IOException ex) { _logger.LogWarning(ex, "Failed to delete binder file {Path}", absolutePath); }
-            catch (UnauthorizedAccessException ex) { _logger.LogWarning(ex, "Failed to delete binder file {Path}", absolutePath); }
-        }
+        // Row is gone; if file cleanup fails we're left with a harmless
+        // orphan rather than a live row pointing at a missing file.
+        TryDeletePriorFile(absolutePath, currentAbsolutePath: string.Empty);
 
         _logger.LogInformation("Deleted curriculum document {Id} ({Family}/{DocType})", doc.Id, doc.CurriculumFamily, doc.DocumentType);
     }

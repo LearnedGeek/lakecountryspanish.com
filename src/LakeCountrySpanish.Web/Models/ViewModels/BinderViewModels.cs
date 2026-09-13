@@ -32,9 +32,11 @@ public sealed class BinderUploadViewModel : IValidatableObject
     // directory name under the binder storage root, so anything more
     // permissive than [a-z0-9-] risks path traversal even after
     // ToLowerInvariant/Trim. Enforced identically in
-    // CurriculumDocumentService as defence-in-depth.
+    // CurriculumDocumentService as defence-in-depth. Explicit 1-second
+    // timeout is defence against a hypothetical ReDoS on a compiled
+    // linear pattern — cheap, and satisfies Sonar S6444.
     private static readonly Regex FamilySlugPattern =
-        new(@"^[a-z][a-z0-9-]{0,79}$", RegexOptions.Compiled);
+        new(@"^[a-z][a-z0-9-]{0,79}$", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
     [Required, StringLength(80)]
     [Display(Name = "Curriculum family", Description = "Pick an existing family or type a new one (lowercase-hyphenated, e.g. \"bailamos\").")]
@@ -66,7 +68,7 @@ public sealed class BinderUploadViewModel : IValidatableObject
     /// <summary>Existing document being replaced (for display), null on fresh upload.</summary>
     public CurriculumDocument? Existing { get; set; }
 
-    public IEnumerable<ValidationResult> Validate(ValidationContext ctx)
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
         // Slug format — normalize to lowercase before checking so Karen
         // can paste "Bailamos" into the box without a wall of red.
