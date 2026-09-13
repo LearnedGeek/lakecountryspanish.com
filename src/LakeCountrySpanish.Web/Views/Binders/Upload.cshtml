@@ -139,11 +139,16 @@
                     <!-- Grade bands — same widget pattern as the Program form
                          so admins don't have to relearn the interaction. -->
                     <div class="sm:col-span-2">
-                        <label class="@labelClass">Grade bands this binder covers</label>
+                        <!-- The chip picker isn't a single form control, so a
+                             plain <label> would fail S6853 (label without a
+                             control). Present it as a labeled group instead:
+                             the visible heading becomes an aria-labelledby
+                             target for the chip container's role="group". -->
+                        <div id="grade-band-picker-label" class="@labelClass">Grade bands this binder covers</div>
                         <div class="text-xs text-gray-600 mb-2">
                             Click a grade to toggle it, or click a start then an end to fill a range (K4-2nd, 3rd-6th, etc).
                         </div>
-                        <div id="grade-band-chips" class="flex flex-wrap gap-2">
+                        <div id="grade-band-chips" role="group" aria-labelledby="grade-band-picker-label" class="flex flex-wrap gap-2">
                             @{
                                 var allBands = new[] {
                                     (LakeCountrySpanish.Web.Models.Entities.GradeBand.K4, "K4"),
@@ -164,7 +169,9 @@
                                 <button type="button"
                                         class="grade-chip inline-flex items-center px-3 py-1.5 rounded-full border-2 text-sm font-semibold transition-colors @(isSelected ? "border-indigo-500 bg-indigo-100 text-indigo-800" : "border-gray-300 bg-white text-gray-700 hover:border-gray-400")"
                                         data-band-value="@((int)band.Item1)"
-                                        data-band-selected="@(isSelected ? "true" : "false")">
+                                        data-band-selected="@(isSelected ? "true" : "false")"
+                                        aria-pressed="@(isSelected ? "true" : "false")"
+                                        aria-label="Grade band @band.Item2">
                                     @band.Item2
                                 </button>
                                 <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
@@ -234,6 +241,7 @@
 
         function setChip(el, selected) {
             el.dataset.bandSelected = selected ? 'true' : 'false';
+            el.setAttribute('aria-pressed', selected ? 'true' : 'false');
             if (selected) {
                 el.classList.add('border-indigo-500', 'bg-indigo-100', 'text-indigo-800');
                 el.classList.remove('border-gray-300', 'bg-white', 'text-gray-700', 'hover:border-gray-400');

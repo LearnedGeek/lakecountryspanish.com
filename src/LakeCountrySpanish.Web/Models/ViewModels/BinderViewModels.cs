@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 using LakeCountrySpanish.Web.Models.Entities;
 
 namespace LakeCountrySpanish.Web.Models.ViewModels;
@@ -27,6 +28,14 @@ public sealed class BinderFamilyGroup
 /// </summary>
 public sealed class BinderUploadViewModel : IValidatableObject
 {
+    // Slug pattern doubles as security perimeter: the value becomes a
+    // directory name under the binder storage root, so anything more
+    // permissive than [a-z0-9-] risks path traversal even after
+    // ToLowerInvariant/Trim. Enforced identically in
+    // CurriculumDocumentService as defence-in-depth.
+    private static readonly Regex FamilySlugPattern =
+        new(@"^[a-z][a-z0-9-]{0,79}$", RegexOptions.Compiled);
+
     [Required, StringLength(80)]
     [Display(Name = "Curriculum family", Description = "Pick an existing family or type a new one (lowercase-hyphenated, e.g. \"bailamos\").")]
     public string CurriculumFamily { get; set; } = string.Empty;
@@ -59,6 +68,25 @@ public sealed class BinderUploadViewModel : IValidatableObject
 
     public IEnumerable<ValidationResult> Validate(ValidationContext ctx)
     {
+        // Slug format — normalize to lowercase before checking so Karen
+        // can paste "Bailamos" into the box without a wall of red.
+        var normalizedFamily = (CurriculumFamily ?? string.Empty).Trim().ToLowerInvariant();
+        if (normalizedFamily.Length > 0 && !FamilySlugPattern.IsMatch(normalizedFamily))
+        {
+            yield return new ValidationResult(
+                "Curriculum family must be lowercase letters, digits, and hyphens (starting with a letter), e.g. \"bailamos\".",
+                new[] { nameof(CurriculumFamily) });
+        }
+
+        // Reject forged DocumentType values (e.g. crafted POST with an
+        // out-of-range enum int) — model binding accepts any int for an
+        // enum property.
+        if (!Enum.IsDefined(typeof(CurriculumDocumentType), DocumentType))
+        {
+            yield return new ValidationResult(
+                "Unknown document type.", new[] { nameof(DocumentType) });
+        }
+
         // At least one grade band required so teacher list can filter meaningfully.
         if (SelectedGradeBands.Count == 0)
         {
@@ -74,6 +102,13 @@ public sealed class BinderUploadViewModel : IValidatableObject
 
         if (Upload is not null)
         {
+            // Empty file is non-null but useless as a binder — teachers
+            // would download a zero-byte "PDF" that PDF readers reject.
+            if (Upload.Length == 0)
+            {
+                yield return new ValidationResult("The selected file is empty.", new[] { nameof(Upload) });
+            }
+
             var ext = Path.GetExtension(Upload.FileName).ToLowerInvariant();
             if (ext != ".pdf")
             {

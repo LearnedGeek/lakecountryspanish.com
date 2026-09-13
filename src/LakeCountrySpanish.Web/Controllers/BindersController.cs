@@ -160,17 +160,40 @@ public class BindersController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Fresh upload OR replace with a new file.
+        // Fresh upload OR replace with a new file. The IValidatableObject
+        // pass guarantees Upload is non-null here (Fresh: Upload required;
+        // Replace-with-no-file: handled by the early branch above), but
+        // the compiler can't see across that so we assert explicitly.
+        if (model.Upload is null)
+        {
+            ModelState.AddModelError(nameof(model.Upload), "Please select a PDF to upload.");
+            return View(model);
+        }
+        var upload = model.Upload;
+
+        // Bound the title + original filename before handing them to the
+        // service — the DB columns cap at 200 / 240 chars and a valid PDF
+        // with a very long filename would otherwise pass validation
+        // (StringLength doesn't apply to IFormFile.FileName) and 500 on
+        // SaveChangesAsync. Truncate rather than reject: parents don't see
+        // these fields and Karen's real filenames are well under either cap.
+        var safeTitle = string.IsNullOrWhiteSpace(model.Title)
+            ? Path.GetFileNameWithoutExtension(upload.FileName)
+            : model.Title!.Trim();
+        if (safeTitle.Length > 200) safeTitle = safeTitle[..200];
+        var safeOriginalName = upload.FileName;
+        if (safeOriginalName.Length > 240) safeOriginalName = safeOriginalName[..240];
+
         var uploaderId = _userManager.GetUserId(User) ?? string.Empty;
-        await using var stream = model.Upload!.OpenReadStream();
+        await using var stream = upload.OpenReadStream();
         var doc = await _documents.UploadAsync(
             normalizedFamily,
             model.DocumentType,
             model.SelectedGradeBands,
-            string.IsNullOrWhiteSpace(model.Title) ? Path.GetFileNameWithoutExtension(model.Upload.FileName) : model.Title!,
+            safeTitle,
             stream,
-            model.Upload.FileName,
-            model.Upload.Length,
+            safeOriginalName,
+            upload.Length,
             uploaderId,
             ct);
 

@@ -247,6 +247,10 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
             StartTime = source.StartTime,
             EndTime = source.EndTime,
             GradeRange = source.GradeRange,
+            // Preserve the binder linkage (issue #20) — without this the
+            // duplicated program lands with no CurriculumFamily and Karen
+            // has to re-pick it before the shared binder shows up.
+            CurriculumFamily = source.CurriculumFamily,
             AgeMin = source.AgeMin,
             AgeMax = source.AgeMax,
             FullPrice = source.FullPrice,

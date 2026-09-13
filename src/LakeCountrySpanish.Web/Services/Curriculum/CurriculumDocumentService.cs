@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using LakeCountrySpanish.Web.Data;
 using LakeCountrySpanish.Web.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,15 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
     // wwwroot so downloads go through the controller action (auth enforced)
     // rather than being served as static files.
     private const string StorageConfigKey = "Storage:BindersDir";
+
+    // Slug pattern for a curriculum-family folder name. Constrained so any
+    // future compromise of the admin form still cannot escape the storage
+    // root: lowercase letter first, then letters / digits / hyphens only,
+    // no dots, no separators, capped at 80 chars. Enforced at both the
+    // ViewModel layer (BinderUploadViewModel.Validate) and here as a
+    // defence-in-depth check before any Path.Combine.
+    private static readonly Regex FamilySlugPattern =
+        new(@"^[a-z][a-z0-9-]{0,79}$", RegexOptions.Compiled);
 
     public CurriculumDocumentService(
         ApplicationDbContext context,
@@ -58,7 +68,7 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
             .FirstOrDefaultAsync(d => d.Id == id, ct);
 
     public string GetAbsolutePath(CurriculumDocument document) =>
-        Path.Combine(ResolveStorageRoot(), document.FilePath);
+        ResolveWithinRoot(document.FilePath);
 
     public async Task<CurriculumDocument> UploadAsync(
         string curriculumFamily,
@@ -71,22 +81,41 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
         string uploadedById,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(curriculumFamily))
-            throw new ArgumentException("Curriculum family is required.", nameof(curriculumFamily));
+        var normalizedFamily = (curriculumFamily ?? string.Empty).Trim().ToLowerInvariant();
+        if (!FamilySlugPattern.IsMatch(normalizedFamily))
+        {
+            // Defence-in-depth: BinderUploadViewModel already rejects anything
+            // that doesn't match this pattern, so hitting this branch means
+            // the request bypassed that layer. Refuse loudly.
+            throw new ArgumentException(
+                "Curriculum family must be lowercase letters, digits, and hyphens (starting with a letter).",
+                nameof(curriculumFamily));
+        }
+        if (!Enum.IsDefined(typeof(CurriculumDocumentType), documentType))
+        {
+            throw new ArgumentException("Unknown document type.", nameof(documentType));
+        }
 
-        var normalizedFamily = curriculumFamily.Trim().ToLowerInvariant();
         var storageRoot = ResolveStorageRoot();
-        Directory.CreateDirectory(Path.Combine(storageRoot, normalizedFamily));
+        var familyDir = Path.Combine(storageRoot, normalizedFamily);
+        Directory.CreateDirectory(familyDir);
 
-        // Filename: {doctype}-{yyyyMMddHHmmss}.pdf under the family folder.
-        // Timestamp in the name means each upload is a fresh file — the
-        // prior file is deleted after the DB row is updated so a partial
-        // failure doesn't corrupt the current binder.
+        // Filename: {doctype}-{yyyyMMddHHmmss}-{8-char-hex}.pdf under the
+        // family folder. Timestamp is human-readable for ops; the random
+        // suffix guarantees a fresh file even when two uploads for the
+        // same (family, doctype) begin in the same second — otherwise
+        // File.Create would truncate the live PDF the DB row still points
+        // at, briefly serving a partial file until commit.
         var stamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var rand = Guid.NewGuid().ToString("N")[..8];
         var ext = Path.GetExtension(originalFileName);
         if (string.IsNullOrEmpty(ext)) ext = ".pdf";
-        var relativePath = Path.Combine(normalizedFamily, $"{documentType.ToString().ToLowerInvariant()}-{stamp}{ext}").Replace('\\', '/');
-        var absolutePath = Path.Combine(storageRoot, relativePath);
+        // Both segments are server-controlled + validated, so string join
+        // is safe. Using explicit '/' rather than Path.Combine matches the
+        // DB storage convention (forward slashes cross-platform).
+        var fileName = $"{documentType.ToString().ToLowerInvariant()}-{stamp}-{rand}{ext}";
+        var relativePath = $"{normalizedFamily}/{fileName}";
+        var absolutePath = ResolveWithinRoot(relativePath);
 
         // Write the file first (before touching the DB) so a DB failure
         // leaves an orphan file rather than a broken DB row pointing at
@@ -106,7 +135,11 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
         string? priorAbsolutePath = null;
         if (existing is not null)
         {
-            priorAbsolutePath = Path.Combine(storageRoot, existing.FilePath);
+            // Resolve prior path defensively — if a legacy row somehow held
+            // a rooted or escaping FilePath we log-and-skip the cleanup
+            // rather than following it. The new DB row will still point at
+            // the freshly-written file.
+            priorAbsolutePath = TryResolveWithinRoot(existing.FilePath);
             existing.FilePath = relativePath;
             existing.Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(originalFileName) : title.Trim();
             existing.OriginalFileName = originalFileName;
@@ -143,11 +176,14 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
         await _context.SaveChangesAsync(ct);
 
         // Prior file cleanup after DB commit — if this fails we've orphaned
-        // it, but the current row + file are consistent. Best-effort.
+        // it, but the current row + file are consistent. Best-effort;
+        // catch only the specific filesystem exceptions that File.Delete
+        // is documented to throw so unexpected exceptions still surface.
         if (priorAbsolutePath is not null && File.Exists(priorAbsolutePath) && priorAbsolutePath != absolutePath)
         {
             try { File.Delete(priorAbsolutePath); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Failed to delete prior binder file {Path}", priorAbsolutePath); }
+            catch (IOException ex) { _logger.LogWarning(ex, "Failed to delete prior binder file {Path}", priorAbsolutePath); }
+            catch (UnauthorizedAccessException ex) { _logger.LogWarning(ex, "Failed to delete prior binder file {Path}", priorAbsolutePath); }
         }
 
         _logger.LogInformation(
@@ -161,36 +197,96 @@ public sealed class CurriculumDocumentService : ICurriculumDocumentService
         var doc = await _context.CurriculumDocuments.FirstOrDefaultAsync(d => d.Id == id, ct);
         if (doc is null) return;
 
-        var absolutePath = Path.Combine(ResolveStorageRoot(), doc.FilePath);
+        // Same defensive resolve — never trust a stored FilePath enough to
+        // let File.Delete follow it outside the storage root.
+        var absolutePath = TryResolveWithinRoot(doc.FilePath);
 
         _context.CurriculumDocuments.Remove(doc);
         await _context.SaveChangesAsync(ct);
 
         // Delete file after row is gone so a partial failure leaves an
         // orphan file rather than a live row pointing at a missing file.
-        if (File.Exists(absolutePath))
+        if (absolutePath is not null && File.Exists(absolutePath))
         {
             try { File.Delete(absolutePath); }
-            catch (Exception ex) { _logger.LogWarning(ex, "Failed to delete binder file {Path}", absolutePath); }
+            catch (IOException ex) { _logger.LogWarning(ex, "Failed to delete binder file {Path}", absolutePath); }
+            catch (UnauthorizedAccessException ex) { _logger.LogWarning(ex, "Failed to delete binder file {Path}", absolutePath); }
         }
 
         _logger.LogInformation("Deleted curriculum document {Id} ({Family}/{DocType})", doc.Id, doc.CurriculumFamily, doc.DocumentType);
     }
 
     /// <summary>
+    /// Combine a stored relative path with the storage root and refuse the
+    /// result if it escapes that root. Throws if the path is invalid — used
+    /// by the write / read paths where a missing file is downstream and an
+    /// escaping path is a bug we want to fail on.
+    /// </summary>
+    private string ResolveWithinRoot(string relativePath) =>
+        TryResolveWithinRoot(relativePath)
+            ?? throw new InvalidOperationException(
+                $"Curriculum document path '{relativePath}' escapes the configured storage root.");
+
+    /// <summary>
+    /// Combine a stored relative path with the storage root, canonicalize,
+    /// and return null (rather than throw) if the result escapes the root
+    /// or is otherwise malformed. Used by cleanup paths where escaping a
+    /// legacy bad row should log-and-skip, not crash the operation.
+    /// Case-insensitive comparison on Windows and macOS (both have
+    /// case-insensitive filesystems by default); ordinal on Linux.
+    /// </summary>
+    private string? TryResolveWithinRoot(string? relativePath)
+    {
+        if (string.IsNullOrWhiteSpace(relativePath)) return null;
+        if (Path.IsPathRooted(relativePath)) return null;
+
+        var storageRoot = Path.GetFullPath(ResolveStorageRoot());
+        var rootWithSep = storageRoot.EndsWith(Path.DirectorySeparatorChar)
+            ? storageRoot
+            : storageRoot + Path.DirectorySeparatorChar;
+
+        string full;
+        try
+        {
+            full = Path.GetFullPath(Path.Combine(storageRoot, relativePath));
+        }
+        catch (Exception ex) when (ex is ArgumentException or PathTooLongException or NotSupportedException)
+        {
+            return null;
+        }
+
+        var cmp = (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+        return full.StartsWith(rootWithSep, cmp) ? full : null;
+    }
+
+    /// <summary>
     /// Resolves the on-disk root where binder PDFs live. Prefers the
     /// configured <c>Storage:BindersDir</c> (set in appsettings or overridden
     /// via env var in prod). Falls back to <c>{contentRoot}/UploadedBinders</c>
-    /// for local dev. Always ensures the directory exists.
+    /// for local dev only — in non-Development environments a missing setting
+    /// throws so a deploy that forgot to wire the persistent volume fails
+    /// loudly rather than storing binders inside the release directory (which
+    /// the deploy workflow rotates on every push, silently deleting them).
+    /// Always ensures the directory exists once resolved.
     /// </summary>
     private string ResolveStorageRoot()
     {
         var configured = _configuration[StorageConfigKey];
-        var root = string.IsNullOrWhiteSpace(configured)
-            ? Path.Combine(_environment.ContentRootPath, "UploadedBinders")
-            : configured;
+        if (string.IsNullOrWhiteSpace(configured))
+        {
+            if (!_environment.IsDevelopment())
+            {
+                throw new InvalidOperationException(
+                    $"Configuration key '{StorageConfigKey}' is required outside Development. " +
+                    "Point it at a persistent volume (e.g. /var/lib/{app-slug}-data/binders) — " +
+                    "the release directory is rotated on every deploy and will silently drop binders.");
+            }
+            configured = Path.Combine(_environment.ContentRootPath, "UploadedBinders");
+        }
 
-        Directory.CreateDirectory(root);
-        return root;
+        Directory.CreateDirectory(configured);
+        return configured;
     }
 }
