@@ -119,12 +119,12 @@
                         <dd class="font-medium text-gray-900">@p.MeetingDays · @p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
                     </div>
                     <div class="flex justify-between py-2.5">
-                        <dt class="font-semibold text-gray-500">Grades / Ages</dt>
+                        <dt class="font-semibold text-gray-500">Who it's for</dt>
                         @{
-                            var detailHasGrades = !string.IsNullOrEmpty(p.GradeRange);
-                            var detailHasAges = p.AgeMin > 0;
+                            // Post-#19: derived from AudienceType + GradeBands.
+                            var adminDetailLabel = LakeCountrySpanish.Web.Services.Programs.ProgramAudienceDisplay.CombinedLabel(p);
                         }
-                        <dd class="font-medium text-gray-900">@(detailHasGrades ? p.GradeRange : "")@(detailHasGrades && detailHasAges ? " · " : "")@(detailHasAges ? $"ages {p.AgeMin}–{p.AgeMax}" : "")@(!detailHasGrades && !detailHasAges ? "No restriction" : "")</dd>
+                        <dd class="font-medium text-gray-900">@(string.IsNullOrEmpty(adminDetailLabel) ? "Not set" : adminDetailLabel)</dd>
                     </div>
                     <div class="flex justify-between py-2.5">
                         <dt class="font-semibold text-gray-500">Full price</dt>

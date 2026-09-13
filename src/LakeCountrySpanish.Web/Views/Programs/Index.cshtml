@@ -118,8 +118,7 @@
                     {
                         var rep = group.Representative;
                         var groupImage = rep.EventImagePath ?? rep.HeroImagePath;
-                        var groupHasGrades = !string.IsNullOrEmpty(rep.GradeRange);
-                        var groupHasAges = rep.AgeMin > 0;
+                        var groupAudienceLabel = LakeCountrySpanish.Web.Services.Programs.ProgramAudienceDisplay.CombinedLabel(rep);
 
                         <div class="flex flex-col bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden transition-all">
                             <!-- Header: image + program name + shared attributes. Image
@@ -142,11 +141,11 @@
                                         <p class="text-sm text-gray-600 mb-3">@rep.TagLine</p>
                                     }
                                     <dl class="text-sm text-gray-700 space-y-1.5">
-                                        @if (groupHasGrades || groupHasAges)
+                                        @if (!string.IsNullOrEmpty(groupAudienceLabel))
                                         {
                                             <div class="flex items-center gap-2">
                                                 <span class="text-gray-400">🎒</span>
-                                                <span>@(groupHasGrades ? $"Grades {rep.GradeRange}" : "")@(groupHasGrades && groupHasAges ? " · " : "")@(groupHasAges ? $"ages {rep.AgeMin}–{rep.AgeMax}" : "")</span>
+                                                <span>@groupAudienceLabel</span>
                                             </div>
                                         }
                                         <div class="flex items-center gap-2">
@@ -204,23 +203,13 @@
                                                 // grade placeholder (adult / no-restriction programs)
                                                 // still gets skipped so Rocky Point stays "ages 18–99"
                                                 // without a weird "Grades 0" injection.
-                                                string? qualifier = null;
-                                                var gradeTrimmed = s.GradeRange?.Trim();
-                                                var hasMeaningfulGrade = !string.IsNullOrEmpty(gradeTrimmed) && gradeTrimmed != "0";
-                                                var hasAges = s.AgeMin > 0;
-
-                                                if (hasMeaningfulGrade && hasAges)
-                                                {
-                                                    qualifier = $"Grades {gradeTrimmed} · ages {s.AgeMin}–{s.AgeMax}";
-                                                }
-                                                else if (hasMeaningfulGrade)
-                                                {
-                                                    qualifier = $"Grades {gradeTrimmed}";
-                                                }
-                                                else if (hasAges)
-                                                {
-                                                    qualifier = $"ages {s.AgeMin}–{s.AgeMax}";
-                                                }
+                                                // Post-#19: audience label comes from the helper,
+                                                // which reads AudienceType + GradeBands + AgeMin/Max
+                                                // and formats a friendly string ("Grades 3–6 · ages 8–14",
+                                                // "Adults · Ages 18+", "All ages", etc). Empty-string
+                                                // return means no meaningful label — omit the pill.
+                                                string? qualifier = LakeCountrySpanish.Web.Services.Programs.ProgramAudienceDisplay.CombinedLabel(s);
+                                                if (string.IsNullOrEmpty(qualifier)) qualifier = null;
                                                 <li>
                                                     <a href="@Url.Action("Detail", "Programs", new { slug = s.Slug })"
                                                        class="block py-3 hover:bg-white/80 rounded-lg -mx-2 px-2 transition-colors group">

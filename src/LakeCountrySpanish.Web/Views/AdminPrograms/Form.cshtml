@@ -213,11 +213,80 @@
                         <label asp-for="EndTime" class="@labelClass"></label>
                         <input asp-for="EndTime" type="time" class="@fieldClass" />
                     </div>
-                    <div>
-                        <label asp-for="GradeRange" class="@labelClass"></label>
-                        <input asp-for="GradeRange" class="@fieldClass" placeholder="3-6" />
+                    <!-- Audience picker (issue #19). Replaces the legacy
+                         free-form Grade range text field. Three tabs pick
+                         AudienceType; when Grades is active, the pill row
+                         picks specific bands with two-click range fill. -->
+                    <div class="sm:col-span-2">
+                        <label class="@labelClass">Who is this for?</label>
+                        <div class="flex flex-wrap gap-2 mb-3" role="radiogroup" aria-label="Audience type">
+                            @foreach (var audience in new[] {
+                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.Grades, "Grades"),
+                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.Adult,  "Adults"),
+                                (LakeCountrySpanish.Web.Models.Entities.AudienceType.All,    "All ages")
+                            })
+                            {
+                                var selected = Model.AudienceType == audience.Item1;
+                                <label class="relative">
+                                    <input type="radio" name="AudienceType" value="@((int)audience.Item1)"
+                                           class="peer sr-only audience-radio"
+                                           data-audience="@audience.Item1"
+                                           checked="@(selected ? "checked" : null)" />
+                                    <span class="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-colors
+                                                 border-gray-300 bg-white text-gray-700
+                                                 peer-checked:border-indigo-500 peer-checked:bg-indigo-50 peer-checked:text-indigo-800
+                                                 peer-focus:ring-4 peer-focus:ring-indigo-500/20">
+                                        @audience.Item2
+                                    </span>
+                                </label>
+                            }
+                        </div>
+
+                        <div id="grade-band-picker" class="@(Model.AudienceType == LakeCountrySpanish.Web.Models.Entities.AudienceType.Grades ? "" : "hidden")">
+                            <div class="text-xs text-gray-600 mb-2">
+                                Click a grade to toggle it, or click a start then an end to fill a range (K–2, 3–6, etc).
+                            </div>
+                            <div id="grade-band-chips" class="flex flex-wrap gap-2">
+                                @{
+                                    var allBands = new[] {
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.K4, "K4"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.K5, "K5"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade1, "1st"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade2, "2nd"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade3, "3rd"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade4, "4th"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade5, "5th"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade6, "6th"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade7, "7th"),
+                                        (LakeCountrySpanish.Web.Models.Entities.GradeBand.Grade8, "8th"),
+                                    };
+                                }
+                                @foreach (var band in allBands)
+                                {
+                                    var isSelected = Model.SelectedGradeBands.Contains(band.Item1);
+                                    <button type="button"
+                                            class="grade-chip inline-flex items-center px-3 py-1.5 rounded-full border-2 text-sm font-semibold transition-colors @(isSelected ? "border-indigo-500 bg-indigo-100 text-indigo-800" : "border-gray-300 bg-white text-gray-700 hover:border-gray-400")"
+                                            data-band-value="@((int)band.Item1)"
+                                            data-band-selected="@(isSelected ? "true" : "false")">
+                                        @band.Item2
+                                    </button>
+                                    <input type="hidden" name="SelectedGradeBands" value="@((int)band.Item1)"
+                                           class="grade-hidden-input"
+                                           data-band-value="@((int)band.Item1)"
+                                           disabled="@(!isSelected ? "disabled" : null)" />
+                                }
+                            </div>
+                        </div>
+
+                        @if (Model.IsEdit && !string.IsNullOrWhiteSpace(Model.GradeRange))
+                        {
+                            <p class="mt-3 text-xs text-gray-500 italic">
+                                Legacy grade range on this program: <code class="px-1.5 py-0.5 bg-gray-100 rounded text-gray-700">@Model.GradeRange</code>. Kept for reference — audience label now comes from the selection above.
+                            </p>
+                        }
                     </div>
-                    <div class="grid grid-cols-2 gap-4">
+
+                    <div class="grid grid-cols-2 gap-4 sm:col-span-2">
                         <div>
                             <label asp-for="AgeMin" class="@labelClass"></label>
                             <input asp-for="AgeMin" type="number" class="@fieldClass" />
@@ -395,4 +464,72 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+    // Audience picker (issue #19) — two-click range fill on grade band chips
+    // + show/hide the chip row based on the AudienceType radio selection.
+    (function () {
+        const chipContainer = document.getElementById('grade-band-chips');
+        const pickerWrap    = document.getElementById('grade-band-picker');
+        if (!chipContainer || !pickerWrap) return;
+
+        // Radio-driven show/hide of the whole picker.
+        document.querySelectorAll('.audience-radio').forEach(function (r) {
+            r.addEventListener('change', function () {
+                const isGrades = r.dataset.audience === 'Grades' && r.checked;
+                pickerWrap.classList.toggle('hidden', !isGrades);
+            });
+        });
+
+        function setChip(el, selected) {
+            el.dataset.bandSelected = selected ? 'true' : 'false';
+            if (selected) {
+                el.classList.add('border-indigo-500', 'bg-indigo-100', 'text-indigo-800');
+                el.classList.remove('border-gray-300', 'bg-white', 'text-gray-700', 'hover:border-gray-400');
+            } else {
+                el.classList.remove('border-indigo-500', 'bg-indigo-100', 'text-indigo-800');
+                el.classList.add('border-gray-300', 'bg-white', 'text-gray-700', 'hover:border-gray-400');
+            }
+            // Sync the hidden input's disabled state — disabled inputs
+            // don't post, which is exactly how we exclude unselected bands.
+            const hidden = document.querySelector('.grade-hidden-input[data-band-value="' + el.dataset.bandValue + '"]');
+            if (hidden) hidden.disabled = !selected;
+        }
+
+        // Range state: pendingStart is the anchor of a two-click fill.
+        // First click on an unselected chip sets pendingStart.
+        // Second click on any chip fills the contiguous range and clears state.
+        // A single click on an already-selected chip toggles it OFF and clears state.
+        let pendingStart = null;
+
+        const chips = Array.from(chipContainer.querySelectorAll('.grade-chip'));
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                const value = parseInt(chip.dataset.bandValue, 10);
+                const currentlySelected = chip.dataset.bandSelected === 'true';
+
+                if (pendingStart === null) {
+                    if (currentlySelected) {
+                        // Toggle off; don't start a range.
+                        setChip(chip, false);
+                    } else {
+                        // Start of a possible range OR single-select.
+                        setChip(chip, true);
+                        pendingStart = value;
+                    }
+                    return;
+                }
+
+                // Second click — fill contiguous range from pendingStart to value.
+                const lo = Math.min(pendingStart, value);
+                const hi = Math.max(pendingStart, value);
+                chips.forEach(function (c) {
+                    const v = parseInt(c.dataset.bandValue, 10);
+                    if (v >= lo && v <= hi) setChip(c, true);
+                });
+                pendingStart = null;
+            });
+        });
+    })();
+    </script>
 }

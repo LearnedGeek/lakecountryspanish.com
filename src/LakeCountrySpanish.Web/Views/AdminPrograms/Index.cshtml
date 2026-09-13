@@ -26,6 +26,39 @@
            a first-class state, distinguished by the Draft badge in the Status
            column instead of hidden behind a filter. *@
 
+        @{
+            // Audience-migration warning banner (issue #19). Data-conversion
+            // parser flags programs it couldn't confidently classify — Karen
+            // clicks through and picks the right audience. Banner disappears
+            // once every program has been reviewed.
+            var needsReview = Model.Where(p => p.AudienceNeedsReview).ToList();
+        }
+        @if (needsReview.Count > 0)
+        {
+            <div class="mb-6 rounded-xl border-2 border-amber-300 bg-amber-50 p-4 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <span class="text-2xl leading-none mt-0.5" aria-hidden="true">⚠</span>
+                    <div class="flex-1">
+                        <div class="text-sm font-bold text-amber-900 mb-1">@needsReview.Count program@(needsReview.Count == 1 ? "" : "s") need audience review</div>
+                        <p class="text-sm text-amber-900/90 mb-2">
+                            Grade info moved to a structured audience picker on 2026-09-13. These programs' old free-form grade values didn't map cleanly. Edit each to pick the correct audience (Grades / Adults / All) and grade bands, then save.
+                        </p>
+                        <ul class="text-sm text-amber-900 space-y-1">
+                            @foreach (var p in needsReview)
+                            {
+                                <li>
+                                    <a href="@Url.Action("Edit", new { id = p.Id })" class="font-semibold underline hover:no-underline">
+                                        @(string.IsNullOrEmpty(p.Name) ? "(untitled)" : p.Name)
+                                    </a>
+                                    <span class="text-amber-900/70">— /join/@p.Slug</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        }
+
         @if (Model.Count == 0)
         {
             <div class="bg-white rounded-2xl shadow-md border-2 border-dashed border-gray-300 p-12 text-center">

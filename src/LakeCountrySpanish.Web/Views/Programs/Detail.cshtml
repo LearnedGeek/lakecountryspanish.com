@@ -142,22 +142,16 @@
                                 <dd class="text-xs text-gray-600">@p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
                             </div>
                             @{
-                                // Karen types "0" as a sentinel for "no grade
-                                // restriction" (adult / open programs). Show "All"
-                                // in that case rather than literally rendering "0".
-                                var gradeTrimmed = p.GradeRange?.Trim();
-                                var gradeIsPlaceholder = string.IsNullOrEmpty(gradeTrimmed) || gradeTrimmed == "0";
-                                var showAges = p.AgeMin > 0;
-                                var showBlock = showAges || !gradeIsPlaceholder || !string.IsNullOrEmpty(p.GradeRange);
-                                var gradeLabel = gradeIsPlaceholder ? "All" : gradeTrimmed;
+                                // Grade + age label from the structured audience data
+                                // (issue #19). Helper handles Adult, All, and Grades with
+                                // smart contiguous range formatting.
+                                var detailAudienceLabel = LakeCountrySpanish.Web.Services.Programs.ProgramAudienceDisplay.CombinedLabel(p);
                             }
-                            @if (showBlock)
+                            @if (!string.IsNullOrEmpty(detailAudienceLabel))
                             {
                                 <div class="py-2.5">
-                                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Grades / Ages</dt>
-                                    <dd class="mt-1 font-semibold text-gray-900">
-                                        Grades: @gradeLabel@(showAges ? $" · ages {p.AgeMin}–{p.AgeMax}" : "")
-                                    </dd>
+                                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Who it's for</dt>
+                                    <dd class="mt-1 font-semibold text-gray-900">@detailAudienceLabel</dd>
                                 </div>
                             }
                             <div class="py-2.5">

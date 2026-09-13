@@ -18,7 +18,13 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
 
     public async Task<IReadOnlyList<EnrollmentProgram>> ListAllAsync(bool includeInactive = false, CancellationToken ct = default)
     {
-        var q = _context.Programs.AsNoTracking().AsQueryable();
+        // Include GradeBands so callers can render the audience label
+        // without a separate query per program. Cost is one JOIN; the
+        // program count is small (single digits, tens at most).
+        var q = _context.Programs
+            .AsNoTracking()
+            .Include(p => p.GradeBands)
+            .AsQueryable();
         if (!includeInactive) q = q.Where(p => p.IsActive);
         return await q.OrderByDescending(p => p.CreatedAt).ToListAsync(ct);
     }
@@ -27,11 +33,14 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
     {
         var normalized = slug?.Trim().ToLowerInvariant() ?? string.Empty;
         return _context.Programs
+            .Include(p => p.GradeBands)
             .FirstOrDefaultAsync(p => p.Slug.ToLower() == normalized, ct);
     }
 
     public Task<EnrollmentProgram?> GetByIdAsync(int id, CancellationToken ct = default) =>
-        _context.Programs.FirstOrDefaultAsync(p => p.Id == id, ct);
+        _context.Programs
+            .Include(p => p.GradeBands)
+            .FirstOrDefaultAsync(p => p.Id == id, ct);
 
     public async Task<EnrollmentProgram> CreateAsync(EnrollmentProgram program, CancellationToken ct = default, bool provisionStripe = true)
     {
@@ -77,7 +86,12 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
 
     public async Task<EnrollmentProgram> UpdateAsync(EnrollmentProgram program, CancellationToken ct = default)
     {
-        var existing = await _context.Programs.FirstOrDefaultAsync(p => p.Id == program.Id, ct)
+        // Include GradeBands so the diff-and-replace below actually loads
+        // the existing rows into the change tracker (otherwise SaveChanges
+        // won't know to delete the old ones when Karen changes the audience).
+        var existing = await _context.Programs
+            .Include(p => p.GradeBands)
+            .FirstOrDefaultAsync(p => p.Id == program.Id, ct)
             ?? throw new InvalidOperationException($"Program {program.Id} not found.");
 
         // Once Stripe knows about this program, price-affecting fields freeze.
@@ -115,6 +129,16 @@ public sealed class EnrollmentProgramService : IEnrollmentProgramService
         existing.StripeInstallmentPriceId = stripeInstallmentPriceId;
         existing.CreatedAt = createdAt;
         existing.UpdatedAt = DateTime.UtcNow;
+
+        // Reconcile grade bands — delete the current set, insert the new
+        // set from the incoming program's transient collection. Simpler and
+        // safer than a diff for a small collection where "single grade
+        // band moved" is rare in practice.
+        existing.GradeBands.Clear();
+        foreach (var band in program.GradeBands)
+        {
+            existing.GradeBands.Add(new ProgramGradeBand { GradeBand = band.GradeBand });
+        }
 
         await _context.SaveChangesAsync(ct);
         _logger.LogInformation("Updated EnrollmentProgram {ProgramId} ({Slug})", existing.Id, existing.Slug);

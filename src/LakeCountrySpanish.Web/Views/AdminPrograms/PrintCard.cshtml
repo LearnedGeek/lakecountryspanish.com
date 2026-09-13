@@ -133,10 +133,13 @@
                 <dt>Meets</dt>
                 <dd>@p.MeetingDays · @p.StartTime.ToString("h:mm tt") – @p.EndTime.ToString("h:mm tt")</dd>
 
-                @if (!string.IsNullOrEmpty(p.GradeRange) || p.AgeMin > 0)
+                @{
+                    var printAudienceLabel = LakeCountrySpanish.Web.Services.Programs.ProgramAudienceDisplay.CombinedLabel(p);
+                }
+                @if (!string.IsNullOrEmpty(printAudienceLabel))
                 {
-                    <dt>Ages / Grades</dt>
-                    <dd>@(!string.IsNullOrEmpty(p.GradeRange) ? p.GradeRange : $"ages {p.AgeMin}–{p.AgeMax}")</dd>
+                    <dt>Who it's for</dt>
+                    <dd>@printAudienceLabel</dd>
                 }
             </dl>
 

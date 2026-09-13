@@ -142,21 +142,12 @@
                                     </div>
                                     <div class="p-6 md:p-8 flex flex-col justify-center">
                                         @{
-                                            // Only render "Grades X" when Karen typed something
-                                            // meaningful. A literal "0" happens when Karen types
-                                            // it out of habit for adult / no-restriction programs
-                                            // — treat that as empty so the tile doesn't say
-                                            // "GRADES 0" for a beginner adult class.
-                                            var gradesTrimmed = rep.GradeRange?.Trim();
-                                            var hasGrades = !string.IsNullOrEmpty(gradesTrimmed) && gradesTrimmed != "0";
+                                            // Audience label from the structured helper (issue #19).
+                                            var homeAudienceLabel = LakeCountrySpanish.Web.Services.Programs.ProgramAudienceDisplay.CombinedLabel(rep);
                                         }
-                                        @if (hasGrades)
+                                        @if (!string.IsNullOrEmpty(homeAudienceLabel))
                                         {
-                                            <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Grades @gradesTrimmed</p>
-                                        }
-                                        else if (rep.AgeMin > 0)
-                                        {
-                                            <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">Ages @rep.AgeMin–@rep.AgeMax</p>
+                                            <p class="text-xs font-bold tracking-[0.15em] uppercase text-secondary-600 mb-2">@homeAudienceLabel</p>
                                         }
                                         <h3 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-2">@rep.Name</h3>
                                         <p class="text-sm text-gray-600 mb-5 flex items-center gap-1.5">

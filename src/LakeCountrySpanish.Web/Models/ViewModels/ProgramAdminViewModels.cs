@@ -19,6 +19,13 @@ public sealed class ProgramListItemViewModel
     public int EnrollmentCount { get; init; }
     public int PaidCount { get; init; }
     public DateTime CreatedAt { get; init; }
+
+    /// <summary>
+    /// True when the data-conversion parser couldn't derive the program's
+    /// audience or the admin created without picking one. Drives a
+    /// per-row warning marker and the top-of-list banner (issue #19).
+    /// </summary>
+    public bool AudienceNeedsReview { get; init; }
 }
 
 /// <summary>
@@ -154,14 +161,38 @@ public sealed class ProgramFormViewModel : IValidatableObject
     [Display(Name = "End time")]
     public TimeOnly? EndTime { get; set; }
 
+    // ---------- Audience (issue #19) ----------
+
+    /// <summary>
+    /// Discriminates the program's audience category — Grades / Adult / All.
+    /// When Grades, <see cref="SelectedGradeBands"/> carries the eligible
+    /// bands. Replaces the legacy free-form <see cref="GradeRange"/> string.
+    /// </summary>
+    [Display(Name = "Who is this for?")]
+    public AudienceType AudienceType { get; set; } = AudienceType.Grades;
+
+    /// <summary>
+    /// Bound from the pill-chip multi-select on the form. Only meaningful
+    /// when <see cref="AudienceType"/> is <see cref="AudienceType.Grades"/>;
+    /// ignored (cleared) for Adult / All on save.
+    /// </summary>
+    [Display(Name = "Grade bands")]
+    public List<GradeBand> SelectedGradeBands { get; set; } = new();
+
+    /// <summary>
+    /// Legacy free-text grade range. Kept so an admin editing a
+    /// pre-migration program can still see what the old string said if the
+    /// data-conversion parser flagged the program for review. Not written
+    /// by new saves — display code now uses AudienceType + SelectedGradeBands.
+    /// </summary>
     [StringLength(20)]
-    [Display(Name = "Grade range", Description = "Free-form: \"3-6\", \"K-2\", or leave blank for adult / no-restriction programs.")]
+    [Display(Name = "Legacy grade range (read-only)")]
     public string? GradeRange { get; set; }
 
     // 0 = "no restriction" (e.g. adult programs Karen doesn't want to gate by age).
     // Display views hide the "· ages X–Y" text when AgeMin is 0.
     [Range(0, 120)]
-    [Display(Name = "Min age", Description = "Enter 0 to indicate no age restriction (e.g. adult programs).")]
+    [Display(Name = "Min age", Description = "For adult programs, use 18 (or higher). Leave 0 for no age restriction on kid programs (rare).")]
     public int AgeMin { get; set; }
 
     [Range(0, 120)]
@@ -301,6 +332,26 @@ public sealed class ProgramFormViewModel : IValidatableObject
         target.MeetingDays = CompileMeetingDays();
         target.StartTime = StartTime ?? default;
         target.EndTime = EndTime ?? default;
+
+        // Audience: write the discriminator + reconcile the join-table
+        // rows. Clearing the collection and re-adding is safe because EF
+        // cascade-deletes orphaned join rows. Adult / All discard any
+        // stray SelectedGradeBands so a bad UI state can't leave zombie
+        // bands attached.
+        target.AudienceType = AudienceType;
+        target.GradeBands.Clear();
+        if (AudienceType == AudienceType.Grades)
+        {
+            foreach (var band in SelectedGradeBands.Distinct())
+            {
+                target.GradeBands.Add(new ProgramGradeBand { GradeBand = band });
+            }
+        }
+        // Any explicit audience save clears the review flag — Karen has
+        // now made an intentional choice for this program.
+        target.AudienceNeedsReview = false;
+
+        // Legacy field kept in DB but no longer written from the form.
         target.GradeRange = GradeRange ?? string.Empty;
         target.AgeMin = AgeMin;
         target.AgeMax = AgeMax;
@@ -342,6 +393,8 @@ public sealed class ProgramFormViewModel : IValidatableObject
             MeetingDays = p.MeetingDays,
             StartTime = p.StartTime == default ? null : p.StartTime,
             EndTime = p.EndTime == default ? null : p.EndTime,
+            AudienceType = p.AudienceType,
+            SelectedGradeBands = p.GradeBands.Select(g => g.GradeBand).OrderBy(b => (int)b).ToList(),
             GradeRange = p.GradeRange,
             AgeMin = p.AgeMin,
             AgeMax = p.AgeMax,

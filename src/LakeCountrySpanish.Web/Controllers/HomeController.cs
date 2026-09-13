@@ -66,6 +66,7 @@ public class HomeController : Controller
         // Distinct match is case-insensitive to survive minor typing variations.
         var now = DateTime.UtcNow;
         var openPrograms = await _context.Programs
+            .Include(p => p.GradeBands)
             .Where(p => p.IsListed && p.IsActive)
             .Where(p => (p.EnrollmentStartsAt == null || p.EnrollmentStartsAt <= now))
             .Where(p => (p.EnrollmentDeadline ?? p.StartDate) > now)

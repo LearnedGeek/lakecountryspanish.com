@@ -116,7 +116,30 @@ public class EnrollmentProgram
     /// <summary>Class end time.</summary>
     public TimeOnly EndTime { get; set; }
 
-    /// <summary>Free-text grade range shown to parents, e.g. "3-6".</summary>
+    /// <summary>
+    /// Discriminates the program's audience category. Every program has one
+    /// (never null). See <see cref="Models.Entities.AudienceType"/> for
+    /// semantics. When <c>Grades</c>, <see cref="GradeBands"/> is populated;
+    /// when <c>Adult</c> or <c>All</c>, grade concept doesn't apply.
+    /// Added 2026-09-13 (issue #19) to replace the overloaded
+    /// <see cref="GradeRange"/> free-text field.
+    /// </summary>
+    public AudienceType AudienceType { get; set; } = AudienceType.Grades;
+
+    /// <summary>
+    /// Grade bands the program serves — only populated when
+    /// <see cref="AudienceType"/> is <see cref="AudienceType.Grades"/>.
+    /// Cascade-deleted with the program.
+    /// </summary>
+    public virtual ICollection<ProgramGradeBand> GradeBands { get; set; } = new List<ProgramGradeBand>();
+
+    /// <summary>
+    /// Legacy free-text grade range (e.g. "3-6"). Kept for backward-compat
+    /// on records that haven't been reviewed post-migration. Public display
+    /// now generates its label from <see cref="AudienceType"/> +
+    /// <see cref="GradeBands"/> — this field is not read by display code.
+    /// Will be dropped in a follow-up once all live records are reviewed.
+    /// </summary>
     public string GradeRange { get; set; } = string.Empty;
 
     /// <summary>Minimum eligible age.</summary>
@@ -124,6 +147,16 @@ public class EnrollmentProgram
 
     /// <summary>Maximum eligible age (inclusive).</summary>
     public int AgeMax { get; set; }
+
+    /// <summary>
+    /// True when the data-conversion parser couldn't confidently derive
+    /// <see cref="AudienceType"/> + <see cref="GradeBands"/> from the legacy
+    /// <see cref="GradeRange"/> string, or when a new program was created
+    /// without picking an audience. Surfaces a warning banner on the admin
+    /// Manage Programs list so Karen can click through and confirm. Cleared
+    /// when the admin explicitly saves the form with an audience choice.
+    /// </summary>
+    public bool AudienceNeedsReview { get; set; }
 
     // ---------------- Pricing ----------------
 

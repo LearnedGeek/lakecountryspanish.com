@@ -72,6 +72,7 @@ public class AdminProgramsController : Controller
                 FullPrice = p.FullPrice,
                 IsActive = p.IsActive,
                 IsListed = p.IsListed,
+                AudienceNeedsReview = p.AudienceNeedsReview,
                 EnrollmentCount = counts.Where(c => c.ProgramId == p.Id).Sum(c => c.Count),
                 PaidCount = counts.Where(c => c.ProgramId == p.Id &&
                     (c.Status == ProgramEnrollmentStatus.FirstPaymentComplete ||

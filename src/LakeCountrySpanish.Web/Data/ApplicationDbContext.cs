@@ -79,6 +79,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     // Program enrollment (unlisted /join/{slug} landing pages for open houses).
     public DbSet<EnrollmentProgram> Programs => Set<EnrollmentProgram>();
+    public DbSet<ProgramGradeBand> ProgramGradeBands => Set<ProgramGradeBand>();
     public DbSet<ProgramEnrollment> ProgramEnrollments => Set<ProgramEnrollment>();
     public DbSet<ProgramEnrollmentAuditEvent> ProgramEnrollmentAuditEvents => Set<ProgramEnrollmentAuditEvent>();
 
@@ -911,6 +912,19 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
             // Common admin queries: list active programs; filter by listed/unlisted.
             entity.HasIndex(e => new { e.IsActive, e.IsListed });
+        });
+
+        builder.Entity<ProgramGradeBand>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Program)
+                .WithMany(p => p.GradeBands)
+                .HasForeignKey(e => e.ProgramId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // A program shouldn't have the same grade band twice.
+            entity.HasIndex(e => new { e.ProgramId, e.GradeBand }).IsUnique();
         });
 
         builder.Entity<ProgramEnrollment>(entity =>
