@@ -380,7 +380,43 @@ public class StripePaymentService : IPaymentService
                         return WebhookProcessingResult.Succeeded(payment);
                     }
                 }
-                _logger.LogInformation("Refund event received but no matching payment found");
+
+                // Fall through to the LCS ProgramEnrollment lookup. The legacy
+                // Payment path above is the tutoring-app shape; program
+                // enrollments live on a separate table. FullOneTime enrollments
+                // carry the PaymentIntentId we stored during
+                // checkout.session.completed. Installment subscription refunds
+                // don't auto-resolve today (each invoice creates a new payment
+                // intent; a refund on installment N carries that installment's
+                // intent, not the one we stored) — Karen uses the admin
+                // "Mark refunded" button for those. A follow-up can wire this
+                // by stamping the latest intent from invoice.paid.
+                if (charge != null && !string.IsNullOrEmpty(charge.PaymentIntentId))
+                {
+                    var enrollment = await _context.ProgramEnrollments
+                        .FirstOrDefaultAsync(e => e.StripePaymentIntentId == charge.PaymentIntentId);
+                    if (enrollment is not null)
+                    {
+                        try
+                        {
+                            await _enrollmentService.MarkRefundedAsync(
+                                enrollment.Id,
+                                Programs.AdminActor.System,
+                                reason: $"Stripe charge.refunded — charge {charge.Id}");
+                            _logger.LogInformation(
+                                "Enrollment {EnrollmentId} marked refunded via charge.refunded webhook (charge {ChargeId})",
+                                enrollment.Id, charge.Id);
+                            return WebhookProcessingResult.Succeeded(payment: null);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to mark enrollment {EnrollmentId} refunded", enrollment.Id);
+                            return WebhookProcessingResult.Failed(ex.Message);
+                        }
+                    }
+                }
+
+                _logger.LogInformation("Refund event received but no matching payment or enrollment found");
             }
 
             _logger.LogInformation("Unhandled Stripe event type: {EventType}", stripeEvent.Type);

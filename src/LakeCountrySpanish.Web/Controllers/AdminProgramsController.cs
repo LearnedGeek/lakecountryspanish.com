@@ -687,6 +687,29 @@ public class AdminProgramsController : Controller
         return RedirectToAction(nameof(Enrollments), new { id });
     }
 
+    /// <summary>
+    /// Mark an enrollment as refunded. Called from the enrollments admin
+    /// page when Karen has already processed a refund in Stripe UI (or
+    /// out-of-band) and needs the LCS row to catch up. The
+    /// <c>charge.refunded</c> webhook covers the automated case; this is
+    /// the manual backfill / one-off lever.
+    /// </summary>
+    [HttpPost("{id:int}/Enrollments/{enrollmentId:int}/Refund")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Refund(int id, int enrollmentId, string? reason, CancellationToken ct)
+    {
+        try
+        {
+            var enrollment = await _enrollments.MarkRefundedAsync(enrollmentId, CurrentActor(), reason, ct);
+            TempData["SuccessMessage"] = $"Marked refunded for {enrollment.ParentFirstName} {enrollment.ParentLastName} — {enrollment.StudentFirstName}'s enrollment updated.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Enrollments), new { id });
+    }
+
     // ---------------- helpers ----------------
 
     /// <summary>Constructs an <see cref="AdminActor"/> from the current ClaimsPrincipal for audit-event attribution.</summary>

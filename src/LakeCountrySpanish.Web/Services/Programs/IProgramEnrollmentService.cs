@@ -59,6 +59,21 @@ public interface IProgramEnrollmentService
     Task<ProgramEnrollment> UndoCashConfirmationAsync(int enrollmentId, AdminActor actor, string? reason, CancellationToken ct = default);
 
     /// <summary>
+    /// Mark the enrollment as refunded. Two callers:
+    /// (1) an admin who has already processed the refund in Stripe and needs
+    /// the LCS row to catch up, and (2) the <c>charge.refunded</c> webhook
+    /// when Stripe fires it automatically. Idempotent — a second call on an
+    /// already-Refunded enrollment is a no-op and returns the enrollment
+    /// unchanged.
+    ///
+    /// Zeroes <see cref="ProgramEnrollment.TotalAmountPaid"/> and writes a
+    /// <see cref="EnrollmentAuditEventType.Refunded"/> audit event with the
+    /// negative monetary delta so the trail shows the reversal alongside
+    /// whatever event originally recorded the payment.
+    /// </summary>
+    Task<ProgramEnrollment> MarkRefundedAsync(int enrollmentId, AdminActor actor, string? reason, CancellationToken ct = default);
+
+    /// <summary>
     /// Full audit trail for one enrollment, oldest first. Used to render the
     /// "who did what and when" view on the admin roster.
     /// </summary>

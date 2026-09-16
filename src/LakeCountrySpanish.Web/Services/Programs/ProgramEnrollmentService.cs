@@ -167,6 +167,9 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
 
         if (enrollment.PaymentType == ProgramPaymentType.FullOneTime)
         {
+            // Record the payment intent so a later charge.refunded event
+            // can find this enrollment without a Stripe API round-trip.
+            enrollment.StripePaymentIntentId = session.PaymentIntentId;
             enrollment.Status = ProgramEnrollmentStatus.FullyPaid;
             enrollment.TotalAmountPaid = enrollment.Program.FullPrice;
             _logger.LogInformation("Enrollment {EnrollmentId} fully paid via one-time checkout", enrollmentId);
@@ -313,6 +316,47 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
 
         await _context.SaveChangesAsync(ct);
         _logger.LogWarning("Enrollment {EnrollmentId} cash confirmation reversed by {Actor}: {Reason}", enrollmentId, actor.DisplayName, reason ?? "(no reason given)");
+        return enrollment;
+    }
+
+    public async Task<ProgramEnrollment> MarkRefundedAsync(int enrollmentId, AdminActor actor, string? reason, CancellationToken ct = default)
+    {
+        var enrollment = await _context.ProgramEnrollments
+            .Include(e => e.Program)
+            .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct)
+            ?? throw new InvalidOperationException($"Enrollment {enrollmentId} not found.");
+
+        // Idempotent: a second refund call for the same enrollment is a
+        // no-op. Both the webhook and the admin button can safely retry.
+        if (enrollment.Status == ProgramEnrollmentStatus.Refunded)
+            return enrollment;
+
+        var refundedAmount = enrollment.TotalAmountPaid;
+        enrollment.Status = ProgramEnrollmentStatus.Refunded;
+        enrollment.TotalAmountPaid = 0m;
+        // FirstPaymentAt / SecondPaymentAt kept as historical record —
+        // the audit event carries the reversal timestamp separately.
+        enrollment.UpdatedAt = DateTime.UtcNow;
+
+        var details = string.IsNullOrWhiteSpace(reason)
+            ? $"Marked as refunded (-${refundedAmount:N2})"
+            : $"Marked as refunded (-${refundedAmount:N2}) — {reason.Trim()}";
+
+        _context.ProgramEnrollmentAuditEvents.Add(new ProgramEnrollmentAuditEvent
+        {
+            EnrollmentId = enrollment.Id,
+            OccurredAt = DateTime.UtcNow,
+            ActorUserId = actor.UserId,
+            ActorDisplayName = actor.DisplayName,
+            EventType = EnrollmentAuditEventType.Refunded,
+            Details = details,
+            MonetaryDelta = -refundedAmount
+        });
+
+        await _context.SaveChangesAsync(ct);
+        _logger.LogInformation(
+            "Enrollment {EnrollmentId} marked refunded by {Actor} (was ${Amount:N2})",
+            enrollmentId, actor.DisplayName, refundedAmount);
         return enrollment;
     }
 

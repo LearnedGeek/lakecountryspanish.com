@@ -95,6 +95,18 @@ public class ProgramEnrollment
     public string? StripeSubscriptionId { get; set; }
     public string? StripeCustomerId { get; set; }
 
+    /// <summary>
+    /// PaymentIntent id for one-time-full checkout sessions. Populated
+    /// from <c>session.payment_intent</c> when the checkout completion
+    /// webhook lands. Used by the <c>charge.refunded</c> webhook to
+    /// look up the enrollment without a round-trip to Stripe's API —
+    /// the Charge object carries only <c>payment_intent</c>, not
+    /// <c>checkout_session</c>. Null for subscription enrollments (their
+    /// refunds are looked up via <see cref="StripeSubscriptionId"/>) and
+    /// for cash-in-hand enrollments (no Stripe payment at all).
+    /// </summary>
+    public string? StripePaymentIntentId { get; set; }
+
     public DateTime? FirstPaymentAt { get; set; }
     public DateTime? SecondPaymentAt { get; set; }
 
