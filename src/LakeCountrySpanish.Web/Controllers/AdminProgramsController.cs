@@ -658,6 +658,7 @@ public class AdminProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmCash(int id, int enrollmentId, CancellationToken ct)
     {
+        if (!await EnrollmentBelongsToProgramAsync(enrollmentId, id, ct)) return NotFound();
         try
         {
             var enrollment = await _enrollments.MarkCashConfirmedAsync(enrollmentId, CurrentActor(), ct);
@@ -675,6 +676,7 @@ public class AdminProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UndoCashConfirmation(int id, int enrollmentId, string? reason, CancellationToken ct)
     {
+        if (!await EnrollmentBelongsToProgramAsync(enrollmentId, id, ct)) return NotFound();
         try
         {
             var enrollment = await _enrollments.UndoCashConfirmationAsync(enrollmentId, CurrentActor(), reason, ct);
@@ -698,6 +700,7 @@ public class AdminProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Refund(int id, int enrollmentId, string? reason, CancellationToken ct)
     {
+        if (!await EnrollmentBelongsToProgramAsync(enrollmentId, id, ct)) return NotFound();
         try
         {
             var enrollment = await _enrollments.MarkRefundedAsync(enrollmentId, CurrentActor(), reason, ct);
@@ -716,6 +719,18 @@ public class AdminProgramsController : Controller
     private AdminActor CurrentActor() => new(
         UserId: User.FindFirstValue(ClaimTypes.NameIdentifier),
         DisplayName: User.Identity?.Name ?? "unknown");
+
+    /// <summary>
+    /// Route-scope guard for the enrollment-mutation actions. A crafted POST
+    /// could target an enrollmentId that lives under a different program
+    /// while claiming this one in the URL — this check rejects that.
+    /// Returns false (→ NotFound) rather than throwing so the caller can
+    /// bail out with an HTTP response.
+    /// </summary>
+    private Task<bool> EnrollmentBelongsToProgramAsync(int enrollmentId, int programId, CancellationToken ct) =>
+        _context.ProgramEnrollments
+            .AsNoTracking()
+            .AnyAsync(e => e.Id == enrollmentId && e.ProgramId == programId, ct);
 
     /// <summary>RFC 4180 CSV field escape — wraps in quotes if the field contains a comma, quote, or newline; doubles internal quotes.</summary>
     private static string CsvField(string value)

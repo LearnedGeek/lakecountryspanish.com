@@ -15,11 +15,21 @@ namespace LakeCountrySpanish.Web.Migrations
                 table: "ProgramEnrollments",
                 type: "text",
                 nullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProgramEnrollments_StripePaymentIntentId",
+                table: "ProgramEnrollments",
+                column: "StripePaymentIntentId",
+                filter: "\"StripePaymentIntentId\" IS NOT NULL");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropIndex(
+                name: "IX_ProgramEnrollments_StripePaymentIntentId",
+                table: "ProgramEnrollments");
+
             migrationBuilder.DropColumn(
                 name: "StripePaymentIntentId",
                 table: "ProgramEnrollments");

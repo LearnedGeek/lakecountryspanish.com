@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace LakeCountrySpanish.Web.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260916001144_AddStripePaymentIntentIdToEnrollment")]
+    [Migration("20260916012013_AddStripePaymentIntentIdToEnrollment")]
     partial class AddStripePaymentIntentIdToEnrollment
     {
         /// <inheritdoc />
@@ -1757,6 +1757,9 @@ namespace LakeCountrySpanish.Web.Migrations
 
                     b.HasIndex("StripeCheckoutSessionId")
                         .HasFilter("\"StripeCheckoutSessionId\" IS NOT NULL");
+
+                    b.HasIndex("StripePaymentIntentId")
+                        .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
 
                     b.HasIndex("StripeSubscriptionId")
                         .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");

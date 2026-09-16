@@ -389,29 +389,49 @@ public class StripePaymentService : IPaymentService
                 // don't auto-resolve today (each invoice creates a new payment
                 // intent; a refund on installment N carries that installment's
                 // intent, not the one we stored) — Karen uses the admin
-                // "Mark refunded" button for those. A follow-up can wire this
-                // by stamping the latest intent from invoice.paid.
+                // "Mark refunded" button for those.
                 if (charge != null && !string.IsNullOrEmpty(charge.PaymentIntentId))
                 {
-                    var enrollment = await _context.ProgramEnrollments
-                        .FirstOrDefaultAsync(e => e.StripePaymentIntentId == charge.PaymentIntentId);
-                    if (enrollment is not null)
+                    // Partial refunds also fire charge.refunded; the admin
+                    // button treats a refund as full-only, so we only
+                    // auto-flip the enrollment when Stripe reports the
+                    // entire charge as refunded. Partial refunds fall
+                    // through and Karen reconciles by hand.
+                    var fullyRefunded = charge.Refunded
+                        || (charge.Amount > 0 && charge.AmountRefunded >= charge.Amount);
+                    if (!fullyRefunded)
                     {
-                        try
+                        _logger.LogInformation(
+                            "Partial refund on charge {ChargeId} ({Refunded}/{Total}); leaving enrollment status alone for manual reconciliation",
+                            charge.Id, charge.AmountRefunded, charge.Amount);
+                    }
+                    else
+                    {
+                        var enrollment = await _context.ProgramEnrollments
+                            .FirstOrDefaultAsync(e => e.StripePaymentIntentId == charge.PaymentIntentId);
+                        if (enrollment is not null)
                         {
-                            await _enrollmentService.MarkRefundedAsync(
-                                enrollment.Id,
-                                Programs.AdminActor.System,
-                                reason: $"Stripe charge.refunded — charge {charge.Id}");
-                            _logger.LogInformation(
-                                "Enrollment {EnrollmentId} marked refunded via charge.refunded webhook (charge {ChargeId})",
-                                enrollment.Id, charge.Id);
-                            return WebhookProcessingResult.Succeeded(payment: null);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Failed to mark enrollment {EnrollmentId} refunded", enrollment.Id);
-                            return WebhookProcessingResult.Failed(ex.Message);
+                            try
+                            {
+                                await _enrollmentService.MarkRefundedAsync(
+                                    enrollment.Id,
+                                    Programs.AdminActor.System,
+                                    reason: $"Stripe charge.refunded — charge {charge.Id}");
+                                _logger.LogInformation(
+                                    "Enrollment {EnrollmentId} marked refunded via charge.refunded webhook (charge {ChargeId})",
+                                    enrollment.Id, charge.Id);
+                                return WebhookProcessingResult.Succeeded(payment: null);
+                            }
+                            catch (DbUpdateException ex)
+                            {
+                                _logger.LogError(ex, "Failed to mark enrollment {EnrollmentId} refunded", enrollment.Id);
+                                return WebhookProcessingResult.Failed(ex.Message);
+                            }
+                            catch (InvalidOperationException ex)
+                            {
+                                _logger.LogWarning(ex, "MarkRefundedAsync rejected enrollment {EnrollmentId}", enrollment.Id);
+                                return WebhookProcessingResult.Failed(ex.Message);
+                            }
                         }
                     }
                 }

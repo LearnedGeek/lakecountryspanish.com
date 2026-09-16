@@ -1755,6 +1755,9 @@ namespace LakeCountrySpanish.Web.Migrations
                     b.HasIndex("StripeCheckoutSessionId")
                         .HasFilter("\"StripeCheckoutSessionId\" IS NOT NULL");
 
+                    b.HasIndex("StripePaymentIntentId")
+                        .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
+
                     b.HasIndex("StripeSubscriptionId")
                         .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
 
