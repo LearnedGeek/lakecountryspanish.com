@@ -198,6 +198,25 @@
                                                 </button>
                                             </form>
                                         }
+                                        @* Mark Refunded button — for Stripe-paid enrollments Karen has
+                                           already refunded in Stripe UI (or that the charge.refunded
+                                           webhook missed). Shown for any enrollment currently in a "paid"
+                                           status EXCEPT cash — cash reversals use the Undo button above so
+                                           the cash-specific pair (Mark paid / Undo) stays intact. *@
+                                        @if ((e.Status == ProgramEnrollmentStatus.FullyPaid
+                                              || e.Status == ProgramEnrollmentStatus.FirstPaymentComplete)
+                                             && e.PaymentType != ProgramPaymentType.CashInHand)
+                                        {
+                                            <form method="post" action="@Url.Action("Refund", new { id = p.Id, enrollmentId = e.Id })" class="inline ml-1"
+                                                  onsubmit="var r = prompt('Optional: reason (Stripe refund reference, mistake, etc.)?'); if (r === null) return false; this.reason.value = r; return confirm('Mark this enrollment as refunded? This zeros the amount paid and stamps the audit trail. The refund itself must already be posted in Stripe.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="reason" value="" />
+                                                <button type="submit"
+                                                        class="inline-flex items-center gap-1 px-3 py-1.5 text-xs bg-white border-2 border-purple-300 text-purple-800 rounded-lg hover:bg-purple-50 hover:border-purple-400 font-semibold focus:outline-none focus:ring-4 focus:ring-purple-500/20 transition-all">
+                                                    ⤺ Mark refunded
+                                                </button>
+                                            </form>
+                                        }
                                     </td>
                                 </tr>
                                 @if (events.Count > 0)

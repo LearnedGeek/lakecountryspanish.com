@@ -1004,6 +1004,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Same for subscription id (installment path).
             entity.HasIndex(e => e.StripeSubscriptionId)
                 .HasFilter("\"StripeSubscriptionId\" IS NOT NULL");
+            // Refund lookup: the charge.refunded webhook queries by
+            // PaymentIntentId. Filtered so the index only carries the
+            // FullOneTime rows that actually store one.
+            entity.HasIndex(e => e.StripePaymentIntentId)
+                .HasFilter("\"StripePaymentIntentId\" IS NOT NULL");
         });
 
         builder.Entity<ProgramEnrollmentAuditEvent>(entity =>

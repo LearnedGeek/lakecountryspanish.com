@@ -154,10 +154,14 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         }
 
         // Idempotency: don't reprocess a session we've already booked.
+        // Refunded is terminal — a late-arriving or replayed
+        // checkout.session.completed must not resurrect a refunded row
+        // back into FullyPaid + $150.
         if (enrollment.Status is ProgramEnrollmentStatus.FirstPaymentComplete
-            or ProgramEnrollmentStatus.FullyPaid)
+            or ProgramEnrollmentStatus.FullyPaid
+            or ProgramEnrollmentStatus.Refunded)
         {
-            _logger.LogInformation("Enrollment {EnrollmentId} already marked paid; ignoring duplicate checkout.session.completed", enrollmentId);
+            _logger.LogInformation("Enrollment {EnrollmentId} already in terminal or paid state ({Status}); ignoring duplicate checkout.session.completed", enrollmentId, enrollment.Status);
             return true;
         }
 
@@ -167,6 +171,9 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
 
         if (enrollment.PaymentType == ProgramPaymentType.FullOneTime)
         {
+            // Record the payment intent so a later charge.refunded event
+            // can find this enrollment without a Stripe API round-trip.
+            enrollment.StripePaymentIntentId = session.PaymentIntentId;
             enrollment.Status = ProgramEnrollmentStatus.FullyPaid;
             enrollment.TotalAmountPaid = enrollment.Program.FullPrice;
             _logger.LogInformation("Enrollment {EnrollmentId} fully paid via one-time checkout", enrollmentId);
@@ -212,9 +219,12 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
 
         // Cycle 1 was already recorded via checkout.session.completed. Only bump
         // to FullyPaid on cycle 2 (or later — safe idempotency).
-        if (enrollment.Status == ProgramEnrollmentStatus.FullyPaid)
+        // Refunded is also terminal — a late invoice.paid must not
+        // resurrect a refunded row.
+        if (enrollment.Status is ProgramEnrollmentStatus.FullyPaid
+            or ProgramEnrollmentStatus.Refunded)
         {
-            _logger.LogInformation("Enrollment {EnrollmentId} already fully paid; ignoring extra invoice.paid", enrollment.Id);
+            _logger.LogInformation("Enrollment {EnrollmentId} already in terminal state ({Status}); ignoring extra invoice.paid", enrollment.Id, enrollment.Status);
             return true;
         }
 
@@ -314,6 +324,96 @@ public sealed class ProgramEnrollmentService : IProgramEnrollmentService
         await _context.SaveChangesAsync(ct);
         _logger.LogWarning("Enrollment {EnrollmentId} cash confirmation reversed by {Actor}: {Reason}", enrollmentId, actor.DisplayName, reason ?? "(no reason given)");
         return enrollment;
+    }
+
+    // Maximum length of a Refunded audit-event reason. The Details column
+    // is capped at 2000 chars; leaving headroom for the "Marked as
+    // refunded (-$xxx.xx) — " prefix keeps the DB write safe even for
+    // long slug-like reasons (Stripe refund ids, note text).
+    private const int MaxRefundReasonLength = 500;
+
+    public async Task<ProgramEnrollment> MarkRefundedAsync(int enrollmentId, AdminActor actor, string? reason, CancellationToken ct = default)
+    {
+        var enrollment = await _context.ProgramEnrollments
+            .Include(e => e.Program)
+            .FirstOrDefaultAsync(e => e.Id == enrollmentId, ct)
+            ?? throw new InvalidOperationException($"Enrollment {enrollmentId} not found.");
+
+        // Idempotent: a second refund call is a no-op. Both the webhook
+        // and the admin button can safely retry.
+        if (enrollment.Status == ProgramEnrollmentStatus.Refunded)
+            return enrollment;
+
+        // Business rule: only enrollments that actually received money can
+        // be refunded. Blocking CashPending / PendingPayment / Cancelled
+        // stops a crafted POST from writing a bogus -$0 audit trail or
+        // reversing a payment that never landed.
+        if (enrollment.Status != ProgramEnrollmentStatus.FullyPaid
+            && enrollment.Status != ProgramEnrollmentStatus.FirstPaymentComplete)
+        {
+            throw new InvalidOperationException(
+                $"Enrollment is in {enrollment.Status} state — only paid enrollments (fully paid or first-installment complete) can be marked refunded.");
+        }
+
+        var boundedReason = string.IsNullOrWhiteSpace(reason)
+            ? null
+            : reason.Trim() is var trimmed && trimmed.Length > MaxRefundReasonLength
+                ? trimmed[..MaxRefundReasonLength]
+                : trimmed;
+
+        var refundedAmount = enrollment.TotalAmountPaid;
+        var now = DateTime.UtcNow;
+
+        // Single-winner status transition via a conditional UPDATE. Two
+        // concurrent callers (webhook + admin click) that both read the
+        // "not yet refunded" row would otherwise each write an audit
+        // event and double the negative delta. ExecuteUpdateAsync bakes
+        // the "was I first?" check into the SQL so only one caller sees
+        // affected == 1 and proceeds to write the audit row.
+        var affected = await _context.ProgramEnrollments
+            .Where(e => e.Id == enrollmentId
+                     && e.Status != ProgramEnrollmentStatus.Refunded)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(e => e.Status, ProgramEnrollmentStatus.Refunded)
+                .SetProperty(e => e.TotalAmountPaid, 0m)
+                .SetProperty(e => e.UpdatedAt, now),
+                ct);
+
+        if (affected == 0)
+        {
+            // Someone else won the race. Re-read the row to return the
+            // now-canonical Refunded state to the caller.
+            return await _context.ProgramEnrollments
+                .Include(e => e.Program)
+                .FirstAsync(e => e.Id == enrollmentId, ct);
+        }
+
+        var details = boundedReason is null
+            ? $"Marked as refunded (-${refundedAmount:N2})"
+            : $"Marked as refunded (-${refundedAmount:N2}) — {boundedReason}";
+
+        _context.ProgramEnrollmentAuditEvents.Add(new ProgramEnrollmentAuditEvent
+        {
+            EnrollmentId = enrollmentId,
+            OccurredAt = now,
+            ActorUserId = actor.UserId,
+            ActorDisplayName = actor.DisplayName,
+            EventType = EnrollmentAuditEventType.Refunded,
+            Details = details,
+            MonetaryDelta = -refundedAmount
+        });
+        await _context.SaveChangesAsync(ct);
+
+        // Return the fresh row — our in-memory instance is stale since
+        // ExecuteUpdateAsync bypasses the change tracker.
+        var fresh = await _context.ProgramEnrollments
+            .Include(e => e.Program)
+            .FirstAsync(e => e.Id == enrollmentId, ct);
+
+        _logger.LogInformation(
+            "Enrollment {EnrollmentId} marked refunded by {Actor} (was ${Amount:N2})",
+            enrollmentId, actor.DisplayName, refundedAmount);
+        return fresh;
     }
 
     public async Task<IReadOnlyList<ProgramEnrollmentAuditEvent>> GetAuditEventsAsync(int enrollmentId, CancellationToken ct = default)

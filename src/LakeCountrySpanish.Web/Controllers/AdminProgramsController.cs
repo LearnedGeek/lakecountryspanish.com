@@ -658,6 +658,7 @@ public class AdminProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ConfirmCash(int id, int enrollmentId, CancellationToken ct)
     {
+        if (!await EnrollmentBelongsToProgramAsync(enrollmentId, id, ct)) return NotFound();
         try
         {
             var enrollment = await _enrollments.MarkCashConfirmedAsync(enrollmentId, CurrentActor(), ct);
@@ -675,10 +676,35 @@ public class AdminProgramsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UndoCashConfirmation(int id, int enrollmentId, string? reason, CancellationToken ct)
     {
+        if (!await EnrollmentBelongsToProgramAsync(enrollmentId, id, ct)) return NotFound();
         try
         {
             var enrollment = await _enrollments.UndoCashConfirmationAsync(enrollmentId, CurrentActor(), reason, ct);
             TempData["SuccessMessage"] = $"Reversed cash confirmation for {enrollment.ParentFirstName} {enrollment.ParentLastName} — enrollment is back to cash-pending.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ErrorMessage"] = ex.Message;
+        }
+        return RedirectToAction(nameof(Enrollments), new { id });
+    }
+
+    /// <summary>
+    /// Mark an enrollment as refunded. Called from the enrollments admin
+    /// page when Karen has already processed a refund in Stripe UI (or
+    /// out-of-band) and needs the LCS row to catch up. The
+    /// <c>charge.refunded</c> webhook covers the automated case; this is
+    /// the manual backfill / one-off lever.
+    /// </summary>
+    [HttpPost("{id:int}/Enrollments/{enrollmentId:int}/Refund")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Refund(int id, int enrollmentId, string? reason, CancellationToken ct)
+    {
+        if (!await EnrollmentBelongsToProgramAsync(enrollmentId, id, ct)) return NotFound();
+        try
+        {
+            var enrollment = await _enrollments.MarkRefundedAsync(enrollmentId, CurrentActor(), reason, ct);
+            TempData["SuccessMessage"] = $"Marked refunded for {enrollment.ParentFirstName} {enrollment.ParentLastName} — {enrollment.StudentFirstName}'s enrollment updated.";
         }
         catch (InvalidOperationException ex)
         {
@@ -693,6 +719,18 @@ public class AdminProgramsController : Controller
     private AdminActor CurrentActor() => new(
         UserId: User.FindFirstValue(ClaimTypes.NameIdentifier),
         DisplayName: User.Identity?.Name ?? "unknown");
+
+    /// <summary>
+    /// Route-scope guard for the enrollment-mutation actions. A crafted POST
+    /// could target an enrollmentId that lives under a different program
+    /// while claiming this one in the URL — this check rejects that.
+    /// Returns false (→ NotFound) rather than throwing so the caller can
+    /// bail out with an HTTP response.
+    /// </summary>
+    private Task<bool> EnrollmentBelongsToProgramAsync(int enrollmentId, int programId, CancellationToken ct) =>
+        _context.ProgramEnrollments
+            .AsNoTracking()
+            .AnyAsync(e => e.Id == enrollmentId && e.ProgramId == programId, ct);
 
     /// <summary>RFC 4180 CSV field escape — wraps in quotes if the field contains a comma, quote, or newline; doubles internal quotes.</summary>
     private static string CsvField(string value)
